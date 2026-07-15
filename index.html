@@ -98,6 +98,24 @@
             <button id="cashButton" class="action-button cash pressable hidden"><span>CASH OUT</span><small id="cashButtonValue">115 F</small></button>
           </div>
         </section>
+
+        <section class="engagement-panel glass" aria-label="Pond milestones and goals">
+          <div class="engagement-heading">
+            <div><small>POND RUN</small><h2>Milestones & Goals</h2></div>
+            <span id="goalSummary" class="goal-summary">3 goals available</span>
+          </div>
+
+          <div class="milestone-track" id="milestoneTrack" aria-label="Round milestone progress">
+            <div class="milestone-line"><i id="milestoneFill"></i></div>
+            <div class="milestone-node" data-milestone="5"><b>5</b><small>WARM-UP</small></div>
+            <div class="milestone-node" data-milestone="10"><b>10</b><small>DEEP WATER</small></div>
+            <div class="milestone-node" data-milestone="15"><b>15</b><small>POND MASTER</small></div>
+            <div class="milestone-node" data-milestone="20"><b>20</b><small>LEGEND</small></div>
+          </div>
+
+          <div id="goalGrid" class="goal-grid"></div>
+          <p class="fair-play-note">Goals never expire. Odds remain visible, and the game never creates fake near-misses.</p>
+        </section>
       </section>
 
       <section id="collectionScreen" class="screen" aria-label="Collection">
@@ -189,9 +207,25 @@
           <div class="stat-card glass"><small>ROUNDS PLAYED</small><b id="roundsStat">0</b></div>
           <div class="stat-card glass level-bonus-card"><small>NEXT LEVEL BONUS</small><b id="nextLevelBonusStat">550 F</b></div>
         </div>
+        <section class="session-panel glass">
+          <div class="session-panel-head"><div><small>THIS SESSION</small><h2 id="pondRankLabel">Tadpole</h2></div><span>Fresh start every launch</span></div>
+          <div class="session-grid">
+            <div><small>ROUNDS</small><b id="sessionRoundsStat">0</b></div>
+            <div><small>WINS</small><b id="sessionWinsStat">0</b></div>
+            <div><small>NET FROGGY</small><b id="sessionNetStat">0 F</b></div>
+            <div><small>TIME</small><b id="sessionTimeStat">0m</b></div>
+          </div>
+        </section>
+
+        <section class="achievement-panel glass">
+          <div class="session-panel-head"><div><small>BADGE CABINET</small><h2>Achievements</h2></div><span>Permanent progress</span></div>
+          <div id="achievementGrid" class="achievement-grid"></div>
+        </section>
+
         <div class="settings-list glass">
           <button id="settingsSound" class="settings-row pressable"><span>🔊 Sound effects</span><b>On</b></button>
           <button id="settingsMotion" class="settings-row pressable"><span>✨ Extra effects</span><b>On</b></button>
+          <button id="settingsReminders" class="settings-row pressable"><span>⏱️ 15-minute play reminder</span><b>On</b></button>
           <button id="howToButton" class="settings-row pressable"><span>❔ How to play</span><b>›</b></button>
           <button id="resetButton" class="settings-row danger pressable"><span>↻ Reset progress</span><b>›</b></button>
         </div>

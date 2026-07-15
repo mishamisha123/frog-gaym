@@ -133,3 +133,16 @@ The normal jump game now targets **96% RTP** at every cash-out step:
 Formula: `multiplier = 0.96 ÷ cumulative survival probability`.
 
 Because payouts are credited as whole Froggy, small bets may produce a slightly lower realized RTP due to rounding down.
+
+
+## v10 engaging but fair progression
+
+This update adds stronger game feel without using deceptive gambling dark patterns:
+
+- Four visible round milestones at jumps 5, 10, 15, and 20.
+- Three permanent, deterministic Pond Goals with fixed Froggy and XP rewards.
+- Session rounds, wins, net Froggy, elapsed time, and Pond Rank.
+- Five permanent achievement badges.
+- Deeper visual intensity after jump 10 and milestone celebration effects.
+- Optional 15-minute play reminders and a neutral message after three consecutive losses.
+- No fake near-misses, hidden odds changes, expiring missions, or loss-chasing prompts.

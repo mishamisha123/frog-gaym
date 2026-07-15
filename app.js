@@ -88,7 +88,11 @@
     roundSafe: false,
     unlimitedSpins: false,
     freeSpins: 0,
-    promoCoinClaimed: false
+    promoCoinClaimed: false,
+    safeJumps: 0,
+    bestCashMultiplier: 0,
+    goalClaims: {safe25:false, cash5:false, rounds5:false},
+    playReminders: true
   };
 
   const $ = (id) => document.getElementById(id);
@@ -108,6 +112,8 @@
     totalJumpsStat: $('totalJumpsStat'), bestJumpStat: $('bestJumpStat'), biggestWinStat: $('biggestWinStat'), roundsStat: $('roundsStat'), nextLevelBonusStat: $('nextLevelBonusStat'),
     levelToast: $('levelToast'), levelToastTitle: $('levelToastTitle'), levelToastBonus: $('levelToastBonus'),
     promoForm: $('promoForm'), promoInput: $('promoInput'), promoRedeem: $('promoRedeemButton'), promoMessage: $('promoMessage'), promoUsedCount: $('promoUsedCount'), promoSafeStatus: $('promoSafeStatus'), promoSpinStatus: $('promoSpinStatus'), promoFrogStatus: $('promoFrogStatus'), promoCoinStatus: $('promoCoinStatus'),
+    milestoneTrack: $('milestoneTrack'), milestoneFill: $('milestoneFill'), goalGrid: $('goalGrid'), goalSummary: $('goalSummary'),
+    sessionRoundsStat: $('sessionRoundsStat'), sessionWinsStat: $('sessionWinsStat'), sessionNetStat: $('sessionNetStat'), sessionTimeStat: $('sessionTimeStat'), pondRankLabel: $('pondRankLabel'), achievementGrid: $('achievementGrid'), settingsReminders: $('settingsReminders'),
     confetti: $('confettiLayer'), flash: $('flashLayer'), selfTest: $('selfTestResult')
   };
 
@@ -154,6 +160,10 @@
       merged.unlimitedSpins = Boolean(merged.unlimitedSpins);
       merged.freeSpins = Number.isFinite(merged.freeSpins) ? Math.max(0, Math.floor(merged.freeSpins)) : 0;
       merged.promoCoinClaimed = Boolean(merged.promoCoinClaimed);
+      merged.safeJumps = Number.isFinite(merged.safeJumps) ? Math.max(0, Math.floor(merged.safeJumps)) : 0;
+      merged.bestCashMultiplier = Number.isFinite(merged.bestCashMultiplier) ? Math.max(0, merged.bestCashMultiplier) : 0;
+      merged.goalClaims = Object.assign({safe25:false,cash5:false,rounds5:false}, merged.goalClaims || {});
+      merged.playReminders = merged.playReminders !== false;
       merged.balance = Number.isFinite(merged.balance) ? Math.max(0, Math.floor(merged.balance)) : 1000;
       return merged;
     } catch { return deepClone(DEFAULT_STATE); }
@@ -371,12 +381,87 @@
   let collectionMode = 'frogs';
   let wheelSpinning = false;
   let currentSpinSource = null;
+  const session = {startedAt:Date.now(), rounds:0, wins:0, losses:0, net:0, lossStreak:0, reminded:false};
 
   function setStatus(text,kind=''){
     els.status.textContent=text; els.status.classList.remove('win','lose'); if(kind)els.status.classList.add(kind);
   }
   function dangerName(r){ return r<8?'Tiny ripple':r<18?'Wobbly':r<30?'Getting risky':r<45?'Slippery':r<60?'Dangerous':r<75?'Very dangerous':'Splash zone'; }
   function effectiveRisk(){ if(state.jump>=RISKS.length)return 0; return Math.max(1,RISKS[state.jump]-(state.luckyCharges>0?5:0)); }
+
+  const POND_GOALS = [
+    {id:'safe25', icon:'🌿', title:'Sure-Footed', detail:'Land 25 safe jumps across all rounds.', target:25, reward:300, xp:50},
+    {id:'cash5', icon:'🪙', title:'Smart Hopper', detail:'Cash out at 5.00× or higher.', target:5, reward:600, xp:80},
+    {id:'rounds5', icon:'🎯', title:'Pond Regular', detail:'Complete 5 rounds.', target:5, reward:250, xp:40}
+  ];
+
+  function pondRank(){
+    if(state.bestJump>=20)return 'Pond Legend';
+    if(state.bestJump>=15)return 'Pond Master';
+    if(state.bestJump>=10)return 'Deepwater Hopper';
+    if(state.bestJump>=5)return 'Lily Scout';
+    if(state.bestJump>=1)return 'Hopper';
+    return 'Tadpole';
+  }
+
+  function goalValue(id){
+    if(id==='safe25')return state.safeJumps;
+    if(id==='cash5')return state.bestCashMultiplier;
+    return state.rounds;
+  }
+
+  function refreshEngagement(){
+    if(!els.milestoneFill)return;
+    const progress=clamp(state.jump/RISKS.length*100,0,100);
+    els.milestoneFill.style.width=`${progress}%`;
+    els.milestoneTrack.querySelectorAll('[data-milestone]').forEach(node=>{
+      const step=Number(node.dataset.milestone);
+      node.classList.toggle('active',state.jump>=step);
+      node.classList.toggle('current',state.roundActive&&state.jump<step&&step===Math.ceil((state.jump+1)/5)*5);
+    });
+    const unclaimed=POND_GOALS.filter(goal=>!state.goalClaims[goal.id]).length;
+    els.goalSummary.textContent=unclaimed?`${unclaimed} goal${unclaimed===1?'':'s'} available`:'All goals claimed';
+    els.goalGrid.innerHTML=POND_GOALS.map(goal=>{
+      const value=goalValue(goal.id), completed=value>=goal.target, claimed=Boolean(state.goalClaims[goal.id]);
+      const shown=Math.min(value,goal.target), pct=clamp(value/goal.target*100,0,100);
+      return `<article class="goal-card ${claimed?'claimed':''}"><div class="goal-top"><span class="goal-icon">${goal.icon}</span><div class="goal-copy"><b>${goal.title}</b><small>${goal.detail}</small></div><span class="goal-reward">+${money(goal.reward)} F<br>+${goal.xp} XP</span></div><div class="goal-progress"><i style="width:${pct}%"></i></div><div class="goal-footer"><span>${idProgress(goal.id,shown,goal.target)}</span><button class="goal-claim pressable" data-goal-claim="${goal.id}" ${!completed||claimed?'disabled':''}>${claimed?'CLAIMED':completed?'CLAIM':'IN PROGRESS'}</button></div></article>`;
+    }).join('');
+    const minutes=Math.floor((Date.now()-session.startedAt)/60000);
+    els.sessionRoundsStat.textContent=session.rounds;
+    els.sessionWinsStat.textContent=session.wins;
+    els.sessionNetStat.textContent=`${session.net>0?'+':''}${money(session.net)} F`;
+    els.sessionNetStat.classList.toggle('positive',session.net>0);
+    els.sessionNetStat.classList.toggle('negative',session.net<0);
+    els.sessionTimeStat.textContent=`${minutes}m`;
+    els.pondRankLabel.textContent=pondRank();
+    const achievements=[
+      ['🌱','First Hop','Land your first safe jump.',state.safeJumps>=1],
+      ['🌊','Deep Pond','Reach jump 10.',state.bestJump>=10],
+      ['🏆','Legendary Leap','Clear all 20 pads.',state.bestJump>=20],
+      ['🐸','Collector','Own five frogs.',state.unlockedFrogs.length>=5],
+      ['💰','Big Cash','Cash out at 10× or higher.',state.bestCashMultiplier>=10]
+    ];
+    els.achievementGrid.innerHTML=achievements.map(([icon,title,detail,unlocked])=>`<article class="achievement-card ${unlocked?'unlocked':''}"><span class="badge">${unlocked?icon:'🔒'}</span><div><b>${title}</b><small>${unlocked?detail:'Locked'}</small></div></article>`).join('');
+    els.settingsReminders.querySelector('b').textContent=state.playReminders?'On':'Off';
+    els.gameFrame.classList.toggle('deep-run',state.roundActive&&state.jump>=10);
+  }
+
+  function idProgress(id,value,target){
+    if(id==='cash5')return `${Math.min(value,target).toFixed(2)}× / ${target.toFixed(2)}×`;
+    return `${Math.floor(value)} / ${target}`;
+  }
+
+  function claimGoal(id){
+    const goal=POND_GOALS.find(item=>item.id===id);
+    if(!goal||state.goalClaims[id]||goalValue(id)<goal.target)return false;
+    state.goalClaims[id]=true;
+    state.balance+=goal.reward;
+    addXp(goal.xp);
+    audio.reward();haptic([12,35,22]);confettiBurst(55);screenFeedback('win');
+    setStatus(`${goal.title} complete: +${money(goal.reward)} Froggy and +${goal.xp} XP!`,'win');
+    refresh();
+    return true;
+  }
 
   function refresh(){
     const payout=currentPayout(), risk=effectiveRisk(), xpNeeded=nextXp(), frog=selectedFrog(), lake=selectedLake();
@@ -389,7 +474,7 @@
     els.luckyBadge.classList.toggle('hidden',state.luckyCharges<=0);els.luckyCount.textContent=state.luckyCharges;
     els.profileFrog.innerHTML=frogSvg(frog);els.bigProfileFrog.innerHTML=frogSvg(frog);els.currentFrogName.textContent=frog.name;els.app.dataset.theme=lake.id;
     els.totalJumpsStat.textContent=money(state.totalJumps);els.bestJumpStat.textContent=state.bestJump;els.biggestWinStat.textContent=`${money(state.biggestWin)} F`;els.roundsStat.textContent=money(state.rounds);els.nextLevelBonusStat.textContent=`${money(levelBonusFor(state.level+1))} F`;
-    refreshDaily(); refreshPromo(); saveState();
+    refreshDaily(); refreshPromo(); refreshEngagement(); saveState();
   }
 
   let levelToastTimer=0;
@@ -438,7 +523,7 @@
     audio.unlock(); if(state.roundActive||state.animating)return;
     if(state.balance<MIN_BET){state.balance+=500;setStatus('Pond rescue bonus: +500 Froggy!','win');audio.reward();confettiBurst(25);refresh();return;}
     if(state.bet>state.balance){state.bet=Math.floor(state.balance/50)*50;setStatus('Bet adjusted to your available Froggy.');refresh();return;}
-    state.balance-=state.bet;state.jump=0;state.roundActive=true;state.animating=false;state.roundSafe=state.safeRunCredits>0;if(state.roundSafe)state.safeRunCredits--;state.rounds++;scene.reset();setStatus(`${money(state.bet)} Froggy on the line. Make the first leap!`);audio.start();haptic(20);refresh();
+    state.balance-=state.bet;session.rounds++;session.net-=state.bet;state.jump=0;state.roundActive=true;state.animating=false;state.roundSafe=state.safeRunCredits>0;if(state.roundSafe)state.safeRunCredits--;state.rounds++;scene.reset();setStatus(`${money(state.bet)} Froggy on the line. Make the first leap!`);audio.start();haptic(20);refresh();
   }
 
   function jump(){
@@ -447,19 +532,20 @@
     scene.jumpTo(next,fail,(didFail)=>{
       state.animating=false;state.totalJumps++;
       if(didFail){
-        state.roundActive=false;state.roundSafe=false;state.bestJump=Math.max(state.bestJump,state.jump);setStatus('SPLASH! The lily pad broke.','lose');
-        const lost=state.bet; refresh(); setTimeout(()=>showResult({icon:'💦',kicker:'ROUND OVER',title:'The pad cracked!',amount:`−${money(lost)} F`,text:`You reached jump ${state.jump}. The pond keeps this bet—but your next leap could be legendary.`,lose:true}),TEST_MODE?1:420);
+        state.roundActive=false;state.roundSafe=false;state.bestJump=Math.max(state.bestJump,state.jump);session.losses++;session.lossStreak++;setStatus('SPLASH! The lily pad broke.','lose');
+        const lost=state.bet,careNote=session.lossStreak>=3?' Three losses in a row—consider taking a short break before another round.':''; refresh(); setTimeout(()=>showResult({icon:'💦',kicker:'ROUND OVER',title:'The pad cracked!',amount:`−${money(lost)} F`,text:`You reached jump ${state.jump}. The pond keeps this bet.${careNote}`,lose:true}),TEST_MODE?1:420);
       } else {
-        state.jump=next;state.bestJump=Math.max(state.bestJump,state.jump);addXp(10+state.jump*2);audio.coin();haptic(15);screenFeedback('win');
+        state.jump=next;state.safeJumps++;state.bestJump=Math.max(state.bestJump,state.jump);addXp(10+state.jump*2);audio.coin();haptic(15);screenFeedback('win');
+        if([5,10,15].includes(state.jump)){audio.reward();haptic([12,30,18]);confettiBurst(22+state.jump);}
         if(state.jump===RISKS.length){
-          const payout=currentPayout();state.balance+=payout;state.biggestWin=Math.max(state.biggestWin,payout);state.roundActive=false;state.roundSafe=false;addXp(120);setStatus(`LEGENDARY LEAP! ${money(payout)} Froggy at ${MULTIPLIERS[state.jump].toFixed(2)}×!`,'win');audio.win();confettiBurst(120);refresh();setTimeout(()=>showResult({icon:'🏆',kicker:'LEGENDARY LEAP',title:'Every pad cleared!',amount:`+${money(payout)} F`,text:`Twenty golden landings and a ${MULTIPLIERS[state.jump].toFixed(2)}× finish. Absolute frog glory.`}),TEST_MODE?1:500);
-        } else {setStatus(`Perfect landing! ${MULTIPLIERS[state.jump].toFixed(2)}× — cash out or leap again.`,'win');refresh();}
+          const payout=currentPayout();state.balance+=payout;session.net+=payout;session.wins++;session.lossStreak=0;state.bestCashMultiplier=Math.max(state.bestCashMultiplier,MULTIPLIERS[state.jump]);state.biggestWin=Math.max(state.biggestWin,payout);state.roundActive=false;state.roundSafe=false;addXp(120);setStatus(`LEGENDARY LEAP! ${money(payout)} Froggy at ${MULTIPLIERS[state.jump].toFixed(2)}×!`,'win');audio.win();confettiBurst(120);refresh();setTimeout(()=>showResult({icon:'🏆',kicker:'LEGENDARY LEAP',title:'Every pad cleared!',amount:`+${money(payout)} F`,text:`Twenty golden landings and a ${MULTIPLIERS[state.jump].toFixed(2)}× finish. Absolute frog glory.`}),TEST_MODE?1:500);
+        } else {const milestoneName={5:'WARM-UP CLEARED',10:'DEEP WATER',15:'POND MASTER'}[state.jump];setStatus(milestoneName?`${milestoneName}! ${MULTIPLIERS[state.jump].toFixed(2)}× secured so far.`:`Perfect landing! ${MULTIPLIERS[state.jump].toFixed(2)}× — cash out or leap again.`,'win');refresh();}
       }
     });
   }
 
   function cashOut(){
-    if(!state.roundActive||state.animating||state.jump===0)return;const payout=currentPayout(),profit=payout-state.bet;state.balance+=payout;state.biggestWin=Math.max(state.biggestWin,payout);state.roundActive=false;state.roundSafe=false;addXp(25+state.jump*4);audio.cash();haptic([15,35,20]);screenFeedback('win');confettiBurst(35+state.jump*3);setStatus(`Cashed out ${money(payout)} Froggy!`,'win');refresh();setTimeout(()=>showResult({icon:'🪙',kicker:'SMART CASH-OUT',title:`${MULTIPLIERS[state.jump].toFixed(2)}× secured!`,amount:`+${money(payout)} F`,text:`Profit: ${money(profit)} Froggy. Great timing.`}),TEST_MODE?1:220);
+    if(!state.roundActive||state.animating||state.jump===0)return;const payout=currentPayout(),profit=payout-state.bet;state.balance+=payout;session.net+=payout;session.wins++;session.lossStreak=0;state.bestCashMultiplier=Math.max(state.bestCashMultiplier,MULTIPLIERS[state.jump]);state.biggestWin=Math.max(state.biggestWin,payout);state.roundActive=false;state.roundSafe=false;addXp(25+state.jump*4);audio.cash();haptic([15,35,20]);screenFeedback('win');confettiBurst(35+state.jump*3);setStatus(`Cashed out ${money(payout)} Froggy!`,'win');refresh();setTimeout(()=>showResult({icon:'🪙',kicker:'SMART CASH-OUT',title:`${MULTIPLIERS[state.jump].toFixed(2)}× secured!`,amount:`+${money(payout)} F`,text:`Profit: ${money(profit)} Froggy. Great timing.`}),TEST_MODE?1:220);
   }
 
   function showResult({icon,kicker,title,amount,text,lose=false}){
@@ -610,7 +696,7 @@
     document.addEventListener('pointerdown',()=>audio.unlock(),{once:true});
     els.quickBets.addEventListener('click',e=>{const b=e.target.closest('[data-bet]');if(b)selectBet(b.dataset.bet);});els.betAdjusters.addEventListener('click',e=>{const betButton=e.target.closest('[data-bet]');if(betButton)selectBet(betButton.dataset.bet);const actionButton=e.target.closest('[data-bet-action]');if(actionButton)adjustBet(actionButton.dataset.betAction);});els.customBetToggle.addEventListener('click',()=>{if(state.roundActive)return;els.customBetRow.classList.toggle('hidden');if(!els.customBetRow.classList.contains('hidden'))setTimeout(()=>els.customBetInput.focus(),30);});els.customBetRow.addEventListener('submit',e=>{e.preventDefault();applyCustomBet();});
     els.start.addEventListener('click',startRound);els.jumpButton.addEventListener('click',jump);els.cash.addEventListener('click',cashOut);els.resultButton.addEventListener('click',()=>{closeModal();state.jump=0;scene.reset();refresh();});
-    els.sound.addEventListener('click',toggleSound);els.settingsSound.addEventListener('click',toggleSound);els.settingsMotion.addEventListener('click',()=>{state.effects=!state.effects;refresh();});
+    els.sound.addEventListener('click',toggleSound);els.settingsSound.addEventListener('click',toggleSound);els.settingsMotion.addEventListener('click',()=>{state.effects=!state.effects;refresh();});els.settingsReminders.addEventListener('click',()=>{state.playReminders=!state.playReminders;session.reminded=false;refresh();});els.goalGrid.addEventListener('click',e=>{const button=e.target.closest('[data-goal-claim]');if(button)claimGoal(button.dataset.goalClaim);});
     $('howToButton').addEventListener('click',()=>openModal(els.howToModal));$('resetButton').addEventListener('click',resetProgress);$('profileButton').addEventListener('click',()=>navigate('stats'));
     document.querySelectorAll('.nav-button').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.screen)));
     document.querySelectorAll('.segment').forEach(b=>b.addEventListener('click',()=>{collectionMode=b.dataset.collection;document.querySelectorAll('.segment').forEach(x=>x.classList.toggle('active',x===b));renderCollection();audio.tap();}));
@@ -643,10 +729,11 @@
       state=deepClone(DEFAULT_STATE);refresh();const promoStart=state.balance;if(!redeemPromo('50000')||state.balance!==promoStart+50000)throw new Error('50000 promo failed');if(!redeemPromo('unlockall')||state.unlockedFrogs.length!==FROGS.length)throw new Error('unlockall promo failed');if(!redeemPromo('10')||state.freeSpins!==10)throw new Error('10 promo failed');const levelBeforeFive=state.level;if(!redeemPromo('5')||state.level!==levelBeforeFive*5)throw new Error('5 promo failed');if(!redeemPromo('spinall')||!state.unlimitedSpins||freeSpinDisplay()!=='unlimintos'||!dailyAvailable())throw new Error('spinall promo failed');if(!redeemPromo('imtheowner')||state.safeRunCredits!==1)throw new Error('owner promo failed');state.bet=100;startRound();forcedOutcome=false;jump();await new Promise(r=>setTimeout(r,500));if(state.jump!==1||!state.roundActive)throw new Error('owner safe round failed');state.roundActive=false;state.roundSafe=false;closeModal();
       if(MULTIPLIERS.length!==21||RISKS.length!==20||Math.abs(MULTIPLIERS[MULTIPLIERS.length-1]-112.07104101303273)>.000001)throw new Error('20-jump reward curve failed');let curveSurvival=1;for(let i=0;i<RISKS.length;i++){curveSurvival*=1-RISKS[i]/100;if(Math.abs(curveSurvival*MULTIPLIERS[i+1]-TARGET_RTP)>.000000001)throw new Error(`RTP mismatch at jump ${i+1}`);}if(WHEEL_SEGMENTS.length!==10||WHEEL_SEGMENTS.filter(x=>x.amount===50000).length!==1)throw new Error('wheel setup failed');if(FROGS[FROGS.length-1].id!=='owner'||FROGS[FROGS.length-1].cost!==1000000000||FROGS[FROGS.length-1].level!==20000)throw new Error('owner frog setup failed');
       state.level=3;state.balance=5000;collectionMode='frogs';collectionAction('king');if(state.selectedFrog!=='king'||!state.unlockedFrogs.includes('king'))throw new Error('collection failed');
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: 20-jump gameplay, balanced 96% RTP curve, half/double/custom bets, promos, free spins, premium characters, level bonuses, wheel, and unlocks';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: 20-jump gameplay, balanced 96% RTP curve, milestones, fixed goals, session stats, achievements, bet tools, promos, free spins, characters, level bonuses, wheel, and unlocks';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 
+  setInterval(()=>{if(!state.playReminders||session.reminded||state.roundActive)return;if(Date.now()-session.startedAt>=15*60*1000){session.reminded=true;setStatus('Pond check: you have been playing for 15 minutes. Take a break whenever you need one.');refreshEngagement();}},30000);
   renderWheel();bind();setupInstall();refresh();renderCollection();scene.reset();
   if(!state.tutorialSeen&&!TEST_MODE){state.tutorialSeen=true;saveState();setTimeout(()=>openModal(els.howToModal),600);}
   if(TEST_MODE)runSelfTest();
