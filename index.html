@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=12" />
   <title>Froggy Leap Deluxe</title>
 </head>
 <body>
@@ -90,6 +90,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
+          <div class="build-version" aria-label="Installed game version">v12 · 20 JUMPS</div>
           <div class="run-meta"><span>20 lily pads</span><b>Up to 112.07×</b><span>96% base RTP</span></div>
 
           <div class="main-actions">
@@ -161,7 +162,7 @@
       <section id="promoScreen" class="screen" aria-label="Promo codes">
         <div class="section-heading">
           <div><small>SECRET POND</small><h1>Promo Codes</h1></div>
-          <span class="promo-vault-chip">🎟️ <b id="promoUsedCount">0</b> redeemed</span>
+          <span class="promo-vault-chip">🎟️ <b id="promoUsedCount">0</b> one-time codes</span>
         </div>
 
         <div class="promo-hero glass">
@@ -171,7 +172,7 @@
           <div class="promo-copy">
             <small>HAVE A SECRET CODE?</small>
             <h2>Unlock a pond surprise.</h2>
-            <p>Promo codes are case-insensitive and can be redeemed once per saved game.</p>
+            <p>Promo codes are case-insensitive. Most are one-time rewards, while 5, 10, and 50000 are reusable.</p>
           </div>
 
           <form id="promoForm" class="promo-form" autocomplete="off">
@@ -187,8 +188,9 @@
         <div class="promo-status-grid">
           <article class="promo-status-card glass"><span class="promo-status-icon">🛡️</span><small>OWNER PASS</small><b id="promoSafeStatus">Not active</b><p>Protects one complete round while the normal risk display remains unchanged.</p></article>
           <article class="promo-status-card glass"><span class="promo-status-icon">🎡</span><small>REWARD WHEEL</small><b id="promoSpinStatus">0 free spins</b><p>Use code 10 for ten extra spins. Unlimited mode shows as “unlimintos”.</p></article>
-          <article class="promo-status-card glass"><span class="promo-status-icon">🐸</span><small>CHARACTERS</small><b id="promoFrogStatus">1 / 6 frogs</b><p>See every owned character in the Collection tab.</p></article>
-          <article class="promo-status-card glass"><span class="promo-status-icon">🪙</span><small>BONUS FROGGY</small><b id="promoCoinStatus">No promo claimed</b><p>Coin promo rewards are added directly to the saved balance.</p></article>
+          <article class="promo-status-card glass"><span class="promo-status-icon">🐸</span><small>CHARACTERS</small><b id="promoFrogStatus">1 / 10 frogs</b><p>See every owned character in the Collection tab.</p></article>
+          <article class="promo-status-card glass"><span class="promo-status-icon">🌊</span><small>LAKES</small><b id="promoLakeStatus">1 / 7 lakes</b><p>The code iwannaswim opens every lake theme.</p></article>
+          <article class="promo-status-card glass"><span class="promo-status-icon">🪙</span><small>BONUS FROGGY</small><b id="promoCoinStatus">Reusable 50K reward</b><p>The 50000 code can be entered repeatedly for fictional Froggy coins.</p></article>
         </div>
 
         <p class="virtual-note">Promo rewards affect only fictional in-game Froggy currency and progression.</p>
@@ -293,6 +295,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=12"></script>
 </body>
 </html>

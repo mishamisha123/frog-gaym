@@ -3,6 +3,8 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
+  const BUILD_VERSION = 'v12';
+  console.info(`Froggy Leap ${BUILD_VERSION}: 20 jumps + promo pack loaded`);
 
   // Base-game economy: every ordinary cash-out point targets 96% RTP.
   // Lucky charms and promo protections are deliberate bonuses layered above this curve.
@@ -18,6 +20,8 @@
     return values;
   })();
   const MIN_BET = 50;
+  const REPEATABLE_PROMOS = new Set(['5','10','50000']);
+  const MAX_PROMO_LEVEL = 1000000000;
 
   const FROGS = [
     { id:'classic', name:'Classic Frog', rarity:'COMMON', cost:0, level:1, description:'The bright-eyed mascot with a perfect storybook hop.', colors:['#baff72','#4fb84d'], art:'characters/classic.svg' },
@@ -111,7 +115,7 @@
     profileFrog: $('profileFrog'), bigProfileFrog: $('bigProfileFrog'), currentFrogName: $('currentFrogName'),
     totalJumpsStat: $('totalJumpsStat'), bestJumpStat: $('bestJumpStat'), biggestWinStat: $('biggestWinStat'), roundsStat: $('roundsStat'), nextLevelBonusStat: $('nextLevelBonusStat'),
     levelToast: $('levelToast'), levelToastTitle: $('levelToastTitle'), levelToastBonus: $('levelToastBonus'),
-    promoForm: $('promoForm'), promoInput: $('promoInput'), promoRedeem: $('promoRedeemButton'), promoMessage: $('promoMessage'), promoUsedCount: $('promoUsedCount'), promoSafeStatus: $('promoSafeStatus'), promoSpinStatus: $('promoSpinStatus'), promoFrogStatus: $('promoFrogStatus'), promoCoinStatus: $('promoCoinStatus'),
+    promoForm: $('promoForm'), promoInput: $('promoInput'), promoRedeem: $('promoRedeemButton'), promoMessage: $('promoMessage'), promoUsedCount: $('promoUsedCount'), promoSafeStatus: $('promoSafeStatus'), promoSpinStatus: $('promoSpinStatus'), promoFrogStatus: $('promoFrogStatus'), promoLakeStatus: $('promoLakeStatus'), promoCoinStatus: $('promoCoinStatus'),
     milestoneTrack: $('milestoneTrack'), milestoneFill: $('milestoneFill'), goalGrid: $('goalGrid'), goalSummary: $('goalSummary'),
     sessionRoundsStat: $('sessionRoundsStat'), sessionWinsStat: $('sessionWinsStat'), sessionNetStat: $('sessionNetStat'), sessionTimeStat: $('sessionTimeStat'), pondRankLabel: $('pondRankLabel'), achievementGrid: $('achievementGrid'), settingsReminders: $('settingsReminders'),
     confetti: $('confettiLayer'), flash: $('flashLayer'), selfTest: $('selfTestResult')
@@ -155,7 +159,7 @@
       merged.animating = false;
       merged.jump = 0;
       merged.roundSafe = false;
-      merged.redeemedCodes = Array.isArray(merged.redeemedCodes) ? merged.redeemedCodes.map(String) : [];
+      merged.redeemedCodes = Array.isArray(merged.redeemedCodes) ? merged.redeemedCodes.map(String).filter(code=>!REPEATABLE_PROMOS.has(code)) : [];
       merged.safeRunCredits = Number.isFinite(merged.safeRunCredits) ? Math.max(0, Math.floor(merged.safeRunCredits)) : 0;
       merged.unlimitedSpins = Boolean(merged.unlimitedSpins);
       merged.freeSpins = Number.isFinite(merged.freeSpins) ? Math.max(0, Math.floor(merged.freeSpins)) : 0;
@@ -589,50 +593,73 @@
   function refreshPromo(){
     if(!els.promoUsedCount)return;
     els.promoUsedCount.textContent=state.redeemedCodes.length;
-    els.promoSafeStatus.textContent=state.safeRunCredits>0?'Next round ready':state.roundSafe?'Active this round':'Not active';
+    els.promoSafeStatus.textContent=state.safeRunCredits>0?`${state.safeRunCredits} protected round${state.safeRunCredits===1?'':'s'}`:state.roundSafe?'Active this round':'Not active';
     els.promoSpinStatus.textContent=state.unlimitedSpins?'unlimintos':`${state.freeSpins} free spin${state.freeSpins===1?'':'s'}`;
     els.promoFrogStatus.textContent=`${state.unlockedFrogs.length} / ${FROGS.length} frogs`;
-    els.promoCoinStatus.textContent=state.promoCoinClaimed?'50,000 F claimed':'No promo claimed';
+    els.promoLakeStatus.textContent=`${state.unlockedLakes.length} / ${LAKES.length} lakes`;
+    els.promoCoinStatus.textContent=state.promoCoinClaimed?'Reusable · 50K claimed':'Reusable 50K reward';
   }
 
   function redeemPromo(rawCode){
     const code=String(rawCode||'').trim().toLowerCase();
+    const repeatable=REPEATABLE_PROMOS.has(code);
     if(!code){setPromoMessage('Type a promo code first.','error');haptic(18);return false;}
-    if(state.redeemedCodes.includes(code)){setPromoMessage('That code has already been redeemed on this save.','error');haptic(20);return false;}
+    if(!repeatable&&state.redeemedCodes.includes(code)){setPromoMessage('That one-time code has already been redeemed on this save.','error');haptic(20);return false;}
 
     let message='';
+    let confettiCount=55;
+
     if(code==='imtheowner'){
       state.safeRunCredits+=1;
       message='Owner Pass armed. Your next complete round is protected while every displayed risk percentage stays normal.';
     }else if(code==='50000'){
       state.balance+=50000;
       state.promoCoinClaimed=true;
-      message='Vault opened: +50,000 Froggy added to your balance!';
+      confettiCount=120;
+      message='Vault opened: +50,000 Froggy added. This code is reusable.';
     }else if(code==='unlockall'){
       state.unlockedFrogs=FROGS.map(f=>f.id);
       message='Character vault opened. Every frog is now unlocked!';
+    }else if(code==='iwannaswim'){
+      state.unlockedLakes=LAKES.map(lake=>lake.id);
+      message='Every lake is unlocked. Pick a new pond in the Collection tab!';
     }else if(code==='spinall'){
       state.unlimitedSpins=true;
       message='Unlimited wheel mode activated. The counter now shows unlimintos!';
     }else if(code==='10'){
       state.freeSpins+=10;
-      message='Ten free spins added to your reward wheel!';
+      message=`Ten free spins added. You now have ${state.freeSpins} free spins. This code is reusable.`;
     }else if(code==='5'){
       const previousLevel=state.level;
-      state.level=Math.max(1,Math.floor(state.level*5));
+      state.level=Math.min(MAX_PROMO_LEVEL,Math.max(1,Math.floor(state.level*5)));
       state.xp=0;
-      message=`Level multiplied: ${money(previousLevel)} → ${money(state.level)}. Your next level bonus now scales from the boosted level.`;
+      message=state.level===previousLevel
+        ? `Maximum promo level reached: ${money(state.level)}.`
+        : `Level multiplied: ${money(previousLevel)} → ${money(state.level)}. This code is reusable.`;
+    }else if(code==='luckylily'){
+      state.luckyCharges+=25;
+      message='Lucky Lily activated: +25 lucky jumps with reduced failure risk.';
+    }else if(code==='pondparty'){
+      state.balance+=2500;
+      state.freeSpins+=3;
+      message='Pond Party bundle: +2,500 Froggy and +3 free spins!';
+    }else if(code==='xpfrog'){
+      addXp(1000);
+      message='XP Frog delivered +1,000 XP. Any earned level bonuses were added too!';
+    }else if(code==='lifeguard'){
+      state.safeRunCredits+=3;
+      message='Lifeguard bundle added three protected rounds.';
     }else{
       setPromoMessage('That promo code was not recognized. Check the spelling and try again.','error');
       haptic([18,45,18]);
       return false;
     }
 
-    state.redeemedCodes.push(code);
+    if(!repeatable)state.redeemedCodes.push(code);
     els.promoInput.value='';
     setPromoMessage(message,'success');
     setStatus(message,'win');
-    audio.reward();haptic([12,35,22]);confettiBurst(code==='50000'?120:55);screenFeedback('win');
+    audio.reward();haptic([12,35,22]);confettiBurst(confettiCount);screenFeedback('win');
     refresh();renderCollection();
     return true;
   }
@@ -726,10 +753,10 @@
       els.cash.click();await new Promise(r=>setTimeout(r,20));if(state.roundActive||state.balance<=667)throw new Error('cash out failed');closeModal();
       const before=state.balance;claimDaily({type:'froggy',amount:500});if(state.balance!==before+500||dailyAvailable())throw new Error('daily reward failed');closeModal();
       state.lastDaily='';state.xp=nextXp()-1;const beforeLevel=state.balance,expectedLevelBonus=levelBonusFor(state.level+1);addXp(1);if(state.balance!==beforeLevel+expectedLevelBonus)throw new Error('level bonus failed');
-      state=deepClone(DEFAULT_STATE);refresh();const promoStart=state.balance;if(!redeemPromo('50000')||state.balance!==promoStart+50000)throw new Error('50000 promo failed');if(!redeemPromo('unlockall')||state.unlockedFrogs.length!==FROGS.length)throw new Error('unlockall promo failed');if(!redeemPromo('10')||state.freeSpins!==10)throw new Error('10 promo failed');const levelBeforeFive=state.level;if(!redeemPromo('5')||state.level!==levelBeforeFive*5)throw new Error('5 promo failed');if(!redeemPromo('spinall')||!state.unlimitedSpins||freeSpinDisplay()!=='unlimintos'||!dailyAvailable())throw new Error('spinall promo failed');if(!redeemPromo('imtheowner')||state.safeRunCredits!==1)throw new Error('owner promo failed');state.bet=100;startRound();forcedOutcome=false;jump();await new Promise(r=>setTimeout(r,500));if(state.jump!==1||!state.roundActive)throw new Error('owner safe round failed');state.roundActive=false;state.roundSafe=false;closeModal();
+      state=deepClone(DEFAULT_STATE);refresh();const promoStart=state.balance;if(!redeemPromo('50000')||!redeemPromo('50000')||state.balance!==promoStart+100000)throw new Error('reusable 50000 promo failed');if(!redeemPromo('unlockall')||state.unlockedFrogs.length!==FROGS.length)throw new Error('unlockall promo failed');if(!redeemPromo('iwannaswim')||state.unlockedLakes.length!==LAKES.length)throw new Error('lake promo failed');if(!redeemPromo('10')||!redeemPromo('10')||state.freeSpins!==20)throw new Error('reusable 10 promo failed');const levelBeforeFive=state.level;if(!redeemPromo('5')||!redeemPromo('5')||state.level!==levelBeforeFive*25)throw new Error('reusable 5 promo failed');if(!redeemPromo('luckylily')||state.luckyCharges!==25)throw new Error('luckylily promo failed');const partyBalance=state.balance,partySpins=state.freeSpins;if(!redeemPromo('pondparty')||state.balance!==partyBalance+2500||state.freeSpins!==partySpins+3)throw new Error('pondparty promo failed');const safeBefore=state.safeRunCredits;if(!redeemPromo('lifeguard')||state.safeRunCredits!==safeBefore+3)throw new Error('lifeguard promo failed');if(!redeemPromo('spinall')||!state.unlimitedSpins||freeSpinDisplay()!=='unlimintos'||!dailyAvailable())throw new Error('spinall promo failed');if(!redeemPromo('imtheowner')||state.safeRunCredits!==safeBefore+4)throw new Error('owner promo failed');state.bet=100;startRound();forcedOutcome=false;jump();await new Promise(r=>setTimeout(r,500));if(state.jump!==1||!state.roundActive)throw new Error('owner safe round failed');state.roundActive=false;state.roundSafe=false;closeModal();
       if(MULTIPLIERS.length!==21||RISKS.length!==20||Math.abs(MULTIPLIERS[MULTIPLIERS.length-1]-112.07104101303273)>.000001)throw new Error('20-jump reward curve failed');let curveSurvival=1;for(let i=0;i<RISKS.length;i++){curveSurvival*=1-RISKS[i]/100;if(Math.abs(curveSurvival*MULTIPLIERS[i+1]-TARGET_RTP)>.000000001)throw new Error(`RTP mismatch at jump ${i+1}`);}if(WHEEL_SEGMENTS.length!==10||WHEEL_SEGMENTS.filter(x=>x.amount===50000).length!==1)throw new Error('wheel setup failed');if(FROGS[FROGS.length-1].id!=='owner'||FROGS[FROGS.length-1].cost!==1000000000||FROGS[FROGS.length-1].level!==20000)throw new Error('owner frog setup failed');
       state.level=3;state.balance=5000;collectionMode='frogs';collectionAction('king');if(state.selectedFrog!=='king'||!state.unlockedFrogs.includes('king'))throw new Error('collection failed');
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: 20-jump gameplay, balanced 96% RTP curve, milestones, fixed goals, session stats, achievements, bet tools, promos, free spins, characters, level bonuses, wheel, and unlocks';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v12 gameplay, balanced curve, reusable promos, lake unlock, promo bundles, goals, bet tools, spins, characters, wheel, and unlocks';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 
@@ -738,5 +765,5 @@
   if(!state.tutorialSeen&&!TEST_MODE){state.tutorialSeen=true;saveState();setTimeout(()=>openModal(els.howToModal),600);}
   if(TEST_MODE)runSelfTest();
 
-  window.FroggyGame={getState:()=>deepClone(state),selectBet,setBetAmount,adjustBet,applyCustomBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,spinDaily,redeemPromo,levelBonusFor,wheelSegments:deepClone(WHEEL_SEGMENTS),reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();renderWheel();refresh();}};
+  window.FroggyGame={version:BUILD_VERSION,getState:()=>deepClone(state),selectBet,setBetAmount,adjustBet,applyCustomBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,spinDaily,redeemPromo,levelBonusFor,wheelSegments:deepClone(WHEEL_SEGMENTS),reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();renderWheel();refresh();}};
 })();

@@ -146,3 +146,46 @@ This update adds stronger game feel without using deceptive gambling dark patter
 - Deeper visual intensity after jump 10 and milestone celebration effects.
 - Optional 15-minute play reminders and a neutral message after three consecutive losses.
 - No fake near-misses, hidden odds changes, expiring missions, or loss-chasing prompts.
+
+
+## Consolidated v11 deployment check
+
+This build includes an unmistakable yellow badge reading **v12 · 20 JUMPS** above the start button.
+
+After uploading all files to GitHub Pages, visit:
+
+`https://YOUR-USERNAME.github.io/YOUR-REPOSITORY/refresh.html`
+
+That helper unregisters old service workers and removes stale cached game files, while preserving localStorage progress. It then redirects to the newest game.
+
+The correct build must visibly show:
+
+- `v12 · 20 JUMPS`
+- Jump display `0 / 20`
+- Fixed bets: 50, 100, 250, 500
+- Bet tools: ÷2, ×2, CUSTOM, MAX
+- A custom amount input after tapping CUSTOM
+
+
+## v12 promo pack
+
+Promo codes are case-insensitive.
+
+### Reusable codes
+
+- `50000` — adds 50,000 Froggy every use
+- `10` — adds 10 free reward-wheel spins every use
+- `5` — multiplies the current level by five every use, capped at level 1,000,000,000
+
+### One-time codes
+
+- `imtheowner` — one protected round with the normal displayed risk curve
+- `unlockall` — unlocks every frog character
+- `iwannaswim` — unlocks every lake theme
+- `spinall` — enables unlimited wheel spins and displays `unlimintos`
+- `luckylily` — adds 25 lucky reduced-risk jumps
+- `pondparty` — adds 2,500 Froggy and 3 free spins
+- `xpfrog` — adds 1,000 XP and any resulting level bonuses
+- `lifeguard` — adds 3 protected rounds
+
+To force GitHub Pages to replace an older cached build, visit `refresh.html` after deployment.
