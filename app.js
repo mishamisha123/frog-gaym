@@ -9,13 +9,21 @@
   const MIN_BET = 50;
 
   const FROGS = [
-    { id:'classic', name:'Classic Frog', emoji:'🐸', rarity:'COMMON', cost:0, level:1, description:'Bright, bouncy, and born for lily pads.', colors:['#dbff7c','#66ce53'] },
-    { id:'king', name:'King Frog', emoji:'👑', rarity:'ROYAL', cost:1200, level:3, description:'Every landing deserves a crown.', colors:['#fff07a','#dc9f39'] },
-    { id:'robot', name:'Robot Frog', emoji:'🤖', rarity:'EPIC', cost:2500, level:5, description:'Calibrated for maximum ribbit velocity.', colors:['#b9f0ff','#6297ba'] },
-    { id:'ghost', name:'Ghost Frog', emoji:'👻', rarity:'EPIC', cost:4000, level:7, description:'Spooky, floaty, and slightly transparent.', colors:['#e7dcff','#9a83d2'] },
-    { id:'dragon', name:'Dragon Frog', emoji:'🐉', rarity:'LEGENDARY', cost:7000, level:10, description:'Tiny wings. Enormous confidence.', colors:['#ffcc6a','#eb6b47'] },
-    { id:'dino', name:'Dino Frog', emoji:'🦖', rarity:'LEGENDARY', cost:9000, level:13, description:'Prehistoric hops with modern style.', colors:['#caff83','#49ad5e'] }
+    { id:'classic', name:'Classic Frog', rarity:'COMMON', cost:0, level:1, description:'The bright-eyed mascot with a perfect storybook hop.', colors:['#baff72','#4fb84d'], art:'characters/classic.svg' },
+    { id:'king', name:'King Frog', rarity:'ROYAL', cost:1200, level:3, description:'A smug pond monarch in a jeweled crown and velvet cape.', colors:['#d6ef65','#70b944'], art:'characters/king.svg' },
+    { id:'robot', name:'Robo Frog', rarity:'EPIC', cost:2500, level:5, description:'Polished alloy, cyan display eyes, and calibrated landing legs.', colors:['#dff6ff','#6d97b3'], art:'characters/robot.svg' },
+    { id:'ghost', name:'Ghost Frog', rarity:'EPIC', cost:4000, level:7, description:'A translucent, grumpy little spirit that floats over the pond.', colors:['#b9f5ff','#6bc8e8'], art:'characters/ghost.svg' },
+    { id:'dragon', name:'Dragon Frog', rarity:'LEGENDARY', cost:7000, level:10, description:'Tiny wings, bright scales, horns, and enormous confidence.', colors:['#ff9c42','#e75235'], art:'characters/dragon.svg' },
+    { id:'dino', name:'Dino Frog', rarity:'LEGENDARY', cost:9000, level:13, description:'A chunky prehistoric hopper with spikes and a toothy grin.', colors:['#c8ff70','#4eb650'], art:'characters/dino.svg' },
+    { id:'ninja', name:'Ninja Frog', rarity:'EPIC', cost:15000, level:20, description:'Masked, focused, and nearly silent until the landing splash.', colors:['#344348','#161f24'], art:'characters/ninja.svg' },
+    { id:'alien', name:'Alien Frog', rarity:'MYTHIC', cost:30000, level:30, description:'Stalk eyes, cosmic curiosity, and suspiciously accurate jumps.', colors:['#b7ff67','#5dc84a'], art:'characters/alien.svg' },
+    { id:'rockstar', name:'Rockstar Frog', rarity:'MYTHIC', cost:75000, level:50, description:'Spiky hair, reflective shades, and a stadium-sized landing pose.', colors:['#92e95c','#4ba848'], art:'characters/rockstar.svg' },
+    { id:'owner', name:'Owner Frog', rarity:'ONE OF ONE', cost:1000000000, level:20000, description:'A photo-inspired pond boss with cropped dark hair, heavy-lidded brown eyes, stubble, and an unbreakable deadpan stare.', colors:['#8ad467','#4f9d50'], art:'characters/owner.svg' }
   ];
+
+  const FROG_IMAGES = Object.fromEntries(FROGS.map(frog=>{
+    const image=new Image(); image.decoding='async'; image.src=frog.art; return [frog.id,image];
+  }));
 
   const LAKES = [
     { id:'forest', name:'Forest Pond', emoji:'🌿', rarity:'COMMON', cost:0, level:1, description:'Sunlit reeds and crystal blue water.', a:'#bdf2f4', b:'#45bfd0', bank:'#55a94b', pad:'#5cc251', glow:'#dfff75' },
@@ -25,6 +33,20 @@
     { id:'volcano', name:'Volcano Lake', emoji:'🌋', rarity:'LEGENDARY', cost:6500, level:10, description:'Leap across obsidian pads above glowing lava.', a:'#3b1e2c', b:'#e5572f', bank:'#5c2f32', pad:'#423f42', glow:'#ffdd52' },
     { id:'frozen', name:'Frozen Lake', emoji:'❄️', rarity:'LEGENDARY', cost:8000, level:12, description:'Auroras dance above glassy blue ice.', a:'#cfefff', b:'#5aa7cd', bank:'#a3cce0', pad:'#8fd3d7', glow:'#f1ffff' },
     { id:'space', name:'Cosmic Pond', emoji:'🪐', rarity:'MYTHIC', cost:12000, level:15, description:'Zero-gravity lily pads under a galaxy sky.', a:'#130d31', b:'#31285b', bank:'#5c4b90', pad:'#6edb8c', glow:'#e8a7ff' }
+  ];
+
+
+  const WHEEL_SEGMENTS = [
+    { label:'300', sub:'FROGGY', color:'#ffca4b', kind:'froggy', amount:300 },
+    { label:'×3', sub:'LUCKY', color:'#59cf92', kind:'lucky', amount:3 },
+    { label:'500', sub:'FROGGY', color:'#4bcddd', kind:'froggy', amount:500 },
+    { label:'750', sub:'FROGGY', color:'#ff788d', kind:'froggy', amount:750 },
+    { label:'FROG', sub:'SKIN', color:'#9c7ee8', kind:'skin' },
+    { label:'1,000', sub:'FROGGY', color:'#5fa7ee', kind:'froggy', amount:1000 },
+    { label:'250', sub:'FROGGY', color:'#9bd94e', kind:'froggy', amount:250 },
+    { label:'×5', sub:'LUCKY', color:'#ed83c4', kind:'lucky', amount:5 },
+    { label:'1,500', sub:'FROGGY', color:'#f29b43', kind:'froggy', amount:1500 },
+    { label:'50K', sub:'JACKPOT', color:'#ffe15d', kind:'jackpot', amount:50000 }
   ];
 
   const DEFAULT_STATE = {
@@ -49,7 +71,13 @@
     streak: 0,
     luckyCharges: 0,
     wheelRotation: 0,
-    tutorialSeen: false
+    tutorialSeen: false,
+    redeemedCodes: [],
+    safeRunCredits: 0,
+    roundSafe: false,
+    unlimitedSpins: false,
+    freeSpins: 0,
+    promoCoinClaimed: false
   };
 
   const $ = (id) => document.getElementById(id);
@@ -59,14 +87,16 @@
     jump: $('jumpLabel'), multiplier: $('multiplierLabel'), risk: $('riskLabel'), payout: $('payoutLabel'), danger: $('dangerLabel'), riskFill: $('riskFill'), riskMarker: $('riskMarker'),
     betDisplay: $('betDisplay'), start: $('startButton'), jumpButton: $('jumpButton'), cash: $('cashButton'), cashValue: $('cashButtonValue'), quickBets: $('quickBets'),
     sound: $('soundButton'), settingsSound: $('settingsSound'), settingsMotion: $('settingsMotion'), luckyBadge: $('luckyBadge'), luckyCount: $('luckyCount'),
-    screens: { play:$('playScreen'), collection:$('collectionScreen'), rewards:$('rewardsScreen'), stats:$('statsScreen') },
+    screens: { play:$('playScreen'), collection:$('collectionScreen'), rewards:$('rewardsScreen'), promo:$('promoScreen'), stats:$('statsScreen') },
     collectionGrid: $('collectionGrid'), spin: $('spinButton'), wheelDisc: $('wheelDisc'), rewardDot: $('rewardDot'), streakLabel: $('streakLabel'), streakDays: $('streakDays'),
-    rewardHeadline: $('rewardHeadline'), rewardSubtext: $('rewardSubtext'), installButton: $('installButton'),
+    rewardHeadline: $('rewardHeadline'), rewardSubtext: $('rewardSubtext'), freeSpinCounter: $('freeSpinCounter'), installButton: $('installButton'),
     modalBackdrop: $('modalBackdrop'), resultModal: $('resultModal'), howToModal: $('howToModal'), installModal: $('installModal'), rewardModal: $('rewardModal'),
     resultIcon: $('resultIcon'), resultKicker: $('resultKicker'), resultTitle: $('resultTitle'), resultAmount: $('resultAmount'), resultText: $('resultText'), resultButton: $('resultButton'),
     rewardResultTitle: $('rewardResultTitle'), rewardResultText: $('rewardResultText'),
     profileFrog: $('profileFrog'), bigProfileFrog: $('bigProfileFrog'), currentFrogName: $('currentFrogName'),
-    totalJumpsStat: $('totalJumpsStat'), bestJumpStat: $('bestJumpStat'), biggestWinStat: $('biggestWinStat'), roundsStat: $('roundsStat'),
+    totalJumpsStat: $('totalJumpsStat'), bestJumpStat: $('bestJumpStat'), biggestWinStat: $('biggestWinStat'), roundsStat: $('roundsStat'), nextLevelBonusStat: $('nextLevelBonusStat'),
+    levelToast: $('levelToast'), levelToastTitle: $('levelToastTitle'), levelToastBonus: $('levelToastBonus'),
+    promoForm: $('promoForm'), promoInput: $('promoInput'), promoRedeem: $('promoRedeemButton'), promoMessage: $('promoMessage'), promoUsedCount: $('promoUsedCount'), promoSafeStatus: $('promoSafeStatus'), promoSpinStatus: $('promoSpinStatus'), promoFrogStatus: $('promoFrogStatus'), promoCoinStatus: $('promoCoinStatus'),
     confetti: $('confettiLayer'), flash: $('flashLayer'), selfTest: $('selfTestResult')
   };
 
@@ -82,6 +112,23 @@
   function selectedFrog(){ return FROGS.find(x=>x.id===state.selectedFrog) || FROGS[0]; }
   function selectedLake(){ return LAKES.find(x=>x.id===state.selectedLake) || LAKES[0]; }
 
+  function levelBonusFor(level){ return Math.round((250 + level * 150) / 50) * 50; }
+
+  function frogSvg(frog){
+    return `<img class="frog-avatar-img" src="${frog.art}" alt="${frog.name}" draggable="false" />`;
+  }
+
+  function renderWheel(){
+    const size=WHEEL_SEGMENTS.length, step=360/size;
+    els.wheelDisc.style.background=`conic-gradient(${WHEEL_SEGMENTS.map((seg,i)=>`${seg.color} ${i*step}deg ${(i+1)*step}deg`).join(',')})`;
+    els.wheelDisc.innerHTML=WHEEL_SEGMENTS.map((seg,i)=>{
+      const angle=(i*step+step/2)*Math.PI/180;
+      const x=50+34*Math.sin(angle), y=50-34*Math.cos(angle);
+      return `<span class="wheel-label ${seg.kind==='jackpot'?'jackpot':''}" style="--x:${x.toFixed(2)}%;--y:${y.toFixed(2)}%"><b>${seg.label}</b><small>${seg.sub}</small></span>`;
+    }).join('');
+    els.wheelDisc.style.transform=`rotate(${state.wheelRotation||0}deg)`;
+  }
+
   function loadState(){
     if (TEST_MODE) return deepClone(DEFAULT_STATE);
     try {
@@ -90,6 +137,12 @@
       merged.roundActive = false;
       merged.animating = false;
       merged.jump = 0;
+      merged.roundSafe = false;
+      merged.redeemedCodes = Array.isArray(merged.redeemedCodes) ? merged.redeemedCodes.map(String) : [];
+      merged.safeRunCredits = Number.isFinite(merged.safeRunCredits) ? Math.max(0, Math.floor(merged.safeRunCredits)) : 0;
+      merged.unlimitedSpins = Boolean(merged.unlimitedSpins);
+      merged.freeSpins = Number.isFinite(merged.freeSpins) ? Math.max(0, Math.floor(merged.freeSpins)) : 0;
+      merged.promoCoinClaimed = Boolean(merged.promoCoinClaimed);
       merged.balance = Number.isFinite(merged.balance) ? Math.max(0, Math.floor(merged.balance)) : 1000;
       return merged;
     } catch { return deepClone(DEFAULT_STATE); }
@@ -98,7 +151,7 @@
   let state = loadState();
   function saveState(){
     if (TEST_MODE) return;
-    const stored = Object.assign({}, state, {roundActive:false, animating:false, jump:0});
+    const stored = Object.assign({}, state, {roundActive:false, animating:false, jump:0, roundSafe:false});
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
   }
 
@@ -196,6 +249,7 @@
       this.drawWater(c,w,h,lake);
       this.ripples.forEach(r=>{ const x=this.worldToScreenX(r.x); c.strokeStyle=`rgba(225,255,255,${r.life*.7})`;c.lineWidth=3;c.beginPath();c.ellipse(x,r.y,r.r,r.r*.24,0,0,Math.PI*2);c.stroke(); });
       this.pads.forEach((pad,i)=>this.drawPad(c,pad,i,lake));
+      this.drawNextArrow(c,lake);
       this.drawFinish(c,lake);
       this.drawFrog(c,this.worldToScreenX(this.frog.x),this.frog.y,this.frog);
       this.particles.forEach(p=>this.drawParticle(c,p));
@@ -221,28 +275,80 @@
       if(lake.id==='frozen'){c.globalAlpha=.3;c.strokeStyle='#fff';for(let i=0;i<8;i++){c.beginPath();c.moveTo(i*w/7,h*.34);c.lineTo(i*w/7+Math.sin(i)*75,h);c.stroke();}c.globalAlpha=1;}
     }
     drawPad(c,pad,i,lake){
-      const x=this.worldToScreenX(pad.x),bob=Math.sin(this.time*1.7+pad.phase)*3,y=pad.y+bob+pad.sink;if(x<-90||x>this.w+90)return;
-      c.save();c.translate(x,y);c.rotate(Math.sin(i*1.7)*.04);c.globalAlpha=pad.sink?clamp(1-pad.sink/90,.1,1):1;
-      const active=state.roundActive&&i===state.jump&&!state.animating; if(active){c.shadowBlur=26;c.shadowColor=lake.glow;}
-      c.fillStyle='rgba(0,54,67,.22)';c.beginPath();c.ellipse(0,15,53,21,0,0,Math.PI*2);c.fill();
-      const grad=c.createLinearGradient(-45,-25,45,25);grad.addColorStop(0,this.mix(lake.pad,'#ffffff',.23));grad.addColorStop(1,this.mix(lake.pad,'#123f35',.15));c.fillStyle=grad;c.strokeStyle=active?lake.glow:this.mix(lake.pad,'#164f3a',.35);c.lineWidth=active?5:3;c.beginPath();c.ellipse(0,0,51,27,0,0,Math.PI*2);c.fill();c.stroke();
-      c.fillStyle=lake.b;c.beginPath();c.moveTo(8,-27);c.lineTo(53,-5);c.lineTo(14,11);c.closePath();c.fill();
-      c.shadowBlur=0;c.fillStyle='rgba(13,55,43,.67)';c.font='900 9px system-ui';c.textAlign='center';c.fillText(i===0?'START':String(i),-16,4);
-      if(pad.crack){c.strokeStyle='#253c3d';c.lineWidth=3;c.beginPath();c.moveTo(-18,-7);c.lineTo(-4,3);c.lineTo(-13,14);c.moveTo(-4,3);c.lineTo(16,10);c.moveTo(-4,3);c.lineTo(9,-11);c.stroke();}
+      const x=this.worldToScreenX(pad.x),bob=Math.sin(this.time*1.7+pad.phase)*3,y=pad.y+bob+pad.sink;if(x<-100||x>this.w+100)return;
+      c.save();c.translate(x,y);c.rotate(Math.sin(i*1.7)*.035);c.globalAlpha=pad.sink?clamp(1-pad.sink/90,.1,1):1;
+      const active=state.roundActive&&i===state.jump&&!state.animating;
+      const next=state.roundActive&&i===state.jump+1&&!state.animating;
+      if(active||next){c.shadowBlur=next?30:24;c.shadowColor=next?'#ffe34f':lake.glow;}
+      c.fillStyle='rgba(0,54,67,.24)';c.beginPath();c.ellipse(1,17,57,22,0,0,Math.PI*2);c.fill();
+      const grad=c.createLinearGradient(-46,-26,45,29);grad.addColorStop(0,this.mix(lake.pad,'#ffffff',.34));grad.addColorStop(.55,lake.pad);grad.addColorStop(1,this.mix(lake.pad,'#123f35',.18));
+      c.fillStyle=grad;c.strokeStyle=next?'#ffe34f':active?lake.glow:this.mix(lake.pad,'#164f3a',.38);c.lineWidth=next?6:active?5:3;
+      c.beginPath();c.moveTo(-53,-4);c.bezierCurveTo(-48,-27,-19,-32,7,-27);c.bezierCurveTo(34,-33,56,-18,55,2);c.bezierCurveTo(55,22,30,30,2,27);c.bezierCurveTo(-27,32,-55,20,-53,-4);c.closePath();c.fill();c.stroke();
+      c.shadowBlur=0;
+      c.fillStyle=lake.b;c.beginPath();c.moveTo(9,-28);c.lineTo(56,-7);c.lineTo(16,12);c.bezierCurveTo(11,3,9,-8,9,-28);c.closePath();c.fill();
+      c.strokeStyle='rgba(24,91,53,.28)';c.lineWidth=1.5;c.beginPath();c.moveTo(4,-2);c.lineTo(-33,-15);c.moveTo(4,-2);c.lineTo(-34,11);c.moveTo(4,-2);c.lineTo(23,21);c.stroke();
+      c.fillStyle='rgba(255,255,255,.24)';c.beginPath();c.ellipse(-23,-13,14,5,-.25,0,Math.PI*2);c.fill();
+      if(i%4===2&&!pad.crack){
+        c.save();c.translate(-34,-18);for(let k=0;k<6;k++){c.rotate(Math.PI/3);c.fillStyle=k%2?'#ffd5ea':'#fff1f8';c.beginPath();c.ellipse(0,-7,4,9,0,0,Math.PI*2);c.fill();}c.fillStyle='#ffd147';c.beginPath();c.arc(0,0,4,0,Math.PI*2);c.fill();c.restore();
+      }
+      if(next){c.globalAlpha=.75+.25*Math.sin(this.time*6);c.strokeStyle='#fff7a2';c.lineWidth=3;c.beginPath();c.ellipse(0,0,64,35,0,0,Math.PI*2);c.stroke();c.globalAlpha=1;}
+      if(pad.crack){c.strokeStyle='#253c3d';c.lineWidth=3.5;c.lineCap='round';c.beginPath();c.moveTo(-18,-7);c.lineTo(-4,3);c.lineTo(-13,14);c.moveTo(-4,3);c.lineTo(16,10);c.moveTo(-4,3);c.lineTo(9,-11);c.stroke();}
+      c.restore();
+    }
+    drawNextArrow(c,lake){
+      if(!state.roundActive||state.animating||state.jump>=this.pads.length-1)return;
+      const from=this.pads[state.jump],to=this.pads[state.jump+1];
+      const x1=this.worldToScreenX(from.x),x2=this.worldToScreenX(to.x),y1=from.y-3,y2=to.y-3;
+      if(x2<-80||x1>this.w+80)return;
+      const x=lerp(x1,x2,.53),y=lerp(y1,y2,.53)-50+Math.sin(this.time*5)*4,angle=Math.atan2(y2-y1,x2-x1),pulse=.94+Math.sin(this.time*6)*.06;
+      c.save();c.translate(x,y);c.rotate(angle);c.scale(pulse,pulse);c.shadowColor='rgba(255,214,44,.85)';c.shadowBlur=18;
+      const g=c.createLinearGradient(-45,0,45,0);g.addColorStop(0,'#fff37a');g.addColorStop(1,'#ffbd21');c.fillStyle=g;c.strokeStyle='#8e6200';c.lineWidth=2.5;c.lineJoin='round';
+      c.beginPath();c.moveTo(-48,-8);c.lineTo(13,-8);c.lineTo(13,-18);c.lineTo(47,0);c.lineTo(13,18);c.lineTo(13,8);c.lineTo(-48,8);c.closePath();c.fill();c.stroke();
+      c.shadowBlur=0;c.fillStyle='#6f4b00';c.textAlign='center';c.font='1000 10px system-ui';c.fillText('NEXT',-6,3);
+      for(let i=0;i<3;i++){const sx=-62-i*14,alpha=.25+.25*Math.sin(this.time*6-i);c.globalAlpha=alpha;c.fillStyle='#fff36c';c.beginPath();c.arc(sx,0,3+i,0,Math.PI*2);c.fill();}
       c.restore();
     }
     drawFinish(c,lake){const p=this.pads[this.pads.length-1],x=this.worldToScreenX(p.x),y=p.y-115;if(x<-100||x>this.w+100)return;c.save();c.translate(x,y);c.rotate(.04);c.fillStyle='#8d6032';c.fillRect(-4,25,8,80);c.fillStyle='#fff2c8';c.strokeStyle='#8d6032';c.lineWidth=4;c.beginPath();c.roundRect(-50,-26,100,52,10);c.fill();c.stroke();c.fillStyle='#6a4627';c.textAlign='center';c.font='1000 12px system-ui';c.fillText('12.00×',0,-3);c.font='900 9px system-ui';c.fillText('LEGENDARY',0,13);c.restore();}
     drawFrog(c,x,y,f){
-      if(f.opacity<=0||x<-100||x>this.w+100)return; const frog=selectedFrog(); c.save();c.translate(x,y);c.rotate(f.rotation);c.scale(f.scaleX,f.scaleY);c.globalAlpha=f.opacity;c.shadowColor='rgba(0,43,49,.35)';c.shadowBlur=12;c.shadowOffsetY=8;
-      if(frog.id==='ghost') c.globalAlpha*=.72;
-      c.fillStyle=frog.colors[1];c.strokeStyle=this.mix(frog.colors[1],'#143a30',.45);c.lineWidth=3;
-      c.beginPath();c.ellipse(-21,24,18,10,-.2,0,Math.PI*2);c.ellipse(21,24,18,10,.2,0,Math.PI*2);c.fill();c.stroke();
-      c.shadowBlur=0;c.fillStyle=frog.colors[1];c.beginPath();c.ellipse(0,11,25,28,0,0,Math.PI*2);c.fill();c.stroke();
-      c.fillStyle=frog.colors[0];c.beginPath();c.ellipse(0,-9,30,25,0,0,Math.PI*2);c.fill();c.stroke();
-      c.beginPath();c.ellipse(-18,-27,12,13,0,0,Math.PI*2);c.ellipse(18,-27,12,13,0,0,Math.PI*2);c.fill();c.stroke();
-      c.fillStyle='#102a25';c.beginPath();c.arc(-18,-29,4.4,0,Math.PI*2);c.arc(18,-29,4.4,0,Math.PI*2);c.fill();
-      c.strokeStyle='#235338';c.lineWidth=2;c.beginPath();c.arc(0,-7,12,8,.15,Math.PI-.15);c.stroke();
-      c.textAlign='center';c.textBaseline='middle';c.font='24px system-ui'; if(frog.id!=='classic')c.fillText(frog.emoji,0,-51);
+      if(f.opacity<=0||x<-120||x>this.w+120)return;const frog=selectedFrog(),main=frog.colors[0],shade=frog.colors[1],outline=this.mix(shade,'#0b3c2d',.62),blink=Math.sin(this.time*.9+1.8)>.985?.14:1;
+      c.save();c.translate(x,y);c.rotate(f.rotation);c.scale(f.scaleX,f.scaleY);c.globalAlpha=f.opacity*(frog.id==='ghost'?.74:1);
+      c.shadowColor='rgba(0,43,49,.34)';c.shadowBlur=13;c.shadowOffsetY=9;c.fillStyle='rgba(0,48,54,.28)';c.beginPath();c.ellipse(0,34,38,11,0,0,Math.PI*2);c.fill();c.shadowBlur=0;c.shadowOffsetY=0;
+      const sprite=FROG_IMAGES[frog.id];
+      if(sprite&&sprite.complete&&sprite.naturalWidth){
+        if(frog.id==='ghost'){c.shadowColor='#d9cfff';c.shadowBlur=24;}
+        c.drawImage(sprite,-62,-78,124,124);c.restore();return;
+      }
+      if(frog.id==='ghost'){c.shadowColor='#d9cfff';c.shadowBlur=24;}
+      if(frog.id==='dragon'){
+        c.fillStyle='#f1a048';c.strokeStyle='#833e2f';c.lineWidth=3;c.beginPath();c.moveTo(-25,2);c.quadraticCurveTo(-50,-14,-44,24);c.quadraticCurveTo(-34,16,-24,24);c.closePath();c.fill();c.stroke();c.beginPath();c.moveTo(25,2);c.quadraticCurveTo(50,-14,44,24);c.quadraticCurveTo(34,16,24,24);c.closePath();c.fill();c.stroke();
+      }
+      if(frog.id==='dino'){c.fillStyle='#efff70';c.strokeStyle=outline;c.lineWidth=2.5;c.beginPath();c.moveTo(-25,-24);c.lineTo(-18,-42);c.lineTo(-7,-29);c.lineTo(1,-48);c.lineTo(11,-29);c.lineTo(23,-41);c.lineTo(27,-20);c.closePath();c.fill();c.stroke();}
+      c.fillStyle=shade;c.strokeStyle=outline;c.lineWidth=3;
+      c.save();c.rotate(-.12);c.beginPath();c.ellipse(-24,23,24,12,0,0,Math.PI*2);c.fill();c.stroke();c.restore();c.save();c.rotate(.12);c.beginPath();c.ellipse(24,23,24,12,0,0,Math.PI*2);c.fill();c.stroke();c.restore();
+      c.fillStyle=shade;[[-40,25],[-32,34],[-22,37],[40,25],[32,34],[22,37]].forEach(([tx,ty])=>{c.beginPath();c.ellipse(tx,ty,7,4,0,0,Math.PI*2);c.fill();});
+      const body=c.createLinearGradient(0,-5,0,36);body.addColorStop(0,main);body.addColorStop(1,shade);c.fillStyle=body;c.beginPath();c.moveTo(-23,-2);c.bezierCurveTo(-31,8,-30,31,-17,39);c.bezierCurveTo(-7,45,7,45,17,39);c.bezierCurveTo(30,31,31,8,23,-2);c.closePath();c.fill();c.stroke();
+      c.fillStyle='rgba(244,255,211,.72)';c.beginPath();c.ellipse(0,22,15,18,0,0,Math.PI*2);c.fill();
+      c.strokeStyle=outline;c.lineWidth=6;c.lineCap='round';c.beginPath();c.moveTo(-21,5);c.quadraticCurveTo(-36,13,-31,28);c.moveTo(21,5);c.quadraticCurveTo(36,13,31,28);c.stroke();
+      c.lineWidth=2.6;[[-34,29,-43,30],[-33,30,-40,37],[34,29,43,30],[33,30,40,37]].forEach(q=>{c.beginPath();c.moveTo(q[0],q[1]);c.lineTo(q[2],q[3]);c.stroke();});
+      const head=c.createLinearGradient(0,-37,0,9);head.addColorStop(0,this.mix(main,'#ffffff',.12));head.addColorStop(1,main);c.fillStyle=head;c.lineWidth=3.2;c.beginPath();c.moveTo(-29,-21);c.bezierCurveTo(-27,-42,-10,-47,0,-42);c.bezierCurveTo(10,-47,27,-42,29,-21);c.bezierCurveTo(34,-2,21,10,0,12);c.bezierCurveTo(-21,10,-34,-2,-29,-21);c.closePath();c.fill();c.stroke();
+      c.fillStyle=main;c.beginPath();c.ellipse(-18,-37,13,15,0,0,Math.PI*2);c.ellipse(18,-37,13,15,0,0,Math.PI*2);c.fill();c.stroke();
+      c.save();c.translate(0,-37);c.scale(1,blink);c.fillStyle='#fff';c.beginPath();c.ellipse(-18,0,8.2,10,0,0,Math.PI*2);c.ellipse(18,0,8.2,10,0,0,Math.PI*2);c.fill();c.fillStyle='#e9c73c';c.beginPath();c.ellipse(-17,1,5.2,7,0,0,Math.PI*2);c.ellipse(17,1,5.2,7,0,0,Math.PI*2);c.fill();c.fillStyle='#102f29';c.beginPath();c.ellipse(-17,2,2.6,5.2,0,0,Math.PI*2);c.ellipse(17,2,2.6,5.2,0,0,Math.PI*2);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(-15,-2,1.7,0,Math.PI*2);c.arc(19,-2,1.7,0,Math.PI*2);c.fill();c.restore();
+      c.shadowBlur=0;c.fillStyle='#275b40';c.beginPath();c.arc(-7,-18,1.7,0,Math.PI*2);c.arc(7,-18,1.7,0,Math.PI*2);c.fill();
+      c.fillStyle='rgba(255,118,133,.24)';c.beginPath();c.arc(-22,-10,5,0,Math.PI*2);c.arc(22,-10,5,0,Math.PI*2);c.fill();
+      c.strokeStyle='#275b40';c.lineWidth=2.5;c.beginPath();
+      if(frog.id==='owner'){c.moveTo(-13,-8);c.quadraticCurveTo(0,-11,13,-8);}else{c.moveTo(-13,-9);c.quadraticCurveTo(0,3,13,-9);}c.stroke();
+      if(frog.id==='owner'){
+        c.fillStyle='#1a2025';c.strokeStyle='#0d1216';c.lineWidth=2.8;c.lineJoin='round';c.beginPath();c.moveTo(-29,-36);c.lineTo(-24,-51);c.lineTo(-16,-44);c.lineTo(-8,-59);c.lineTo(0,-47);c.lineTo(10,-61);c.lineTo(16,-46);c.lineTo(27,-54);c.lineTo(30,-34);c.quadraticCurveTo(12,-43,0,-39);c.quadraticCurveTo(-12,-44,-29,-36);c.closePath();c.fill();c.stroke();
+        c.strokeStyle='#183f33';c.lineWidth=3;c.beginPath();c.moveTo(-25,-29);c.lineTo(-10,-31);c.moveTo(10,-31);c.lineTo(25,-29);c.stroke();
+        c.fillStyle='#1c2328';c.beginPath();c.moveTo(-21,14);c.quadraticCurveTo(0,25,21,14);c.lineTo(17,38);c.quadraticCurveTo(0,46,-17,38);c.closePath();c.fill();
+      }
+      if(frog.id==='king'){
+        c.fillStyle='#ffd84e';c.strokeStyle='#81551e';c.lineWidth=3;c.lineJoin='round';c.beginPath();c.moveTo(-25,-47);c.lineTo(-16,-65);c.lineTo(-3,-51);c.lineTo(12,-66);c.lineTo(24,-47);c.closePath();c.fill();c.stroke();c.fillStyle='#ff6d76';c.beginPath();c.arc(-16,-58,2.5,0,Math.PI*2);c.fill();c.fillStyle='#58bdff';c.beginPath();c.arc(12,-59,2.5,0,Math.PI*2);c.fill();
+      } else if(frog.id==='robot'){
+        c.strokeStyle='#3c596e';c.lineWidth=3;c.beginPath();c.moveTo(0,-50);c.lineTo(0,-63);c.stroke();c.fillStyle='#ff6d70';c.beginPath();c.arc(0,-66,4,0,Math.PI*2);c.fill();c.stroke();c.strokeStyle='#def8ff';c.lineWidth=2;c.beginPath();c.roundRect(-27,-31,54,35,12);c.stroke();
+      } else if(frog.id==='dragon'){
+        c.fillStyle='#fff1a2';c.strokeStyle='#833e2f';c.lineWidth=3;c.beginPath();c.moveTo(-24,-44);c.lineTo(-31,-60);c.lineTo(-14,-50);c.moveTo(24,-44);c.lineTo(31,-60);c.lineTo(14,-50);c.stroke();
+      }
       c.restore();
     }
     drawParticle(c,p){const x=this.worldToScreenX(p.x),alpha=clamp(p.life/p.max,0,1);c.save();c.globalAlpha=alpha;c.fillStyle=p.color;if(p.kind==='coin'){c.beginPath();c.arc(x,p.y,p.size,0,Math.PI*2);c.fill();c.fillStyle='#986700';c.font=`900 ${Math.max(6,p.size)}px system-ui`;c.textAlign='center';c.fillText('F',x,p.y+2);}else{c.beginPath();c.arc(x,p.y,p.size,0,Math.PI*2);c.fill();}c.restore();}
@@ -252,6 +358,8 @@
   let forcedOutcome = null;
   let installPrompt = null;
   let collectionMode = 'frogs';
+  let wheelSpinning = false;
+  let currentSpinSource = null;
 
   function setStatus(text,kind=''){
     els.status.textContent=text; els.status.classList.remove('win','lose'); if(kind)els.status.classList.add(kind);
@@ -268,15 +376,24 @@
     els.quickBets.querySelectorAll('button').forEach(b=>{b.disabled=state.roundActive;b.classList.toggle('selected',(b.dataset.bet==='max'&&state.bet===Math.floor(state.balance/50)*50)||(Number(b.dataset.bet)===state.bet));});
     els.sound.textContent=state.sound?'🔊':'🔇';audio.enabled=state.sound;els.settingsSound.querySelector('b').textContent=state.sound?'On':'Off';els.settingsMotion.querySelector('b').textContent=state.effects?'On':'Reduced';
     els.luckyBadge.classList.toggle('hidden',state.luckyCharges<=0);els.luckyCount.textContent=state.luckyCharges;
-    els.profileFrog.textContent=frog.emoji;els.bigProfileFrog.textContent=frog.emoji;els.currentFrogName.textContent=frog.name;els.app.dataset.theme=lake.id;
-    els.totalJumpsStat.textContent=money(state.totalJumps);els.bestJumpStat.textContent=state.bestJump;els.biggestWinStat.textContent=`${money(state.biggestWin)} F`;els.roundsStat.textContent=money(state.rounds);
-    refreshDaily(); saveState();
+    els.profileFrog.innerHTML=frogSvg(frog);els.bigProfileFrog.innerHTML=frogSvg(frog);els.currentFrogName.textContent=frog.name;els.app.dataset.theme=lake.id;
+    els.totalJumpsStat.textContent=money(state.totalJumps);els.bestJumpStat.textContent=state.bestJump;els.biggestWinStat.textContent=`${money(state.biggestWin)} F`;els.roundsStat.textContent=money(state.rounds);els.nextLevelBonusStat.textContent=`${money(levelBonusFor(state.level+1))} F`;
+    refreshDaily(); refreshPromo(); saveState();
+  }
+
+  let levelToastTimer=0;
+  function showLevelBonus(level,bonus){
+    clearTimeout(levelToastTimer);els.levelToastTitle.textContent=`Level ${level}`;els.levelToastBonus.textContent=`+${money(bonus)} F`;els.levelToast.classList.remove('show');void els.levelToast.offsetWidth;els.levelToast.classList.add('show');levelToastTimer=setTimeout(()=>els.levelToast.classList.remove('show'),3000);
   }
 
   function addXp(amount){
-    state.xp+=amount; let leveled=false;
-    while(state.xp>=nextXp()){state.xp-=nextXp();state.level++;leveled=true;}
-    if(leveled){setStatus(`Level up! You reached level ${state.level}.`,'win');screenFeedback('win');audio.reward();confettiBurst(45);}
+    state.xp+=amount;let totalBonus=0,lastLevel=state.level;
+    while(state.xp>=nextXp()){
+      const needed=nextXp();state.xp-=needed;state.level++;lastLevel=state.level;
+      const bonus=levelBonusFor(state.level);state.balance+=bonus;totalBonus+=bonus;
+    }
+    if(totalBonus>0){setStatus(`Level ${lastLevel}! Bonus: +${money(totalBonus)} Froggy.`,'win');showLevelBonus(lastLevel,totalBonus);screenFeedback('win');audio.reward();confettiBurst(65);}
+    return totalBonus;
   }
 
   function selectBet(value){
@@ -287,28 +404,28 @@
     audio.unlock(); if(state.roundActive||state.animating)return;
     if(state.balance<MIN_BET){state.balance+=500;setStatus('Pond rescue bonus: +500 Froggy!','win');audio.reward();confettiBurst(25);refresh();return;}
     if(state.bet>state.balance){state.bet=Math.floor(state.balance/50)*50;setStatus('Bet adjusted to your available Froggy.');refresh();return;}
-    state.balance-=state.bet;state.jump=0;state.roundActive=true;state.animating=false;state.rounds++;scene.reset();setStatus(`${money(state.bet)} Froggy on the line. Make the first leap!`);audio.start();haptic(20);refresh();
+    state.balance-=state.bet;state.jump=0;state.roundActive=true;state.animating=false;state.roundSafe=state.safeRunCredits>0;if(state.roundSafe)state.safeRunCredits--;state.rounds++;scene.reset();setStatus(`${money(state.bet)} Froggy on the line. Make the first leap!`);audio.start();haptic(20);refresh();
   }
 
   function jump(){
-    if(!state.roundActive||state.animating||state.jump>=RISKS.length)return;audio.unlock();state.animating=true;const next=state.jump+1;const risk=effectiveRisk();if(state.luckyCharges>0)state.luckyCharges--;
-    const fail=forcedOutcome===null?Math.random()<risk/100:!forcedOutcome;forcedOutcome=null;setStatus(`Crouch… launch! Pad ${next} has ${risk}% failure risk.`);refresh();
+    if(!state.roundActive||state.animating||state.jump>=RISKS.length)return;audio.unlock();state.animating=true;const next=state.jump+1;const risk=effectiveRisk();if(state.luckyCharges>0&&!state.roundSafe)state.luckyCharges--;
+    const fail=state.roundSafe?false:(forcedOutcome===null?Math.random()<risk/100:!forcedOutcome);forcedOutcome=null;setStatus(`Crouch… launch! Pad ${next} has ${risk}% failure risk.`);refresh();
     scene.jumpTo(next,fail,(didFail)=>{
       state.animating=false;state.totalJumps++;
       if(didFail){
-        state.roundActive=false;state.bestJump=Math.max(state.bestJump,state.jump);setStatus('SPLASH! The lily pad broke.','lose');
+        state.roundActive=false;state.roundSafe=false;state.bestJump=Math.max(state.bestJump,state.jump);setStatus('SPLASH! The lily pad broke.','lose');
         const lost=state.bet; refresh(); setTimeout(()=>showResult({icon:'💦',kicker:'ROUND OVER',title:'The pad cracked!',amount:`−${money(lost)} F`,text:`You reached jump ${state.jump}. The pond keeps this bet—but your next leap could be legendary.`,lose:true}),TEST_MODE?1:420);
       } else {
         state.jump=next;state.bestJump=Math.max(state.bestJump,state.jump);addXp(10+state.jump*2);audio.coin();haptic(15);screenFeedback('win');
         if(state.jump===RISKS.length){
-          const payout=currentPayout();state.balance+=payout;state.biggestWin=Math.max(state.biggestWin,payout);state.roundActive=false;addXp(120);setStatus(`LEGENDARY LEAP! ${money(payout)} Froggy at 12.00×!`,'win');audio.win();confettiBurst(120);refresh();setTimeout(()=>showResult({icon:'🏆',kicker:'LEGENDARY LEAP',title:'Every pad cleared!',amount:`+${money(payout)} F`,text:'Golden lily pads, maximum multiplier, absolute frog glory.'}),TEST_MODE?1:500);
+          const payout=currentPayout();state.balance+=payout;state.biggestWin=Math.max(state.biggestWin,payout);state.roundActive=false;state.roundSafe=false;addXp(120);setStatus(`LEGENDARY LEAP! ${money(payout)} Froggy at 12.00×!`,'win');audio.win();confettiBurst(120);refresh();setTimeout(()=>showResult({icon:'🏆',kicker:'LEGENDARY LEAP',title:'Every pad cleared!',amount:`+${money(payout)} F`,text:'Golden lily pads, maximum multiplier, absolute frog glory.'}),TEST_MODE?1:500);
         } else {setStatus(`Perfect landing! ${MULTIPLIERS[state.jump].toFixed(2)}× — cash out or leap again.`,'win');refresh();}
       }
     });
   }
 
   function cashOut(){
-    if(!state.roundActive||state.animating||state.jump===0)return;const payout=currentPayout(),profit=payout-state.bet;state.balance+=payout;state.biggestWin=Math.max(state.biggestWin,payout);state.roundActive=false;addXp(25+state.jump*4);audio.cash();haptic([15,35,20]);screenFeedback('win');confettiBurst(35+state.jump*3);setStatus(`Cashed out ${money(payout)} Froggy!`,'win');refresh();setTimeout(()=>showResult({icon:'🪙',kicker:'SMART CASH-OUT',title:`${MULTIPLIERS[state.jump].toFixed(2)}× secured!`,amount:`+${money(payout)} F`,text:`Profit: ${money(profit)} Froggy. Great timing.`}),TEST_MODE?1:220);
+    if(!state.roundActive||state.animating||state.jump===0)return;const payout=currentPayout(),profit=payout-state.bet;state.balance+=payout;state.biggestWin=Math.max(state.biggestWin,payout);state.roundActive=false;state.roundSafe=false;addXp(25+state.jump*4);audio.cash();haptic([15,35,20]);screenFeedback('win');confettiBurst(35+state.jump*3);setStatus(`Cashed out ${money(payout)} Froggy!`,'win');refresh();setTimeout(()=>showResult({icon:'🪙',kicker:'SMART CASH-OUT',title:`${MULTIPLIERS[state.jump].toFixed(2)}× secured!`,amount:`+${money(payout)} F`,text:`Profit: ${money(profit)} Froggy. Great timing.`}),TEST_MODE?1:220);
   }
 
   function showResult({icon,kicker,title,amount,text,lose=false}){
@@ -320,14 +437,16 @@
   function confettiBurst(count=55){if(!state.effects)count=Math.ceil(count*.25);const colors=['#e9ff6a','#52d8d0','#ffcc4b','#fa6d8a','#aa82ec','#fff'];for(let i=0;i<count;i++){const d=document.createElement('i');d.className='confetti';d.style.left=`${Math.random()*100}%`;d.style.top=`${-10-Math.random()*30}px`;d.style.background=colors[i%colors.length];d.style.setProperty('--dx',`${(Math.random()-.5)*240}px`);d.style.setProperty('--spin',`${(Math.random()-.5)*1200}deg`);d.style.setProperty('--dur',`${1.5+Math.random()*1.8}s`);els.confetti.appendChild(d);setTimeout(()=>d.remove(),3600);}}
 
   function navigate(screen){
-    Object.entries(els.screens).forEach(([key,node])=>node.classList.toggle('active',key===screen));document.querySelectorAll('.nav-button').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));audio.tap();if(screen==='collection')renderCollection();if(screen==='rewards')refreshDaily();if(screen==='stats')refresh();
+    Object.entries(els.screens).forEach(([key,node])=>node.classList.toggle('active',key===screen));document.querySelectorAll('.nav-button').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));audio.tap();if(screen==='collection')renderCollection();if(screen==='rewards')refreshDaily();if(screen==='promo')refreshPromo();if(screen==='stats')refresh();
   }
 
   function renderCollection(){
     const items=collectionMode==='frogs'?FROGS:LAKES, unlocked=collectionMode==='frogs'?state.unlockedFrogs:state.unlockedLakes, selected=collectionMode==='frogs'?state.selectedFrog:state.selectedLake;
     els.collectionGrid.innerHTML=items.map(item=>{
       const owned=unlocked.includes(item.id),equipped=selected===item.id,canLevel=state.level>=item.level;let action=equipped?'EQUIPPED':owned?'EQUIP':canLevel?`UNLOCK · ${money(item.cost)} F`:`LEVEL ${item.level} REQUIRED`;
-      return `<article class="collection-card ${collectionMode==='lakes'?'lake':''} ${equipped?'selected':''}" data-item="${item.id}"><span class="rarity">${item.rarity}</span><div class="collection-art" style="--card-a:${item.colors?item.colors[0]:item.a};--card-b:${item.colors?item.colors[1]:item.b}">${item.emoji}</div><h3>${item.name}</h3><p>${item.description}</p><button class="collection-action pressable ${owned?'owned':'locked'}" data-collection-action="${item.id}" ${equipped?'disabled':''}>${action}</button></article>`;
+      const art=collectionMode==='frogs'?frogSvg(item):`<span class="lake-art-emoji">${item.emoji}</span><i class="lake-art-ripple"></i>`;
+      const tier=String(item.rarity||'common').toLowerCase().replace(/[^a-z0-9]+/g,'-');
+      return `<article class="collection-card ${collectionMode==='lakes'?'lake':''} tier-${tier} ${equipped?'selected':''}" data-item="${item.id}" style="--card-a:${item.colors?item.colors[0]:item.a};--card-b:${item.colors?item.colors[1]:item.b}"><span class="rarity">${item.rarity}</span><div class="collection-art">${art}<i class="portrait-spark s1"></i><i class="portrait-spark s2"></i></div><h3>${item.name}</h3><p>${item.description}</p><button class="collection-action pressable ${owned?'owned':'locked'}" data-collection-action="${item.id}" ${equipped?'disabled':''}>${action}</button></article>`;
     }).join('');
   }
 
@@ -340,30 +459,113 @@
     refresh();renderCollection();scene.reset();
   }
 
-  function dailyAvailable(){return state.lastDaily!==todayKey();}
+
+  function setPromoMessage(text,kind=''){
+    els.promoMessage.textContent=text;
+    els.promoMessage.classList.remove('success','error');
+    if(kind)els.promoMessage.classList.add(kind);
+  }
+
+  function refreshPromo(){
+    if(!els.promoUsedCount)return;
+    els.promoUsedCount.textContent=state.redeemedCodes.length;
+    els.promoSafeStatus.textContent=state.safeRunCredits>0?'Next round ready':state.roundSafe?'Active this round':'Not active';
+    els.promoSpinStatus.textContent=state.unlimitedSpins?'unlimintos':`${state.freeSpins} free spin${state.freeSpins===1?'':'s'}`;
+    els.promoFrogStatus.textContent=`${state.unlockedFrogs.length} / ${FROGS.length} frogs`;
+    els.promoCoinStatus.textContent=state.promoCoinClaimed?'50,000 F claimed':'No promo claimed';
+  }
+
+  function redeemPromo(rawCode){
+    const code=String(rawCode||'').trim().toLowerCase();
+    if(!code){setPromoMessage('Type a promo code first.','error');haptic(18);return false;}
+    if(state.redeemedCodes.includes(code)){setPromoMessage('That code has already been redeemed on this save.','error');haptic(20);return false;}
+
+    let message='';
+    if(code==='imtheowner'){
+      state.safeRunCredits+=1;
+      message='Owner Pass armed. Your next complete round is protected while every displayed risk percentage stays normal.';
+    }else if(code==='50000'){
+      state.balance+=50000;
+      state.promoCoinClaimed=true;
+      message='Vault opened: +50,000 Froggy added to your balance!';
+    }else if(code==='unlockall'){
+      state.unlockedFrogs=FROGS.map(f=>f.id);
+      message='Character vault opened. Every frog is now unlocked!';
+    }else if(code==='spinall'){
+      state.unlimitedSpins=true;
+      message='Unlimited wheel mode activated. The counter now shows unlimintos!';
+    }else if(code==='10'){
+      state.freeSpins+=10;
+      message='Ten free spins added to your reward wheel!';
+    }else if(code==='5'){
+      const previousLevel=state.level;
+      state.level=Math.max(1,Math.floor(state.level*5));
+      state.xp=0;
+      message=`Level multiplied: ${money(previousLevel)} → ${money(state.level)}. Your next level bonus now scales from the boosted level.`;
+    }else{
+      setPromoMessage('That promo code was not recognized. Check the spelling and try again.','error');
+      haptic([18,45,18]);
+      return false;
+    }
+
+    state.redeemedCodes.push(code);
+    els.promoInput.value='';
+    setPromoMessage(message,'success');
+    setStatus(message,'win');
+    audio.reward();haptic([12,35,22]);confettiBurst(code==='50000'?120:55);screenFeedback('win');
+    refresh();renderCollection();
+    return true;
+  }
+
+  function hasDailySpin(){return state.lastDaily!==todayKey();}
+  function dailyAvailable(){return state.unlimitedSpins||state.freeSpins>0||hasDailySpin();}
+  function freeSpinDisplay(){return state.unlimitedSpins?'unlimintos':String(state.freeSpins);}
   function refreshDaily(){
-    const ready=dailyAvailable();els.rewardDot.classList.toggle('hidden',!ready);els.spin.disabled=!ready;els.spin.textContent=ready?'SPIN':'DONE';els.rewardHeadline.textContent=ready?'Your reward is ready!':'Come back tomorrow!';els.rewardSubtext.textContent=ready?'Spin once per day for Froggy, skins, or lucky charms.':`Day ${state.streak} claimed. Your streak is safe.`;els.streakLabel.textContent=Math.max(1,state.streak);
+    const ready=dailyAvailable(),unlimited=state.unlimitedSpins,daily=hasDailySpin(),free=state.freeSpins;
+    els.rewardDot.classList.toggle('hidden',!ready);els.spin.disabled=!ready||wheelSpinning;
+    els.freeSpinCounter.textContent=freeSpinDisplay();
+    els.spin.querySelector('span').textContent=wheelSpinning?'SPINNING':ready?'SPIN':'DONE';
+    els.spin.querySelector('small').textContent=wheelSpinning?'GOOD LUCK':unlimited?'UNLIMITED':daily?'DAILY':free>0?`FREE ×${free}`:'TOMORROW';
+    els.rewardHeadline.textContent=unlimited?'Unlimited spins unlocked!':daily?'Your daily reward is ready!':free>0?`${free} free spin${free===1?'':'s'} ready!`:'Come back tomorrow!';
+    els.rewardSubtext.textContent=unlimited?'Spin as often as you like. The free-spin counter shows unlimintos.':daily?'Your daily spin is ready. Extra promo spins are shown in the counter above.':free>0?'Each tap consumes one free spin after your daily spin has been used.':`Day ${state.streak} claimed. Your streak is safe.`;
+    els.streakLabel.textContent=Math.max(1,state.streak);
     els.streakDays.innerHTML=Array.from({length:7},(_,i)=>`<div class="streak-day ${i<Math.min(state.streak,7)?'claimed':''} ${i===Math.min(state.streak,7)-1?'today':''}">${i===6?'🎁':i+1}</div>`).join('');
   }
 
+  function rewardFromSegment(index,lockedFrogs){
+    const segment=WHEEL_SEGMENTS[index];
+    if(segment.kind==='skin'){
+      if(lockedFrogs.length)return{type:'skin',item:lockedFrogs[Math.floor(Math.random()*lockedFrogs.length)]};
+      return{type:'froggy',amount:2000};
+    }
+    if(segment.kind==='lucky')return{type:'lucky',amount:segment.amount};
+    return{type:'froggy',amount:segment.amount};
+  }
+
   function pickDailyReward(){
-    const nextStreak=state.lastDaily===yesterdayKey()?state.streak+1:1;const lockedFrogs=FROGS.filter(f=>!state.unlockedFrogs.includes(f.id)&&state.level>=f.level);if(nextStreak%7===0&&lockedFrogs.length)return{type:'skin',item:lockedFrogs[Math.floor(Math.random()*lockedFrogs.length)]};
-    const r=Math.random();if(r<.26)return{type:'froggy',amount:300};if(r<.48)return{type:'froggy',amount:500};if(r<.64)return{type:'lucky',amount:3};if(r<.78)return{type:'froggy',amount:750};if(r<.9&&lockedFrogs.length)return{type:'skin',item:lockedFrogs[Math.floor(Math.random()*lockedFrogs.length)]};return{type:'froggy',amount:1000};
+    const nextStreak=state.unlimitedSpins?1:(state.lastDaily===yesterdayKey()?state.streak+1:1);
+    const lockedFrogs=FROGS.filter(f=>!state.unlockedFrogs.includes(f.id)&&state.level>=f.level);
+    if(nextStreak%7===0&&lockedFrogs.length)return{index:4,reward:{type:'skin',item:lockedFrogs[Math.floor(Math.random()*lockedFrogs.length)]}};
+    const index=Math.floor(Math.random()*WHEEL_SEGMENTS.length);
+    return{index,reward:rewardFromSegment(index,lockedFrogs)};
   }
 
   function spinDaily(){
-    if(!dailyAvailable())return;audio.unlock();els.spin.disabled=true;const reward=pickDailyReward();state.wheelRotation+=1440+Math.floor(Math.random()*8)*45;els.wheelDisc.style.transform=`rotate(${state.wheelRotation}deg)`;audio.reward();haptic([10,60,10]);setTimeout(()=>claimDaily(reward),TEST_MODE?1:4050);
+    if(!dailyAvailable()||wheelSpinning)return;wheelSpinning=true;currentSpinSource=state.unlimitedSpins?'unlimited':hasDailySpin()?'daily':'free';audio.unlock();els.spin.disabled=true;els.spin.querySelector('span').textContent='SPINNING';els.spin.querySelector('small').textContent='GOOD LUCK';
+    const result=pickDailyReward(),step=360/WHEEL_SEGMENTS.length,center=result.index*step+step/2,current=((state.wheelRotation%360)+360)%360,target=(360-center)%360,delta=(target-current+360)%360;
+    state.wheelRotation+=1440+delta;els.wheelDisc.style.transform=`rotate(${state.wheelRotation}deg)`;audio.reward();haptic([10,60,10]);setTimeout(()=>claimDaily(result.reward),TEST_MODE?1:4050);
   }
   function claimDaily(reward){
-    const previous=state.lastDaily;state.streak=previous===yesterdayKey()?state.streak+1:1;state.lastDaily=todayKey();let title,text;
-    if(reward.type==='froggy'){state.balance+=reward.amount;title=`${money(reward.amount)} Froggy!`;text='Added to your virtual balance.';}
+    if(currentSpinSource===null)currentSpinSource=state.unlimitedSpins?'unlimited':hasDailySpin()?'daily':'free';
+    wheelSpinning=false;const previous=state.lastDaily;if(currentSpinSource==='daily'){state.streak=previous===yesterdayKey()?state.streak+1:1;state.lastDaily=todayKey();}else if(currentSpinSource==='free'){state.freeSpins=Math.max(0,state.freeSpins-1);}currentSpinSource=null;let title,text;
+    if(reward.type==='froggy'){state.balance+=reward.amount;title=reward.amount===50000?'JACKPOT — 50,000 Froggy!':`${money(reward.amount)} Froggy!`;text=reward.amount===50000?'You landed on the golden jackpot slice. Ribbit-rich!':'Added to your virtual balance.';}
     else if(reward.type==='lucky'){state.luckyCharges+=reward.amount;title='Lucky Charm!';text=`The next ${reward.amount} jumps each get 5% less risk.`;}
     else{if(!state.unlockedFrogs.includes(reward.item.id))state.unlockedFrogs.push(reward.item.id);title=`${reward.item.name} unlocked!`;text='Find it in your frog collection.';}
-    addXp(30);audio.reward();confettiBurst(70);els.rewardResultTitle.textContent=title;els.rewardResultText.textContent=text;refresh();openModal(els.rewardModal);
+    addXp(30);audio.reward();confettiBurst(reward.type==='froggy'&&reward.amount===50000?180:70);if(reward.type==='froggy'&&reward.amount===50000){screenFeedback('win');haptic([30,40,30,40,80]);}els.rewardResultTitle.textContent=title;els.rewardResultText.textContent=text;refresh();openModal(els.rewardModal);
   }
 
   function toggleSound(){state.sound=!state.sound;audio.enabled=state.sound;if(state.sound)audio.tap();refresh();}
-  function resetProgress(){if(!confirm('Reset all Froggy, skins, lakes, stats, and daily progress?'))return;state=deepClone(DEFAULT_STATE);localStorage.removeItem(STORAGE_KEY);scene.reset();refresh();renderCollection();setStatus('Fresh pond, fresh start.');navigate('play');}
+  function resetProgress(){if(!confirm('Reset all Froggy, skins, lakes, stats, and daily progress?'))return;wheelSpinning=false;currentSpinSource=null;state=deepClone(DEFAULT_STATE);localStorage.removeItem(STORAGE_KEY);scene.reset();renderWheel();refresh();renderCollection();setPromoMessage('Enter a valid code to reveal its reward.');setStatus('Fresh pond, fresh start.');navigate('play');}
 
   function installGame(){
     if(installPrompt){installPrompt.prompt();installPrompt.userChoice.finally(()=>{installPrompt=null;els.installButton.classList.add('hidden');});}
@@ -380,6 +582,7 @@
     document.querySelectorAll('.segment').forEach(b=>b.addEventListener('click',()=>{collectionMode=b.dataset.collection;document.querySelectorAll('.segment').forEach(x=>x.classList.toggle('active',x===b));renderCollection();audio.tap();}));
     els.collectionGrid.addEventListener('click',e=>{const b=e.target.closest('[data-collection-action]');if(b)collectionAction(b.dataset.collectionAction);});
     els.spin.addEventListener('click',spinDaily);els.installButton.addEventListener('click',installGame);
+    els.promoForm.addEventListener('submit',e=>{e.preventDefault();redeemPromo(els.promoInput.value);});
     document.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('click',closeModal));els.modalBackdrop.addEventListener('click',e=>{if(e.target===els.modalBackdrop)closeModal();});
     window.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();state.roundActive?jump():startRound();}if(e.code==='Escape')state.roundActive?cashOut():closeModal();});
     window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;els.installButton.classList.remove('hidden');});
@@ -396,17 +599,20 @@
       state=deepClone(DEFAULT_STATE);refresh();
       document.querySelector('[data-bet="250"]').click();if(state.bet!==250)throw new Error('bet button failed');
       els.start.click();if(!state.roundActive||state.balance!==750)throw new Error('start button failed');
-      forcedOutcome=true;els.jumpButton.click();await new Promise(r=>setTimeout(r,80));if(state.jump!==1||!state.roundActive)throw new Error('jump button failed');
+      forcedOutcome=true;els.jumpButton.click();await new Promise(r=>setTimeout(r,500));if(state.jump!==1||!state.roundActive)throw new Error('jump button failed');
       els.cash.click();await new Promise(r=>setTimeout(r,20));if(state.roundActive||state.balance<=750)throw new Error('cash out failed');closeModal();
       const before=state.balance;claimDaily({type:'froggy',amount:500});if(state.balance!==before+500||dailyAvailable())throw new Error('daily reward failed');closeModal();
+      state.lastDaily='';state.xp=nextXp()-1;const beforeLevel=state.balance,expectedLevelBonus=levelBonusFor(state.level+1);addXp(1);if(state.balance!==beforeLevel+expectedLevelBonus)throw new Error('level bonus failed');
+      state=deepClone(DEFAULT_STATE);refresh();const promoStart=state.balance;if(!redeemPromo('50000')||state.balance!==promoStart+50000)throw new Error('50000 promo failed');if(!redeemPromo('unlockall')||state.unlockedFrogs.length!==FROGS.length)throw new Error('unlockall promo failed');if(!redeemPromo('10')||state.freeSpins!==10)throw new Error('10 promo failed');const levelBeforeFive=state.level;if(!redeemPromo('5')||state.level!==levelBeforeFive*5)throw new Error('5 promo failed');if(!redeemPromo('spinall')||!state.unlimitedSpins||freeSpinDisplay()!=='unlimintos'||!dailyAvailable())throw new Error('spinall promo failed');if(!redeemPromo('imtheowner')||state.safeRunCredits!==1)throw new Error('owner promo failed');state.bet=100;startRound();forcedOutcome=false;jump();await new Promise(r=>setTimeout(r,500));if(state.jump!==1||!state.roundActive)throw new Error('owner safe round failed');state.roundActive=false;state.roundSafe=false;closeModal();
+      if(WHEEL_SEGMENTS.length!==10||WHEEL_SEGMENTS.filter(x=>x.amount===50000).length!==1)throw new Error('wheel setup failed');if(FROGS[FROGS.length-1].id!=='owner'||FROGS[FROGS.length-1].cost!==1000000000||FROGS[FROGS.length-1].level!==20000)throw new Error('owner frog setup failed');
       state.level=3;state.balance=5000;collectionMode='frogs';collectionAction('king');if(state.selectedFrog!=='king'||!state.unlockedFrogs.includes('king'))throw new Error('collection failed');
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: bet, start, jump, cash-out, rewards, and unlocks';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: gameplay, promos, 10 free spins, hidden safe run, unlimintos mode, premium character art, owner frog, ×5 level promo, level bonuses, wheel, and unlocks';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 
-  bind();setupInstall();refresh();renderCollection();scene.reset();
+  renderWheel();bind();setupInstall();refresh();renderCollection();scene.reset();
   if(!state.tutorialSeen&&!TEST_MODE){state.tutorialSeen=true;saveState();setTimeout(()=>openModal(els.howToModal),600);}
   if(TEST_MODE)runSelfTest();
 
-  window.FroggyGame={getState:()=>deepClone(state),selectBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,spinDaily,reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();refresh();}};
+  window.FroggyGame={getState:()=>deepClone(state),selectBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,spinDaily,redeemPromo,levelBonusFor,wheelSegments:deepClone(WHEEL_SEGMENTS),reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();renderWheel();refresh();}};
 })();

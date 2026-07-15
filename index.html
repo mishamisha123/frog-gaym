@@ -98,21 +98,22 @@
       <section id="rewardsScreen" class="screen" aria-label="Daily rewards">
         <div class="section-heading">
           <div><small>COME BACK DAILY</small><h1>Froggy Rewards</h1></div>
-          <div class="streak-pill">🔥 <b id="streakLabel">1</b> day streak</div>
+          <div class="reward-heading-actions">
+            <div class="free-spin-pill"><small>FREE SPINS</small><b id="freeSpinCounter">0</b></div>
+            <div class="streak-pill">🔥 <b id="streakLabel">1</b> day streak</div>
+          </div>
         </div>
         <div class="reward-hero glass">
           <div class="reward-copy">
             <small>DAILY SPIN</small>
             <h2 id="rewardHeadline">Your reward is ready!</h2>
-            <p id="rewardSubtext">Spin once per day for Froggy, skins, or lucky charms.</p>
+            <p id="rewardSubtext">Every slice shows its prize—including a golden 50,000 Froggy jackpot slice.</p>
+            <div class="jackpot-note"><span>★</span><b>50,000 F JACKPOT</b><small>1 in 10 daily spins</small></div>
           </div>
           <div id="wheel" class="reward-wheel" aria-label="Daily reward wheel">
             <div class="wheel-pointer">▼</div>
-            <div id="wheelDisc" class="wheel-disc">
-              <span style="--i:0">300</span><span style="--i:1">🍀</span><span style="--i:2">500</span><span style="--i:3">🐸</span>
-              <span style="--i:4">750</span><span style="--i:5">🍀</span><span style="--i:6">1K</span><span style="--i:7">✨</span>
-            </div>
-            <button id="spinButton" class="spin-button pressable">SPIN</button>
+            <div id="wheelDisc" class="wheel-disc" aria-label="Prize slices"></div>
+            <button id="spinButton" class="spin-button" type="button"><span>SPIN</span><small>DAILY</small></button>
           </div>
         </div>
         <div class="calendar-card glass">
@@ -121,17 +122,55 @@
         </div>
       </section>
 
+
+      <section id="promoScreen" class="screen" aria-label="Promo codes">
+        <div class="section-heading">
+          <div><small>SECRET POND</small><h1>Promo Codes</h1></div>
+          <span class="promo-vault-chip">🎟️ <b id="promoUsedCount">0</b> redeemed</span>
+        </div>
+
+        <div class="promo-hero glass">
+          <div class="promo-ticket-art" aria-hidden="true">
+            <span>★</span><b>FROGGY</b><small>VIP PASS</small>
+          </div>
+          <div class="promo-copy">
+            <small>HAVE A SECRET CODE?</small>
+            <h2>Unlock a pond surprise.</h2>
+            <p>Promo codes are case-insensitive and can be redeemed once per saved game.</p>
+          </div>
+
+          <form id="promoForm" class="promo-form" autocomplete="off">
+            <label for="promoInput">PROMO CODE</label>
+            <div class="promo-entry-row">
+              <input id="promoInput" type="text" maxlength="32" inputmode="text" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="ENTER CODE" aria-describedby="promoMessage" />
+              <button id="promoRedeemButton" class="promo-redeem pressable" type="submit"><span>REDEEM</span><small>Activate</small></button>
+            </div>
+          </form>
+          <p id="promoMessage" class="promo-message" role="status" aria-live="polite">Enter a valid code to reveal its reward.</p>
+        </div>
+
+        <div class="promo-status-grid">
+          <article class="promo-status-card glass"><span class="promo-status-icon">🛡️</span><small>OWNER PASS</small><b id="promoSafeStatus">Not active</b><p>Protects one complete round while the normal risk display remains unchanged.</p></article>
+          <article class="promo-status-card glass"><span class="promo-status-icon">🎡</span><small>REWARD WHEEL</small><b id="promoSpinStatus">0 free spins</b><p>Use code 10 for ten extra spins. Unlimited mode shows as “unlimintos”.</p></article>
+          <article class="promo-status-card glass"><span class="promo-status-icon">🐸</span><small>CHARACTERS</small><b id="promoFrogStatus">1 / 6 frogs</b><p>See every owned character in the Collection tab.</p></article>
+          <article class="promo-status-card glass"><span class="promo-status-icon">🪙</span><small>BONUS FROGGY</small><b id="promoCoinStatus">No promo claimed</b><p>Coin promo rewards are added directly to the saved balance.</p></article>
+        </div>
+
+        <p class="virtual-note">Promo rewards affect only fictional in-game Froggy currency and progression.</p>
+      </section>
+
       <section id="statsScreen" class="screen" aria-label="Stats and settings">
         <div class="section-heading"><div><small>PLAYER PROFILE</small><h1>Stats & Settings</h1></div></div>
         <div class="profile-hero glass">
-          <div id="bigProfileFrog" class="big-profile-frog">🐸</div>
-          <div><small>CURRENT FROG</small><h2 id="currentFrogName">Classic Frog</h2><p>Keep leaping to level up and unlock new ponds.</p></div>
+          <div id="bigProfileFrog" class="big-profile-frog" aria-label="Selected frog"></div>
+          <div><small>CURRENT FROG</small><h2 id="currentFrogName">Classic Frog</h2><p>Every level awards a growing Froggy coin bonus.</p></div>
         </div>
         <div class="stats-grid">
           <div class="stat-card glass"><small>TOTAL JUMPS</small><b id="totalJumpsStat">0</b></div>
           <div class="stat-card glass"><small>BEST STREAK</small><b id="bestJumpStat">0</b></div>
           <div class="stat-card glass"><small>BIGGEST CASH-OUT</small><b id="biggestWinStat">0 F</b></div>
           <div class="stat-card glass"><small>ROUNDS PLAYED</small><b id="roundsStat">0</b></div>
+          <div class="stat-card glass level-bonus-card"><small>NEXT LEVEL BONUS</small><b id="nextLevelBonusStat">550 F</b></div>
         </div>
         <div class="settings-list glass">
           <button id="settingsSound" class="settings-row pressable"><span>🔊 Sound effects</span><b>On</b></button>
@@ -147,8 +186,14 @@
       <button class="nav-button active pressable" data-screen="play"><span>🐸</span><small>Play</small></button>
       <button class="nav-button pressable" data-screen="collection"><span>🎒</span><small>Collection</small></button>
       <button class="nav-button pressable" data-screen="rewards"><span>🎁</span><small>Rewards</small><i id="rewardDot" class="notification-dot"></i></button>
+      <button class="nav-button pressable" data-screen="promo"><span>🎟️</span><small>Promo</small></button>
       <button class="nav-button pressable" data-screen="stats"><span>🏆</span><small>Profile</small></button>
     </nav>
+
+    <div id="levelToast" class="level-toast" role="status" aria-live="polite">
+      <div class="level-toast-burst">★</div>
+      <div><small>LEVEL UP</small><b id="levelToastTitle">Level 2</b><span id="levelToastBonus">+550 F</span></div>
+    </div>
 
     <div id="modalBackdrop" class="modal-backdrop hidden">
       <div id="resultModal" class="modal-card result-modal hidden">

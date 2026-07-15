@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Owner Frog">
+<defs>
+  <radialGradient id="halo" cx="32%" cy="18%" r="78%"><stop offset="0" stop-color="#e8ff9b" stop-opacity=".95"/><stop offset=".42" stop-color="#8ad467" stop-opacity=".65"/><stop offset="1" stop-color="#4f9d50" stop-opacity="0"/></radialGradient>
+  <linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#8ad467"/><stop offset="1" stop-color="#4f9d50"/></linearGradient>
+  <filter id="shadow" x="-40%" y="-40%" width="180%" height="190%"><feDropShadow dx="0" dy="16" stdDeviation="12" flood-color="#062d31" flood-opacity=".34"/></filter>
+  <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="12"/></filter>
+  <linearGradient id="shine" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff" stop-opacity=".8"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+</defs>
+<ellipse cx="256" cy="470" rx="150" ry="24" fill="#073d47" opacity=".22" filter="url(#soft)"/>
+<circle cx="170" cy="128" r="190" fill="url(#halo)" opacity=".62"/>
+<g filter="url(#shadow)">
+<!-- Photo-inspired Owner Frog: short dark hair, heavy-lidded brown eyes, straight brows, long face, subtle stubble and black shirt. -->
+<path d="M109 426Q112 312 172 285L256 324 340 285Q400 312 403 426Z" fill="#171b20" stroke="#0c1014" stroke-width="16"/>
+<path d="M171 293Q256 337 341 293L322 445H190Z" fill="#20262d"/>
+<g stroke="#254b37" stroke-width="14" stroke-linejoin="round">
+ <ellipse cx="139" cy="414" rx="93" ry="42" fill="#4e9f4d"/><ellipse cx="373" cy="414" rx="93" ry="42" fill="#4e9f4d"/>
+ <ellipse cx="256" cy="340" rx="116" ry="104" fill="url(#body)"/>
+ <path d="M120 205Q123 118 190 99Q256 64 322 99Q389 118 392 205Q399 289 337 321Q256 363 175 321Q113 289 120 205Z" fill="url(#body)"/>
+ <ellipse cx="175" cy="135" rx="58" ry="67" fill="#79c75c"/><ellipse cx="337" cy="135" rx="58" ry="67" fill="#79c75c"/>
+</g>
+<!-- cropped dark hair -->
+<path d="M124 167Q119 99 151 65L167 84 185 45 207 72 233 34 257 69 286 31 305 72 336 48 348 83 379 64 391 171Q353 138 321 144Q286 123 256 134Q219 116 188 143Q156 136 124 167Z" fill="#171a1f" stroke="#0a0d11" stroke-width="15" stroke-linejoin="round"/>
+<path d="M143 152Q172 134 210 143M302 143Q340 134 369 152" fill="none" stroke="#242a31" stroke-width="11"/>
+<!-- thick level eyebrows -->
+<path d="M145 154Q177 143 214 153M298 153Q335 143 367 154" fill="none" stroke="#20231f" stroke-width="18" stroke-linecap="round"/>
+<!-- heavy-lidded brown eyes -->
+<path d="M139 164Q178 144 220 164Q179 197 139 164ZM292 164Q334 144 373 164Q333 197 292 164Z" fill="#f7f2e6" stroke="#254b37" stroke-width="11"/>
+<ellipse cx="181" cy="169" rx="22" ry="25" fill="#604536"/><ellipse cx="331" cy="169" rx="22" ry="25" fill="#604536"/>
+<ellipse cx="181" cy="172" rx="10" ry="16" fill="#171b1b"/><ellipse cx="331" cy="172" rx="10" ry="16" fill="#171b1b"/>
+<circle cx="173" cy="160" r="6" fill="#fff"/><circle cx="323" cy="160" r="6" fill="#fff"/>
+<!-- longer central snout/nose suggestion -->
+<path d="M256 181Q242 213 249 235Q256 245 266 235" fill="none" stroke="#326044" stroke-width="9" stroke-linecap="round"/>
+<circle cx="227" cy="236" r="6" fill="#254b37"/><circle cx="285" cy="236" r="6" fill="#254b37"/>
+<!-- deadpan mouth and compressed chin -->
+<path d="M202 270Q256 259 310 270" fill="none" stroke="#203d31" stroke-width="13" stroke-linecap="round"/>
+<path d="M203 289Q256 321 309 289Q299 338 256 346Q213 338 203 289Z" fill="#5ca44f" opacity=".68"/>
+<!-- subtle stubble dots -->
+<g fill="#294c3d" opacity=".45"><circle cx="211" cy="286" r="3"/><circle cx="229" cy="295" r="3"/><circle cx="247" cy="300" r="3"/><circle cx="266" cy="300" r="3"/><circle cx="284" cy="295" r="3"/><circle cx="302" cy="286" r="3"/><circle cx="219" cy="313" r="3"/><circle cx="239" cy="320" r="3"/><circle cx="260" cy="322" r="3"/><circle cx="282" cy="317" r="3"/><circle cx="298" cy="309" r="3"/></g>
+<path d="M173 319Q256 357 339 319" fill="none" stroke="#eaf5d6" stroke-width="9" opacity=".22"/>
+</g>
+</svg>

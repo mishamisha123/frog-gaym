@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Ninja Frog">
+<defs>
+  <radialGradient id="halo" cx="32%" cy="18%" r="78%"><stop offset="0" stop-color="#c8fff0" stop-opacity=".95"/><stop offset=".42" stop-color="#344348" stop-opacity=".65"/><stop offset="1" stop-color="#161f24" stop-opacity="0"/></radialGradient>
+  <linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#344348"/><stop offset="1" stop-color="#161f24"/></linearGradient>
+  <filter id="shadow" x="-40%" y="-40%" width="180%" height="190%"><feDropShadow dx="0" dy="16" stdDeviation="12" flood-color="#062d31" flood-opacity=".34"/></filter>
+  <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="12"/></filter>
+  <linearGradient id="shine" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff" stop-opacity=".8"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+</defs>
+<ellipse cx="256" cy="470" rx="150" ry="24" fill="#073d47" opacity=".22" filter="url(#soft)"/>
+<circle cx="170" cy="128" r="190" fill="url(#halo)" opacity=".62"/>
+<g filter="url(#shadow)">
+<path d="M73 137Q229 59 439 132L407 180Q220 116 78 194Z" fill="#d62839" stroke="#4b131d" stroke-width="14"/><path d="M395 135 475 82 432 181Z" fill="#d62839" stroke="#4b131d" stroke-width="14"/>
+<g stroke="#101d24" stroke-width="14" stroke-linejoin="round">
+ <ellipse cx="138" cy="407" rx="95" ry="43" fill="#242f34"/><ellipse cx="374" cy="407" rx="95" ry="43" fill="#242f34"/>
+ <ellipse cx="256" cy="346" rx="126" ry="113" fill="#28363a"/><path d="M183 312h146l34 116H149Z" fill="#0d1519"/>
+ <path d="M109 216Q116 122 193 104Q256 67 319 104Q396 122 403 216Q410 294 338 323Q256 354 174 323Q102 294 109 216Z" fill="url(#body)"/>
+ <ellipse cx="174" cy="140" rx="62" ry="70" fill="#222e33"/><ellipse cx="338" cy="140" rx="62" ry="70" fill="#222e33"/>
+ <path d="M135 141Q174 114 219 143" fill="#f9fff3"/><path d="M293 143Q338 114 377 141" fill="#f9fff3"/>
+ <ellipse cx="181" cy="145" rx="20" ry="19" fill="#d64a3c"/><ellipse cx="331" cy="145" rx="20" ry="19" fill="#d64a3c"/>
+ <path d="M124 192Q256 232 388 192L378 285Q256 324 134 285Z" fill="#0d1519"/>
+</g>
+<path d="M189 329 256 373 323 329" fill="none" stroke="#d62839" stroke-width="18"/></g>
+</svg>
