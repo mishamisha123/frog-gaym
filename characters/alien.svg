@@ -1,14 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Alien Frog">
 <defs>
-  <radialGradient id="halo" cx="32%" cy="18%" r="78%"><stop offset="0" stop-color="#e8ffc1" stop-opacity=".95"/><stop offset=".42" stop-color="#b7ff67" stop-opacity=".65"/><stop offset="1" stop-color="#5dc84a" stop-opacity="0"/></radialGradient>
-  <linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#b7ff67"/><stop offset="1" stop-color="#5dc84a"/></linearGradient>
-  <filter id="shadow" x="-40%" y="-40%" width="180%" height="190%"><feDropShadow dx="0" dy="16" stdDeviation="12" flood-color="#062d31" flood-opacity=".34"/></filter>
-  <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="12"/></filter>
-  <linearGradient id="shine" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff" stop-opacity=".8"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#b7ff67"/><stop offset="1" stop-color="#5dc84a"/></linearGradient>
 </defs>
-<ellipse cx="256" cy="470" rx="150" ry="24" fill="#073d47" opacity=".22" filter="url(#soft)"/>
-<circle cx="170" cy="128" r="190" fill="url(#halo)" opacity=".62"/>
-<g filter="url(#shadow)">
+<ellipse cx="256" cy="470" rx="150" ry="24" fill="#073d47" opacity=".22"/>
+<g>
 <path d="M180 115Q132 38 111 83" fill="none" stroke="#215b3d" stroke-width="18"/><path d="M332 115Q380 38 401 83" fill="none" stroke="#215b3d" stroke-width="18"/>
 <circle cx="103" cy="72" r="44" fill="#9bff5b" stroke="#215b3d" stroke-width="14"/><circle cx="409" cy="72" r="44" fill="#9bff5b" stroke="#215b3d" stroke-width="14"/><circle cx="103" cy="72" r="29" fill="#101d36"/><circle cx="409" cy="72" r="29" fill="#101d36"/><circle cx="90" cy="58" r="10" fill="#fff"/><circle cx="396" cy="58" r="10" fill="#fff"/>
 <g stroke="#215b3d" stroke-width="14" stroke-linejoin="round">

@@ -150,7 +150,7 @@ This update adds stronger game feel without using deceptive gambling dark patter
 
 ## Consolidated v11 deployment check
 
-This build includes an unmistakable yellow badge reading **v15 · 20 JUMPS** above the start button.
+This build includes an unmistakable yellow badge reading **v16 · 20 JUMPS** above the start button.
 
 After uploading all files to GitHub Pages, visit:
 
@@ -160,7 +160,7 @@ That helper unregisters old service workers and removes stale cached game files,
 
 The correct build must visibly show:
 
-- `v15 · 20 JUMPS`
+- `v16 · 20 JUMPS`
 - Jump display `0 / 20`
 - Fixed bets: 50, 100, 250, 500
 - Bet tools: ÷2, ×2, CUSTOM, MAX
@@ -236,3 +236,28 @@ Debt uses fictional Froggy currency only.
 - Custom loans may be entered up to the currently available credit limit.
 
 After deploying v15, visit `refresh.html` once to remove the older cached version.
+
+
+## v16 mobile cockpit and character cleanup
+
+### One-screen mobile play layout
+
+- The Play screen sits between a compact header and navigation bar.
+- Before a round, the lake and all eight bet controls fit in the same phone viewport:
+  - 50, 100, 250, 500
+  - ÷2, ×2, CUSTOM, MAX
+- The custom amount opens in a bottom sheet and never pushes the lake or Start button away.
+- During a live round, setup controls disappear and the lower deck becomes a large Jump/Cash dock.
+- The lake expands into the space recovered from the hidden betting controls.
+- Milestone cards no longer displace mobile controls.
+- Short iPhones use a denser version without removing any betting option.
+
+### Clean character art
+
+- Removed every SVG halo.
+- Removed SVG blur and drop-shadow filters that could become rectangular blocks in Mobile Safari.
+- Removed the forehead shine overlay.
+- Removed CSS portrait glow and drop-shadow effects.
+- Collection, Profile, header, and gameplay portraits now use clean flat shading.
+
+After deployment, visit `refresh.html` once to clear the older cached build.

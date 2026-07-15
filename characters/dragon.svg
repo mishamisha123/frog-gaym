@@ -1,14 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Dragon Frog">
 <defs>
-  <radialGradient id="halo" cx="32%" cy="18%" r="78%"><stop offset="0" stop-color="#ffe7a6" stop-opacity=".95"/><stop offset=".42" stop-color="#ff9c42" stop-opacity=".65"/><stop offset="1" stop-color="#e75235" stop-opacity="0"/></radialGradient>
-  <linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ff9c42"/><stop offset="1" stop-color="#e75235"/></linearGradient>
-  <filter id="shadow" x="-40%" y="-40%" width="180%" height="190%"><feDropShadow dx="0" dy="16" stdDeviation="12" flood-color="#062d31" flood-opacity=".34"/></filter>
-  <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="12"/></filter>
-  <linearGradient id="shine" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff" stop-opacity=".8"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ff9c42"/><stop offset="1" stop-color="#e75235"/></linearGradient>
 </defs>
-<ellipse cx="256" cy="470" rx="150" ry="24" fill="#073d47" opacity=".22" filter="url(#soft)"/>
-<circle cx="170" cy="128" r="190" fill="url(#halo)" opacity=".62"/>
-<g filter="url(#shadow)">
+<ellipse cx="256" cy="470" rx="150" ry="24" fill="#073d47" opacity=".22"/>
+<g>
 <path d="M135 309Q44 226 60 368Q103 328 149 368M377 309Q468 226 452 368Q409 328 363 368" fill="#ef6a3e" stroke="#7c2d2a" stroke-width="15" stroke-linejoin="round"/>
 <g stroke="#7c2d2a" stroke-width="14" stroke-linejoin="round">
  <ellipse cx="135" cy="407" rx="94" ry="43" fill="#e85d35"/><ellipse cx="377" cy="407" rx="94" ry="43" fill="#e85d35"/>

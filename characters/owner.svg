@@ -1,12 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Owner Frog">
 <defs>
 <linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#8ad467"/><stop offset="1" stop-color="#4f9d50"/></linearGradient>
-  <filter id="shadow" x="-40%" y="-40%" width="180%" height="190%"><feDropShadow dx="0" dy="16" stdDeviation="12" flood-color="#062d31" flood-opacity=".34"/></filter>
-  <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="12"/></filter>
-  <linearGradient id="shine" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff" stop-opacity=".8"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
 </defs>
-<ellipse cx="256" cy="470" rx="150" ry="24" fill="#073d47" opacity=".22" filter="url(#soft)"/>
-<g filter="url(#shadow)">
+<ellipse cx="256" cy="470" rx="150" ry="24" fill="#073d47" opacity=".22"/>
+<g>
 <!-- Photo-inspired Owner Frog: short dark hair, heavy-lidded brown eyes, straight brows, long face, subtle stubble and black shirt. -->
 <path d="M109 426Q112 312 172 285L256 324 340 285Q400 312 403 426Z" fill="#171b20" stroke="#0c1014" stroke-width="16"/>
 <path d="M171 293Q256 337 341 293L322 445H190Z" fill="#20262d"/>

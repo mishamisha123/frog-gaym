@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=15" />
+  <link rel="stylesheet" href="styles.css?v=16" />
   <title>Froggy Leap Deluxe</title>
 </head>
 <body>
@@ -83,7 +83,7 @@
           </div>
 
           <form id="customBetRow" class="custom-bet-row hidden" autocomplete="off">
-            <label for="customBetInput"><small>CUSTOM BET</small><span>Enter any whole amount</span></label>
+            <div class="custom-bet-sheet-head"><label for="customBetInput"><small>CUSTOM BET</small><span>Enter any whole amount up to your balance</span></label><button id="customBetClose" class="custom-bet-close pressable" type="button" aria-label="Close custom bet">×</button></div>
             <div>
               <input id="customBetInput" type="number" min="50" step="1" inputmode="numeric" placeholder="e.g. 1337" />
               <button id="customBetApply" class="custom-bet-apply pressable" type="submit">SET BET</button>
@@ -91,7 +91,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v15 · 20 JUMPS</div>
+          <div class="build-version" aria-label="Installed game version">v16 · 20 JUMPS</div>
           <div class="run-meta"><span>20 lily pads</span><b>Up to 112.07×</b><span>96% base RTP</span></div>
 
           <div class="main-actions">
@@ -342,6 +342,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=15"></script>
+  <script src="app.js?v=16"></script>
 </body>
 </html>
