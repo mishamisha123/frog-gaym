@@ -1,5 +1,5 @@
-const CACHE='froggy-leap-v12-promo-pack';
-const CORE=['./','./index.html','./styles.css?v=12','./app.js?v=12','./manifest.webmanifest','./refresh.html','./icons/icon-192.png','./icons/icon-512.png','./characters/classic.svg','./characters/king.svg','./characters/robot.svg','./characters/ghost.svg','./characters/dragon.svg','./characters/dino.svg','./characters/ninja.svg','./characters/alien.svg','./characters/rockstar.svg','./characters/owner.svg'];
+const CACHE='froggy-leap-v15-manual-debt';
+const CORE=['./','./index.html','./styles.css?v=15','./app.js?v=15','./manifest.webmanifest','./refresh.html','./icons/icon-192.png','./icons/icon-512.png','./characters/classic.svg','./characters/king.svg','./characters/robot.svg','./characters/ghost.svg','./characters/dragon.svg','./characters/dino.svg','./characters/ninja.svg','./characters/alien.svg','./characters/rockstar.svg','./characters/owner.svg'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{

@@ -150,7 +150,7 @@ This update adds stronger game feel without using deceptive gambling dark patter
 
 ## Consolidated v11 deployment check
 
-This build includes an unmistakable yellow badge reading **v12 · 20 JUMPS** above the start button.
+This build includes an unmistakable yellow badge reading **v15 · 20 JUMPS** above the start button.
 
 After uploading all files to GitHub Pages, visit:
 
@@ -160,7 +160,7 @@ That helper unregisters old service workers and removes stale cached game files,
 
 The correct build must visibly show:
 
-- `v12 · 20 JUMPS`
+- `v15 · 20 JUMPS`
 - Jump display `0 / 20`
 - Fixed bets: 50, 100, 250, 500
 - Bet tools: ÷2, ×2, CUSTOM, MAX
@@ -189,3 +189,50 @@ Promo codes are case-insensitive.
 - `lifeguard` — adds 3 protected rounds
 
 To force GitHub Pages to replace an older cached build, visit `refresh.html` after deployment.
+
+
+## v13 fixes and promo updates
+
+- Removed the green Owner Frog halo that appeared as a rectangular block in Mobile Safari.
+- `lifeguard` is now reusable and adds three protected rounds per use.
+- `qoostommoney` is reusable. Enter it in the Promo tab, then type a positive whole-number Froggy amount into the prompt.
+- `5` now pays the cumulative coin reward for every level skipped by the multiplier.
+- Normal XP level-ups now use the same cumulative reward system, ensuring every gained level credits its Froggy bonus exactly once.
+- The balance uses a safe technical maximum of 9,000,000,000,000,000 Froggy to prevent JavaScript number corruption.
+
+
+## v14 fictional debt system
+
+The debt system only uses fictional Froggy currency.
+
+- Borrow 1,000, 5,000, 10,000, or 50,000 Froggy from the Profile tab.
+- Total debt is capped at 1,000,000 Froggy.
+- There is no interest.
+- Every five **completed rounds**, an installment equal to 10% of the current debt is due.
+- The installment is deducted automatically from the balance.
+- If the balance is too low, all available Froggy is paid and one level is removed.
+- The level cannot fall below level 1.
+- Unpaid debt remains outstanding.
+- Players may manually pay the next 10% installment or repay as much of the debt as their balance allows.
+- The Play screen shows the current debt and the number of rounds until the next installment.
+
+After deployment, use `refresh.html` once to remove the previous cached build.
+
+
+## v15 manual debt rules
+
+Debt uses fictional Froggy currency only.
+
+- Credit limit: `max(10,000, 10 × biggest cash-out)`.
+- A player with no meaningful cash-out history may still borrow up to 10,000 Froggy.
+- There is no additional gameplay cap; a technical JavaScript safe-number ceiling remains to protect save data.
+- After five completed rounds, a payment equal to 10% of the current debt becomes due.
+- The game does **not** deduct the payment automatically.
+- A red exclamation mark appears on the Profile navigation button and debt panel while payment is due.
+- The player must manually use **PAY DUE** or **REPAY ALL**.
+- Every additional completed round while the payment remains overdue removes one level.
+- At level 1, another missed-payment penalty resets the entire save to a fresh level-1, 1,000-Froggy start.
+- The overdue debt itself is unchanged until a manual payment is made or the save resets.
+- Custom loans may be entered up to the currently available credit limit.
+
+After deploying v15, visit `refresh.html` once to remove the older cached version.

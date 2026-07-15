@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=12" />
+  <link rel="stylesheet" href="styles.css?v=15" />
   <title>Froggy Leap Deluxe</title>
 </head>
 <body>
@@ -53,6 +53,7 @@
           </div>
 
           <div id="luckyBadge" class="lucky-badge hidden">🍀 Lucky charm: <b id="luckyCount">0</b></div>
+          <div id="debtBadge" class="debt-badge hidden">🏦 Debt <b id="debtBadgeAmount">0 F</b> · <span id="debtBadgeStatus">due in <b id="debtBadgeTurns">5</b></span></div>
           <button id="installButton" class="install-chip glass pressable hidden">＋ Install game</button>
         </div>
 
@@ -90,7 +91,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v12 · 20 JUMPS</div>
+          <div class="build-version" aria-label="Installed game version">v15 · 20 JUMPS</div>
           <div class="run-meta"><span>20 lily pads</span><b>Up to 112.07×</b><span>96% base RTP</span></div>
 
           <div class="main-actions">
@@ -172,7 +173,7 @@
           <div class="promo-copy">
             <small>HAVE A SECRET CODE?</small>
             <h2>Unlock a pond surprise.</h2>
-            <p>Promo codes are case-insensitive. Most are one-time rewards, while 5, 10, and 50000 are reusable.</p>
+            <p>Promo codes are case-insensitive. Codes 5, 10, 50000, lifeguard, and qoostommoney are reusable.</p>
           </div>
 
           <form id="promoForm" class="promo-form" autocomplete="off">
@@ -190,7 +191,7 @@
           <article class="promo-status-card glass"><span class="promo-status-icon">🎡</span><small>REWARD WHEEL</small><b id="promoSpinStatus">0 free spins</b><p>Use code 10 for ten extra spins. Unlimited mode shows as “unlimintos”.</p></article>
           <article class="promo-status-card glass"><span class="promo-status-icon">🐸</span><small>CHARACTERS</small><b id="promoFrogStatus">1 / 10 frogs</b><p>See every owned character in the Collection tab.</p></article>
           <article class="promo-status-card glass"><span class="promo-status-icon">🌊</span><small>LAKES</small><b id="promoLakeStatus">1 / 7 lakes</b><p>The code iwannaswim opens every lake theme.</p></article>
-          <article class="promo-status-card glass"><span class="promo-status-icon">🪙</span><small>BONUS FROGGY</small><b id="promoCoinStatus">Reusable 50K reward</b><p>The 50000 code can be entered repeatedly for fictional Froggy coins.</p></article>
+          <article class="promo-status-card glass"><span class="promo-status-icon">🪙</span><small>BONUS FROGGY</small><b id="promoCoinStatus">Reusable coin vaults</b><p>Use 50000 for a fixed reward or qoostommoney to enter a custom amount.</p></article>
         </div>
 
         <p class="virtual-note">Promo rewards affect only fictional in-game Froggy currency and progression.</p>
@@ -209,6 +210,52 @@
           <div class="stat-card glass"><small>ROUNDS PLAYED</small><b id="roundsStat">0</b></div>
           <div class="stat-card glass level-bonus-card"><small>NEXT LEVEL BONUS</small><b id="nextLevelBonusStat">550 F</b></div>
         </div>
+        <section class="debt-panel glass" aria-label="Froggy debt">
+          <div class="debt-panel-head">
+            <div><small>FROGGY CREDIT</small><h2>Debt & repayments</h2></div>
+            <div class="debt-head-status">
+              <span id="debtDueFlag" class="debt-due-flag hidden">! PAYMENT DUE</span>
+              <small>Fictional currency only</small>
+            </div>
+          </div>
+
+          <div class="debt-summary-grid">
+            <div><small>OUTSTANDING DEBT</small><b id="debtAmountLabel">0 F</b></div>
+            <div><small>PAYMENT AMOUNT</small><b id="debtInstallmentLabel">0 F</b></div>
+            <div><small>PAYMENT STATUS</small><b id="debtTurnsLabel">No debt</b></div>
+            <div><small>CREDIT LIMIT</small><b id="debtLimitLabel">10,000 F</b></div>
+            <div><small>AVAILABLE CREDIT</small><b id="debtAvailableLabel">10,000 F</b></div>
+          </div>
+
+          <p id="debtExplanation" class="debt-explanation">
+            Borrow Froggy with no interest. After five completed rounds, a 10% payment becomes due—but nothing is taken automatically.
+            Pay it manually before completing another round. Each completed round while overdue removes one level.
+            If another penalty would take you below level 1, the entire save resets and you start over.
+          </p>
+
+          <div id="loanButtons" class="loan-buttons">
+            <button type="button" class="loan-button pressable" data-loan="1000"><b>+1,000 F</b><small>Borrow</small></button>
+            <button type="button" class="loan-button pressable" data-loan="5000"><b>+5,000 F</b><small>Borrow</small></button>
+            <button type="button" class="loan-button pressable" data-loan="10000"><b>+10,000 F</b><small>Borrow</small></button>
+            <button type="button" class="loan-button pressable" data-loan="50000"><b>+50,000 F</b><small>Borrow</small></button>
+          </div>
+
+          <form id="customLoanForm" class="custom-loan-form">
+            <label for="customLoanInput">CUSTOM LOAN</label>
+            <div>
+              <input id="customLoanInput" type="number" min="1" step="1" inputmode="numeric" placeholder="Enter Froggy amount" />
+              <button id="customLoanButton" type="submit" class="pressable">BORROW</button>
+              <button id="maxLoanButton" type="button" class="pressable">MAX</button>
+            </div>
+          </form>
+
+          <div class="debt-actions">
+            <button id="repayInstallmentButton" type="button" class="debt-action pressable"><span>PAY DUE</span><small>Manual payment—never automatic</small></button>
+            <button id="repayAllButton" type="button" class="debt-action secondary pressable"><span>REPAY ALL</span><small>Use available balance</small></button>
+          </div>
+          <p id="debtMessage" class="debt-message" role="status" aria-live="polite">Credit limit: at least 10,000 F, or 10× your biggest cash-out.</p>
+        </section>
+
         <section class="session-panel glass">
           <div class="session-panel-head"><div><small>THIS SESSION</small><h2 id="pondRankLabel">Tadpole</h2></div><span>Fresh start every launch</span></div>
           <div class="session-grid">
@@ -240,7 +287,7 @@
       <button class="nav-button pressable" data-screen="collection"><span>🎒</span><small>Collection</small></button>
       <button class="nav-button pressable" data-screen="rewards"><span>🎁</span><small>Rewards</small><i id="rewardDot" class="notification-dot"></i></button>
       <button class="nav-button pressable" data-screen="promo"><span>🎟️</span><small>Promo</small></button>
-      <button class="nav-button pressable" data-screen="stats"><span>🏆</span><small>Profile</small></button>
+      <button class="nav-button pressable" data-screen="stats"><span>🏆</span><small>Profile</small><i id="debtDueDot" class="debt-alert hidden" aria-label="Debt payment due">!</i></button>
     </nav>
 
     <div id="levelToast" class="level-toast" role="status" aria-live="polite">
@@ -295,6 +342,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=12"></script>
+  <script src="app.js?v=15"></script>
 </body>
 </html>
