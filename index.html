@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=18" />
+  <link rel="stylesheet" href="styles.css?v=19" />
   <title>Froggy Leap Deluxe</title>
 </head>
 <body>
@@ -91,7 +91,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v18 · 15 JUMPS</div>
+          <div class="build-version" aria-label="Installed game version">v19 · 15 JUMPS</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -222,21 +222,33 @@
             <div><small>OUTSTANDING DEBT</small><b id="debtAmountLabel">0 F</b></div>
             <div><small>PAYMENT AMOUNT</small><b id="debtInstallmentLabel">0 F</b></div>
             <div><small>PAYMENT STATUS</small><b id="debtTurnsLabel">No debt</b></div>
-            <div><small>LEVEL CREDIT LIMIT</small><b id="debtLimitLabel">10,000 F</b></div>
-            <div><small>AVAILABLE CREDIT</small><b id="debtAvailableLabel">10,000 F</b></div>
+            <div><small>TOTAL CREDIT LIMIT</small><b id="debtLimitLabel">5,000 F</b></div>
+            <div><small>AVAILABLE CREDIT</small><b id="debtAvailableLabel">5,000 F</b></div>
           </div>
 
           <p id="debtExplanation" class="debt-explanation">
-            Borrow Froggy with no interest. After five completed rounds, a 10% payment becomes due—but nothing is taken automatically.
-            Pay it manually before completing another round. Each completed round while overdue removes one level.
-            If another penalty would take you below level 1, the entire save resets and you start over.
+            Credit is based on repayment history and verified paid gameplay—not levels, promo coins, free spins, protected rounds,
+            daily rewards, or level bonuses. The total limit is the smaller of your repayment tier and affordability limit.
+            A single loan is capped at 50% of available credit, with one loan allowed per five completed rounds.
+            Payments remain manual: after five completed rounds, 10% becomes due.
           </p>
 
+          <div class="credit-metrics-grid" aria-label="Credit calculation">
+            <div><small>REPAYMENT TIER</small><b id="creditTierLabel">Starter · 5,000 F</b></div>
+            <div><small>AFFORDABILITY</small><b id="creditAffordabilityLabel">5,000 F</b></div>
+            <div><small>MAX NEXT LOAN</small><b id="creditMaxLoanLabel">2,500 F</b></div>
+            <div><small>NEXT LOAN</small><b id="creditCooldownLabel">Ready</b></div>
+            <div><small>PAYMENT HISTORY</small><b id="creditHistoryLabel">0 on-time · 0 missed</b></div>
+            <div><small>VERIFIED EARNINGS</small><b id="creditEarningsLabel">0 F</b></div>
+            <div><small>RECENT MEDIANS</small><b id="creditMediansLabel">Bet 0 F · Cash 0 F</b></div>
+            <div><small>CREDIT FREEZE</small><b id="creditFreezeLabel">None</b></div>
+          </div>
+
           <div id="loanButtons" class="loan-buttons">
+            <button type="button" class="loan-button pressable" data-loan="500"><b>+500 F</b><small>Borrow</small></button>
             <button type="button" class="loan-button pressable" data-loan="1000"><b>+1,000 F</b><small>Borrow</small></button>
+            <button type="button" class="loan-button pressable" data-loan="2500"><b>+2,500 F</b><small>Borrow</small></button>
             <button type="button" class="loan-button pressable" data-loan="5000"><b>+5,000 F</b><small>Borrow</small></button>
-            <button type="button" class="loan-button pressable" data-loan="10000"><b>+10,000 F</b><small>Borrow</small></button>
-            <button type="button" class="loan-button pressable" data-loan="50000"><b>+50,000 F</b><small>Borrow</small></button>
           </div>
 
           <form id="customLoanForm" class="custom-loan-form">
@@ -252,7 +264,7 @@
             <button id="repayInstallmentButton" type="button" class="debt-action pressable"><span>PAY DUE</span><small>Manual payment—never automatic</small></button>
             <button id="repayAllButton" type="button" class="debt-action secondary pressable"><span>REPAY ALL</span><small>Use available balance</small></button>
           </div>
-          <p id="debtMessage" class="debt-message" role="status" aria-live="polite">Credit limit: at least 10,000 F, or 100× your current level.</p>
+          <p id="debtMessage" class="debt-message" role="status" aria-live="polite">Starter credit is 5,000 F. Higher limits require verified gameplay and on-time repayments.</p>
         </section>
 
         <section class="session-panel glass">
@@ -341,6 +353,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=18"></script>
+  <script src="app.js?v=19"></script>
 </body>
 </html>

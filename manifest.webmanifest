@@ -1,7 +1,7 @@
 {
   "name": "Froggy Leap Deluxe",
   "short_name": "Froggy Leap",
-  "description": "A polished 15-jump lily-pad game with textured character artwork embedded directly inside the app, level-based fictional credit, promo rewards and offline play.",
+  "description": "A polished 15-jump lily-pad game with transparent fictional credit based on repayment history and verified paid gameplay, embedded character art and offline play.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

@@ -150,7 +150,7 @@ This update adds stronger game feel without using deceptive gambling dark patter
 
 ## Consolidated v11 deployment check
 
-This build includes an unmistakable yellow badge reading **v18 · 15 JUMPS** above the start button.
+This build includes an unmistakable yellow badge reading **v19 · 15 JUMPS** above the start button.
 
 After uploading all files to GitHub Pages, visit:
 
@@ -160,7 +160,7 @@ That helper unregisters old service workers and removes stale cached game files,
 
 The correct build must visibly show:
 
-- `v18 · 15 JUMPS`
+- `v19 · 15 JUMPS`
 - Jump display `0 / 20`
 - Fixed bets: 50, 100, 250, 500
 - Bet tools: ÷2, ×2, CUSTOM, MAX
@@ -322,3 +322,52 @@ v18:
 - Requires no `characters` folder.
 - Replaces the crude emergency frog with a neutral `LOADING` marker.
 - Adds strict aspect-ratio and containment rules to prevent stretching or clipping.
+
+
+## v19 trust-based fictional credit
+
+The old level-based limit has been removed.
+
+### Repayment tiers
+
+| On-time payments | Tier | Maximum |
+|---:|---|---:|
+| 0 | Starter | 5,000 F |
+| 3 | Reliable | 10,000 F |
+| 8 | Established | 25,000 F |
+| 20 | Trusted | 50,000 F |
+| 40 | Prime | 100,000 F |
+| 75 | Pond Elite | 250,000 F |
+
+Three missed deadlines reduce the effective tier by one step. Every additional group of
+three missed deadlines applies another step of penalty.
+
+### Verified affordability
+
+Only ordinary paid rounds without protected-round insurance are counted.
+
+`affordability = max(5,000, min(20 × median recent bet, 6 × median recent cash-out, 25% × verified gameplay earnings))`
+
+The histories retain the latest 20 qualifying bets and latest 20 qualifying positive cash-outs.
+
+These never directly increase credit eligibility:
+
+- Promo codes and custom promo money
+- Free reward-wheel spins
+- Protected rounds
+- Daily rewards
+- Level rewards and level-multiplier codes
+- Collection unlocks or owner/admin rewards
+
+### Final limit and borrowing controls
+
+`total credit limit = min(effective repayment tier, affordability limit)`
+
+- Outstanding debt is subtracted from available credit.
+- A single new loan is capped at 50% of currently available credit.
+- Only one new loan may be taken per five completed rounds.
+- No new loan is allowed while a payment is due.
+- One missed deadline freezes credit increases.
+- A freeze requires three later on-time payments to clear.
+- Three missed deadlines reduce the repayment tier by one step.
+- Manual 10% installments, overdue level penalties and the level-1 reset remain unchanged.
