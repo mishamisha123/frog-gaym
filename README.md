@@ -8,7 +8,7 @@ A mobile-first, installable HTML5 game for GitHub Pages. It uses only HTML, CSS,
 - Choose bets of 50, 100, 250, 500, or MAX.
 - The redesigned frog crouches, launches in an arc, spins, blinks, and squash-stretches on landing.
 - Organic lily pads now use a **bright yellow NEXT arrow** and glowing destination ring instead of number blocks.
-- Ten increasingly risky jumps lead from **1.10×** to **12.00×**.
+- Twenty increasingly risky jumps use a **96% base RTP** curve, rising from about **1.01×** to **112.07×**.
 - Cash out after any successful jump, or risk the next lily pad.
 - Failed pads crack, sink, splash, shake the screen, and end the round.
 - Procedural water, flowers, particles, ripples, glows, confetti, haptics, and generated sound effects.
@@ -57,7 +57,7 @@ The address normally looks like:
 
 ## See the update on iPhone
 
-After GitHub finishes deploying, open the Pages link in Safari and refresh. If the Home Screen version still shows the old design, fully close it, open the Pages link once in Safari while online, then reopen the Home Screen app. The v4 service worker replaces the old cached files.
+After GitHub finishes deploying, open the Pages link in Safari and refresh. If the Home Screen version still shows the old design, fully close it, open the Pages link once in Safari while online, then reopen the Home Screen app. The v9 service worker replaces the old cached files.
 
 
 ## Promo Code Tab
@@ -89,3 +89,47 @@ Uploading this version over an older GitHub Pages build preserves existing progr
 - Promo code `5` multiplies the current level by five once per saved game.
 - Improved collection-card framing, rarity glow, portrait lighting, spacing and selected-character presentation.
 - The service worker now caches every character asset for offline play.
+
+
+## Bet controls added in v8
+
+- Fixed quick bets: 50, 100, 250, and 500 Froggy.
+- **÷2** halves the current bet.
+- **×2** doubles the current bet without exceeding the available balance.
+- **Custom** accepts any whole-number amount from 50 Froggy up to the current balance.
+- **MAX** sets the bet to the full available balance.
+
+## Twenty-jump curve
+
+The path contains twenty jumps. Per-jump failure risk rises from 5% to 52%. Multipliers are calculated from cumulative survival probability using a 96% target RTP, so ordinary cash-out points have the same long-run return before integer payout rounding. Lucky charms, reward spins, level bonuses, and protected promo rounds remain additional bonuses.
+
+## v9 balanced base-game economy
+
+The normal jump game now targets **96% RTP** at every cash-out step:
+
+| Jump | Pad failure risk | Chance of reaching this jump | Cash-out multiplier |
+|---:|---:|---:|---:|
+| 1 | 5% | 95.000% | 1.01× |
+| 2 | 6% | 89.300% | 1.08× |
+| 3 | 7% | 83.049% | 1.16× |
+| 4 | 8% | 76.405% | 1.26× |
+| 5 | 9% | 69.529% | 1.38× |
+| 6 | 10% | 62.576% | 1.53× |
+| 7 | 11% | 55.692% | 1.72× |
+| 8 | 12% | 49.009% | 1.96× |
+| 9 | 13% | 42.638% | 2.25× |
+| 10 | 14% | 36.669% | 2.62× |
+| 11 | 16% | 30.802% | 3.12× |
+| 12 | 18% | 25.257% | 3.80× |
+| 13 | 20% | 20.206% | 4.75× |
+| 14 | 23% | 15.559% | 6.17× |
+| 15 | 26% | 11.513% | 8.34× |
+| 16 | 30% | 8.059% | 11.91× |
+| 17 | 34% | 5.319% | 18.05× |
+| 18 | 39% | 3.245% | 29.59× |
+| 19 | 45% | 1.785% | 53.79× |
+| 20 | 52% | 0.857% | 112.07× |
+
+Formula: `multiplier = 0.96 ÷ cumulative survival probability`.
+
+Because payouts are credited as whole Froggy, small bets may produce a slightly lower realized RTP due to rounding down.

@@ -46,7 +46,7 @@
           <div id="statusToast" class="status-toast glass">Choose your bet and start the leap.</div>
 
           <div class="risk-heads-up glass">
-            <div><small>JUMP</small><b id="jumpLabel">0 / 10</b></div>
+            <div><small>JUMP</small><b id="jumpLabel">0 / 20</b></div>
             <div><small>MULTIPLIER</small><b id="multiplierLabel">1.00×</b></div>
             <div><small>NEXT RISK</small><b id="riskLabel">5%</b></div>
             <div><small>CASH-OUT</small><b id="payoutLabel">100 F</b></div>
@@ -72,8 +72,25 @@
             <button class="bet-chip pressable selected" data-bet="100">100</button>
             <button class="bet-chip pressable" data-bet="250">250</button>
             <button class="bet-chip pressable" data-bet="500">500</button>
-            <button class="bet-chip pressable" data-bet="max">MAX</button>
           </div>
+
+          <div id="betAdjusters" class="bet-adjusters" aria-label="Adjust bet amount">
+            <button class="bet-tool pressable" data-bet-action="half"><b>÷2</b><small>HALF</small></button>
+            <button class="bet-tool pressable" data-bet-action="double"><b>×2</b><small>DOUBLE</small></button>
+            <button id="customBetToggle" class="bet-tool pressable" type="button"><b>✎</b><small>CUSTOM</small></button>
+            <button class="bet-tool pressable" data-bet="max"><b>MAX</b><small>ALL IN</small></button>
+          </div>
+
+          <form id="customBetRow" class="custom-bet-row hidden" autocomplete="off">
+            <label for="customBetInput"><small>CUSTOM BET</small><span>Enter any whole amount</span></label>
+            <div>
+              <input id="customBetInput" type="number" min="50" step="1" inputmode="numeric" placeholder="e.g. 1337" />
+              <button id="customBetApply" class="custom-bet-apply pressable" type="submit">SET BET</button>
+            </div>
+            <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
+          </form>
+
+          <div class="run-meta"><span>20 lily pads</span><b>Up to 112.07×</b><span>96% base RTP</span></div>
 
           <div class="main-actions">
             <button id="startButton" class="action-button start pressable"><span>START ROUND</span><small>Bet 100 F</small></button>
@@ -212,7 +229,7 @@
         <div class="how-steps">
           <div><b>1</b><span>Choose a virtual Froggy bet and start the round.</span></div>
           <div><b>2</b><span>Each safe jump raises your multiplier and the next risk.</span></div>
-          <div><b>3</b><span>Cash out before a lily pad breaks—or clear all ten for 12×.</span></div>
+          <div><b>3</b><span>Cash out before a lily pad breaks—or clear all twenty for about 112×.</span></div>
         </div>
         <button class="action-button start pressable" data-close-modal><span>GOT IT</span></button>
       </div>

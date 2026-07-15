@@ -4,8 +4,19 @@
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
 
-  const MULTIPLIERS = [1, 1.10, 1.25, 1.45, 1.72, 2.10, 2.70, 3.60, 5.20, 8.00, 12.00];
-  const RISKS = [5, 10, 16, 24, 33, 45, 58, 70, 82, 90];
+  // Base-game economy: every ordinary cash-out point targets 96% RTP.
+  // Lucky charms and promo protections are deliberate bonuses layered above this curve.
+  const TARGET_RTP = 0.96;
+  const RISKS = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 23, 26, 30, 34, 39, 45, 52];
+  const MULTIPLIERS = (() => {
+    const values = [1];
+    let survivalProbability = 1;
+    for (const risk of RISKS) {
+      survivalProbability *= 1 - risk / 100;
+      values.push(TARGET_RTP / survivalProbability);
+    }
+    return values;
+  })();
   const MIN_BET = 50;
 
   const FROGS = [
@@ -85,7 +96,7 @@
     app: $('app'), canvas: $('gameCanvas'), gameFrame: $('gameFrame'), status: $('statusToast'),
     balance: $('balanceLabel'), collectionBalance: $('collectionBalance'), level: $('levelLabel'), xp: $('xpLabel'), xpNext: $('xpNextLabel'), xpRing: $('xpRing'),
     jump: $('jumpLabel'), multiplier: $('multiplierLabel'), risk: $('riskLabel'), payout: $('payoutLabel'), danger: $('dangerLabel'), riskFill: $('riskFill'), riskMarker: $('riskMarker'),
-    betDisplay: $('betDisplay'), start: $('startButton'), jumpButton: $('jumpButton'), cash: $('cashButton'), cashValue: $('cashButtonValue'), quickBets: $('quickBets'),
+    betDisplay: $('betDisplay'), start: $('startButton'), jumpButton: $('jumpButton'), cash: $('cashButton'), cashValue: $('cashButtonValue'), quickBets: $('quickBets'), betAdjusters: $('betAdjusters'), customBetToggle: $('customBetToggle'), customBetRow: $('customBetRow'), customBetInput: $('customBetInput'), customBetError: $('customBetError'),
     sound: $('soundButton'), settingsSound: $('settingsSound'), settingsMotion: $('settingsMotion'), luckyBadge: $('luckyBadge'), luckyCount: $('luckyCount'),
     screens: { play:$('playScreen'), collection:$('collectionScreen'), rewards:$('rewardsScreen'), promo:$('promoScreen'), stats:$('statsScreen') },
     collectionGrid: $('collectionGrid'), spin: $('spinButton'), wheelDisc: $('wheelDisc'), rewardDot: $('rewardDot'), streakLabel: $('streakLabel'), streakDays: $('streakDays'),
@@ -308,7 +319,7 @@
       for(let i=0;i<3;i++){const sx=-62-i*14,alpha=.25+.25*Math.sin(this.time*6-i);c.globalAlpha=alpha;c.fillStyle='#fff36c';c.beginPath();c.arc(sx,0,3+i,0,Math.PI*2);c.fill();}
       c.restore();
     }
-    drawFinish(c,lake){const p=this.pads[this.pads.length-1],x=this.worldToScreenX(p.x),y=p.y-115;if(x<-100||x>this.w+100)return;c.save();c.translate(x,y);c.rotate(.04);c.fillStyle='#8d6032';c.fillRect(-4,25,8,80);c.fillStyle='#fff2c8';c.strokeStyle='#8d6032';c.lineWidth=4;c.beginPath();c.roundRect(-50,-26,100,52,10);c.fill();c.stroke();c.fillStyle='#6a4627';c.textAlign='center';c.font='1000 12px system-ui';c.fillText('12.00×',0,-3);c.font='900 9px system-ui';c.fillText('LEGENDARY',0,13);c.restore();}
+    drawFinish(c,lake){const p=this.pads[this.pads.length-1],x=this.worldToScreenX(p.x),y=p.y-115;if(x<-100||x>this.w+100)return;c.save();c.translate(x,y);c.rotate(.04);c.fillStyle='#8d6032';c.fillRect(-4,25,8,80);c.fillStyle='#fff2c8';c.strokeStyle='#8d6032';c.lineWidth=4;c.beginPath();c.roundRect(-50,-26,100,52,10);c.fill();c.stroke();c.fillStyle='#6a4627';c.textAlign='center';c.font='1000 12px system-ui';c.fillText(`${MULTIPLIERS[MULTIPLIERS.length-1].toFixed(2)}×`,0,-3);c.font='900 9px system-ui';c.fillText('LEGENDARY',0,13);c.restore();}
     drawFrog(c,x,y,f){
       if(f.opacity<=0||x<-120||x>this.w+120)return;const frog=selectedFrog(),main=frog.colors[0],shade=frog.colors[1],outline=this.mix(shade,'#0b3c2d',.62),blink=Math.sin(this.time*.9+1.8)>.985?.14:1;
       c.save();c.translate(x,y);c.rotate(f.rotation);c.scale(f.scaleX,f.scaleY);c.globalAlpha=f.opacity*(frog.id==='ghost'?.74:1);
@@ -373,7 +384,7 @@
     els.jump.textContent=`${state.jump} / ${RISKS.length}`; els.multiplier.textContent=`${MULTIPLIERS[state.jump].toFixed(2)}×`; els.risk.textContent=state.jump>=RISKS.length?'—':`${risk}%`; els.payout.textContent=`${money(payout)} F`; els.cashValue.textContent=`${money(payout)} F`;
     els.betDisplay.textContent=money(state.bet); els.start.querySelector('small').textContent=`Bet ${money(state.bet)} F`; els.danger.textContent=state.jump>=RISKS.length?'Legendary leap':dangerName(risk); els.riskFill.style.width=`${risk}%`;els.riskMarker.style.left=`${risk}%`;els.riskMarker.style.background=risk<30?'#52c95a':risk<60?'#f3c442':'#eb506b';
     els.start.classList.toggle('hidden',state.roundActive); els.jumpButton.classList.toggle('hidden',!state.roundActive); els.cash.classList.toggle('hidden',!state.roundActive||state.jump===0); els.jumpButton.disabled=state.animating;els.cash.disabled=state.animating;
-    els.quickBets.querySelectorAll('button').forEach(b=>{b.disabled=state.roundActive;b.classList.toggle('selected',(b.dataset.bet==='max'&&state.bet===Math.floor(state.balance/50)*50)||(Number(b.dataset.bet)===state.bet));});
+    els.quickBets.querySelectorAll('button').forEach(b=>{b.disabled=state.roundActive;b.classList.toggle('selected',Number(b.dataset.bet)===state.bet);});els.betAdjusters.querySelectorAll('button').forEach(b=>b.disabled=state.roundActive);els.customBetInput.disabled=state.roundActive;
     els.sound.textContent=state.sound?'🔊':'🔇';audio.enabled=state.sound;els.settingsSound.querySelector('b').textContent=state.sound?'On':'Off';els.settingsMotion.querySelector('b').textContent=state.effects?'On':'Reduced';
     els.luckyBadge.classList.toggle('hidden',state.luckyCharges<=0);els.luckyCount.textContent=state.luckyCharges;
     els.profileFrog.innerHTML=frogSvg(frog);els.bigProfileFrog.innerHTML=frogSvg(frog);els.currentFrogName.textContent=frog.name;els.app.dataset.theme=lake.id;
@@ -396,8 +407,31 @@
     return totalBonus;
   }
 
+  function setBetAmount(rawValue,{quiet=false}={}){
+    if(state.roundActive)return false;
+    const bet=Math.floor(Number(rawValue));
+    if(!Number.isFinite(bet)){els.customBetError.textContent='Enter a whole-number bet.';haptic(18);return false;}
+    if(bet<MIN_BET){els.customBetError.textContent=`Minimum bet is ${MIN_BET} Froggy.`;haptic(18);return false;}
+    if(bet>state.balance){els.customBetError.textContent=`You only have ${money(state.balance)} Froggy.`;haptic(18);return false;}
+    state.bet=bet;els.customBetError.textContent='';if(!quiet)audio.tap();refresh();return true;
+  }
+
   function selectBet(value){
-    if(state.roundActive)return; let bet=value==='max'?Math.floor(state.balance/50)*50:Number(value);bet=clamp(Math.floor(bet/50)*50,MIN_BET,Math.max(MIN_BET,state.balance));state.bet=bet;audio.tap();refresh();
+    if(state.roundActive)return false;
+    const bet=value==='max'?state.balance:Number(value);
+    return setBetAmount(bet);
+  }
+
+  function adjustBet(action){
+    if(state.roundActive)return;
+    if(action==='half')setBetAmount(Math.max(MIN_BET,Math.floor(state.bet/2)));
+    if(action==='double')setBetAmount(Math.min(state.balance,state.bet*2));
+  }
+
+  function applyCustomBet(){
+    const applied=setBetAmount(els.customBetInput.value);
+    if(applied){els.customBetInput.value='';els.customBetRow.classList.add('hidden');setStatus(`Custom bet set to ${money(state.bet)} Froggy.`,'win');}
+    return applied;
   }
 
   function startRound(){
@@ -418,7 +452,7 @@
       } else {
         state.jump=next;state.bestJump=Math.max(state.bestJump,state.jump);addXp(10+state.jump*2);audio.coin();haptic(15);screenFeedback('win');
         if(state.jump===RISKS.length){
-          const payout=currentPayout();state.balance+=payout;state.biggestWin=Math.max(state.biggestWin,payout);state.roundActive=false;state.roundSafe=false;addXp(120);setStatus(`LEGENDARY LEAP! ${money(payout)} Froggy at 12.00×!`,'win');audio.win();confettiBurst(120);refresh();setTimeout(()=>showResult({icon:'🏆',kicker:'LEGENDARY LEAP',title:'Every pad cleared!',amount:`+${money(payout)} F`,text:'Golden lily pads, maximum multiplier, absolute frog glory.'}),TEST_MODE?1:500);
+          const payout=currentPayout();state.balance+=payout;state.biggestWin=Math.max(state.biggestWin,payout);state.roundActive=false;state.roundSafe=false;addXp(120);setStatus(`LEGENDARY LEAP! ${money(payout)} Froggy at ${MULTIPLIERS[state.jump].toFixed(2)}×!`,'win');audio.win();confettiBurst(120);refresh();setTimeout(()=>showResult({icon:'🏆',kicker:'LEGENDARY LEAP',title:'Every pad cleared!',amount:`+${money(payout)} F`,text:`Twenty golden landings and a ${MULTIPLIERS[state.jump].toFixed(2)}× finish. Absolute frog glory.`}),TEST_MODE?1:500);
         } else {setStatus(`Perfect landing! ${MULTIPLIERS[state.jump].toFixed(2)}× — cash out or leap again.`,'win');refresh();}
       }
     });
@@ -574,7 +608,7 @@
 
   function bind(){
     document.addEventListener('pointerdown',()=>audio.unlock(),{once:true});
-    els.quickBets.addEventListener('click',e=>{const b=e.target.closest('[data-bet]');if(b)selectBet(b.dataset.bet);});
+    els.quickBets.addEventListener('click',e=>{const b=e.target.closest('[data-bet]');if(b)selectBet(b.dataset.bet);});els.betAdjusters.addEventListener('click',e=>{const betButton=e.target.closest('[data-bet]');if(betButton)selectBet(betButton.dataset.bet);const actionButton=e.target.closest('[data-bet-action]');if(actionButton)adjustBet(actionButton.dataset.betAction);});els.customBetToggle.addEventListener('click',()=>{if(state.roundActive)return;els.customBetRow.classList.toggle('hidden');if(!els.customBetRow.classList.contains('hidden'))setTimeout(()=>els.customBetInput.focus(),30);});els.customBetRow.addEventListener('submit',e=>{e.preventDefault();applyCustomBet();});
     els.start.addEventListener('click',startRound);els.jumpButton.addEventListener('click',jump);els.cash.addEventListener('click',cashOut);els.resultButton.addEventListener('click',()=>{closeModal();state.jump=0;scene.reset();refresh();});
     els.sound.addEventListener('click',toggleSound);els.settingsSound.addEventListener('click',toggleSound);els.settingsMotion.addEventListener('click',()=>{state.effects=!state.effects;refresh();});
     $('howToButton').addEventListener('click',()=>openModal(els.howToModal));$('resetButton').addEventListener('click',resetProgress);$('profileButton').addEventListener('click',()=>navigate('stats'));
@@ -598,15 +632,18 @@
     try{
       state=deepClone(DEFAULT_STATE);refresh();
       document.querySelector('[data-bet="250"]').click();if(state.bet!==250)throw new Error('bet button failed');
-      els.start.click();if(!state.roundActive||state.balance!==750)throw new Error('start button failed');
+      document.querySelector('[data-bet-action="half"]').click();if(state.bet!==125)throw new Error('half bet failed');
+      document.querySelector('[data-bet-action="double"]').click();if(state.bet!==250)throw new Error('double bet failed');
+      els.customBetInput.value='333';if(!applyCustomBet()||state.bet!==333)throw new Error('custom bet failed');
+      els.start.click();if(!state.roundActive||state.balance!==667)throw new Error('start button failed');
       forcedOutcome=true;els.jumpButton.click();await new Promise(r=>setTimeout(r,500));if(state.jump!==1||!state.roundActive)throw new Error('jump button failed');
-      els.cash.click();await new Promise(r=>setTimeout(r,20));if(state.roundActive||state.balance<=750)throw new Error('cash out failed');closeModal();
+      els.cash.click();await new Promise(r=>setTimeout(r,20));if(state.roundActive||state.balance<=667)throw new Error('cash out failed');closeModal();
       const before=state.balance;claimDaily({type:'froggy',amount:500});if(state.balance!==before+500||dailyAvailable())throw new Error('daily reward failed');closeModal();
       state.lastDaily='';state.xp=nextXp()-1;const beforeLevel=state.balance,expectedLevelBonus=levelBonusFor(state.level+1);addXp(1);if(state.balance!==beforeLevel+expectedLevelBonus)throw new Error('level bonus failed');
       state=deepClone(DEFAULT_STATE);refresh();const promoStart=state.balance;if(!redeemPromo('50000')||state.balance!==promoStart+50000)throw new Error('50000 promo failed');if(!redeemPromo('unlockall')||state.unlockedFrogs.length!==FROGS.length)throw new Error('unlockall promo failed');if(!redeemPromo('10')||state.freeSpins!==10)throw new Error('10 promo failed');const levelBeforeFive=state.level;if(!redeemPromo('5')||state.level!==levelBeforeFive*5)throw new Error('5 promo failed');if(!redeemPromo('spinall')||!state.unlimitedSpins||freeSpinDisplay()!=='unlimintos'||!dailyAvailable())throw new Error('spinall promo failed');if(!redeemPromo('imtheowner')||state.safeRunCredits!==1)throw new Error('owner promo failed');state.bet=100;startRound();forcedOutcome=false;jump();await new Promise(r=>setTimeout(r,500));if(state.jump!==1||!state.roundActive)throw new Error('owner safe round failed');state.roundActive=false;state.roundSafe=false;closeModal();
-      if(WHEEL_SEGMENTS.length!==10||WHEEL_SEGMENTS.filter(x=>x.amount===50000).length!==1)throw new Error('wheel setup failed');if(FROGS[FROGS.length-1].id!=='owner'||FROGS[FROGS.length-1].cost!==1000000000||FROGS[FROGS.length-1].level!==20000)throw new Error('owner frog setup failed');
+      if(MULTIPLIERS.length!==21||RISKS.length!==20||Math.abs(MULTIPLIERS[MULTIPLIERS.length-1]-112.07104101303273)>.000001)throw new Error('20-jump reward curve failed');let curveSurvival=1;for(let i=0;i<RISKS.length;i++){curveSurvival*=1-RISKS[i]/100;if(Math.abs(curveSurvival*MULTIPLIERS[i+1]-TARGET_RTP)>.000000001)throw new Error(`RTP mismatch at jump ${i+1}`);}if(WHEEL_SEGMENTS.length!==10||WHEEL_SEGMENTS.filter(x=>x.amount===50000).length!==1)throw new Error('wheel setup failed');if(FROGS[FROGS.length-1].id!=='owner'||FROGS[FROGS.length-1].cost!==1000000000||FROGS[FROGS.length-1].level!==20000)throw new Error('owner frog setup failed');
       state.level=3;state.balance=5000;collectionMode='frogs';collectionAction('king');if(state.selectedFrog!=='king'||!state.unlockedFrogs.includes('king'))throw new Error('collection failed');
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: gameplay, promos, 10 free spins, hidden safe run, unlimintos mode, premium character art, owner frog, ×5 level promo, level bonuses, wheel, and unlocks';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: 20-jump gameplay, balanced 96% RTP curve, half/double/custom bets, promos, free spins, premium characters, level bonuses, wheel, and unlocks';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 
@@ -614,5 +651,5 @@
   if(!state.tutorialSeen&&!TEST_MODE){state.tutorialSeen=true;saveState();setTimeout(()=>openModal(els.howToModal),600);}
   if(TEST_MODE)runSelfTest();
 
-  window.FroggyGame={getState:()=>deepClone(state),selectBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,spinDaily,redeemPromo,levelBonusFor,wheelSegments:deepClone(WHEEL_SEGMENTS),reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();renderWheel();refresh();}};
+  window.FroggyGame={getState:()=>deepClone(state),selectBet,setBetAmount,adjustBet,applyCustomBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,spinDaily,redeemPromo,levelBonusFor,wheelSegments:deepClone(WHEEL_SEGMENTS),reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();renderWheel();refresh();}};
 })();

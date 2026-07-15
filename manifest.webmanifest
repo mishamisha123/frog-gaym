@@ -1,7 +1,7 @@
 {
   "name": "Froggy Leap Deluxe",
   "short_name": "Froggy Leap",
-  "description": "A polished lily-pad risk game with ten premium collectible frogs, daily rewards, promo codes, a 50K jackpot and offline play.",
+  "description": "A polished 20-jump lily-pad risk game with premium collectible frogs, flexible bets, a balanced 96% base payout curve, daily rewards, promo codes and offline play.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
