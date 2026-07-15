@@ -1,16 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Ghost Frog">
 <defs>
-<linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#b9f5ff"/><stop offset="1" stop-color="#6bc8e8"/></linearGradient>
 </defs>
 <ellipse cx="256" cy="470" rx="150" ry="24" fill="#073d47" opacity=".22"/>
 <g>
 <g stroke="#405585" stroke-width="13" stroke-linejoin="round">
- <path d="M110 217Q113 119 194 101Q256 65 318 101Q399 119 402 217L403 382Q371 443 335 397Q302 458 263 402Q226 459 188 401Q148 447 109 382Z" fill="url(#body)" opacity=".9"/>
+ <path d="M110 217Q113 119 194 101Q256 65 318 101Q399 119 402 217L403 382Q371 443 335 397Q302 458 263 402Q226 459 188 401Q148 447 109 382Z" fill="#8ed8ec" opacity=".9"/>
  <ellipse cx="178" cy="143" rx="64" ry="70" fill="#b8eeff" opacity=".84"/><ellipse cx="334" cy="143" rx="64" ry="70" fill="#b8eeff" opacity=".84"/>
  <path d="M137 149Q178 128 219 149" fill="#fff" opacity=".9"/><path d="M293 149Q334 128 375 149" fill="#fff" opacity=".9"/>
  <ellipse cx="183" cy="157" rx="25" ry="28" fill="#30436f"/><ellipse cx="329" cy="157" rx="25" ry="28" fill="#30436f"/>
  <path d="M218 264Q256 238 294 264" fill="none"/>
 </g>
 <circle cx="153" cy="229" r="25" fill="#ff9bb0" opacity=".28"/><circle cx="359" cy="229" r="25" fill="#ff9bb0" opacity=".28"/>
-<path d="M154 352Q256 397 358 352" stroke="#fff" stroke-width="12" opacity=".45" fill="none"/></g>
+</g>
 </svg>

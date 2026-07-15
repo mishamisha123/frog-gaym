@@ -1,5 +1,5 @@
-const CACHE='froggy-leap-v16-mobile-cockpit-clean-art';
-const CORE=['./','./index.html','./styles.css?v=16','./app.js?v=16','./manifest.webmanifest','./refresh.html','./icons/icon-192.png','./icons/icon-512.png','./characters/classic.svg','./characters/king.svg','./characters/robot.svg','./characters/ghost.svg','./characters/dragon.svg','./characters/dino.svg','./characters/ninja.svg','./characters/alien.svg','./characters/rockstar.svg','./characters/owner.svg'];
+const CACHE='froggy-leap-v17-15jump-level-credit-flat-png';
+const CORE=['./','./index.html','./styles.css?v=17','./app.js?v=17','./manifest.webmanifest','./refresh.html','./icons/icon-192.png','./icons/icon-512.png','./characters-flat-v17/classic.png','./characters-flat-v17/king.png','./characters-flat-v17/robot.png','./characters-flat-v17/ghost.png','./characters-flat-v17/dragon.png','./characters-flat-v17/dino.png','./characters-flat-v17/ninja.png','./characters-flat-v17/alien.png','./characters-flat-v17/rockstar.png','./characters-flat-v17/owner.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{

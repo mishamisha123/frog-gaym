@@ -3,13 +3,13 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v16';
-  console.info(`Froggy Leap ${BUILD_VERSION}: one-screen mobile play layout and clean character art loaded`);
+  const BUILD_VERSION = 'v17';
+  console.info(`Froggy Leap ${BUILD_VERSION}: 15-jump fair curve, level credit, and flat PNG characters loaded`);
 
-  // Base-game economy: every ordinary cash-out point targets 96% RTP.
-  // Lucky charms and promo protections are deliberate bonuses layered above this curve.
-  const TARGET_RTP = 0.96;
-  const RISKS = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 23, 26, 30, 34, 39, 45, 52];
+  // Base-game economy: each ordinary cash-out point targets 95% RTP.
+  // The 15-jump curve is intentionally tighter early and highly rewarding at the finish.
+  const TARGET_RTP = 0.95;
+  const RISKS = [8, 10, 12, 14, 16, 18, 21, 24, 28, 32, 37, 43, 49, 56, 64];
   const MULTIPLIERS = (() => {
     const values = [1];
     let survivalProbability = 1;
@@ -27,16 +27,16 @@
   const DEBT_ROUND_INTERVAL = 5;
 
   const FROGS = [
-    { id:'classic', name:'Classic Frog', rarity:'COMMON', cost:0, level:1, description:'The bright-eyed mascot with a perfect storybook hop.', colors:['#baff72','#4fb84d'], art:'characters/classic.svg' },
-    { id:'king', name:'King Frog', rarity:'ROYAL', cost:1200, level:3, description:'A smug pond monarch in a jeweled crown and velvet cape.', colors:['#d6ef65','#70b944'], art:'characters/king.svg' },
-    { id:'robot', name:'Robo Frog', rarity:'EPIC', cost:2500, level:5, description:'Polished alloy, cyan display eyes, and calibrated landing legs.', colors:['#dff6ff','#6d97b3'], art:'characters/robot.svg' },
-    { id:'ghost', name:'Ghost Frog', rarity:'EPIC', cost:4000, level:7, description:'A translucent, grumpy little spirit that floats over the pond.', colors:['#b9f5ff','#6bc8e8'], art:'characters/ghost.svg' },
-    { id:'dragon', name:'Dragon Frog', rarity:'LEGENDARY', cost:7000, level:10, description:'Tiny wings, bright scales, horns, and enormous confidence.', colors:['#ff9c42','#e75235'], art:'characters/dragon.svg' },
-    { id:'dino', name:'Dino Frog', rarity:'LEGENDARY', cost:9000, level:13, description:'A chunky prehistoric hopper with spikes and a toothy grin.', colors:['#c8ff70','#4eb650'], art:'characters/dino.svg' },
-    { id:'ninja', name:'Ninja Frog', rarity:'EPIC', cost:15000, level:20, description:'Masked, focused, and nearly silent until the landing splash.', colors:['#344348','#161f24'], art:'characters/ninja.svg' },
-    { id:'alien', name:'Alien Frog', rarity:'MYTHIC', cost:30000, level:30, description:'Stalk eyes, cosmic curiosity, and suspiciously accurate jumps.', colors:['#b7ff67','#5dc84a'], art:'characters/alien.svg' },
-    { id:'rockstar', name:'Rockstar Frog', rarity:'MYTHIC', cost:75000, level:50, description:'Spiky hair, reflective shades, and a stadium-sized landing pose.', colors:['#92e95c','#4ba848'], art:'characters/rockstar.svg' },
-    { id:'owner', name:'Owner Frog', rarity:'ONE OF ONE', cost:1000000000, level:20000, description:'A photo-inspired pond boss with cropped dark hair, heavy-lidded brown eyes, stubble, and an unbreakable deadpan stare.', colors:['#8ad467','#4f9d50'], art:'characters/owner.svg' }
+    { id:'classic', name:'Classic Frog', rarity:'COMMON', cost:0, level:1, description:'The bright-eyed mascot with a perfect storybook hop.', colors:['#baff72','#4fb84d'], art:'characters-flat-v17/classic.png' },
+    { id:'king', name:'King Frog', rarity:'ROYAL', cost:1200, level:3, description:'A smug pond monarch in a jeweled crown and velvet cape.', colors:['#d6ef65','#70b944'], art:'characters-flat-v17/king.png' },
+    { id:'robot', name:'Robo Frog', rarity:'EPIC', cost:2500, level:5, description:'Polished alloy, cyan display eyes, and calibrated landing legs.', colors:['#dff6ff','#6d97b3'], art:'characters-flat-v17/robot.png' },
+    { id:'ghost', name:'Ghost Frog', rarity:'EPIC', cost:4000, level:7, description:'A translucent, grumpy little spirit that floats over the pond.', colors:['#b9f5ff','#6bc8e8'], art:'characters-flat-v17/ghost.png' },
+    { id:'dragon', name:'Dragon Frog', rarity:'LEGENDARY', cost:7000, level:10, description:'Tiny wings, bright scales, horns, and enormous confidence.', colors:['#ff9c42','#e75235'], art:'characters-flat-v17/dragon.png' },
+    { id:'dino', name:'Dino Frog', rarity:'LEGENDARY', cost:9000, level:13, description:'A chunky prehistoric hopper with spikes and a toothy grin.', colors:['#c8ff70','#4eb650'], art:'characters-flat-v17/dino.png' },
+    { id:'ninja', name:'Ninja Frog', rarity:'EPIC', cost:15000, level:20, description:'Masked, focused, and nearly silent until the landing splash.', colors:['#344348','#161f24'], art:'characters-flat-v17/ninja.png' },
+    { id:'alien', name:'Alien Frog', rarity:'MYTHIC', cost:30000, level:30, description:'Stalk eyes, cosmic curiosity, and suspiciously accurate jumps.', colors:['#b7ff67','#5dc84a'], art:'characters-flat-v17/alien.png' },
+    { id:'rockstar', name:'Rockstar Frog', rarity:'MYTHIC', cost:75000, level:50, description:'Spiky hair, reflective shades, and a stadium-sized landing pose.', colors:['#92e95c','#4ba848'], art:'characters-flat-v17/rockstar.png' },
+    { id:'owner', name:'Owner Frog', rarity:'ONE OF ONE', cost:1000000000, level:20000, description:'A photo-inspired pond boss with cropped dark hair, heavy-lidded brown eyes, stubble, and an unbreakable deadpan stare.', colors:['#8ad467','#4f9d50'], art:'characters-flat-v17/owner.png' }
   ];
 
   const FROG_IMAGES = Object.fromEntries(FROGS.map(frog=>{
@@ -390,11 +390,11 @@
       c.fillStyle=shade;c.strokeStyle=outline;c.lineWidth=3;
       c.save();c.rotate(-.12);c.beginPath();c.ellipse(-24,23,24,12,0,0,Math.PI*2);c.fill();c.stroke();c.restore();c.save();c.rotate(.12);c.beginPath();c.ellipse(24,23,24,12,0,0,Math.PI*2);c.fill();c.stroke();c.restore();
       c.fillStyle=shade;[[-40,25],[-32,34],[-22,37],[40,25],[32,34],[22,37]].forEach(([tx,ty])=>{c.beginPath();c.ellipse(tx,ty,7,4,0,0,Math.PI*2);c.fill();});
-      const body=c.createLinearGradient(0,-5,0,36);body.addColorStop(0,main);body.addColorStop(1,shade);c.fillStyle=body;c.beginPath();c.moveTo(-23,-2);c.bezierCurveTo(-31,8,-30,31,-17,39);c.bezierCurveTo(-7,45,7,45,17,39);c.bezierCurveTo(30,31,31,8,23,-2);c.closePath();c.fill();c.stroke();
+      c.fillStyle=main;c.beginPath();c.moveTo(-23,-2);c.bezierCurveTo(-31,8,-30,31,-17,39);c.bezierCurveTo(-7,45,7,45,17,39);c.bezierCurveTo(30,31,31,8,23,-2);c.closePath();c.fill();c.stroke();
       c.fillStyle='rgba(244,255,211,.72)';c.beginPath();c.ellipse(0,22,15,18,0,0,Math.PI*2);c.fill();
       c.strokeStyle=outline;c.lineWidth=6;c.lineCap='round';c.beginPath();c.moveTo(-21,5);c.quadraticCurveTo(-36,13,-31,28);c.moveTo(21,5);c.quadraticCurveTo(36,13,31,28);c.stroke();
       c.lineWidth=2.6;[[-34,29,-43,30],[-33,30,-40,37],[34,29,43,30],[33,30,40,37]].forEach(q=>{c.beginPath();c.moveTo(q[0],q[1]);c.lineTo(q[2],q[3]);c.stroke();});
-      const head=c.createLinearGradient(0,-37,0,9);head.addColorStop(0,this.mix(main,'#ffffff',.12));head.addColorStop(1,main);c.fillStyle=head;c.lineWidth=3.2;c.beginPath();c.moveTo(-29,-21);c.bezierCurveTo(-27,-42,-10,-47,0,-42);c.bezierCurveTo(10,-47,27,-42,29,-21);c.bezierCurveTo(34,-2,21,10,0,12);c.bezierCurveTo(-21,10,-34,-2,-29,-21);c.closePath();c.fill();c.stroke();
+      c.fillStyle=main;c.lineWidth=3.2;c.beginPath();c.moveTo(-29,-21);c.bezierCurveTo(-27,-42,-10,-47,0,-42);c.bezierCurveTo(10,-47,27,-42,29,-21);c.bezierCurveTo(34,-2,21,10,0,12);c.bezierCurveTo(-21,10,-34,-2,-29,-21);c.closePath();c.fill();c.stroke();
       c.fillStyle=main;c.beginPath();c.ellipse(-18,-37,13,15,0,0,Math.PI*2);c.ellipse(18,-37,13,15,0,0,Math.PI*2);c.fill();c.stroke();
       c.save();c.translate(0,-37);c.scale(1,blink);c.fillStyle='#fff';c.beginPath();c.ellipse(-18,0,8.2,10,0,0,Math.PI*2);c.ellipse(18,0,8.2,10,0,0,Math.PI*2);c.fill();c.fillStyle='#e9c73c';c.beginPath();c.ellipse(-17,1,5.2,7,0,0,Math.PI*2);c.ellipse(17,1,5.2,7,0,0,Math.PI*2);c.fill();c.fillStyle='#102f29';c.beginPath();c.ellipse(-17,2,2.6,5.2,0,0,Math.PI*2);c.ellipse(17,2,2.6,5.2,0,0,Math.PI*2);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(-15,-2,1.7,0,Math.PI*2);c.arc(19,-2,1.7,0,Math.PI*2);c.fill();c.restore();
       c.shadowBlur=0;c.fillStyle='#275b40';c.beginPath();c.arc(-7,-18,1.7,0,Math.PI*2);c.arc(7,-18,1.7,0,Math.PI*2);c.fill();
@@ -508,8 +508,8 @@
 
 
   function debtLimit(){
-    const basedOnCashOut=Math.floor((Number(state.biggestWin)||0)*10);
-    return Math.min(MAX_SAFE_BALANCE,Math.max(10000,basedOnCashOut));
+    const basedOnLevel=Math.max(1,Math.floor(Number(state.level)||1))*100;
+    return Math.min(MAX_SAFE_BALANCE,Math.max(10000,basedOnLevel));
   }
 
   function availableCredit(){
@@ -546,13 +546,13 @@
     const room=availableCredit();
     const amount=Math.min(requested,room);
     if(amount<=0){
-      setDebtMessage(`No credit available. Current limit: ${money(debtLimit())} Froggy.`, 'error');
+      setDebtMessage(`No credit available. Your level-based limit is ${money(debtLimit())} Froggy.`, 'error');
       haptic(18);
       return false;
     }
 
     if(!skipConfirm&&!window.confirm(
-      `Borrow ${money(amount)} Froggy?\n\nAfter five completed rounds, a 10% payment becomes due. Nothing is deducted automatically. Every extra completed round while overdue costs one level.`
+      `Borrow ${money(amount)} Froggy?\n\nYour credit limit is 100× your level, with a 10,000-Froggy minimum. After five completed rounds, a 10% payment becomes due. Nothing is deducted automatically. Every extra completed round while overdue costs one level.`
     ))return false;
 
     const credited=creditBalance(amount);
@@ -798,8 +798,8 @@
         state.jump=next;state.safeJumps++;state.bestJump=Math.max(state.bestJump,state.jump);addXp(10+state.jump*2);audio.coin();haptic(15);screenFeedback('win');
         if([5,10,15].includes(state.jump)){audio.reward();haptic([12,30,18]);confettiBurst(22+state.jump);}
         if(state.jump===RISKS.length){
-          const payout=currentPayout();state.balance+=payout;session.net+=payout;session.wins++;session.lossStreak=0;state.bestCashMultiplier=Math.max(state.bestCashMultiplier,MULTIPLIERS[state.jump]);state.biggestWin=Math.max(state.biggestWin,payout);state.roundActive=false;state.roundSafe=false;addXp(120);const debtResult=completeDebtTurn();setStatus(`LEGENDARY LEAP! ${money(payout)} Froggy at ${MULTIPLIERS[state.jump].toFixed(2)}×!`,'win');audio.win();confettiBurst(120);refresh();setTimeout(()=>showResult({icon:'🏆',kicker:'LEGENDARY LEAP',title:'Every pad cleared!',amount:`+${money(payout)} F`,text:appendDebtResult(`Twenty golden landings and a ${MULTIPLIERS[state.jump].toFixed(2)}× finish. Absolute frog glory.`,debtResult)}),TEST_MODE?1:500);
-        } else {const milestoneName={5:'WARM-UP CLEARED',10:'DEEP WATER',15:'POND MASTER'}[state.jump];setStatus(milestoneName?`${milestoneName}! ${MULTIPLIERS[state.jump].toFixed(2)}× secured so far.`:`Perfect landing! ${MULTIPLIERS[state.jump].toFixed(2)}× — cash out or leap again.`,'win');refresh();}
+          const payout=currentPayout();state.balance+=payout;session.net+=payout;session.wins++;session.lossStreak=0;state.bestCashMultiplier=Math.max(state.bestCashMultiplier,MULTIPLIERS[state.jump]);state.biggestWin=Math.max(state.biggestWin,payout);state.roundActive=false;state.roundSafe=false;addXp(120);const debtResult=completeDebtTurn();setStatus(`LEGENDARY LEAP! ${money(payout)} Froggy at ${MULTIPLIERS[state.jump].toFixed(2)}×!`,'win');audio.win();confettiBurst(120);refresh();setTimeout(()=>showResult({icon:'🏆',kicker:'LEGENDARY LEAP',title:'Every pad cleared!',amount:`+${money(payout)} F`,text:appendDebtResult(`Fifteen golden landings and a ${MULTIPLIERS[state.jump].toFixed(2)}× finish. Absolute frog glory.`,debtResult)}),TEST_MODE?1:500);
+        } else {const milestoneName={5:'WARM-UP CLEARED',10:'DEEP WATER'}[state.jump];setStatus(milestoneName?`${milestoneName}! ${MULTIPLIERS[state.jump].toFixed(2)}× secured so far.`:`Perfect landing! ${MULTIPLIERS[state.jump].toFixed(2)}× — cash out or leap again.`,'win');refresh();}
       }
     });
   }
@@ -1049,10 +1049,10 @@
       const before=state.balance;claimDaily({type:'froggy',amount:500});if(state.balance!==before+500||dailyAvailable())throw new Error('daily reward failed');closeModal();
       state.lastDaily='';state.xp=nextXp()-1;const beforeLevel=state.balance,expectedLevelBonus=levelBonusFor(state.level+1);addXp(1);if(state.balance!==beforeLevel+expectedLevelBonus)throw new Error('level bonus failed');
       state=deepClone(DEFAULT_STATE);refresh();const promoStart=state.balance;if(!redeemPromo('50000')||!redeemPromo('50000')||state.balance!==promoStart+100000)throw new Error('reusable 50000 promo failed');const customStart=state.balance;if(!redeemPromo('qoostommoney',123456)||!redeemPromo('qoostommoney',44)||state.balance!==customStart+123500)throw new Error('custom money promo failed');if(!redeemPromo('unlockall')||state.unlockedFrogs.length!==FROGS.length)throw new Error('unlockall promo failed');if(!redeemPromo('iwannaswim')||state.unlockedLakes.length!==LAKES.length)throw new Error('lake promo failed');if(!redeemPromo('10')||!redeemPromo('10')||state.freeSpins!==20)throw new Error('reusable 10 promo failed');const levelBeforeFive=state.level,levelBalanceBefore=state.balance;const expectedFiveBonus=cumulativeLevelBonus(levelBeforeFive,levelBeforeFive*5)+cumulativeLevelBonus(levelBeforeFive*5,levelBeforeFive*25);if(!redeemPromo('5')||!redeemPromo('5')||state.level!==levelBeforeFive*25||state.balance!==levelBalanceBefore+expectedFiveBonus)throw new Error('reusable 5 promo or level bonus failed');if(!redeemPromo('luckylily')||state.luckyCharges!==25)throw new Error('luckylily promo failed');const partyBalance=state.balance,partySpins=state.freeSpins;if(!redeemPromo('pondparty')||state.balance!==partyBalance+2500||state.freeSpins!==partySpins+3)throw new Error('pondparty promo failed');const safeBefore=state.safeRunCredits;if(!redeemPromo('lifeguard')||!redeemPromo('lifeguard')||state.safeRunCredits!==safeBefore+6)throw new Error('reusable lifeguard promo failed');if(!redeemPromo('spinall')||!state.unlimitedSpins||freeSpinDisplay()!=='unlimintos'||!dailyAvailable())throw new Error('spinall promo failed');if(!redeemPromo('imtheowner')||state.safeRunCredits!==safeBefore+4)throw new Error('owner promo failed');state.bet=100;startRound();forcedOutcome=false;jump();await new Promise(r=>setTimeout(r,500));if(state.jump!==1||!state.roundActive)throw new Error('owner safe round failed');state.roundActive=false;state.roundSafe=false;closeModal();
-      state=deepClone(DEFAULT_STATE);if(debtLimit()!==10000)throw new Error('minimum debt limit failed');state.biggestWin=2500;if(debtLimit()!==25000)throw new Error('cash-out debt limit failed');state.biggestWin=0;if(!takeLoan(1000,{skipConfirm:true})||state.debt!==1000||state.balance!==2000)throw new Error('loan failed');for(let i=0;i<4;i++){if(completeDebtTurn()!==null)throw new Error('debt due too early');}const dueDebt=completeDebtTurn();if(!dueDebt||dueDebt.due!==100||!state.debtDue||state.balance!==2000||state.debt!==1000)throw new Error('manual debt due failed');state.level=5;const overdueDebt=completeDebtTurn();if(!overdueDebt||!overdueDebt.levelLost||state.level!==4||state.balance!==2000||state.debt!==1000)throw new Error('overdue level penalty failed');if(!repayDebt('installment')||state.debt!==900||state.balance!==1900||state.debtDue)throw new Error('manual installment failed');state.debt=1000;state.debtDue=true;state.debtDueAmount=100;state.level=1;state.balance=50;const resetDebt=completeDebtTurn();if(!resetDebt||!resetDebt.reset||state.level!==1||state.balance!==1000||state.debt!==0)throw new Error('debt default reset failed');
-            if(MULTIPLIERS.length!==21||RISKS.length!==20||Math.abs(MULTIPLIERS[MULTIPLIERS.length-1]-112.07104101303273)>.000001)throw new Error('20-jump reward curve failed');let curveSurvival=1;for(let i=0;i<RISKS.length;i++){curveSurvival*=1-RISKS[i]/100;if(Math.abs(curveSurvival*MULTIPLIERS[i+1]-TARGET_RTP)>.000000001)throw new Error(`RTP mismatch at jump ${i+1}`);}if(WHEEL_SEGMENTS.length!==10||WHEEL_SEGMENTS.filter(x=>x.amount===50000).length!==1)throw new Error('wheel setup failed');if(FROGS[FROGS.length-1].id!=='owner'||FROGS[FROGS.length-1].cost!==1000000000||FROGS[FROGS.length-1].level!==20000)throw new Error('owner frog setup failed');
+      state=deepClone(DEFAULT_STATE);if(debtLimit()!==10000)throw new Error('minimum debt limit failed');state.level=100;if(debtLimit()!==10000)throw new Error('level-100 debt minimum failed');state.level=250;if(debtLimit()!==25000)throw new Error('level debt limit failed');state.level=1;if(!takeLoan(1000,{skipConfirm:true})||state.debt!==1000||state.balance!==2000)throw new Error('loan failed');for(let i=0;i<4;i++){if(completeDebtTurn()!==null)throw new Error('debt due too early');}const dueDebt=completeDebtTurn();if(!dueDebt||dueDebt.due!==100||!state.debtDue||state.balance!==2000||state.debt!==1000)throw new Error('manual debt due failed');state.level=5;const overdueDebt=completeDebtTurn();if(!overdueDebt||!overdueDebt.levelLost||state.level!==4||state.balance!==2000||state.debt!==1000)throw new Error('overdue level penalty failed');if(!repayDebt('installment')||state.debt!==900||state.balance!==1900||state.debtDue)throw new Error('manual installment failed');state.debt=1000;state.debtDue=true;state.debtDueAmount=100;state.level=1;state.balance=50;const resetDebt=completeDebtTurn();if(!resetDebt||!resetDebt.reset||state.level!==1||state.balance!==1000||state.debt!==0)throw new Error('debt default reset failed');
+            if(MULTIPLIERS.length!==16||RISKS.length!==15||Math.abs(MULTIPLIERS[MULTIPLIERS.length-1]-258.10484412313536)>.000001)throw new Error('15-jump reward curve failed');let curveSurvival=1;for(let i=0;i<RISKS.length;i++){curveSurvival*=1-RISKS[i]/100;if(Math.abs(curveSurvival*MULTIPLIERS[i+1]-TARGET_RTP)>.000000001)throw new Error(`RTP mismatch at jump ${i+1}`);}if(WHEEL_SEGMENTS.length!==10||WHEEL_SEGMENTS.filter(x=>x.amount===50000).length!==1)throw new Error('wheel setup failed');if(FROGS[FROGS.length-1].id!=='owner'||FROGS[FROGS.length-1].cost!==1000000000||FROGS[FROGS.length-1].level!==20000)throw new Error('owner frog setup failed');
       state.level=3;state.balance=5000;collectionMode='frogs';collectionAction('king');if(state.selectedFrog!=='king'||!state.unlockedFrogs.includes('king'))throw new Error('collection failed');
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v16 one-screen mobile layout, custom bet sheet, clean SVG characters, debt, gameplay, bets, promos, and spins';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v17 15-jump fair curve, level-based credit, flat PNG characters, mobile layout, debt, bets, promos, and spins';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 

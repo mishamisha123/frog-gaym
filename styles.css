@@ -520,7 +520,7 @@ body {
 }
 
 
-/* v16 build marker: confirms that the newest GitHub deployment loaded. */
+/* v17 build marker: confirms that the newest GitHub deployment loaded. */
 .build-version {
   width: max-content;
   margin: 10px auto 2px;
@@ -1082,4 +1082,31 @@ body {
   .main-actions { margin-top:4px; }
   .action-button { min-height:42px; }
   #playScreen.round-live .action-button { min-height:53px; }
+}
+
+
+/* v17: completely flat portrait treatment—no forehead light, card spotlight, or image filter. */
+.frog-avatar-img,
+.profile-frog .frog-avatar-img,
+.big-profile-frog .frog-avatar-img,
+.collection-art .frog-avatar-img {
+  filter:none !important;
+  mix-blend-mode:normal !important;
+}
+.profile-frog,
+.big-profile-frog,
+.collection-art,
+.collection-card[data-item="owner"] .collection-art {
+  background:#dff2cf !important;
+  box-shadow:none !important;
+}
+.collection-art::before,
+.collection-art::after,
+.profile-frog::before,
+.profile-frog::after,
+.big-profile-frog::before,
+.big-profile-frog::after {
+  content:none !important;
+  display:none !important;
+  background:none !important;
 }

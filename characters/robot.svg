@@ -1,16 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Robo Frog">
 <defs>
-<linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#dff6ff"/><stop offset="1" stop-color="#6d97b3"/></linearGradient>
 </defs>
 <ellipse cx="256" cy="470" rx="150" ry="24" fill="#073d47" opacity=".22"/>
 <g>
 <g stroke="#294a63" stroke-width="14" stroke-linejoin="round">
  <ellipse cx="136" cy="405" rx="92" ry="45" fill="#789eb6"/><ellipse cx="376" cy="405" rx="92" ry="45" fill="#789eb6"/>
- <rect x="126" y="268" width="260" height="166" rx="72" fill="url(#body)"/><rect x="187" y="312" width="138" height="83" rx="38" fill="#dff8ff" opacity=".64"/>
+ <rect x="126" y="268" width="260" height="166" rx="72" fill="#9fc1d3"/><rect x="187" y="312" width="138" height="83" rx="38" fill="#dff8ff" opacity=".64"/>
  <circle cx="107" cy="335" r="42" fill="#bcecff"/><circle cx="405" cy="335" r="42" fill="#bcecff"/>
- <path d="M117 210Q118 116 190 99Q256 62 322 99Q394 116 395 210Q399 286 335 318Q256 348 177 318Q113 286 117 210Z" fill="url(#body)"/>
- <rect x="136" y="104" width="240" height="163" rx="68" fill="#d6eef8" opacity=".36"/>
- <ellipse cx="179" cy="154" rx="58" ry="64" fill="#112b42"/><ellipse cx="333" cy="154" rx="58" ry="64" fill="#112b42"/>
+ <path d="M117 210Q118 116 190 99Q256 62 322 99Q394 116 395 210Q399 286 335 318Q256 348 177 318Q113 286 117 210Z" fill="#9fc1d3"/>
+<ellipse cx="179" cy="154" rx="58" ry="64" fill="#112b42"/><ellipse cx="333" cy="154" rx="58" ry="64" fill="#112b42"/>
  <ellipse cx="179" cy="154" rx="39" ry="43" fill="#55eeff"/><ellipse cx="333" cy="154" rx="39" ry="43" fill="#55eeff"/>
  <path d="M153 146h52M153 163h52M307 146h52M307 163h52" stroke="#d9ffff" stroke-width="7"/>
  <path d="M196 248Q256 283 316 248" fill="none" stroke="#294a63"/>

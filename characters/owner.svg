@@ -1,6 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Owner Frog">
 <defs>
-<linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#8ad467"/><stop offset="1" stop-color="#4f9d50"/></linearGradient>
 </defs>
 <ellipse cx="256" cy="470" rx="150" ry="24" fill="#073d47" opacity=".22"/>
 <g>
@@ -9,8 +8,8 @@
 <path d="M171 293Q256 337 341 293L322 445H190Z" fill="#20262d"/>
 <g stroke="#254b37" stroke-width="14" stroke-linejoin="round">
  <ellipse cx="139" cy="414" rx="93" ry="42" fill="#4e9f4d"/><ellipse cx="373" cy="414" rx="93" ry="42" fill="#4e9f4d"/>
- <ellipse cx="256" cy="340" rx="116" ry="104" fill="url(#body)"/>
- <path d="M120 205Q123 118 190 99Q256 64 322 99Q389 118 392 205Q399 289 337 321Q256 363 175 321Q113 289 120 205Z" fill="url(#body)"/>
+ <ellipse cx="256" cy="340" rx="116" ry="104" fill="#65b257"/>
+ <path d="M120 205Q123 118 190 99Q256 64 322 99Q389 118 392 205Q399 289 337 321Q256 363 175 321Q113 289 120 205Z" fill="#65b257"/>
  <ellipse cx="175" cy="135" rx="58" ry="67" fill="#79c75c"/><ellipse cx="337" cy="135" rx="58" ry="67" fill="#79c75c"/>
 </g>
 <!-- cropped dark hair -->
@@ -31,6 +30,5 @@
 <path d="M203 289Q256 321 309 289Q299 338 256 346Q213 338 203 289Z" fill="#5ca44f" opacity=".68"/>
 <!-- subtle stubble dots -->
 <g fill="#294c3d" opacity=".45"><circle cx="211" cy="286" r="3"/><circle cx="229" cy="295" r="3"/><circle cx="247" cy="300" r="3"/><circle cx="266" cy="300" r="3"/><circle cx="284" cy="295" r="3"/><circle cx="302" cy="286" r="3"/><circle cx="219" cy="313" r="3"/><circle cx="239" cy="320" r="3"/><circle cx="260" cy="322" r="3"/><circle cx="282" cy="317" r="3"/><circle cx="298" cy="309" r="3"/></g>
-<path d="M173 319Q256 357 339 319" fill="none" stroke="#eaf5d6" stroke-width="9" opacity=".22"/>
 </g>
 </svg>

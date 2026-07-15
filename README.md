@@ -150,7 +150,7 @@ This update adds stronger game feel without using deceptive gambling dark patter
 
 ## Consolidated v11 deployment check
 
-This build includes an unmistakable yellow badge reading **v16 · 20 JUMPS** above the start button.
+This build includes an unmistakable yellow badge reading **v17 · 15 JUMPS** above the start button.
 
 After uploading all files to GitHub Pages, visit:
 
@@ -160,7 +160,7 @@ That helper unregisters old service workers and removes stale cached game files,
 
 The correct build must visibly show:
 
-- `v16 · 20 JUMPS`
+- `v17 · 15 JUMPS`
 - Jump display `0 / 20`
 - Fixed bets: 50, 100, 250, 500
 - Bet tools: ÷2, ×2, CUSTOM, MAX
@@ -261,3 +261,47 @@ After deploying v15, visit `refresh.html` once to remove the older cached versio
 - Collection, Profile, header, and gameplay portraits now use clean flat shading.
 
 After deployment, visit `refresh.html` once to clear the older cached build.
+
+
+## v17 economy, debt and art update
+
+### Fifteen-jump 95% curve
+
+Every ordinary cash-out point targets 95% RTP before whole-Froggy rounding. Early rewards are tighter than v16, while the final jump pays strongly.
+
+| Jump | Failure risk | Cash-out multiplier |
+|---:|---:|---:|
+| 1 | 8% | 1.03× |
+| 2 | 10% | 1.15× |
+| 3 | 12% | 1.30× |
+| 4 | 14% | 1.52× |
+| 5 | 16% | 1.80× |
+| 6 | 18% | 2.20× |
+| 7 | 21% | 2.79× |
+| 8 | 24% | 3.67× |
+| 9 | 28% | 5.09× |
+| 10 | 32% | 7.49× |
+| 11 | 37% | 11.88× |
+| 12 | 43% | 20.85× |
+| 13 | 49% | 40.88× |
+| 14 | 56% | 92.92× |
+| 15 | 64% | 258.10× |
+
+Final survival probability is approximately 0.368%, with a 258.10× final cash-out.
+
+### Level-based fictional credit
+
+- Credit limit is `max(10,000, current level × 100)`.
+- Level 1 through level 100 receive the 10,000-Froggy minimum.
+- Level 250 receives 25,000 Froggy of total credit.
+- Level 10,000 receives 1,000,000 Froggy of total credit.
+- Existing debt counts against the available credit.
+- There is no separate gameplay cap beyond the JavaScript safe-number protection.
+- The existing manual-payment deadline and overdue-level rules remain unchanged.
+
+### Character rendering fix
+
+- All remaining body gradients and artificial face highlights were flattened.
+- Portrait card spotlights and pseudo-element shines were disabled.
+- The game now loads new 512px transparent PNG sprites from `characters-flat-v17/`.
+- The new filenames prevent Mobile Safari from reusing previously cached shiny SVG files.
