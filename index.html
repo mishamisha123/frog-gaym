@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#101d2a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Froggy Leap" />
+  <meta name="description" content="A juicy lily-pad risk game with virtual Froggy currency, unlockable frogs, lakes, daily rewards and offline play." />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Froggy Leap Deluxe</title>
+</head>
+<body>
+  <div id="app" class="app" data-theme="forest">
+    <header class="topbar glass">
+      <button id="profileButton" class="profile-chip pressable" aria-label="Open profile">
+        <span class="profile-frog" id="profileFrog">🐸</span>
+        <span class="profile-copy"><b id="levelLabel">Lv. 1</b><small><span id="xpLabel">0</span>/<span id="xpNextLabel">100</span> XP</small></span>
+        <span class="xp-ring"><i id="xpRing"></i></span>
+      </button>
+
+      <div class="brand" aria-label="Froggy Leap Deluxe">
+        <span class="brand-kicker">FROGGY</span>
+        <strong>LEAP</strong>
+      </div>
+
+      <div class="top-actions">
+        <button id="soundButton" class="icon-button pressable" aria-label="Toggle sound">🔊</button>
+        <div class="balance-pill">
+          <span class="coin-icon">F</span>
+          <strong id="balanceLabel">1,000</strong>
+        </div>
+      </div>
+    </header>
+
+    <main class="screen-stack">
+      <section id="playScreen" class="screen active" aria-label="Play">
+        <div id="gameFrame" class="game-frame">
+          <canvas id="gameCanvas" aria-label="Animated frog lake game"></canvas>
+          <div class="canvas-vignette"></div>
+
+          <div id="statusToast" class="status-toast glass">Choose your bet and start the leap.</div>
+
+          <div class="risk-heads-up glass">
+            <div><small>JUMP</small><b id="jumpLabel">0 / 10</b></div>
+            <div><small>MULTIPLIER</small><b id="multiplierLabel">1.00×</b></div>
+            <div><small>NEXT RISK</small><b id="riskLabel">5%</b></div>
+            <div><small>CASH-OUT</small><b id="payoutLabel">100 F</b></div>
+          </div>
+
+          <div id="luckyBadge" class="lucky-badge hidden">🍀 Lucky charm: <b id="luckyCount">0</b></div>
+          <button id="installButton" class="install-chip glass pressable hidden">＋ Install game</button>
+        </div>
+
+        <section class="bet-panel glass">
+          <div class="bet-header">
+            <div><small>BET AMOUNT</small><strong><span id="betDisplay">100</span> F</strong></div>
+            <div class="danger-copy"><small>DANGER</small><strong id="dangerLabel">Tiny ripple</strong></div>
+          </div>
+
+          <div class="risk-track" aria-label="Current risk">
+            <div id="riskFill" class="risk-fill"></div>
+            <span id="riskMarker" class="risk-marker"></span>
+          </div>
+
+          <div id="quickBets" class="quick-bets">
+            <button class="bet-chip pressable" data-bet="50">50</button>
+            <button class="bet-chip pressable selected" data-bet="100">100</button>
+            <button class="bet-chip pressable" data-bet="250">250</button>
+            <button class="bet-chip pressable" data-bet="500">500</button>
+            <button class="bet-chip pressable" data-bet="max">MAX</button>
+          </div>
+
+          <div class="main-actions">
+            <button id="startButton" class="action-button start pressable"><span>START ROUND</span><small>Bet 100 F</small></button>
+            <button id="jumpButton" class="action-button jump pressable hidden"><span>JUMP</span><small>Tap the next lily pad</small></button>
+            <button id="cashButton" class="action-button cash pressable hidden"><span>CASH OUT</span><small id="cashButtonValue">115 F</small></button>
+          </div>
+        </section>
+      </section>
+
+      <section id="collectionScreen" class="screen" aria-label="Collection">
+        <div class="section-heading">
+          <div><small>YOUR COLLECTION</small><h1>Frogs & Lakes</h1></div>
+          <span class="mini-balance"><span class="coin-icon">F</span><b id="collectionBalance">1,000</b></span>
+        </div>
+        <div class="segmented-control">
+          <button class="segment active" data-collection="frogs">Frogs</button>
+          <button class="segment" data-collection="lakes">Lakes</button>
+        </div>
+        <div id="collectionGrid" class="collection-grid"></div>
+      </section>
+
+      <section id="rewardsScreen" class="screen" aria-label="Daily rewards">
+        <div class="section-heading">
+          <div><small>COME BACK DAILY</small><h1>Froggy Rewards</h1></div>
+          <div class="streak-pill">🔥 <b id="streakLabel">1</b> day streak</div>
+        </div>
+        <div class="reward-hero glass">
+          <div class="reward-copy">
+            <small>DAILY SPIN</small>
+            <h2 id="rewardHeadline">Your reward is ready!</h2>
+            <p id="rewardSubtext">Spin once per day for Froggy, skins, or lucky charms.</p>
+          </div>
+          <div id="wheel" class="reward-wheel" aria-label="Daily reward wheel">
+            <div class="wheel-pointer">▼</div>
+            <div id="wheelDisc" class="wheel-disc">
+              <span style="--i:0">300</span><span style="--i:1">🍀</span><span style="--i:2">500</span><span style="--i:3">🐸</span>
+              <span style="--i:4">750</span><span style="--i:5">🍀</span><span style="--i:6">1K</span><span style="--i:7">✨</span>
+            </div>
+            <button id="spinButton" class="spin-button pressable">SPIN</button>
+          </div>
+        </div>
+        <div class="calendar-card glass">
+          <div class="calendar-title"><b>7-day streak bonus</b><span>Reach day 7 for a guaranteed skin</span></div>
+          <div id="streakDays" class="streak-days"></div>
+        </div>
+      </section>
+
+      <section id="statsScreen" class="screen" aria-label="Stats and settings">
+        <div class="section-heading"><div><small>PLAYER PROFILE</small><h1>Stats & Settings</h1></div></div>
+        <div class="profile-hero glass">
+          <div id="bigProfileFrog" class="big-profile-frog">🐸</div>
+          <div><small>CURRENT FROG</small><h2 id="currentFrogName">Classic Frog</h2><p>Keep leaping to level up and unlock new ponds.</p></div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card glass"><small>TOTAL JUMPS</small><b id="totalJumpsStat">0</b></div>
+          <div class="stat-card glass"><small>BEST STREAK</small><b id="bestJumpStat">0</b></div>
+          <div class="stat-card glass"><small>BIGGEST CASH-OUT</small><b id="biggestWinStat">0 F</b></div>
+          <div class="stat-card glass"><small>ROUNDS PLAYED</small><b id="roundsStat">0</b></div>
+        </div>
+        <div class="settings-list glass">
+          <button id="settingsSound" class="settings-row pressable"><span>🔊 Sound effects</span><b>On</b></button>
+          <button id="settingsMotion" class="settings-row pressable"><span>✨ Extra effects</span><b>On</b></button>
+          <button id="howToButton" class="settings-row pressable"><span>❔ How to play</span><b>›</b></button>
+          <button id="resetButton" class="settings-row danger pressable"><span>↻ Reset progress</span><b>›</b></button>
+        </div>
+        <p class="virtual-note">Froggy is a fictional in-game currency. No deposits, purchases, or real-money prizes.</p>
+      </section>
+    </main>
+
+    <nav class="bottom-nav glass" aria-label="Main navigation">
+      <button class="nav-button active pressable" data-screen="play"><span>🐸</span><small>Play</small></button>
+      <button class="nav-button pressable" data-screen="collection"><span>🎒</span><small>Collection</small></button>
+      <button class="nav-button pressable" data-screen="rewards"><span>🎁</span><small>Rewards</small><i id="rewardDot" class="notification-dot"></i></button>
+      <button class="nav-button pressable" data-screen="stats"><span>🏆</span><small>Profile</small></button>
+    </nav>
+
+    <div id="modalBackdrop" class="modal-backdrop hidden">
+      <div id="resultModal" class="modal-card result-modal hidden">
+        <div id="resultIcon" class="result-icon">🏆</div>
+        <small id="resultKicker">ROUND COMPLETE</small>
+        <h2 id="resultTitle">Smart cash-out!</h2>
+        <div id="resultAmount" class="result-amount">+115 F</div>
+        <p id="resultText">You locked in your Froggy.</p>
+        <button id="resultButton" class="action-button start pressable"><span>PLAY AGAIN</span><small>Choose another bet</small></button>
+      </div>
+
+      <div id="howToModal" class="modal-card hidden">
+        <button class="modal-close pressable" data-close-modal>×</button>
+        <small>HOW TO PLAY</small>
+        <h2>Leap, risk, cash out.</h2>
+        <div class="how-steps">
+          <div><b>1</b><span>Choose a virtual Froggy bet and start the round.</span></div>
+          <div><b>2</b><span>Each safe jump raises your multiplier and the next risk.</span></div>
+          <div><b>3</b><span>Cash out before a lily pad breaks—or clear all ten for 12×.</span></div>
+        </div>
+        <button class="action-button start pressable" data-close-modal><span>GOT IT</span></button>
+      </div>
+
+      <div id="installModal" class="modal-card hidden">
+        <button class="modal-close pressable" data-close-modal>×</button>
+        <small>INSTALL ON IPHONE</small>
+        <h2>Add Froggy Leap to your Home Screen.</h2>
+        <div class="install-steps">
+          <p><b>1.</b> Open this page in Safari.</p>
+          <p><b>2.</b> Tap the Share button <span class="share-symbol">□↑</span>.</p>
+          <p><b>3.</b> Choose <b>Add to Home Screen</b>.</p>
+        </div>
+      </div>
+
+      <div id="rewardModal" class="modal-card reward-modal hidden">
+        <div class="result-icon">🎁</div>
+        <small>DAILY REWARD</small>
+        <h2 id="rewardResultTitle">500 Froggy!</h2>
+        <p id="rewardResultText">Added to your balance.</p>
+        <button class="action-button start pressable" data-close-modal><span>CLAIM</span></button>
+      </div>
+    </div>
+
+    <div id="confettiLayer" class="confetti-layer" aria-hidden="true"></div>
+    <div id="flashLayer" class="flash-layer" aria-hidden="true"></div>
+    <div id="selfTestResult" hidden></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
