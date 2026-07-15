@@ -520,7 +520,7 @@ body {
 }
 
 
-/* v17 build marker: confirms that the newest GitHub deployment loaded. */
+/* v18 build marker: confirms that the newest GitHub deployment loaded. */
 .build-version {
   width: max-content;
   margin: 10px auto 2px;
@@ -1109,4 +1109,41 @@ body {
   content:none !important;
   display:none !important;
   background:none !important;
+}
+
+
+/* v18 — one embedded textured portrait source in every game view. */
+.frog-avatar-img {
+  display:block !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  aspect-ratio:1 / 1;
+  object-fit:contain !important;
+  object-position:center !important;
+  transform-origin:center;
+  isolation:isolate;
+  image-rendering:auto;
+}
+.profile-frog,
+.big-profile-frog,
+.collection-art {
+  overflow:hidden !important;
+  contain:paint;
+}
+.profile-frog .frog-avatar-img {
+  width:44px !important;
+  height:44px !important;
+}
+.big-profile-frog .frog-avatar-img {
+  width:108px !important;
+  height:108px !important;
+}
+.collection-art .frog-avatar-img {
+  width:min(96%,176px) !important;
+  height:min(96%,176px) !important;
+  transform:none !important;
+}
+.collection-card[data-item="owner"] .frog-avatar-img {
+  width:min(94%,184px) !important;
+  height:min(94%,184px) !important;
 }

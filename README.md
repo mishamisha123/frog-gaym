@@ -150,7 +150,7 @@ This update adds stronger game feel without using deceptive gambling dark patter
 
 ## Consolidated v11 deployment check
 
-This build includes an unmistakable yellow badge reading **v17 · 15 JUMPS** above the start button.
+This build includes an unmistakable yellow badge reading **v18 · 15 JUMPS** above the start button.
 
 After uploading all files to GitHub Pages, visit:
 
@@ -160,7 +160,7 @@ That helper unregisters old service workers and removes stale cached game files,
 
 The correct build must visibly show:
 
-- `v17 · 15 JUMPS`
+- `v18 · 15 JUMPS`
 - Jump display `0 / 20`
 - Fixed bets: 50, 100, 250, 500
 - Bet tools: ÷2, ×2, CUSTOM, MAX
@@ -305,3 +305,20 @@ Final survival probability is approximately 0.368%, with a 258.10× final cash-o
 - Portrait card spotlights and pseudo-element shines were disabled.
 - The game now loads new 512px transparent PNG sprites from `characters-flat-v17/`.
 - The new filenames prevent Mobile Safari from reusing previously cached shiny SVG files.
+
+
+## v18 character repair
+
+v17 could show a crude malformed fallback frog when its new character folder was not uploaded.
+It also flattened the artwork too aggressively.
+
+v18:
+
+- Restores the original textured gradients, shadows, colors and accessories.
+- Removes only the artificial halo and forehead-shine layers.
+- Corrects Owner Frog's hairline and eyebrows so the eyes stay unobstructed.
+- Embeds all ten 512×512 transparent PNG portraits directly inside `app.js`.
+- Uses the same embedded source in gameplay, Profile, Collection and the header.
+- Requires no `characters` folder.
+- Replaces the crude emergency frog with a neutral `LOADING` marker.
+- Adds strict aspect-ratio and containment rules to prevent stretching or clipping.
