@@ -150,7 +150,7 @@ This update adds stronger game feel without using deceptive gambling dark patter
 
 ## Consolidated v11 deployment check
 
-This build includes an unmistakable yellow badge reading **v21 · 15 JUMPS** above the start button.
+This build includes an unmistakable yellow badge reading **v22 · 15 JUMPS** above the start button.
 
 After uploading all files to GitHub Pages, visit:
 
@@ -160,7 +160,7 @@ That helper unregisters old service workers and removes stale cached game files,
 
 The correct build must visibly show:
 
-- `v21 · 15 JUMPS`
+- `v22 · 15 JUMPS`
 - Jump display `0 / 20`
 - Fixed bets: 50, 100, 250, 500
 - Bet tools: ÷2, ×2, CUSTOM, MAX
@@ -466,3 +466,49 @@ scheduled interest.
 
 An active v20 debt is migrated into ten fixed payments without adding retroactive interest.
 Only loans created in v21 receive the new 8% finance charge.
+
+
+## v22 dedicated Bank
+
+### Separate Bank tab
+
+The full credit system has moved out of Profile and into a dedicated Bank screen.
+The Bank navigation button owns the red payment-due alert. The live-game debt badge also
+opens the Bank directly.
+
+### Two-step loan redemption
+
+1. **GET A LOAN** opens an interactive quote.
+2. A slider and exact amount field select the principal.
+3. Before any warning, the quote displays:
+   - 8% total finance charge
+   - 50-completed-round duration
+   - ten fixed payments
+   - one payment every five rounds
+   - total interest
+   - scheduled total
+   - fixed payment amount
+   - first due point
+   - immediate early-payoff amount
+   - tier qualification
+4. **REVIEW FINAL WARNING** opens a second screen.
+5. The warning briefly explains manual payments, overdue level penalties, level-1 reset,
+   early-payoff savings, tier rules and the fictional-currency status.
+6. The player chooses **CANCEL** or **REDEEM MONEY**.
+
+Only one active loan remains allowed. The quote is calculated by the same `loanQuote()`
+function used when the loan is actually created.
+
+### Piggy Bank
+
+- Players may deposit wallet Froggy or withdraw savings at any time outside an active round.
+- No deposit or withdrawal fee.
+- Savings earn 0.1% every 20 completed rounds while money is stored.
+- Accrual is calculated a little each round from the balance actually stored during that round.
+- This prevents depositing only on round 20 from earning a full cycle on money that was not stored earlier.
+- Whole Froggy interest is credited at the end of each 20-round cycle.
+- Fractional interest carries forward instead of being discarded.
+- Credited interest compounds in later cycles.
+- The Bank displays savings, wallet funds, estimated next interest, rounds remaining,
+  lifetime interest, cycle count and progress.
+- Piggy savings are not available for betting or debt payments until withdrawn.

@@ -1,7 +1,7 @@
 {
   "name": "Froggy Leap Deluxe",
   "short_name": "Froggy Leap",
-  "description": "A polished 15-jump lily-pad game with fictional fixed-payment loans, 8% total term interest, early-payoff savings, billion-Froggy credit tiers and offline play.",
+  "description": "A polished 15-jump lily-pad game with a dedicated fictional Bank, interactive fixed-loan quotes, Piggy savings interest, embedded characters and offline play.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

@@ -25,7 +25,7 @@
     <h1>Updating Froggy Leap</h1>
     <p>Removing the old offline cache and loading the consolidated game.</p>
     <div class="bar"><i></i></div>
-    <small id="status">Preparing v21…</small>
+    <small id="status">Preparing v22…</small>
   </main>
   <script>
     (async () => {
@@ -41,13 +41,13 @@
           const names = await caches.keys();
           await Promise.all(names.map(name => caches.delete(name)));
         }
-        status.textContent = 'Loading v21…';
+        status.textContent = 'Loading v22…';
       } catch (error) {
         console.warn('Refresh helper:', error);
         status.textContent = 'Reloading the game…';
       }
       // localStorage is intentionally untouched, so balance and progress remain.
-      setTimeout(() => location.replace('./?build=v21-' + Date.now()), 650);
+      setTimeout(() => location.replace('./?build=v22-' + Date.now()), 650);
     })();
   </script>
 </body>

@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=21" />
+  <link rel="stylesheet" href="styles.css?v=22" />
   <title>Froggy Leap Deluxe</title>
 </head>
 <body>
@@ -53,7 +53,7 @@
           </div>
 
           <div id="luckyBadge" class="lucky-badge hidden">🍀 Lucky charm: <b id="luckyCount">0</b></div>
-          <div id="debtBadge" class="debt-badge hidden">🏦 Debt <b id="debtBadgeAmount">0 F</b> · <span id="debtBadgeStatus">due in <b id="debtBadgeTurns">5</b></span></div>
+          <button id="debtBadge" type="button" class="debt-badge hidden pressable" aria-label="Open Bank debt account">🏦 Debt <b id="debtBadgeAmount">0 F</b> · <span id="debtBadgeStatus">due in <b id="debtBadgeTurns">5</b></span></button>
           <button id="installButton" class="install-chip glass pressable hidden">＋ Install game</button>
         </div>
 
@@ -91,7 +91,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v21 · 15 JUMPS</div>
+          <div class="build-version" aria-label="Installed game version">v22 · 15 JUMPS</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -196,22 +196,83 @@
         <p class="virtual-note">Promo rewards affect only fictional in-game Froggy currency and progression.</p>
       </section>
 
-      <section id="statsScreen" class="screen" aria-label="Stats and settings">
-        <div class="section-heading"><div><small>PLAYER PROFILE</small><h1>Stats & Settings</h1></div></div>
-        <div class="profile-hero glass">
-          <div id="bigProfileFrog" class="big-profile-frog" aria-label="Selected frog"></div>
-          <div><small>CURRENT FROG</small><h2 id="currentFrogName">Classic Frog</h2><p>Every level awards a growing Froggy coin bonus.</p></div>
+
+      <section id="bankScreen" class="screen" aria-label="Bank">
+        <div class="section-heading bank-heading">
+          <div><small>FROGGY FINANCE</small><h1>Bank</h1></div>
+          <div class="bank-total-pill"><small>TOTAL FROGGY</small><b id="bankTotalWealthLabel">1,000 F</b></div>
         </div>
-        <div class="stats-grid">
-          <div class="stat-card glass"><small>TOTAL JUMPS</small><b id="totalJumpsStat">0</b></div>
-          <div class="stat-card glass"><small>BEST STREAK</small><b id="bestJumpStat">0</b></div>
-          <div class="stat-card glass"><small>BIGGEST CASH-OUT</small><b id="biggestWinStat">0 F</b></div>
-          <div class="stat-card glass"><small>ROUNDS PLAYED</small><b id="roundsStat">0</b></div>
-          <div class="stat-card glass level-bonus-card"><small>NEXT LEVEL BONUS</small><b id="nextLevelBonusStat">550 F</b></div>
-        </div>
+
+        <section class="bank-overview glass">
+          <div class="bank-overview-icon" aria-hidden="true">🏦</div>
+          <div>
+            <small>YOUR POND BANK</small>
+            <h2>Save safely or manage a fixed-payment loan.</h2>
+            <p>Piggy savings and Froggy credit are fictional game systems. Savings never enter a bet until you withdraw them.</p>
+          </div>
+        </section>
+
+        <section class="piggy-panel glass" aria-label="Piggy Bank savings">
+          <div class="piggy-head">
+            <div class="piggy-title">
+              <span class="piggy-icon" aria-hidden="true">🐷</span>
+              <div><small>PIGGY SAVINGS</small><h2>Piggy Bank</h2></div>
+            </div>
+            <span class="piggy-rate">+0.1% every 20 stored rounds</span>
+          </div>
+
+          <div class="piggy-balance-card">
+            <small>SAVINGS BALANCE</small>
+            <b id="piggyBalanceLabel">0 F</b>
+            <span>Wallet: <strong id="piggyWalletLabel">1,000 F</strong></span>
+          </div>
+
+          <div class="piggy-metrics">
+            <div><small>NEXT INTEREST</small><b id="piggyNextInterestLabel">0 F</b></div>
+            <div><small>ROUNDS REMAINING</small><b id="piggyRoundsLabel">20</b></div>
+            <div><small>LIFETIME INTEREST</small><b id="piggyLifetimeInterestLabel">0 F</b></div>
+            <div><small>COMPLETED CYCLES</small><b id="piggyCyclesLabel">0</b></div>
+          </div>
+
+          <div class="piggy-progress" aria-label="Piggy Bank interest progress">
+            <i id="piggyProgressFill"></i>
+          </div>
+          <p class="piggy-fair-note">
+            Interest accrues a little each completed round using the money actually stored during that round.
+            Fractions carry forward, so small balances do not lose earned interest.
+          </p>
+
+          <div class="piggy-transfer-card">
+            <div class="piggy-mode-toggle" role="group" aria-label="Piggy transfer direction">
+              <button type="button" class="active pressable" data-piggy-mode="deposit">DEPOSIT</button>
+              <button type="button" class="pressable" data-piggy-mode="withdraw">WITHDRAW</button>
+            </div>
+
+            <div class="piggy-transfer-amount">
+              <small id="piggyTransferKicker">MOVE TO SAVINGS</small>
+              <b><span id="piggyTransferAmountLabel">0</span> F</b>
+            </div>
+
+            <input id="piggyTransferSlider" class="piggy-slider" type="range" min="0" max="1000" step="10" value="0" aria-label="Piggy Bank transfer amount" />
+
+            <div class="piggy-transfer-row">
+              <input id="piggyTransferInput" type="number" min="0" step="1" inputmode="numeric" value="0" aria-label="Exact Piggy Bank transfer amount" />
+              <button type="button" class="piggy-quick pressable" data-piggy-share="25">25%</button>
+              <button type="button" class="piggy-quick pressable" data-piggy-share="50">50%</button>
+              <button type="button" class="piggy-quick pressable" data-piggy-share="100">MAX</button>
+            </div>
+
+            <button id="piggyTransferButton" type="button" class="piggy-transfer-button pressable">
+              <span>DEPOSIT TO PIGGY</span>
+              <small>No fee · withdraw anytime</small>
+            </button>
+            <p id="piggyMessage" class="piggy-message" role="status" aria-live="polite">Deposit Froggy to begin earning after stored rounds.</p>
+          </div>
+        </section>
+
         <section class="debt-panel glass" aria-label="Froggy debt">
           <div class="debt-panel-head">
-            <div><small>FROGGY CREDIT</small><h2>Debt & repayments</h2></div>
+            <div><small>FROGGY CREDIT</small><h2>Loans & repayments</h2></div>
             <div class="debt-head-status">
               <span id="debtDueFlag" class="debt-due-flag hidden">! PAYMENT DUE</span>
               <small>Fictional currency only</small>
@@ -248,21 +309,20 @@
             <div><small>PAYMENT PROGRESS</small><b id="loanProgressLabel">No active loan</b></div>
           </div>
 
-          <div id="loanButtons" class="loan-buttons">
-            <button type="button" class="loan-button pressable" data-loan="500"><b>+500 F</b><small>Borrow</small></button>
-            <button type="button" class="loan-button pressable" data-loan="1000"><b>+1,000 F</b><small>Borrow</small></button>
-            <button type="button" class="loan-button pressable" data-loan="2500"><b>+2,500 F</b><small>Borrow</small></button>
-            <button type="button" class="loan-button pressable" data-loan="5000"><b>+5,000 F</b><small>Borrow</small></button>
-          </div>
-
-          <form id="customLoanForm" class="custom-loan-form">
-            <label for="customLoanInput">CUSTOM LOAN</label>
-            <div>
-              <input id="customLoanInput" type="number" min="1" step="1" inputmode="numeric" placeholder="Enter Froggy amount" />
-              <button id="customLoanButton" type="submit" class="pressable">BORROW</button>
-              <button id="maxLoanButton" type="button" class="pressable">MAX</button>
+          <div class="loan-entry-card">
+            <div class="loan-entry-copy">
+              <span class="loan-entry-icon">🪷</span>
+              <div>
+                <small>NEW FIXED-PAYMENT LOAN</small>
+                <b id="loanEntryHeadline">Up to 2,500 F available</b>
+                <p id="loanEntrySubtext">8% total finance charge · 10 payments · 50 completed-round term</p>
+              </div>
             </div>
-          </form>
+            <button id="openLoanBuilderButton" type="button" class="loan-open-button pressable">
+              <span>GET A LOAN</span>
+              <small>Choose amount with slider</small>
+            </button>
+          </div>
 
           <div class="debt-actions">
             <button id="repayInstallmentButton" type="button" class="debt-action pressable"><span>PAY FIXED AMOUNT</span><small>Keeps current · no tier progress</small></button>
@@ -270,7 +330,21 @@
           </div>
           <p id="debtMessage" class="debt-message" role="status" aria-live="polite">Loans use 8% total interest, ten fixed payments and no early-payoff penalty.</p>
         </section>
+      </section>
 
+      <section id="statsScreen" class="screen" aria-label="Stats and settings">
+        <div class="section-heading"><div><small>PLAYER PROFILE</small><h1>Stats & Settings</h1></div></div>
+        <div class="profile-hero glass">
+          <div id="bigProfileFrog" class="big-profile-frog" aria-label="Selected frog"></div>
+          <div><small>CURRENT FROG</small><h2 id="currentFrogName">Classic Frog</h2><p>Every level awards a growing Froggy coin bonus.</p></div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card glass"><small>TOTAL JUMPS</small><b id="totalJumpsStat">0</b></div>
+          <div class="stat-card glass"><small>BEST STREAK</small><b id="bestJumpStat">0</b></div>
+          <div class="stat-card glass"><small>BIGGEST CASH-OUT</small><b id="biggestWinStat">0 F</b></div>
+          <div class="stat-card glass"><small>ROUNDS PLAYED</small><b id="roundsStat">0</b></div>
+          <div class="stat-card glass level-bonus-card"><small>NEXT LEVEL BONUS</small><b id="nextLevelBonusStat">550 F</b></div>
+        </div>
         <section class="session-panel glass">
           <div class="session-panel-head"><div><small>THIS SESSION</small><h2 id="pondRankLabel">Tadpole</h2></div><span>Fresh start every launch</span></div>
           <div class="session-grid">
@@ -301,8 +375,9 @@
       <button class="nav-button active pressable" data-screen="play"><span>🐸</span><small>Play</small></button>
       <button class="nav-button pressable" data-screen="collection"><span>🎒</span><small>Collection</small></button>
       <button class="nav-button pressable" data-screen="rewards"><span>🎁</span><small>Rewards</small><i id="rewardDot" class="notification-dot"></i></button>
+      <button class="nav-button pressable" data-screen="bank"><span>🏦</span><small>Bank</small><i id="debtDueDot" class="debt-alert hidden" aria-label="Debt payment due">!</i></button>
       <button class="nav-button pressable" data-screen="promo"><span>🎟️</span><small>Promo</small></button>
-      <button class="nav-button pressable" data-screen="stats"><span>🏆</span><small>Profile</small><i id="debtDueDot" class="debt-alert hidden" aria-label="Debt payment due">!</i></button>
+      <button class="nav-button pressable" data-screen="stats"><span>🏆</span><small>Profile</small></button>
     </nav>
 
     <div id="levelToast" class="level-toast" role="status" aria-live="polite">
@@ -350,6 +425,77 @@
         <p id="rewardResultText">Added to your balance.</p>
         <button class="action-button start pressable" data-close-modal><span>CLAIM</span></button>
       </div>
+
+      <div id="loanBuilderModal" class="modal-card loan-builder-modal hidden">
+        <button class="modal-close pressable" data-close-modal>×</button>
+        <small>FROGGY CREDIT QUOTE</small>
+        <h2>Choose your loan.</h2>
+        <p class="loan-builder-intro">Move the slider or enter an exact amount. The complete terms update before any warning or redemption.</p>
+
+        <div class="loan-builder-amount">
+          <small>YOU RECEIVE</small>
+          <b><span id="loanBuilderAmountLabel">500</span> F</b>
+        </div>
+
+        <input id="loanAmountSlider" class="loan-amount-slider" type="range" min="500" max="2500" step="100" value="500" aria-label="Loan amount" />
+        <div class="loan-slider-limits"><span id="loanSliderMinimumLabel">500 F</span><span id="loanSliderMaximumLabel">2,500 F maximum</span></div>
+
+        <div class="loan-exact-row">
+          <label for="loanAmountInput">EXACT AMOUNT</label>
+          <input id="loanAmountInput" type="number" min="500" step="1" inputmode="numeric" value="500" />
+        </div>
+
+        <div class="loan-quote-grid">
+          <div><small>FINANCE CHARGE</small><b>8% total</b></div>
+          <div><small>DURATION</small><b>50 completed rounds</b></div>
+          <div><small>PAYMENT COUNT</small><b>10 fixed payments</b></div>
+          <div><small>PAYMENT FREQUENCY</small><b>Every 5 rounds</b></div>
+          <div><small>INTEREST</small><b id="loanQuoteInterestLabel">40 F</b></div>
+          <div><small>SCHEDULED TOTAL</small><b id="loanQuoteTotalLabel">540 F</b></div>
+          <div><small>FIXED PAYMENT</small><b id="loanQuotePaymentLabel">54 F</b></div>
+          <div><small>FIRST PAYMENT</small><b>After 5 rounds</b></div>
+          <div><small>EARLY PAYOFF TODAY</small><b id="loanQuotePayoffLabel">500 F</b></div>
+          <div><small>TIER QUALIFICATION</small><b id="loanQuoteTierLabel">Eligible after 1 round</b></div>
+        </div>
+
+        <div class="loan-quote-note">
+          <b>No overlapping loans.</b>
+          <span>Early payoff has no penalty and removes all future interest that has not yet been earned.</span>
+        </div>
+        <p id="loanBuilderError" class="loan-builder-error" role="status" aria-live="polite"></p>
+        <button id="loanReviewButton" type="button" class="action-button start pressable">
+          <span>REVIEW FINAL WARNING</span>
+          <small>Nothing is redeemed yet</small>
+        </button>
+      </div>
+
+      <div id="loanWarningModal" class="modal-card loan-warning-modal hidden">
+        <div class="loan-warning-symbol">!</div>
+        <small>FINAL LOAN WARNING</small>
+        <h2>Understand before redeeming.</h2>
+
+        <div class="loan-warning-summary">
+          <span>You receive</span><b id="loanWarningAmountLabel">500 F</b>
+          <span>Fixed payment</span><b id="loanWarningPaymentLabel">54 F × 10</b>
+          <span>Scheduled total</span><b id="loanWarningTotalLabel">540 F</b>
+        </div>
+
+        <div class="loan-warning-list">
+          <p><b>1.</b> The 8% charge is spread across ten fixed payments. One payment becomes due every five completed rounds.</p>
+          <p><b>2.</b> Payments are manual. Completing another round while overdue removes one level; another penalty below level 1 resets the save.</p>
+          <p><b>3.</b> PAY FIXED AMOUNT keeps the account current but gives no tier progress.</p>
+          <p><b>4.</b> PAY OFF EARLY removes unearned future interest, has no penalty, and may count as one qualified full payoff.</p>
+          <p><b>5.</b> Froggy is fictional game currency. This is not real credit or real money.</p>
+        </div>
+
+        <div class="loan-warning-actions">
+          <button id="loanWarningCancelButton" type="button" class="loan-cancel-button pressable">CANCEL</button>
+          <button id="loanRedeemButton" type="button" class="loan-redeem-button pressable">
+            <span>REDEEM MONEY</span><small id="loanRedeemButtonSubtext">Receive 500 F</small>
+          </button>
+        </div>
+      </div>
+
     </div>
 
     <div id="confettiLayer" class="confetti-layer" aria-hidden="true"></div>
@@ -357,6 +503,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=21"></script>
+  <script src="app.js?v=22"></script>
 </body>
 </html>
