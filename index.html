@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=26" />
+  <link rel="stylesheet" href="styles.css?v=27" />
   <title>Froggy Leap Deluxe</title>
 </head>
 <body>
@@ -92,7 +92,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v26 · 15 JUMPS</div>
+          <div class="build-version" aria-label="Installed game version">v27 · 15 JUMPS</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -255,14 +255,7 @@
                 Paying off now saves <b id="debtInterestSavedLabel">0 F</b> in future interest.
               </div>
 
-              <div class="debt-actions">
-                <button id="repayInstallmentButton" type="button" class="debt-action pressable">
-                  <span>PAY NEXT PAYMENT EARLY</span><small>Resets the five-round countdown</small>
-                </button>
-                <button id="repayAllButton" type="button" class="debt-action secondary pressable">
-                  <span>PAY OFF EARLY</span><small>Save future interest</small>
-                </button>
-              </div>
+              <p class="loan-action-location-note">Payment controls stay visible above the navigation bar.</p>
             </div>
 
             <p id="debtMessage" class="debt-message" role="status" aria-live="polite">
@@ -276,6 +269,21 @@
               <span>Overdue: skin first</span><span>Then −1 level</span>
             </div>
           </section>
+
+          <div id="loanPaymentDock" class="loan-payment-dock hidden" aria-label="Active loan payment actions">
+            <div class="loan-payment-dock-label">
+              <span>ACTIVE LOAN</span>
+              <b id="loanPaymentDockStatus">Payment controls</b>
+            </div>
+            <div class="debt-actions loan-payment-dock-actions">
+              <button id="repayInstallmentButton" type="button" class="debt-action pressable">
+                <span>PAY NEXT PAYMENT EARLY</span><small>Resets the five-round countdown</small>
+              </button>
+              <button id="repayAllButton" type="button" class="debt-action secondary pressable">
+                <span>PAY OFF EARLY</span><small>Save future interest</small>
+              </button>
+            </div>
+          </div>
         </div>
 
         <div id="bankPiggyPane" class="bank-pane hidden">
@@ -514,6 +522,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=26"></script>
+  <script src="app.js?v=27"></script>
 </body>
 </html>

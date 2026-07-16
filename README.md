@@ -150,7 +150,7 @@ This update adds stronger game feel without using deceptive gambling dark patter
 
 ## Consolidated v11 deployment check
 
-This build includes an unmistakable yellow badge reading **v26 · 15 JUMPS** above the start button.
+This build includes an unmistakable yellow badge reading **v27 · 15 JUMPS** above the start button.
 
 After uploading all files to GitHub Pages, visit:
 
@@ -160,7 +160,7 @@ That helper unregisters old service workers and removes stale cached game files,
 
 The correct build must visibly show:
 
-- `v26 · 15 JUMPS`
+- `v27 · 15 JUMPS`
 - Jump display `0 / 20`
 - Fixed bets: 50, 100, 250, 500
 - Bet tools: ÷2, ×2, CUSTOM, MAX
@@ -687,3 +687,28 @@ The loan amount sheet no longer requires scrolling to find the next action.
 - The final warning also has a fixed footer.
 - **CANCEL** and **REDEEM MONEY** remain visible while the warning text scrolls.
 - No loan calculations, warnings, repayment rules, XP rules, Piggy rules or collateral rules were changed.
+
+
+## v27 always-visible repayment controls
+
+When an active loan exists and the Loans pane is open, a repayment dock remains fixed directly
+above the bottom navigation.
+
+The dock contains:
+
+- **PAY AMOUNT DUE** when a payment is due.
+- **PAY NEXT PAYMENT EARLY** before the deadline.
+- **PAY OFF EARLY** at all times when the wallet can cover the payoff.
+- The current scheduled amount and countdown or due status.
+
+The dock disappears immediately after the loan is cleared. It is also automatically hidden
+outside the Bank Loans pane and does not appear over Piggy Bank.
+
+Additional layout behavior:
+
+- Bank content receives extra bottom spacing while the dock is present, so no information is
+  permanently covered.
+- The dock respects the device safe area.
+- Compact phone layouts reduce button height and type size.
+- Very narrow screens stack the two actions vertically.
+- No loan calculations, deadlines, interest, collateral, tier, XP or Piggy rules changed.
