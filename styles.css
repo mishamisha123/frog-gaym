@@ -520,7 +520,7 @@ body {
 }
 
 
-/* v22 build marker: confirms that the newest GitHub deployment loaded. */
+/* v23 build marker: confirms that the newest GitHub deployment loaded. */
 .build-version {
   width: max-content;
   margin: 10px auto 2px;
@@ -1772,4 +1772,231 @@ body {
   .piggy-transfer-row { grid-template-columns:minmax(0,1fr) repeat(3,44px); }
   .loan-quote-grid { grid-template-columns:1fr; }
   .loan-warning-actions { grid-template-columns:1fr; }
+}
+
+
+/* ==========================================================================
+   v23 — simple tier credit and compact Loans-first Bank
+   ========================================================================== */
+
+.bank-shortcut {
+  color:#10283a !important;
+  background:#dfff67 !important;
+  box-shadow:0 7px 17px rgba(90,132,34,.22) !important;
+}
+.bank-nav-button {
+  position:relative;
+}
+.bank-nav-button::before {
+  content:"";
+  position:absolute;
+  inset:3px 9px;
+  z-index:-1;
+  border-radius:14px;
+  background:rgba(202,255,97,.24);
+}
+.bank-pane-toggle {
+  position:sticky;
+  top:0;
+  z-index:12;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:5px;
+  margin-bottom:10px;
+  padding:5px;
+  border-radius:18px;
+}
+.bank-pane-toggle button {
+  min-height:42px;
+  border-radius:13px;
+  color:var(--ink-soft);
+  background:transparent;
+  font-size:9px;
+  font-weight:1000;
+  cursor:pointer;
+}
+.bank-pane-toggle button.active {
+  color:white;
+  background:#10283a;
+  box-shadow:0 8px 18px rgba(16,40,58,.17);
+}
+.bank-pane {
+  animation:bankPaneIn .2s ease;
+}
+@keyframes bankPaneIn {
+  from { opacity:.35; transform:translateY(5px); }
+}
+
+.compact-debt-panel {
+  margin:0;
+  padding:14px;
+}
+.simple-tier-card {
+  margin:11px 0 9px;
+  padding:13px;
+  border-radius:20px;
+  color:white;
+  background:linear-gradient(145deg,#143642,#1f5b54);
+  box-shadow:0 12px 28px rgba(11,63,63,.18);
+}
+.simple-tier-top {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.simple-tier-top > div:last-child {
+  text-align:right;
+}
+.simple-tier-top small {
+  display:block;
+  color:#afc9cc;
+  font-size:6.5px;
+  letter-spacing:.1em;
+  font-weight:1000;
+}
+.simple-tier-top b {
+  display:block;
+  margin-top:3px;
+  color:#dfff67;
+  font-size:18px;
+}
+.simple-tier-progress {
+  height:8px;
+  margin:12px 0 7px;
+  overflow:hidden;
+  border-radius:999px;
+  background:rgba(255,255,255,.15);
+}
+.simple-tier-progress i {
+  display:block;
+  width:0;
+  height:100%;
+  border-radius:inherit;
+  background:#dfff67;
+  transition:width .3s ease;
+}
+.simple-tier-card p {
+  margin:0;
+  color:#d7e5e5;
+  font-size:8px;
+  line-height:1.4;
+}
+.simple-tier-card p strong {
+  color:white;
+}
+.loan-entry-card {
+  margin:9px 0 !important;
+}
+.active-loan-card {
+  margin:9px 0;
+  padding:11px;
+  border-radius:20px;
+  background:#f7fbed;
+  border:1px solid rgba(16,40,58,.06);
+}
+.simple-loan-summary {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:6px;
+}
+.simple-loan-summary > div {
+  min-width:0;
+  padding:9px;
+  border-radius:13px;
+  background:white;
+}
+.simple-loan-summary small {
+  display:block;
+  min-height:16px;
+  color:var(--ink-soft);
+  font-size:5.8px;
+  line-height:1.25;
+  letter-spacing:.07em;
+  font-weight:1000;
+}
+.simple-loan-summary b {
+  display:block;
+  margin-top:3px;
+  overflow:hidden;
+  color:var(--ink);
+  font-size:10px;
+  text-overflow:ellipsis;
+}
+.early-savings-line {
+  margin:7px 2px;
+  color:#47705b;
+  font-size:8px;
+  text-align:center;
+}
+.simple-loan-rules {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:5px;
+  margin-top:9px;
+}
+.simple-loan-rules span {
+  padding:6px 8px;
+  border-radius:999px;
+  color:var(--ink-soft);
+  background:#edf3e9;
+  font-size:6.5px;
+  font-weight:900;
+}
+.compact-piggy-panel {
+  margin:0;
+}
+.simple-piggy-metrics {
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+}
+.simple-quote-grid {
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+#repayInstallmentButton:not(:disabled) {
+  color:#10283a;
+  background:#dfff67;
+  box-shadow:0 8px 18px rgba(85,137,34,.18);
+}
+#repayInstallmentButton:disabled {
+  opacity:.42;
+}
+
+@media (max-width:759px) {
+  #bankScreen.active {
+    overflow:auto;
+    padding-bottom:12px;
+  }
+  .compact-debt-panel,
+  .compact-piggy-panel {
+    border-radius:21px;
+  }
+  .simple-loan-summary {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .loan-entry-card {
+    grid-template-columns:minmax(0,1fr) 128px !important;
+    gap:8px !important;
+  }
+  .loan-open-button {
+    min-height:49px;
+  }
+}
+@media (max-width:430px) {
+  .top-actions {
+    gap:4px;
+  }
+  .bank-shortcut,
+  #soundButton {
+    width:34px;
+    height:34px;
+  }
+  .loan-entry-card {
+    grid-template-columns:1fr !important;
+  }
+  .simple-tier-top b {
+    font-size:15px;
+  }
+  .simple-quote-grid {
+    grid-template-columns:1fr;
+  }
 }

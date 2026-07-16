@@ -150,7 +150,7 @@ This update adds stronger game feel without using deceptive gambling dark patter
 
 ## Consolidated v11 deployment check
 
-This build includes an unmistakable yellow badge reading **v22 · 15 JUMPS** above the start button.
+This build includes an unmistakable yellow badge reading **v23 · 15 JUMPS** above the start button.
 
 After uploading all files to GitHub Pages, visit:
 
@@ -160,7 +160,7 @@ That helper unregisters old service workers and removes stale cached game files,
 
 The correct build must visibly show:
 
-- `v22 · 15 JUMPS`
+- `v23 · 15 JUMPS`
 - Jump display `0 / 20`
 - Fixed bets: 50, 100, 250, 500
 - Bet tools: ÷2, ×2, CUSTOM, MAX
@@ -512,3 +512,60 @@ function used when the loan is actually created.
 - The Bank displays savings, wallet funds, estimated next interest, rounds remaining,
   lifetime interest, cycle count and progress.
 - Piggy savings are not available for betting or debt payments until withdrawn.
+
+
+## v23 simplified Bank and credit tiers
+
+### One credit rule
+
+The previous affordability calculation, recent-bet medians, verified earnings, credit freezes,
+50% single-loan cap and borrowing cooldown have been removed.
+
+The maximum new loan is determined only by the current repayment tier.
+
+Tier progress is the total Froggy actually repaid on time:
+
+- **PAY AMOUNT DUE** counts only when a payment is genuinely due and the loan has not missed a deadline.
+- The button cannot be repeatedly used before a due date.
+- **PAY OFF EARLY** counts the payoff amount after at least one completed round, provided the loan has not missed a deadline.
+- Payments made after a missed deadline clear debt but do not increase the tier.
+- Missed deadlines retain the overdue level penalty, but no longer reduce or freeze the tier.
+- Only one loan may be active.
+- The maximum selected loan amount is the full tier ceiling rather than 50% of it.
+
+### Amount-based tier ladder
+
+| On-time Froggy repaid | Tier | Maximum loan |
+|---:|---|---:|
+| 0 | Starter | 5,000 F |
+| 5,000 | Bronze | 10,000 F |
+| 15,000 | Copper | 20,000 F |
+| 35,000 | Silver | 50,000 F |
+| 75,000 | Gold | 100,000 F |
+| 175,000 | Platinum | 250,000 F |
+| 425,000 | Emerald | 500,000 F |
+| 925,000 | Sapphire | 1,000,000 F |
+| 1,900,000 | Ruby | 2,000,000 F |
+| 3,900,000 | Diamond | 5,000,000 F |
+| 8,900,000 | Master | 10,000,000 F |
+| 18,900,000 | Grandmaster | 20,000,000 F |
+| 38,900,000 | Elite | 50,000,000 F |
+| 88,900,000 | Champion | 100,000,000 F |
+| 188,900,000 | Hero | 200,000,000 F |
+| 388,900,000 | Legend | 350,000,000 F |
+| 738,900,000 | Mythic | 500,000,000 F |
+| 1,238,900,000 | Sovereign | 750,000,000 F |
+| 1,988,900,000 | Pond Billionaire | 1,000,000,000 F |
+
+Existing v22 full-payoff progress migrates to the equivalent v23 tier.
+
+### Compact Bank design
+
+- Loans appear first when Bank opens.
+- Loans and Piggy Bank are separate tabs, so neither pushes the other down the page.
+- A bright Bank shortcut is added to the top bar.
+- The bottom Bank navigation item is visually emphasized.
+- The credit screen shows only the current tier, maximum loan, total repaid on time,
+  progress to the next tier and active-loan essentials.
+- The scheduled payment action is renamed **PAY AMOUNT DUE**.
+- Piggy Bank keeps its balance, next-interest estimate, rounds remaining and transfer controls.

@@ -3,8 +3,8 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v22';
-  console.info(`Froggy Leap ${BUILD_VERSION}: dedicated Bank, two-step loan quote and Piggy savings loaded`);
+  const BUILD_VERSION = 'v23';
+  console.info(`Froggy Leap ${BUILD_VERSION}: simple on-time repayment tiers and compact Bank loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
   // The 15-jump curve is intentionally tighter early and highly rewarding at the finish.
@@ -23,31 +23,39 @@
   const REPEATABLE_PROMOS = new Set(['5','10','50000','lifeguard','qoostommoney']);
   const MAX_PROMO_LEVEL = 1000000000;
   const MAX_SAFE_BALANCE = 9000000000000000;
-  const CREDIT_HISTORY_SIZE = 20;
-  const CREDIT_LOAN_INTERVAL = 5;
-  const CREDIT_FREEZE_RECOVERY_FULL_PAYOFFS = 2;
-  const MIN_QUALIFYING_FULL_PAYOFF = 500;
+  const MIN_LOAN_AMOUNT = 500;
   const CREDIT_TIERS = Object.freeze([
-    {payoffs:0,  limit:5000,       name:'Starter'},
-    {payoffs:1,  limit:10000,      name:'Bronze'},
-    {payoffs:2,  limit:20000,      name:'Copper'},
-    {payoffs:3,  limit:50000,      name:'Silver'},
-    {payoffs:4,  limit:100000,     name:'Gold'},
-    {payoffs:5,  limit:250000,     name:'Platinum'},
-    {payoffs:6,  limit:500000,     name:'Emerald'},
-    {payoffs:7,  limit:1000000,    name:'Sapphire'},
-    {payoffs:8,  limit:2000000,    name:'Ruby'},
-    {payoffs:9,  limit:5000000,    name:'Diamond'},
-    {payoffs:10, limit:10000000,   name:'Master'},
-    {payoffs:11, limit:20000000,   name:'Grandmaster'},
-    {payoffs:12, limit:50000000,   name:'Elite'},
-    {payoffs:13, limit:100000000,  name:'Champion'},
-    {payoffs:15, limit:200000000,  name:'Hero'},
-    {payoffs:17, limit:350000000,  name:'Legend'},
-    {payoffs:19, limit:500000000,  name:'Mythic'},
-    {payoffs:22, limit:750000000,  name:'Sovereign'},
-    {payoffs:25, limit:1000000000, name:'Pond Billionaire'}
+    {repaid:0,          limit:5000,       name:'Starter'},
+    {repaid:5000,       limit:10000,      name:'Bronze'},
+    {repaid:15000,      limit:20000,      name:'Copper'},
+    {repaid:35000,      limit:50000,      name:'Silver'},
+    {repaid:75000,      limit:100000,     name:'Gold'},
+    {repaid:175000,     limit:250000,     name:'Platinum'},
+    {repaid:425000,     limit:500000,     name:'Emerald'},
+    {repaid:925000,     limit:1000000,    name:'Sapphire'},
+    {repaid:1900000,    limit:2000000,    name:'Ruby'},
+    {repaid:3900000,    limit:5000000,    name:'Diamond'},
+    {repaid:8900000,    limit:10000000,   name:'Master'},
+    {repaid:18900000,   limit:20000000,   name:'Grandmaster'},
+    {repaid:38900000,   limit:50000000,   name:'Elite'},
+    {repaid:88900000,   limit:100000000,  name:'Champion'},
+    {repaid:188900000,  limit:200000000,  name:'Hero'},
+    {repaid:388900000,  limit:350000000,  name:'Legend'},
+    {repaid:738900000,  limit:500000000,  name:'Mythic'},
+    {repaid:1238900000, limit:750000000,  name:'Sovereign'},
+    {repaid:1988900000, limit:1000000000, name:'Pond Billionaire'}
   ]);
+  const LEGACY_PAYOFF_REQUIREMENTS = Object.freeze([0,1,2,3,4,5,6,7,8,9,10,11,12,13,15,17,19,22,25]);
+
+  function migrateLegacyOnTimeRepaid(payoffs){
+    const count=Math.max(0,Math.floor(Number(payoffs)||0));
+    let index=0;
+    for(let i=0;i<LEGACY_PAYOFF_REQUIREMENTS.length;i++){
+      if(count>=LEGACY_PAYOFF_REQUIREMENTS[i])index=i;
+    }
+    return CREDIT_TIERS[Math.min(index,CREDIT_TIERS.length-1)].repaid;
+  }
+
   const LOAN_TOTAL_INTEREST_RATE = 0.08;
   const LOAN_INSTALLMENTS = 10;
   const DEBT_ROUND_INTERVAL = 5;
@@ -148,19 +156,10 @@
     debtDue: false,
     debtDueAmount: 0,
     completedRounds: 0,
-    recentCreditBets: [],
-    recentCreditCashouts: [],
-    verifiedGameplayEarnings: 0,
-    fullRepayments: 0,
+    onTimeRepaid: 0,
     missedDebtDeadlines: 0,
-    creditFreezeFullRepayments: 0,
-    creditFreezeLimit: 0,
-    lastLoanRound: -5,
-    creditRoundEligible: false,
     debtCycleMissed: false,
-    debtCycleBorrowed: 0,
     debtCycleStartRound: 0,
-    debtCycleQualified: false,
     loanPrincipalOriginal: 0,
     loanPrincipalRemaining: 0,
     loanInterestTotal: 0,
@@ -180,7 +179,7 @@
     balance: $('balanceLabel'), collectionBalance: $('collectionBalance'), level: $('levelLabel'), xp: $('xpLabel'), xpNext: $('xpNextLabel'), xpRing: $('xpRing'),
     jump: $('jumpLabel'), multiplier: $('multiplierLabel'), risk: $('riskLabel'), payout: $('payoutLabel'), danger: $('dangerLabel'), riskFill: $('riskFill'), riskMarker: $('riskMarker'),
     betDisplay: $('betDisplay'), start: $('startButton'), jumpButton: $('jumpButton'), cash: $('cashButton'), cashValue: $('cashButtonValue'), quickBets: $('quickBets'), betAdjusters: $('betAdjusters'), customBetToggle: $('customBetToggle'), customBetRow: $('customBetRow'), customBetInput: $('customBetInput'), customBetClose: $('customBetClose'), customBetError: $('customBetError'),
-    sound: $('soundButton'), settingsSound: $('settingsSound'), settingsMotion: $('settingsMotion'), luckyBadge: $('luckyBadge'), luckyCount: $('luckyCount'), debtBadge: $('debtBadge'), debtBadgeAmount: $('debtBadgeAmount'), debtBadgeTurns: $('debtBadgeTurns'), debtBadgeStatus: $('debtBadgeStatus'), debtDueDot: $('debtDueDot'), debtDueFlag: $('debtDueFlag'),
+    sound: $('soundButton'), bankShortcut: $('bankShortcutButton'), settingsSound: $('settingsSound'), settingsMotion: $('settingsMotion'), luckyBadge: $('luckyBadge'), luckyCount: $('luckyCount'), debtBadge: $('debtBadge'), debtBadgeAmount: $('debtBadgeAmount'), debtBadgeTurns: $('debtBadgeTurns'), debtBadgeStatus: $('debtBadgeStatus'), debtDueDot: $('debtDueDot'), debtDueFlag: $('debtDueFlag'),
     screens: { play:$('playScreen'), collection:$('collectionScreen'), rewards:$('rewardsScreen'), bank:$('bankScreen'), promo:$('promoScreen'), stats:$('statsScreen') },
     collectionGrid: $('collectionGrid'), spin: $('spinButton'), wheelDisc: $('wheelDisc'), rewardDot: $('rewardDot'), streakLabel: $('streakLabel'), streakDays: $('streakDays'),
     rewardHeadline: $('rewardHeadline'), rewardSubtext: $('rewardSubtext'), freeSpinCounter: $('freeSpinCounter'), installButton: $('installButton'),
@@ -188,9 +187,9 @@
     resultIcon: $('resultIcon'), resultKicker: $('resultKicker'), resultTitle: $('resultTitle'), resultAmount: $('resultAmount'), resultText: $('resultText'), resultButton: $('resultButton'),
     rewardResultTitle: $('rewardResultTitle'), rewardResultText: $('rewardResultText'),
     profileFrog: $('profileFrog'), bigProfileFrog: $('bigProfileFrog'), currentFrogName: $('currentFrogName'),
-    totalJumpsStat: $('totalJumpsStat'), bestJumpStat: $('bestJumpStat'), biggestWinStat: $('biggestWinStat'), roundsStat: $('roundsStat'), nextLevelBonusStat: $('nextLevelBonusStat'), debtAmountLabel: $('debtAmountLabel'), debtInstallmentLabel: $('debtInstallmentLabel'), debtTurnsLabel: $('debtTurnsLabel'), debtPayoffLabel: $('debtPayoffLabel'), debtInterestSavedLabel: $('debtInterestSavedLabel'), debtLimitLabel: $('debtLimitLabel'), debtAvailableLabel: $('debtAvailableLabel'), creditTierLabel: $('creditTierLabel'), creditAffordabilityLabel: $('creditAffordabilityLabel'), creditMaxLoanLabel: $('creditMaxLoanLabel'), creditCooldownLabel: $('creditCooldownLabel'), creditHistoryLabel: $('creditHistoryLabel'), creditEarningsLabel: $('creditEarningsLabel'), creditMediansLabel: $('creditMediansLabel'), creditFreezeLabel: $('creditFreezeLabel'), loanTermsLabel: $('loanTermsLabel'), loanProgressLabel: $('loanProgressLabel'), debtMessage: $('debtMessage'), openLoanBuilderButton: $('openLoanBuilderButton'), loanEntryHeadline: $('loanEntryHeadline'), loanEntrySubtext: $('loanEntrySubtext'), repayInstallmentButton: $('repayInstallmentButton'), repayAllButton: $('repayAllButton'),
-    bankTotalWealthLabel: $('bankTotalWealthLabel'), piggyBalanceLabel: $('piggyBalanceLabel'), piggyWalletLabel: $('piggyWalletLabel'), piggyNextInterestLabel: $('piggyNextInterestLabel'), piggyRoundsLabel: $('piggyRoundsLabel'), piggyLifetimeInterestLabel: $('piggyLifetimeInterestLabel'), piggyCyclesLabel: $('piggyCyclesLabel'), piggyProgressFill: $('piggyProgressFill'), piggyTransferKicker: $('piggyTransferKicker'), piggyTransferAmountLabel: $('piggyTransferAmountLabel'), piggyTransferSlider: $('piggyTransferSlider'), piggyTransferInput: $('piggyTransferInput'), piggyTransferButton: $('piggyTransferButton'), piggyMessage: $('piggyMessage'),
-    loanBuilderAmountLabel: $('loanBuilderAmountLabel'), loanAmountSlider: $('loanAmountSlider'), loanSliderMinimumLabel: $('loanSliderMinimumLabel'), loanSliderMaximumLabel: $('loanSliderMaximumLabel'), loanAmountInput: $('loanAmountInput'), loanQuoteInterestLabel: $('loanQuoteInterestLabel'), loanQuoteTotalLabel: $('loanQuoteTotalLabel'), loanQuotePaymentLabel: $('loanQuotePaymentLabel'), loanQuotePayoffLabel: $('loanQuotePayoffLabel'), loanQuoteTierLabel: $('loanQuoteTierLabel'), loanBuilderError: $('loanBuilderError'), loanReviewButton: $('loanReviewButton'), loanWarningAmountLabel: $('loanWarningAmountLabel'), loanWarningPaymentLabel: $('loanWarningPaymentLabel'), loanWarningTotalLabel: $('loanWarningTotalLabel'), loanWarningCancelButton: $('loanWarningCancelButton'), loanRedeemButton: $('loanRedeemButton'), loanRedeemButtonSubtext: $('loanRedeemButtonSubtext'),
+    totalJumpsStat: $('totalJumpsStat'), bestJumpStat: $('bestJumpStat'), biggestWinStat: $('biggestWinStat'), roundsStat: $('roundsStat'), nextLevelBonusStat: $('nextLevelBonusStat'), debtAmountLabel: $('debtAmountLabel'), debtInstallmentLabel: $('debtInstallmentLabel'), debtTurnsLabel: $('debtTurnsLabel'), debtPayoffLabel: $('debtPayoffLabel'), debtInterestSavedLabel: $('debtInterestSavedLabel'), debtLimitLabel: $('debtLimitLabel'), creditTierLabel: $('creditTierLabel'), creditTierProgressFill: $('creditTierProgressFill'), creditHistoryLabel: $('creditHistoryLabel'), creditNextTierLabel: $('creditNextTierLabel'), debtMessage: $('debtMessage'), activeLoanCard: $('activeLoanCard'), openLoanBuilderButton: $('openLoanBuilderButton'), loanEntryHeadline: $('loanEntryHeadline'), loanEntrySubtext: $('loanEntrySubtext'), repayInstallmentButton: $('repayInstallmentButton'), repayAllButton: $('repayAllButton'),
+    bankLoansTab: $('bankLoansTab'), bankPiggyTab: $('bankPiggyTab'), bankLoansPane: $('bankLoansPane'), bankPiggyPane: $('bankPiggyPane'), bankTotalWealthLabel: $('bankTotalWealthLabel'), piggyBalanceLabel: $('piggyBalanceLabel'), piggyWalletLabel: $('piggyWalletLabel'), piggyNextInterestLabel: $('piggyNextInterestLabel'), piggyRoundsLabel: $('piggyRoundsLabel'), piggyProgressFill: $('piggyProgressFill'), piggyTransferKicker: $('piggyTransferKicker'), piggyTransferAmountLabel: $('piggyTransferAmountLabel'), piggyTransferSlider: $('piggyTransferSlider'), piggyTransferInput: $('piggyTransferInput'), piggyTransferButton: $('piggyTransferButton'), piggyMessage: $('piggyMessage'),
+    loanBuilderAmountLabel: $('loanBuilderAmountLabel'), loanAmountSlider: $('loanAmountSlider'), loanSliderMinimumLabel: $('loanSliderMinimumLabel'), loanSliderMaximumLabel: $('loanSliderMaximumLabel'), loanAmountInput: $('loanAmountInput'), loanQuoteInterestLabel: $('loanQuoteInterestLabel'), loanQuoteTotalLabel: $('loanQuoteTotalLabel'), loanQuotePaymentLabel: $('loanQuotePaymentLabel'), loanQuotePayoffLabel: $('loanQuotePayoffLabel'), loanBuilderError: $('loanBuilderError'), loanReviewButton: $('loanReviewButton'), loanWarningAmountLabel: $('loanWarningAmountLabel'), loanWarningPaymentLabel: $('loanWarningPaymentLabel'), loanWarningTotalLabel: $('loanWarningTotalLabel'), loanWarningCancelButton: $('loanWarningCancelButton'), loanRedeemButton: $('loanRedeemButton'), loanRedeemButtonSubtext: $('loanRedeemButtonSubtext'),
     levelToast: $('levelToast'), levelToastTitle: $('levelToastTitle'), levelToastBonus: $('levelToastBonus'),
     promoForm: $('promoForm'), promoInput: $('promoInput'), promoRedeem: $('promoRedeemButton'), promoMessage: $('promoMessage'), promoUsedCount: $('promoUsedCount'), promoSafeStatus: $('promoSafeStatus'), promoSpinStatus: $('promoSpinStatus'), promoFrogStatus: $('promoFrogStatus'), promoLakeStatus: $('promoLakeStatus'), promoCoinStatus: $('promoCoinStatus'),
     milestoneTrack: $('milestoneTrack'), milestoneFill: $('milestoneFill'), goalGrid: $('goalGrid'), goalSummary: $('goalSummary'),
@@ -275,20 +274,14 @@
       merged.debtDue = Boolean(merged.debtDue);
       merged.debtDueAmount = Number.isFinite(merged.debtDueAmount) ? Math.max(0,Math.floor(merged.debtDueAmount)) : 0;
       merged.completedRounds = Number.isFinite(raw.completedRounds) ? Math.max(0,Math.floor(raw.completedRounds)) : Math.max(0,Math.floor(merged.rounds||0));
-      merged.recentCreditBets = Array.isArray(raw.recentCreditBets) ? raw.recentCreditBets.filter(Number.isFinite).map(v=>Math.max(0,Math.floor(v))).slice(-CREDIT_HISTORY_SIZE) : [];
-      merged.recentCreditCashouts = Array.isArray(raw.recentCreditCashouts) ? raw.recentCreditCashouts.filter(Number.isFinite).map(v=>Math.max(0,Math.floor(v))).slice(-CREDIT_HISTORY_SIZE) : [];
-      merged.verifiedGameplayEarnings = Number.isFinite(raw.verifiedGameplayEarnings) ? Math.max(0,Math.floor(raw.verifiedGameplayEarnings)) : 0;
-      merged.fullRepayments = Number.isFinite(raw.fullRepayments) ? Math.max(0,Math.floor(raw.fullRepayments)) : 0;
+      merged.onTimeRepaid = Number.isFinite(raw.onTimeRepaid)
+        ? Math.max(0,Math.floor(raw.onTimeRepaid))
+        : migrateLegacyOnTimeRepaid(raw.fullRepayments);
       merged.missedDebtDeadlines = Number.isFinite(raw.missedDebtDeadlines) ? Math.max(0,Math.floor(raw.missedDebtDeadlines)) : 0;
-      const legacyFreeze=Number.isFinite(raw.creditFreezeFullRepayments)?raw.creditFreezeFullRepayments:raw.creditFreezePayments;
-      merged.creditFreezeFullRepayments = Number.isFinite(legacyFreeze) ? clamp(Math.floor(legacyFreeze),0,CREDIT_FREEZE_RECOVERY_FULL_PAYOFFS) : 0;
-      merged.creditFreezeLimit = Number.isFinite(raw.creditFreezeLimit) ? Math.max(0,Math.floor(raw.creditFreezeLimit)) : 0;
-      merged.lastLoanRound = Number.isFinite(raw.lastLoanRound) ? Math.floor(raw.lastLoanRound) : (merged.debt>0?merged.completedRounds:-CREDIT_LOAN_INTERVAL);
-      merged.creditRoundEligible = false;
       merged.debtCycleMissed = Boolean(raw.debtCycleMissed);
-      merged.debtCycleBorrowed = Number.isFinite(raw.debtCycleBorrowed) ? Math.max(0,Math.floor(raw.debtCycleBorrowed)) : Math.max(0,merged.debt);
-      merged.debtCycleStartRound = Number.isFinite(raw.debtCycleStartRound) ? Math.max(0,Math.floor(raw.debtCycleStartRound)) : Math.max(0,merged.lastLoanRound);
-      merged.debtCycleQualified = Boolean(raw.debtCycleQualified)||(merged.debtCycleBorrowed>=MIN_QUALIFYING_FULL_PAYOFF);
+      merged.debtCycleStartRound = Number.isFinite(raw.debtCycleStartRound)
+        ? Math.max(0,Math.floor(raw.debtCycleStartRound))
+        : merged.completedRounds;
       const hasV21Schedule=Number.isFinite(raw.loanPrincipalOriginal)&&Number.isFinite(raw.loanPrincipalRemaining)&&Number.isFinite(raw.loanInstallment);
       if(merged.debt>0&&hasV21Schedule){
         merged.loanPrincipalOriginal=Math.max(0,Math.floor(raw.loanPrincipalOriginal));
@@ -314,7 +307,7 @@
         merged.loanInstallment=0;
         merged.loanInstallmentsPaid=0;
       }
-      if(merged.debt===0){merged.debtTurns=0;merged.debtDue=false;merged.debtDueAmount=0;merged.debtCycleMissed=false;merged.debtCycleBorrowed=0;merged.debtCycleStartRound=merged.completedRounds;merged.debtCycleQualified=false;}
+      if(merged.debt===0){merged.debtTurns=0;merged.debtDue=false;merged.debtDueAmount=0;merged.debtCycleMissed=false;merged.debtCycleStartRound=merged.completedRounds;}
       if(merged.debtDue&&merged.debtDueAmount<=0)merged.debtDueAmount=Math.min(merged.debt,Math.max(1,merged.loanInstallment));
       merged.piggyBalance=Number.isFinite(raw.piggyBalance)?Math.max(0,Math.floor(raw.piggyBalance)):0;
       merged.piggyRounds=Number.isFinite(raw.piggyRounds)?clamp(Math.floor(raw.piggyRounds),0,PIGGY_ROUND_INTERVAL-1):0;
@@ -617,80 +610,31 @@
   }
 
 
-  function median(values){
-    const clean=(Array.isArray(values)?values:[])
-      .map(Number)
-      .filter(value=>Number.isFinite(value)&&value>=0)
-      .sort((a,b)=>a-b);
-    if(!clean.length)return 0;
-    const middle=Math.floor(clean.length/2);
-    return clean.length%2?clean[middle]:(clean[middle-1]+clean[middle])/2;
-  }
-
   function repaymentTierInfo(){
-    let baseIndex=0;
+    let index=0;
     for(let i=0;i<CREDIT_TIERS.length;i++){
-      if(state.fullRepayments>=CREDIT_TIERS[i].payoffs)baseIndex=i;
+      if(state.onTimeRepaid>=CREDIT_TIERS[i].repaid)index=i;
     }
-    const penalty=Math.floor(state.missedDebtDeadlines/3);
-    const effectiveIndex=Math.max(0,baseIndex-penalty);
-    return {
-      baseIndex,
-      effectiveIndex,
-      penalty,
-      tier:CREDIT_TIERS[effectiveIndex],
-      next:CREDIT_TIERS[baseIndex+1]||null
-    };
+    return {index,tier:CREDIT_TIERS[index],next:CREDIT_TIERS[index+1]||null};
   }
 
-  function medianRecentBet(){
-    return median(state.recentCreditBets);
-  }
-
-  function medianRecentCashout(){
-    return median(state.recentCreditCashouts);
-  }
-
-  function affordabilityLimit(){
-    const betCap=medianRecentBet()*20;
-    const cashoutCap=medianRecentCashout()*6;
-    const earningsCap=state.verifiedGameplayEarnings*.25;
-    return Math.max(5000,Math.floor(Math.min(betCap,cashoutCap,earningsCap)));
-  }
-
-  function calculatedDebtLimit(){
-    const tier=repaymentTierInfo().tier.limit;
-    return Math.max(0,Math.floor(Math.min(tier,affordabilityLimit())));
+  function tierProgressPercent(){
+    const info=repaymentTierInfo();
+    if(!info.next)return 100;
+    const span=Math.max(1,info.next.repaid-info.tier.repaid);
+    return clamp(((state.onTimeRepaid-info.tier.repaid)/span)*100,0,100);
   }
 
   function debtLimit(){
-    const calculated=calculatedDebtLimit();
-    if(state.creditFreezeFullRepayments>0&&state.creditFreezeLimit>0){
-      return Math.min(calculated,state.creditFreezeLimit);
-    }
-    return calculated;
+    return repaymentTierInfo().tier.limit;
   }
 
   function availableCredit(){
-    if(state.debt>0)return 0;
-    return Math.max(0,debtLimit());
-  }
-
-  function roundsUntilNextLoan(){
-    return Math.max(0,CREDIT_LOAN_INTERVAL-(state.completedRounds-state.lastLoanRound));
+    return state.debt>0?0:debtLimit();
   }
 
   function maxSingleLoan(){
-    return Math.max(0,Math.floor(availableCredit()*.5));
-  }
-
-  function pushCreditHistory(key,value){
-    const numeric=Math.max(0,Math.floor(Number(value)||0));
-    if(numeric<=0)return;
-    state[key].push(numeric);
-    if(state[key].length>CREDIT_HISTORY_SIZE){
-      state[key]=state[key].slice(-CREDIT_HISTORY_SIZE);
-    }
+    return availableCredit();
   }
 
   let piggyTransferMode='deposit';
@@ -857,8 +801,8 @@
 
   function normalizeLoanBuilderAmount(raw,{exact=false}={}){
     const maximum=maxSingleLoan();
-    if(maximum<MIN_QUALIFYING_FULL_PAYOFF)return 0;
-    const minimum=MIN_QUALIFYING_FULL_PAYOFF;
+    if(maximum<MIN_LOAN_AMOUNT)return 0;
+    const minimum=MIN_LOAN_AMOUNT;
     const numeric=clamp(Math.floor(Number(raw)||minimum),minimum,maximum);
     if(exact)return numeric;
     const step=loanSliderStep(maximum);
@@ -867,7 +811,7 @@
 
   function refreshLoanBuilder(raw=pendingLoanAmount,{exact=false}={}){
     const maximum=maxSingleLoan();
-    const minimum=Math.min(MIN_QUALIFYING_FULL_PAYOFF,maximum);
+    const minimum=Math.min(MIN_LOAN_AMOUNT,maximum);
     pendingLoanAmount=normalizeLoanBuilderAmount(raw,{exact});
 
     els.loanAmountSlider.min=String(minimum);
@@ -886,10 +830,6 @@
     els.loanQuoteTotalLabel.textContent=`${money(quote.total)} F`;
     els.loanQuotePaymentLabel.textContent=`${money(quote.payment)} F`;
     els.loanQuotePayoffLabel.textContent=`${money(quote.principal)} F`;
-    els.loanQuoteTierLabel.textContent=
-      quote.principal>=MIN_QUALIFYING_FULL_PAYOFF
-        ? 'Eligible after 1 completed round'
-        : `Needs at least ${money(MIN_QUALIFYING_FULL_PAYOFF)} F`;
     els.loanBuilderError.textContent='';
     return quote;
   }
@@ -897,9 +837,7 @@
   function loanAvailabilityReason(){
     if(state.roundActive||state.animating)return 'Finish the current round first.';
     if(state.debt>0)return 'Only one loan may be active. Pay off the current loan first.';
-    const cooldown=roundsUntilNextLoan();
-    if(cooldown>0)return `Complete ${cooldown} more round${cooldown===1?'':'s'} before another loan.`;
-    if(maxSingleLoan()<MIN_QUALIFYING_FULL_PAYOFF)return 'Your available credit is below the 500-Froggy minimum.';
+    if(maxSingleLoan()<MIN_LOAN_AMOUNT)return 'Your tier limit is below the 500-Froggy minimum.';
     return '';
   }
 
@@ -911,7 +849,7 @@
       return false;
     }
     const maximum=maxSingleLoan();
-    const starting=Math.min(maximum,Math.max(MIN_QUALIFYING_FULL_PAYOFF,Math.min(2500,maximum)));
+    const starting=Math.min(maximum,Math.max(MIN_LOAN_AMOUNT,Math.min(2500,maximum)));
     refreshLoanBuilder(starting);
     openModal(els.loanBuilderModal);
     return true;
@@ -924,8 +862,8 @@
       return false;
     }
     const amount=normalizeLoanBuilderAmount(els.loanAmountInput.value,{exact:true});
-    if(amount<MIN_QUALIFYING_FULL_PAYOFF||amount>maxSingleLoan()){
-      els.loanBuilderError.textContent=`Choose between ${money(MIN_QUALIFYING_FULL_PAYOFF)} and ${money(maxSingleLoan())} Froggy.`;
+    if(amount<MIN_LOAN_AMOUNT||amount>maxSingleLoan()){
+      els.loanBuilderError.textContent=`Choose between ${money(MIN_LOAN_AMOUNT)} and ${money(maxSingleLoan())} Froggy.`;
       return false;
     }
 
@@ -953,26 +891,13 @@
     return false;
   }
 
-  function recordVerifiedRound(payout){
+  function recordVerifiedRound(){
     state.completedRounds++;
-    const piggyResult=advancePiggyBankRound();
-    if(state.creditRoundEligible){
-      pushCreditHistory('recentCreditBets',state.bet);
-      const verifiedPayout=Math.max(0,Math.floor(Number(payout)||0));
-      if(verifiedPayout>0){
-        pushCreditHistory('recentCreditCashouts',verifiedPayout);
-        state.verifiedGameplayEarnings=Math.min(
-          MAX_SAFE_BALANCE,
-          state.verifiedGameplayEarnings+verifiedPayout
-        );
-      }
-    }
-    state.creditRoundEligible=false;
-    return piggyResult;
+    return advancePiggyBankRound();
   }
 
   function finishCompletedRound(payout=0){
-    const piggyResult=recordVerifiedRound(payout);
+    const piggyResult=recordVerifiedRound();
     const debtResult=completeDebtTurn();
     if(piggyResult){
       if(debtResult){
@@ -984,41 +909,26 @@
     return debtResult;
   }
 
-  function registerFullRepayment(){
-    const qualifies=
-      state.debtCycleQualified&&
-      state.debtCycleBorrowed>=MIN_QUALIFYING_FULL_PAYOFF&&
-      state.completedRounds>state.debtCycleStartRound;
-
-    if(!qualifies){
+  function registerOnTimeRepayment(amount,qualified){
+    const paid=Math.max(0,Math.floor(Number(amount)||0));
+    if(!qualified||paid<=0){
       return {
         credited:false,
         advanced:false,
-        reason:state.debtCycleBorrowed<MIN_QUALIFYING_FULL_PAYOFF
-          ? `A tier payoff must clear at least ${money(MIN_QUALIFYING_FULL_PAYOFF)} F.`
-          : 'Complete at least one round after borrowing before paying off the debt for tier credit.'
+        reason:state.debtCycleMissed
+          ? 'This loan missed a deadline, so the payment does not increase the tier.'
+          : 'Complete at least one round before an early payoff can increase the tier.'
       };
     }
-
     const before=repaymentTierInfo().tier;
-    state.fullRepayments++;
-    if(state.creditFreezeFullRepayments>0){
-      state.creditFreezeFullRepayments--;
-      if(state.creditFreezeFullRepayments===0)state.creditFreezeLimit=0;
-    }
+    state.onTimeRepaid=Math.min(MAX_SAFE_BALANCE,state.onTimeRepaid+paid);
     const after=repaymentTierInfo().tier;
-    return {
-      credited:true,
-      advanced:after.limit!==before.limit||after.name!==before.name,
-      before,
-      after
-    };
+    return {credited:true,amount:paid,advanced:after.limit!==before.limit,before,after};
   }
 
   function resetDebtCycle(){
-    state.debtCycleBorrowed=0;
     state.debtCycleStartRound=state.completedRounds;
-    state.debtCycleQualified=false;
+    state.debtCycleMissed=false;
     state.loanPrincipalOriginal=0;
     state.loanPrincipalRemaining=0;
     state.loanInterestTotal=0;
@@ -1028,13 +938,6 @@
   }
 
   function registerMissedDeadline(){
-    const limitBeforePenalty=debtLimit();
-    if(state.creditFreezeFullRepayments<=0){
-      state.creditFreezeLimit=limitBeforePenalty;
-    }else if(state.creditFreezeLimit>0){
-      state.creditFreezeLimit=Math.min(state.creditFreezeLimit,limitBeforePenalty);
-    }
-    state.creditFreezeFullRepayments=CREDIT_FREEZE_RECOVERY_FULL_PAYOFFS;
     state.missedDebtDeadlines++;
     state.debtCycleMissed=true;
   }
@@ -1102,13 +1005,6 @@
       return false;
     }
 
-    const cooldown=roundsUntilNextLoan();
-    if(cooldown>0){
-      setDebtMessage(`Complete ${cooldown} more round${cooldown===1?'':'s'} before another loan.`, 'error');
-      haptic(18);
-      return false;
-    }
-
     const maximum=maxSingleLoan();
     if(maximum<=0){
       setDebtMessage(`No credit available. Current limit: ${money(debtLimit())} Froggy.`, 'error');
@@ -1128,7 +1024,6 @@
     const totalInterest=quote.interest;
     const scheduledTotal=quote.total;
     const fixedPayment=quote.payment;
-    const tier=repaymentTierInfo();
 
     if(!skipConfirm&&!window.confirm(
       `Borrow ${money(amount)} Froggy?\n\n`+
@@ -1153,14 +1048,11 @@
     state.loanInstallment=fixedPayment;
     state.loanInstallmentsPaid=0;
 
-    state.lastLoanRound=state.completedRounds;
     state.debtTurns=0;
     state.debtDue=false;
     state.debtDueAmount=0;
     state.debtCycleMissed=false;
-    state.debtCycleBorrowed=credited;
     state.debtCycleStartRound=state.completedRounds;
-    state.debtCycleQualified=credited>=MIN_QUALIFYING_FULL_PAYOFF;
 
     const capNote=requested>maximum?` Requested amount was capped at ${money(maximum)} F.`:'';
     setDebtMessage(
@@ -1177,50 +1069,51 @@
     state.debtDue=false;
     state.debtDueAmount=0;
     state.debtTurns=0;
-    state.debtCycleMissed=false;
   }
 
   function repayDebt(mode='installment'){
     if(state.debt<=0){
-      setDebtMessage('You have no outstanding debt.','success');
+      setDebtMessage('You have no outstanding loan.','success');
       return false;
     }
     if(state.roundActive||state.animating){
-      setDebtMessage('Finish the current round before making a manual payment.','error');
+      setDebtMessage('Finish the current round before making a payment.','error');
       haptic(18);
       return false;
     }
 
     const isEarlyPayoff=mode==='all';
-    const requested=isEarlyPayoff?earlyPayoffAmount():debtInstallment();
+    if(!isEarlyPayoff&&!state.debtDue){
+      setDebtMessage(`No payment is due yet. The next amount is due in ${debtRoundsRemaining()} round${debtRoundsRemaining()===1?'':'s'}.`,'error');
+      haptic(16);
+      return false;
+    }
 
+    const requested=isEarlyPayoff?earlyPayoffAmount():debtInstallment();
     if(state.balance<requested){
       setDebtMessage(
-        `${isEarlyPayoff?'Early payoff':'Fixed payment'}: ${money(requested)} F. `+
-        `Your balance is short by ${money(requested-state.balance)} F.`,
+        `${isEarlyPayoff?'Early payoff':'Amount due'}: ${money(requested)} F. `+
+        `Your wallet is short by ${money(requested-state.balance)} F.`,
         'error'
       );
       haptic([18,45,18]);
       return false;
     }
-    if(requested<=0){
-      setDebtMessage('There is no payment to make.','error');
-      return false;
-    }
+    if(requested<=0)return false;
 
-    const scheduledBefore=state.debt;
     const savings=isEarlyPayoff?earlyPayoffSavings():0;
-    let payoffResult=null;
+    const qualifiesForTier=
+      !state.debtCycleMissed&&
+      (isEarlyPayoff?state.completedRounds>state.debtCycleStartRound:state.debtDue);
+    const tierResult=registerOnTimeRepayment(requested,qualifiesForTier);
 
     state.balance-=requested;
     state.debtPayments++;
 
     if(isEarlyPayoff){
-      const earnedInterest=loanEarnedInterest();
-      state.loanInterestPaid=earnedInterest;
+      state.loanInterestPaid=loanEarnedInterest();
       state.loanPrincipalRemaining=0;
       state.debt=0;
-      payoffResult=registerFullRepayment();
     }else{
       const nextPaymentNumber=Math.min(LOAN_INSTALLMENTS,state.loanInstallmentsPaid+1);
       const targetInterestPaid=scheduledInterestThrough(nextPaymentNumber);
@@ -1230,70 +1123,40 @@
         Math.max(0,state.loanInterestTotal-state.loanInterestPaid)
       );
       const principalPortion=Math.max(0,requested-interestPortion);
-
-      state.loanInterestPaid=Math.min(
-        state.loanInterestTotal,
-        state.loanInterestPaid+interestPortion
-      );
-      state.loanPrincipalRemaining=Math.max(
-        0,
-        state.loanPrincipalRemaining-principalPortion
-      );
+      state.loanInterestPaid=Math.min(state.loanInterestTotal,state.loanInterestPaid+interestPortion);
+      state.loanPrincipalRemaining=Math.max(0,state.loanPrincipalRemaining-principalPortion);
       state.loanInstallmentsPaid=nextPaymentNumber;
-      state.debt=state.loanPrincipalRemaining+
-        Math.max(0,state.loanInterestTotal-state.loanInterestPaid);
-
-      if(state.debtDue)clearDebtDue();
-      else state.debtTurns=0;
+      state.debt=state.loanPrincipalRemaining+Math.max(0,state.loanInterestTotal-state.loanInterestPaid);
+      clearDebtDue();
 
       if(state.debt>0&&state.loanInstallmentsPaid>=LOAN_INSTALLMENTS){
-        // Final rounding safeguard.
         state.loanPrincipalRemaining=0;
         state.loanInterestPaid=state.loanInterestTotal;
         state.debt=0;
       }
     }
 
+    const nextTier=repaymentTierInfo().next;
+    let tierNote='';
+    if(tierResult.credited){
+      tierNote=tierResult.advanced
+        ? ` Tier advanced to ${tierResult.after.name}: ${money(tierResult.after.limit)} F maximum.`
+        : ` ${money(tierResult.amount)} F added to on-time repayment progress.${nextTier?` ${money(Math.max(0,nextTier.repaid-state.onTimeRepaid))} F remains to ${nextTier.name}.`:' Maximum tier reached.'}`;
+    }else{
+      tierNote=` No tier progress: ${tierResult.reason}`;
+    }
+
     if(state.debt<=0){
       state.debt=0;
       clearDebtDue();
-
-      let trustNote='';
-      if(isEarlyPayoff&&payoffResult?.credited){
-        const next=repaymentTierInfo().next;
-        trustNote=payoffResult.advanced
-          ? ` Tier advanced to ${payoffResult.after.name}: ${money(payoffResult.after.limit)} F.`
-          : ` Full payoff #${money(state.fullRepayments)} recorded.${next?` Next tier at ${money(next.payoffs)} full payoffs.`:' Maximum tier reached.'}`;
-      }else if(isEarlyPayoff&&payoffResult&&!payoffResult.credited){
-        trustNote=` No tier credit: ${payoffResult.reason}`;
-      }else{
-        trustNote=' Completing the schedule with PAY FIXED AMOUNT does not advance the tier.';
-      }
-
-      const savingsNote=isEarlyPayoff&&savings>0
-        ? ` Unearned interest removed: ${money(savings)} F.`
-        : '';
-      setDebtMessage(
-        `Debt cleared with a ${money(requested)} Froggy payment!${savingsNote}${trustNote}`,
-        'success'
-      );
-      setStatus(
-        isEarlyPayoff
-          ? `Loan paid off early. Saved ${money(savings)} F.`
-          : 'Fixed-payment loan completed.',
-        'win'
-      );
-      confettiBurst(isEarlyPayoff&&payoffResult?.credited?65:35);
+      const savingsNote=isEarlyPayoff&&savings>0?` Saved ${money(savings)} F in future interest.`:'';
+      setDebtMessage(`Loan cleared with ${money(requested)} F.${savingsNote}${tierNote}`,'success');
+      setStatus(isEarlyPayoff?`Loan paid off early. Saved ${money(savings)} F.`:'Loan fully repaid.','win');
+      confettiBurst(tierResult.advanced?65:35);
       resetDebtCycle();
     }else{
-      setDebtMessage(
-        `Fixed payment made: ${money(requested)} F. `+
-        `Scheduled balance: ${money(state.debt)} F. `+
-        `Next fixed payment remains ${money(debtInstallment())} F. `+
-        `Paying early now would save ${money(earlyPayoffSavings())} F.`,
-        'success'
-      );
-      setStatus(`Fixed debt payment: −${money(requested)} F.`, 'win');
+      setDebtMessage(`Amount due paid: ${money(requested)} F. Remaining balance: ${money(state.debt)} F.${tierNote}`,'success');
+      setStatus(`Loan payment: −${money(requested)} F.`, 'win');
     }
 
     audio.cash();haptic(18);refresh();
@@ -1390,8 +1253,43 @@
     els.debtBadge.classList.toggle('hidden',state.debt<=0);els.debtBadge.classList.toggle('due',state.debtDue);els.debtBadgeAmount.textContent=`${money(state.debt)} F`;els.debtBadgeTurns.textContent=state.debt>0?debtRoundsRemaining():'—';els.debtBadgeStatus.innerHTML=state.debtDue?'! <b>PAYMENT DUE</b>':`due in <b>${debtRoundsRemaining()}</b>`;els.debtDueDot.classList.toggle('hidden',!state.debtDue);els.debtDueFlag.classList.toggle('hidden',!state.debtDue);
     els.profileFrog.innerHTML=frogSvg(frog);els.bigProfileFrog.innerHTML=frogSvg(frog);els.currentFrogName.textContent=frog.name;els.app.dataset.theme=lake.id;
     els.totalJumpsStat.textContent=money(state.totalJumps);els.bestJumpStat.textContent=state.bestJump;els.biggestWinStat.textContent=`${money(state.biggestWin)} F`;els.roundsStat.textContent=money(state.rounds);els.nextLevelBonusStat.textContent=`${money(levelBonusFor(state.level+1))} F`;
-    const creditTier=repaymentTierInfo(),creditCooldown=roundsUntilNextLoan(),creditMaxLoan=maxSingleLoan(),nextTier=creditTier.next;els.debtAmountLabel.textContent=`${money(state.debt)} F`;els.debtInstallmentLabel.textContent=`${money(debtInstallment())} F`;els.debtTurnsLabel.textContent=state.debtDue?'! PAYMENT DUE':state.debt>0?`${debtRoundsRemaining()} round${debtRoundsRemaining()===1?'':'s'}`:'No debt';els.debtPayoffLabel.textContent=`${money(earlyPayoffAmount())} F`;els.debtInterestSavedLabel.textContent=`${money(earlyPayoffSavings())} F`;els.debtLimitLabel.textContent=`${money(debtLimit())} F`;els.debtAvailableLabel.textContent=`${money(availableCredit())} F`;els.creditTierLabel.textContent=nextTier?`${creditTier.tier.name} · ${money(creditTier.tier.limit)} F · next at ${money(nextTier.payoffs)}`:`${creditTier.tier.name} · ${money(creditTier.tier.limit)} F · MAX`;els.creditAffordabilityLabel.textContent=`${money(affordabilityLimit())} F`;els.creditMaxLoanLabel.textContent=`${money(creditMaxLoan)} F`;els.creditCooldownLabel.textContent=state.debtDue?'Payment due':creditCooldown>0?`${creditCooldown} round${creditCooldown===1?'':'s'}`:'Ready';els.creditHistoryLabel.textContent=`${money(state.fullRepayments)} full · ${money(state.missedDebtDeadlines)} missed`;els.creditEarningsLabel.textContent=`${money(state.verifiedGameplayEarnings)} F`;els.creditMediansLabel.textContent=`Bet ${money(medianRecentBet())} F · Cash ${money(medianRecentCashout())} F`;els.creditFreezeLabel.textContent=state.creditFreezeFullRepayments>0?`${state.creditFreezeFullRepayments} qualified full payoff${state.creditFreezeFullRepayments===1?'':'s'} to recover`:'None';els.loanTermsLabel.textContent=state.debt>0?`8% total · ${LOAN_INSTALLMENTS} fixed payments`:'8% total · 10 fixed payments';els.loanProgressLabel.textContent=state.debt>0?`${state.loanInstallmentsPaid} / ${LOAN_INSTALLMENTS} paid · ${money(state.loanPrincipalRemaining)} principal`:'No active loan';els.repayInstallmentButton.disabled=state.debt<=0||state.balance<debtInstallment()||state.roundActive;els.repayAllButton.disabled=state.debt<=0||state.balance<earlyPayoffAmount()||state.roundActive;const borrowingLocked=Boolean(loanAvailabilityReason());els.openLoanBuilderButton.disabled=borrowingLocked;els.loanEntryHeadline.textContent=borrowingLocked?(state.debt>0?'Active loan must be cleared':loanAvailabilityReason()):`Up to ${money(creditMaxLoan)} F available`;els.loanEntrySubtext.textContent=state.debt>0?`${money(state.debt)} F scheduled balance · ${money(debtInstallment())} F fixed payment`:'8% total finance charge · 10 payments · 50 completed-round term';
-    els.bankTotalWealthLabel.textContent=`${money(Math.min(MAX_SAFE_BALANCE,state.balance+state.piggyBalance))} F`;els.piggyBalanceLabel.textContent=`${money(state.piggyBalance)} F`;els.piggyWalletLabel.textContent=`${money(state.balance)} F`;els.piggyNextInterestLabel.textContent=`${money(estimatedPiggyCycleInterest())} F`;els.piggyRoundsLabel.textContent=money(piggyRoundsRemaining());els.piggyLifetimeInterestLabel.textContent=`${money(state.piggyLifetimeInterest)} F`;els.piggyCyclesLabel.textContent=money(state.piggyCycles);els.piggyProgressFill.style.width=`${state.piggyBalance>0?(state.piggyRounds/PIGGY_ROUND_INTERVAL)*100:0}%`;updatePiggyTransferControls();
+    const creditTier=repaymentTierInfo(),nextTier=creditTier.next,creditMaxLoan=maxSingleLoan();
+    els.debtAmountLabel.textContent=`${money(state.debt)} F`;
+    els.debtInstallmentLabel.textContent=`${money(debtInstallment())} F`;
+    els.debtTurnsLabel.textContent=state.debtDue?'! DUE NOW':state.debt>0?`Due in ${debtRoundsRemaining()} round${debtRoundsRemaining()===1?'':'s'}`:'No active loan';
+    els.debtPayoffLabel.textContent=`${money(earlyPayoffAmount())} F`;
+    els.debtInterestSavedLabel.textContent=`${money(earlyPayoffSavings())} F`;
+    els.debtLimitLabel.textContent=`${money(debtLimit())} F`;
+    els.creditTierLabel.textContent=creditTier.tier.name;
+    els.creditTierProgressFill.style.width=`${tierProgressPercent()}%`;
+    els.creditHistoryLabel.textContent=`${money(state.onTimeRepaid)} F`;
+    els.creditNextTierLabel.textContent=nextTier
+      ? `${money(Math.max(0,nextTier.repaid-state.onTimeRepaid))} F to ${nextTier.name}`
+      : 'Maximum tier reached';
+    els.activeLoanCard.classList.toggle('hidden',state.debt<=0);
+    els.repayInstallmentButton.disabled=state.debt<=0||!state.debtDue||state.balance<debtInstallment()||state.roundActive;
+    els.repayAllButton.disabled=state.debt<=0||state.balance<earlyPayoffAmount()||state.roundActive;
+    els.repayInstallmentButton.querySelector('small').textContent=state.debtDue
+      ? `Pay ${money(debtInstallment())} F now`
+      : state.debt>0?`Due in ${debtRoundsRemaining()} round${debtRoundsRemaining()===1?'':'s'}`:'No active loan';
+    els.repayAllButton.querySelector('small').textContent=state.debt>0
+      ? `Pay ${money(earlyPayoffAmount())} F · save ${money(earlyPayoffSavings())} F`
+      : 'No active loan';
+    const borrowingLocked=Boolean(loanAvailabilityReason());
+    els.openLoanBuilderButton.disabled=borrowingLocked;
+    els.loanEntryHeadline.textContent=state.debt>0
+      ? 'Pay off the active loan first'
+      : `Up to ${money(creditMaxLoan)} F available`;
+    els.loanEntrySubtext.textContent=state.debt>0
+      ? `${money(state.debt)} F remaining · ${money(debtInstallment())} F due amount`
+      : '8% total interest · 10 payments · due every 5 rounds';
+    els.bankTotalWealthLabel.textContent=`${money(Math.min(MAX_SAFE_BALANCE,state.balance+state.piggyBalance))} F`;
+    els.piggyBalanceLabel.textContent=`${money(state.piggyBalance)} F`;
+    els.piggyWalletLabel.textContent=`${money(state.balance)} F`;
+    els.piggyNextInterestLabel.textContent=`${money(estimatedPiggyCycleInterest())} F`;
+    els.piggyRoundsLabel.textContent=money(piggyRoundsRemaining());
+    els.piggyProgressFill.style.width=`${state.piggyBalance>0?(state.piggyRounds/PIGGY_ROUND_INTERVAL)*100:0}%`;
+    updatePiggyTransferControls();
     refreshDaily(); refreshPromo(); refreshEngagement(); saveState();
   }
 
@@ -1451,7 +1349,7 @@
     audio.unlock(); if(state.roundActive||state.animating)return;
     if(state.balance<MIN_BET){state.balance+=500;setStatus('Pond rescue bonus: +500 Froggy!','win');audio.reward();confettiBurst(25);refresh();return;}
     if(state.bet>state.balance){state.bet=Math.floor(state.balance/50)*50;setStatus('Bet adjusted to your available Froggy.');refresh();return;}
-    els.customBetRow.classList.add('hidden');    state.balance-=state.bet;session.rounds++;session.net-=state.bet;state.jump=0;state.roundActive=true;state.animating=false;state.roundSafe=state.safeRunCredits>0;if(state.roundSafe)state.safeRunCredits--;state.creditRoundEligible=!state.roundSafe;state.rounds++;scene.reset();setStatus(`${money(state.bet)} Froggy on the line. Make the first leap!`);audio.start();haptic(20);refresh();
+    els.customBetRow.classList.add('hidden');    state.balance-=state.bet;session.rounds++;session.net-=state.bet;state.jump=0;state.roundActive=true;state.animating=false;state.roundSafe=state.safeRunCredits>0;if(state.roundSafe)state.safeRunCredits--;state.rounds++;scene.reset();setStatus(`${money(state.bet)} Froggy on the line. Make the first leap!`);audio.start();haptic(20);refresh();
   }
 
   function jump(){
@@ -1485,9 +1383,22 @@
   function screenFeedback(kind){if(!state.effects)return;els.flash.className=`flash-layer flash-${kind}`;els.gameFrame.classList.toggle('shake',kind==='lose');setTimeout(()=>{els.flash.className='flash-layer';els.gameFrame.classList.remove('shake');},500);}
   function confettiBurst(count=55){if(!state.effects)count=Math.ceil(count*.25);const colors=['#e9ff6a','#52d8d0','#ffcc4b','#fa6d8a','#aa82ec','#fff'];for(let i=0;i<count;i++){const d=document.createElement('i');d.className='confetti';d.style.left=`${Math.random()*100}%`;d.style.top=`${-10-Math.random()*30}px`;d.style.background=colors[i%colors.length];d.style.setProperty('--dx',`${(Math.random()-.5)*240}px`);d.style.setProperty('--spin',`${(Math.random()-.5)*1200}deg`);d.style.setProperty('--dur',`${1.5+Math.random()*1.8}s`);els.confetti.appendChild(d);setTimeout(()=>d.remove(),3600);}}
 
+  let bankPane='loans';
+
+  function setBankPane(pane){
+    bankPane=pane==='piggy'?'piggy':'loans';
+    const loans=bankPane==='loans';
+    els.bankLoansPane.classList.toggle('hidden',!loans);
+    els.bankPiggyPane.classList.toggle('hidden',loans);
+    els.bankLoansTab.classList.toggle('active',loans);
+    els.bankPiggyTab.classList.toggle('active',!loans);
+    els.bankLoansTab.setAttribute('aria-selected',String(loans));
+    els.bankPiggyTab.setAttribute('aria-selected',String(!loans));
+  }
+
   function navigate(screen){
     if(screen!=='play')els.customBetRow.classList.add('hidden');
-    Object.entries(els.screens).forEach(([key,node])=>node.classList.toggle('active',key===screen));document.querySelectorAll('.nav-button').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));audio.tap();if(screen==='collection')renderCollection();if(screen==='rewards')refreshDaily();if(screen==='bank')refresh();if(screen==='promo')refreshPromo();if(screen==='stats')refresh();
+    Object.entries(els.screens).forEach(([key,node])=>node.classList.toggle('active',key===screen));document.querySelectorAll('.nav-button').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));audio.tap();if(screen==='collection')renderCollection();if(screen==='rewards')refreshDaily();if(screen==='bank'){if(state.debtDue)setBankPane('loans');refresh();}if(screen==='promo')refreshPromo();if(screen==='stats')refresh();
   }
 
   function renderCollection(){
@@ -1687,8 +1598,8 @@
     els.quickBets.addEventListener('click',e=>{const b=e.target.closest('[data-bet]');if(b)selectBet(b.dataset.bet);});els.betAdjusters.addEventListener('click',e=>{const betButton=e.target.closest('[data-bet]');if(betButton)selectBet(betButton.dataset.bet);const actionButton=e.target.closest('[data-bet-action]');if(actionButton)adjustBet(actionButton.dataset.betAction);});els.customBetToggle.addEventListener('click',()=>{if(state.roundActive)return;els.customBetRow.classList.toggle('hidden');if(!els.customBetRow.classList.contains('hidden'))setTimeout(()=>els.customBetInput.focus(),30);});els.customBetRow.addEventListener('submit',e=>{e.preventDefault();applyCustomBet();});els.customBetClose.addEventListener('click',()=>{els.customBetRow.classList.add('hidden');els.customBetError.textContent='';});
     els.start.addEventListener('click',startRound);els.jumpButton.addEventListener('click',jump);els.cash.addEventListener('click',cashOut);els.resultButton.addEventListener('click',()=>{closeModal();state.jump=0;scene.reset();refresh();});
     els.sound.addEventListener('click',toggleSound);els.settingsSound.addEventListener('click',toggleSound);els.settingsMotion.addEventListener('click',()=>{state.effects=!state.effects;refresh();});els.settingsReminders.addEventListener('click',()=>{state.playReminders=!state.playReminders;session.reminded=false;refresh();});els.goalGrid.addEventListener('click',e=>{const button=e.target.closest('[data-goal-claim]');if(button)claimGoal(button.dataset.goalClaim);});
-    els.openLoanBuilderButton.addEventListener('click',openLoanBuilder);els.loanAmountSlider.addEventListener('input',()=>refreshLoanBuilder(els.loanAmountSlider.value));els.loanAmountInput.addEventListener('input',()=>refreshLoanBuilder(els.loanAmountInput.value,{exact:true}));els.loanReviewButton.addEventListener('click',reviewLoanWarning);els.loanWarningCancelButton.addEventListener('click',closeModal);els.loanRedeemButton.addEventListener('click',redeemPendingLoan);els.repayInstallmentButton.addEventListener('click',()=>repayDebt('installment'));els.repayAllButton.addEventListener('click',()=>repayDebt('all'));
-    document.querySelectorAll('[data-piggy-mode]').forEach(button=>button.addEventListener('click',()=>setPiggyTransferMode(button.dataset.piggyMode)));document.querySelectorAll('[data-piggy-share]').forEach(button=>button.addEventListener('click',()=>setPiggyTransferAmount(Math.floor(piggyTransferMaximum()*Number(button.dataset.piggyShare)/100))));els.piggyTransferSlider.addEventListener('input',()=>setPiggyTransferAmount(els.piggyTransferSlider.value));els.piggyTransferInput.addEventListener('input',()=>setPiggyTransferAmount(els.piggyTransferInput.value,{fromInput:true}));els.piggyTransferButton.addEventListener('click',transferPiggy);els.debtBadge.addEventListener('click',()=>navigate('bank'));
+    els.bankShortcut.addEventListener('click',()=>{setBankPane('loans');navigate('bank');});els.bankLoansTab.addEventListener('click',()=>setBankPane('loans'));els.bankPiggyTab.addEventListener('click',()=>setBankPane('piggy'));    els.openLoanBuilderButton.addEventListener('click',openLoanBuilder);els.loanAmountSlider.addEventListener('input',()=>refreshLoanBuilder(els.loanAmountSlider.value));els.loanAmountInput.addEventListener('input',()=>refreshLoanBuilder(els.loanAmountInput.value,{exact:true}));els.loanReviewButton.addEventListener('click',reviewLoanWarning);els.loanWarningCancelButton.addEventListener('click',closeModal);els.loanRedeemButton.addEventListener('click',redeemPendingLoan);els.repayInstallmentButton.addEventListener('click',()=>repayDebt('installment'));els.repayAllButton.addEventListener('click',()=>repayDebt('all'));
+    document.querySelectorAll('[data-piggy-mode]').forEach(button=>button.addEventListener('click',()=>setPiggyTransferMode(button.dataset.piggyMode)));document.querySelectorAll('[data-piggy-share]').forEach(button=>button.addEventListener('click',()=>setPiggyTransferAmount(Math.floor(piggyTransferMaximum()*Number(button.dataset.piggyShare)/100))));els.piggyTransferSlider.addEventListener('input',()=>setPiggyTransferAmount(els.piggyTransferSlider.value));els.piggyTransferInput.addEventListener('input',()=>setPiggyTransferAmount(els.piggyTransferInput.value,{fromInput:true}));els.piggyTransferButton.addEventListener('click',transferPiggy);els.debtBadge.addEventListener('click',()=>{setBankPane('loans');navigate('bank');});
     $('howToButton').addEventListener('click',()=>openModal(els.howToModal));$('resetButton').addEventListener('click',resetProgress);$('profileButton').addEventListener('click',()=>navigate('stats'));
     document.querySelectorAll('.nav-button').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.screen)));
     document.querySelectorAll('.segment').forEach(b=>b.addEventListener('click',()=>{collectionMode=b.dataset.collection;document.querySelectorAll('.segment').forEach(x=>x.classList.toggle('active',x===b));renderCollection();audio.tap();}));
@@ -1719,10 +1630,10 @@
       const before=state.balance;claimDaily({type:'froggy',amount:500});if(state.balance!==before+500||dailyAvailable())throw new Error('daily reward failed');closeModal();
       state.lastDaily='';state.xp=nextXp()-1;const beforeLevel=state.balance,expectedLevelBonus=levelBonusFor(state.level+1);addXp(1);if(state.balance!==beforeLevel+expectedLevelBonus)throw new Error('level bonus failed');
       state=deepClone(DEFAULT_STATE);refresh();const promoStart=state.balance;if(!redeemPromo('50000')||!redeemPromo('50000')||state.balance!==promoStart+100000)throw new Error('reusable 50000 promo failed');const customStart=state.balance;if(!redeemPromo('qoostommoney',123456)||!redeemPromo('qoostommoney',44)||state.balance!==customStart+123500)throw new Error('custom money promo failed');if(!redeemPromo('unlockall')||state.unlockedFrogs.length!==FROGS.length)throw new Error('unlockall promo failed');if(!redeemPromo('iwannaswim')||state.unlockedLakes.length!==LAKES.length)throw new Error('lake promo failed');if(!redeemPromo('10')||!redeemPromo('10')||state.freeSpins!==20)throw new Error('reusable 10 promo failed');const levelBeforeFive=state.level,levelBalanceBefore=state.balance;const expectedFiveBonus=cumulativeLevelBonus(levelBeforeFive,levelBeforeFive*5)+cumulativeLevelBonus(levelBeforeFive*5,levelBeforeFive*25);if(!redeemPromo('5')||!redeemPromo('5')||state.level!==levelBeforeFive*25||state.balance!==levelBalanceBefore+expectedFiveBonus)throw new Error('reusable 5 promo or level bonus failed');if(!redeemPromo('luckylily')||state.luckyCharges!==25)throw new Error('luckylily promo failed');const partyBalance=state.balance,partySpins=state.freeSpins;if(!redeemPromo('pondparty')||state.balance!==partyBalance+2500||state.freeSpins!==partySpins+3)throw new Error('pondparty promo failed');const safeBefore=state.safeRunCredits;if(!redeemPromo('lifeguard')||!redeemPromo('lifeguard')||state.safeRunCredits!==safeBefore+6)throw new Error('reusable lifeguard promo failed');if(!redeemPromo('spinall')||!state.unlimitedSpins||freeSpinDisplay()!=='unlimintos'||!dailyAvailable())throw new Error('spinall promo failed');if(!redeemPromo('imtheowner')||state.safeRunCredits!==safeBefore+4)throw new Error('owner promo failed');state.bet=100;startRound();forcedOutcome=false;jump();await new Promise(r=>setTimeout(r,500));if(state.jump!==1||!state.roundActive)throw new Error('owner safe round failed');state.roundActive=false;state.roundSafe=false;closeModal();
-      state=deepClone(DEFAULT_STATE);if(repaymentTierInfo().tier.limit!==5000||CREDIT_TIERS[CREDIT_TIERS.length-1].limit!==1000000000)throw new Error('tier range failed');if(!takeLoan(2500,{skipConfirm:true})||state.balance!==3500||state.loanInterestTotal!==200||state.debt!==2700||state.loanInstallment!==270)throw new Error('fixed loan creation failed');if(takeLoan(500,{skipConfirm:true}))throw new Error('overlapping loan allowed');if(earlyPayoffAmount()!==2500||earlyPayoffSavings()!==200)throw new Error('initial payoff savings failed');state.creditRoundEligible=true;state.bet=500;finishCompletedRound(1500);if(earlyPayoffAmount()!==2504||earlyPayoffSavings()!==196)throw new Error('accrued early payoff failed');if(!repayDebt('all')||state.fullRepayments!==1||state.debt!==0||state.balance!==996)throw new Error('qualified early payoff failed');state.completedRounds=5;state.lastLoanRound=0;if(!takeLoan(1000,{skipConfirm:true})||state.loanInterestTotal!==80||state.loanInstallment!==108)throw new Error('second fixed loan failed');for(let i=0;i<4;i++)finishCompletedRound(0);const dueResult=finishCompletedRound(0);if(!dueResult||!state.debtDue||debtInstallment()!==108)throw new Error('fixed payment due failed');const debtBeforeFixed=state.debt;if(!repayDebt('installment')||state.debt!==debtBeforeFixed-108||state.loanInstallmentsPaid!==1||state.loanInterestPaid!==8)throw new Error('fixed payment allocation failed');const fixedAfterOne=debtInstallment();if(fixedAfterOne!==108)throw new Error('fixed amount decreased');state=deepClone(DEFAULT_STATE);state.debt=1000;state.loanPrincipalOriginal=1000;state.loanPrincipalRemaining=1000;state.loanInstallment=100;state.debtCycleBorrowed=1000;state.debtCycleQualified=true;state.debtCycleStartRound=0;state.completedRounds=1;state.balance=1000;state.loanInterestTotal=0;if(!repayDebt('all')||state.fullRepayments!==1)throw new Error('legacy fixed payoff failed');state=deepClone(DEFAULT_STATE);state.fullRepayments=25;if(repaymentTierInfo().tier.limit!==1000000000)throw new Error('billion tier failed');const quoteTest=loanQuote(10000);if(quoteTest.interest!==800||quoteTest.total!==10800||quoteTest.payment!==1080||quoteTest.duration!==50)throw new Error('loan quote modal math failed');state=deepClone(DEFAULT_STATE);state.balance=2000;piggyTransferMode='deposit';piggyTransferAmount=1000;if(!transferPiggy()||state.balance!==1000||state.piggyBalance!==1000)throw new Error('piggy deposit failed');for(let i=0;i<20;i++)advancePiggyBankRound();if(state.piggyBalance!==1001||state.piggyLifetimeInterest!==1||state.piggyCycles!==1||state.piggyRounds!==0)throw new Error('piggy interest cycle failed');piggyTransferMode='withdraw';piggyTransferAmount=501;if(!transferPiggy()||state.balance!==1501||state.piggyBalance!==500)throw new Error('piggy withdrawal failed');
+      state=deepClone(DEFAULT_STATE);if(repaymentTierInfo().tier.limit!==5000||debtLimit()!==5000||maxSingleLoan()!==5000)throw new Error('starter tier failed');state.onTimeRepaid=5000;if(repaymentTierInfo().tier.limit!==10000)throw new Error('on-time amount tier failed');state.onTimeRepaid=1988900000;if(repaymentTierInfo().tier.limit!==1000000000)throw new Error('billion tier failed');state=deepClone(DEFAULT_STATE);if(!takeLoan(1000,{skipConfirm:true})||state.debt!==1080||state.loanInstallment!==108)throw new Error('simple loan creation failed');if(repayDebt('installment'))throw new Error('payment allowed before due');for(let i=0;i<5;i++)finishCompletedRound(0);if(!state.debtDue)throw new Error('amount due did not activate');const beforeOnTime=state.onTimeRepaid;if(!repayDebt('installment')||state.onTimeRepaid!==beforeOnTime+108||state.debt!==972)throw new Error('on-time due payment failed');state=deepClone(DEFAULT_STATE);takeLoan(5000,{skipConfirm:true});finishCompletedRound(0);const payoff=earlyPayoffAmount();if(!repayDebt('all')||state.onTimeRepaid!==payoff||repaymentTierInfo().tier.limit!==10000)throw new Error('on-time early payoff tier failed');state=deepClone(DEFAULT_STATE);takeLoan(1000,{skipConfirm:true});for(let i=0;i<6;i++)finishCompletedRound(0);const lateProgress=state.onTimeRepaid;if(!repayDebt('installment')||state.onTimeRepaid!==lateProgress)throw new Error('late payment increased tier');const quoteTest=loanQuote(10000);if(quoteTest.interest!==800||quoteTest.total!==10800||quoteTest.payment!==1080||quoteTest.duration!==50)throw new Error('loan quote math failed');state=deepClone(DEFAULT_STATE);state.balance=2000;piggyTransferMode='deposit';piggyTransferAmount=1000;if(!transferPiggy()||state.balance!==1000||state.piggyBalance!==1000)throw new Error('piggy deposit failed');for(let i=0;i<20;i++)advancePiggyBankRound();if(state.piggyBalance!==1001||state.piggyLifetimeInterest!==1||state.piggyCycles!==1||state.piggyRounds!==0)throw new Error('piggy interest cycle failed');piggyTransferMode='withdraw';piggyTransferAmount=501;if(!transferPiggy()||state.balance!==1501||state.piggyBalance!==500)throw new Error('piggy withdrawal failed');setBankPane('piggy');if(els.bankPiggyPane.classList.contains('hidden')||!els.bankLoansPane.classList.contains('hidden'))throw new Error('bank pane switch failed');setBankPane('loans');
             if(MULTIPLIERS.length!==16||RISKS.length!==15||Math.abs(MULTIPLIERS[MULTIPLIERS.length-1]-258.10484412313536)>.000001)throw new Error('15-jump reward curve failed');let curveSurvival=1;for(let i=0;i<RISKS.length;i++){curveSurvival*=1-RISKS[i]/100;if(Math.abs(curveSurvival*MULTIPLIERS[i+1]-TARGET_RTP)>.000000001)throw new Error(`RTP mismatch at jump ${i+1}`);}if(WHEEL_SEGMENTS.length!==10||WHEEL_SEGMENTS.filter(x=>x.amount===50000).length!==1)throw new Error('wheel setup failed');if(FROGS[FROGS.length-1].id!=='owner'||FROGS[FROGS.length-1].cost!==1000000000||FROGS[FROGS.length-1].level!==20000)throw new Error('owner frog setup failed');
       state.level=3;state.balance=5000;collectionMode='frogs';collectionAction('king');if(state.selectedFrog!=='king'||!state.unlockedFrogs.includes('king'))throw new Error('collection failed');
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v22 dedicated Bank, slider quote and warning flow, Piggy savings interest, fixed loans, tiers, debt penalties, economy, characters, and promos';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v23 simple on-time repayment tiers, compact Loans-first Bank, clear due button, Piggy savings, fixed loans, debt penalties, economy, characters, and promos';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 
@@ -1731,5 +1642,5 @@
   if(!state.tutorialSeen&&!TEST_MODE){state.tutorialSeen=true;saveState();setTimeout(()=>openModal(els.howToModal),600);}
   if(TEST_MODE)runSelfTest();
 
-  window.FroggyGame={version:BUILD_VERSION,getState:()=>deepClone(state),selectBet,setBetAmount,adjustBet,applyCustomBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,spinDaily,redeemPromo,levelBonusFor,cumulativeLevelBonus,creditBalance,takeLoan,repayDebt,completeDebtTurn,debtInstallment,debtLimit,availableCredit,affordabilityLimit,repaymentTierInfo,registerFullRepayment,medianRecentBet,medianRecentCashout,maxSingleLoan,roundsUntilNextLoan,finishCompletedRound,earlyPayoffAmount,earlyPayoffSavings,loanEarnedInterest,loanQuote,openLoanBuilder,reviewLoanWarning,redeemPendingLoan,transferPiggy,advancePiggyBankRound,piggyRoundsRemaining,estimatedPiggyCycleInterest,wheelSegments:deepClone(WHEEL_SEGMENTS),reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();renderWheel();refresh();}};
+  window.FroggyGame={version:BUILD_VERSION,getState:()=>deepClone(state),selectBet,setBetAmount,adjustBet,applyCustomBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,spinDaily,redeemPromo,levelBonusFor,cumulativeLevelBonus,creditBalance,takeLoan,repayDebt,completeDebtTurn,debtInstallment,debtLimit,availableCredit,repaymentTierInfo,registerOnTimeRepayment,tierProgressPercent,maxSingleLoan,finishCompletedRound,earlyPayoffAmount,earlyPayoffSavings,loanEarnedInterest,loanQuote,openLoanBuilder,reviewLoanWarning,redeemPendingLoan,transferPiggy,advancePiggyBankRound,piggyRoundsRemaining,estimatedPiggyCycleInterest,setBankPane,wheelSegments:deepClone(WHEEL_SEGMENTS),reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();renderWheel();refresh();}};
 })();
