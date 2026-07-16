@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=25" />
+  <link rel="stylesheet" href="styles.css?v=26" />
   <title>Froggy Leap Deluxe</title>
 </head>
 <body>
@@ -92,7 +92,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v25 · 15 JUMPS</div>
+          <div class="build-version" aria-label="Installed game version">v26 · 15 JUMPS</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -427,73 +427,83 @@
         <button class="action-button start pressable" data-close-modal><span>CLAIM</span></button>
       </div>
 
-      <div id="loanBuilderModal" class="modal-card loan-builder-modal hidden">
+      <div id="loanBuilderModal" class="modal-card loan-builder-modal fixed-action-modal hidden">
         <button class="modal-close pressable" data-close-modal>×</button>
-        <small>FROGGY CREDIT QUOTE</small>
-        <h2>Choose your loan.</h2>
-        <p class="loan-builder-intro">Move the slider or enter an exact amount. The complete terms update before any warning or redemption.</p>
 
-        <div class="loan-builder-amount">
-          <small>YOU RECEIVE</small>
-          <b><span id="loanBuilderAmountLabel">500</span> F</b>
-        </div>
+        <div class="loan-modal-scroll">
+          <small>FROGGY CREDIT QUOTE</small>
+          <h2>Choose your loan.</h2>
+          <p class="loan-builder-intro">Move the slider or enter an exact amount. The complete terms update before any warning or redemption.</p>
 
-        <input id="loanAmountSlider" class="loan-amount-slider" type="range" min="500" max="2500" step="100" value="500" aria-label="Loan amount" />
-        <div class="loan-slider-limits"><span id="loanSliderMinimumLabel">500 F</span><span id="loanSliderMaximumLabel">2,500 F maximum</span></div>
+          <div class="loan-builder-amount">
+            <small>YOU RECEIVE</small>
+            <b><span id="loanBuilderAmountLabel">500</span> F</b>
+          </div>
 
-        <div class="loan-exact-row">
-          <label for="loanAmountInput">EXACT AMOUNT</label>
-          <div class="loan-exact-controls">
-            <input id="loanAmountInput" type="number" min="500" step="1" inputmode="numeric" value="500" />
-            <button id="loanMaximumButton" type="button" class="loan-maximum-button pressable">MAX</button>
+          <input id="loanAmountSlider" class="loan-amount-slider" type="range" min="500" max="2500" step="100" value="500" aria-label="Loan amount" />
+          <div class="loan-slider-limits"><span id="loanSliderMinimumLabel">500 F</span><span id="loanSliderMaximumLabel">2,500 F maximum</span></div>
+
+          <div class="loan-exact-row">
+            <label for="loanAmountInput">EXACT AMOUNT</label>
+            <div class="loan-exact-controls">
+              <input id="loanAmountInput" type="number" min="500" step="1" inputmode="numeric" value="500" />
+              <button id="loanMaximumButton" type="button" class="loan-maximum-button pressable">MAX</button>
+            </div>
+          </div>
+
+          <div class="loan-quote-grid simple-quote-grid">
+            <div><small>8% INTEREST</small><b id="loanQuoteInterestLabel">40 F</b></div>
+            <div><small>TOTAL TO REPAY</small><b id="loanQuoteTotalLabel">540 F</b></div>
+            <div><small>AMOUNT DUE</small><b id="loanQuotePaymentLabel">54 F every 5 rounds</b></div>
+            <div><small>FULL DURATION</small><b>50 completed rounds</b></div>
+            <div><small>PAY OFF TODAY</small><b id="loanQuotePayoffLabel">500 F</b></div>
+            <div><small>TIER PROGRESS</small><b>On-time repayments increase your tier</b></div>
+          </div>
+
+          <div class="loan-quote-note">
+            <b>No overlapping loans.</b>
+            <span>Early payoff has no penalty and removes all future interest that has not yet been earned.</span>
           </div>
         </div>
 
-        <div class="loan-quote-grid simple-quote-grid">
-          <div><small>8% INTEREST</small><b id="loanQuoteInterestLabel">40 F</b></div>
-          <div><small>TOTAL TO REPAY</small><b id="loanQuoteTotalLabel">540 F</b></div>
-          <div><small>AMOUNT DUE</small><b id="loanQuotePaymentLabel">54 F every 5 rounds</b></div>
-          <div><small>FULL DURATION</small><b>50 completed rounds</b></div>
-          <div><small>PAY OFF TODAY</small><b id="loanQuotePayoffLabel">500 F</b></div>
-          <div><small>TIER PROGRESS</small><b>On-time repayments increase your tier</b></div>
+        <div class="loan-modal-footer">
+          <p id="loanBuilderError" class="loan-builder-error" role="status" aria-live="polite"></p>
+          <button id="loanReviewButton" type="button" class="action-button start pressable">
+            <span>REVIEW FINAL WARNING</span>
+            <small id="loanReviewButtonSubtext">Continue with 500 F</small>
+          </button>
         </div>
-
-        <div class="loan-quote-note">
-          <b>No overlapping loans.</b>
-          <span>Early payoff has no penalty and removes all future interest that has not yet been earned.</span>
-        </div>
-        <p id="loanBuilderError" class="loan-builder-error" role="status" aria-live="polite"></p>
-        <button id="loanReviewButton" type="button" class="action-button start pressable">
-          <span>REVIEW FINAL WARNING</span>
-          <small>Nothing is redeemed yet</small>
-        </button>
       </div>
 
-      <div id="loanWarningModal" class="modal-card loan-warning-modal hidden">
-        <div class="loan-warning-symbol">!</div>
-        <small>FINAL LOAN WARNING</small>
-        <h2>Understand before redeeming.</h2>
+      <div id="loanWarningModal" class="modal-card loan-warning-modal fixed-action-modal hidden">
+        <div class="loan-modal-scroll warning-modal-scroll">
+          <div class="loan-warning-symbol">!</div>
+          <small>FINAL LOAN WARNING</small>
+          <h2>Understand before redeeming.</h2>
 
-        <div class="loan-warning-summary">
-          <span>You receive</span><b id="loanWarningAmountLabel">500 F</b>
-          <span>Fixed payment</span><b id="loanWarningPaymentLabel">54 F × 10</b>
-          <span>Scheduled total</span><b id="loanWarningTotalLabel">540 F</b>
+          <div class="loan-warning-summary">
+            <span>You receive</span><b id="loanWarningAmountLabel">500 F</b>
+            <span>Fixed payment</span><b id="loanWarningPaymentLabel">54 F × 10</b>
+            <span>Scheduled total</span><b id="loanWarningTotalLabel">540 F</b>
+          </div>
+
+          <div class="loan-warning-list">
+            <p><b>1.</b> You may pay the next fixed payment early. Doing so resets the five-round countdown.</p>
+            <p><b>2.</b> Payments made by the deadline or early add the amount paid to your credit-tier progress.</p>
+            <p><b>3.</b> When overdue, the Bank first liquidates your cheapest owned skin at 80% of its shop value. Any unused proceeds return to your wallet.</p>
+            <p><b>4.</b> Only when no paid skin remains does another overdue round remove one level; below level 1 resets the save.</p>
+            <p><b>5.</b> Paying off early has no penalty and removes unearned future interest.</p>
+            <p><b>6.</b> Froggy is fictional game currency—not real credit or cash.</p>
+          </div>
         </div>
 
-        <div class="loan-warning-list">
-          <p><b>1.</b> You may pay the next fixed payment early. Doing so resets the five-round countdown.</p>
-          <p><b>2.</b> Payments made by the deadline or early add the amount paid to your credit-tier progress.</p>
-          <p><b>3.</b> When overdue, the Bank first liquidates your cheapest owned skin at 80% of its shop value. Any unused proceeds return to your wallet.</p>
-          <p><b>4.</b> Only when no paid skin remains does another overdue round remove one level; below level 1 resets the save.</p>
-          <p><b>5.</b> Paying off early has no penalty and removes unearned future interest.</p>
-          <p><b>6.</b> Froggy is fictional game currency—not real credit or cash.</p>
-        </div>
-
-        <div class="loan-warning-actions">
-          <button id="loanWarningCancelButton" type="button" class="loan-cancel-button pressable">CANCEL</button>
-          <button id="loanRedeemButton" type="button" class="loan-redeem-button pressable">
-            <span>REDEEM MONEY</span><small id="loanRedeemButtonSubtext">Receive 500 F</small>
-          </button>
+        <div class="loan-modal-footer warning-action-footer">
+          <div class="loan-warning-actions">
+            <button id="loanWarningCancelButton" type="button" class="loan-cancel-button pressable">CANCEL</button>
+            <button id="loanRedeemButton" type="button" class="loan-redeem-button pressable">
+              <span>REDEEM MONEY</span><small id="loanRedeemButtonSubtext">Receive 500 F</small>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -504,6 +514,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=25"></script>
+  <script src="app.js?v=26"></script>
 </body>
 </html>

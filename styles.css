@@ -520,7 +520,7 @@ body {
 }
 
 
-/* v25 build marker: confirms that the newest GitHub deployment loaded. */
+/* v26 build marker: confirms that the newest GitHub deployment loaded. */
 .build-version {
   width: max-content;
   margin: 10px auto 2px;
@@ -2050,4 +2050,106 @@ body {
 #startButton small {
   white-space:normal;
   text-align:center;
+}
+
+
+/* ==========================================================================
+   v26 — loan actions remain visible without scrolling
+   ========================================================================== */
+
+.fixed-action-modal {
+  display:flex;
+  flex-direction:column;
+  width:min(440px,100%);
+  max-height:min(86svh,720px);
+  padding:0;
+  overflow:hidden;
+}
+.fixed-action-modal .modal-close {
+  z-index:5;
+}
+.loan-modal-scroll {
+  min-height:0;
+  flex:1 1 auto;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  padding:25px 25px 14px;
+  scrollbar-width:thin;
+}
+.loan-modal-scroll > small {
+  display:block;
+  color:var(--green-dark);
+  font-size:9px;
+  font-weight:1000;
+  letter-spacing:.18em;
+  text-align:center;
+}
+.loan-modal-scroll > h2 {
+  margin:5px 0 10px;
+  font-size:27px;
+  letter-spacing:-.04em;
+  text-align:center;
+}
+.loan-modal-footer {
+  position:relative;
+  z-index:4;
+  flex:0 0 auto;
+  padding:10px 16px max(14px,env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,rgba(255,254,241,.94),#fffef1 24%);
+  border-top:1px solid rgba(16,40,58,.08);
+  box-shadow:0 -12px 28px rgba(16,40,58,.09);
+}
+.loan-modal-footer .loan-builder-error {
+  min-height:14px;
+  margin:0 0 5px;
+}
+.loan-modal-footer #loanReviewButton {
+  width:100%;
+  margin:0;
+}
+.warning-action-footer {
+  padding-top:12px;
+}
+.warning-action-footer .loan-warning-actions {
+  margin:0;
+}
+.warning-modal-scroll {
+  padding-top:22px;
+}
+.loan-builder-modal .loan-builder-amount {
+  margin-top:2px;
+}
+
+@media (max-width:520px) {
+  .fixed-action-modal {
+    width:100%;
+    max-height:92svh;
+    border-radius:25px 25px 18px 18px;
+  }
+  .loan-modal-scroll {
+    padding:22px 16px 12px;
+  }
+  .loan-modal-scroll > h2 {
+    font-size:23px;
+  }
+  .loan-modal-footer {
+    padding-inline:12px;
+  }
+}
+@media (max-height:650px) {
+  .fixed-action-modal {
+    max-height:94svh;
+  }
+  .loan-modal-scroll {
+    padding-top:18px;
+  }
+  .loan-builder-intro {
+    margin-bottom:8px;
+  }
+  .loan-builder-amount {
+    padding:9px;
+  }
+  .loan-quote-grid > div {
+    padding:7px;
+  }
 }

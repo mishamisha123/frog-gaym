@@ -150,7 +150,7 @@ This update adds stronger game feel without using deceptive gambling dark patter
 
 ## Consolidated v11 deployment check
 
-This build includes an unmistakable yellow badge reading **v25 · 15 JUMPS** above the start button.
+This build includes an unmistakable yellow badge reading **v26 · 15 JUMPS** above the start button.
 
 After uploading all files to GitHub Pages, visit:
 
@@ -160,7 +160,7 @@ That helper unregisters old service workers and removes stale cached game files,
 
 The correct build must visibly show:
 
-- `v25 · 15 JUMPS`
+- `v26 · 15 JUMPS`
 - Jump display `0 / 20`
 - Fixed bets: 50, 100, 250, 500
 - Bet tools: ÷2, ×2, CUSTOM, MAX
@@ -673,3 +673,17 @@ The existing multipliers remain:
 
 The Start Round button now shows the rolling median wager and resulting XP per landing.
 Existing saves migrate with an empty history and begin learning from the next completed wagers.
+
+
+## v26 always-visible loan actions
+
+The loan amount sheet no longer requires scrolling to find the next action.
+
+- Quote details scroll independently inside the modal.
+- **REVIEW FINAL WARNING** stays fixed at the bottom of the quote sheet.
+- The button immediately displays the currently selected principal.
+- The footer remains visible on short phone screens and respects the device safe area.
+- Validation errors appear directly above the fixed review button.
+- The final warning also has a fixed footer.
+- **CANCEL** and **REDEEM MONEY** remain visible while the warning text scrolls.
+- No loan calculations, warnings, repayment rules, XP rules, Piggy rules or collateral rules were changed.
