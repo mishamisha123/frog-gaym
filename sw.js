@@ -1,5 +1,5 @@
-const CACHE='froggy-leap-v19-trust-credit';
-const CORE=['./','./index.html','./styles.css?v=19','./app.js?v=19','./manifest.webmanifest','./refresh.html','./icons/icon-192.png','./icons/icon-512.png'];
+const CACHE='froggy-leap-v21-fixed-interest-early-payoff';
+const CORE=['./','./index.html','./styles.css?v=21','./app.js?v=21','./manifest.webmanifest','./refresh.html','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{

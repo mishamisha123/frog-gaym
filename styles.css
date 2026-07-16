@@ -520,7 +520,7 @@ body {
 }
 
 
-/* v19 build marker: confirms that the newest GitHub deployment loaded. */
+/* v21 build marker: confirms that the newest GitHub deployment loaded. */
 .build-version {
   width: max-content;
   margin: 10px auto 2px;
@@ -1202,5 +1202,31 @@ body {
   .credit-metrics-grid b {
     margin-top:0;
     text-align:right;
+  }
+}
+
+
+/* v21 — fixed-payment schedule and early-payoff disclosure. */
+.debt-summary-grid {
+  grid-template-columns:repeat(4,minmax(0,1fr));
+}
+#debtPayoffLabel,
+#debtInterestSavedLabel {
+  color:#247942;
+}
+#repayAllButton {
+  box-shadow:inset 0 0 0 2px rgba(63,150,76,.16);
+}
+@media (max-width:760px) {
+  .debt-summary-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .debt-summary-grid > div:last-child {
+    grid-column:auto;
+  }
+}
+@media (max-width:420px) {
+  .debt-summary-grid {
+    grid-template-columns:1fr;
   }
 }

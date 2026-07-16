@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=19" />
+  <link rel="stylesheet" href="styles.css?v=21" />
   <title>Froggy Leap Deluxe</title>
 </head>
 <body>
@@ -91,7 +91,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v19 · 15 JUMPS</div>
+          <div class="build-version" aria-label="Installed game version">v21 · 15 JUMPS</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -219,18 +219,20 @@
           </div>
 
           <div class="debt-summary-grid">
-            <div><small>OUTSTANDING DEBT</small><b id="debtAmountLabel">0 F</b></div>
-            <div><small>PAYMENT AMOUNT</small><b id="debtInstallmentLabel">0 F</b></div>
+            <div><small>SCHEDULED BALANCE</small><b id="debtAmountLabel">0 F</b></div>
+            <div><small>FIXED PAYMENT</small><b id="debtInstallmentLabel">0 F</b></div>
             <div><small>PAYMENT STATUS</small><b id="debtTurnsLabel">No debt</b></div>
+            <div><small>EARLY PAYOFF NOW</small><b id="debtPayoffLabel">0 F</b></div>
+            <div><small>INTEREST SAVED NOW</small><b id="debtInterestSavedLabel">0 F</b></div>
             <div><small>TOTAL CREDIT LIMIT</small><b id="debtLimitLabel">5,000 F</b></div>
             <div><small>AVAILABLE CREDIT</small><b id="debtAvailableLabel">5,000 F</b></div>
           </div>
 
           <p id="debtExplanation" class="debt-explanation">
-            Credit is based on repayment history and verified paid gameplay—not levels, promo coins, free spins, protected rounds,
-            daily rewards, or level bonuses. The total limit is the smaller of your repayment tier and affordability limit.
-            A single loan is capped at 50% of available credit, with one loan allowed per five completed rounds.
-            Payments remain manual: after five completed rounds, 10% becomes due.
+            Each new loan has an 8% total finance charge and ten fixed scheduled payments.
+            One payment becomes due every five completed rounds. PAY DUE never changes the fixed payment or advances the tier.
+            PAY OFF DEBT waives all unearned future interest, has no penalty, and can count as one qualified full payoff.
+            Only one loan may be active at a time.
           </p>
 
           <div class="credit-metrics-grid" aria-label="Credit calculation">
@@ -238,10 +240,12 @@
             <div><small>AFFORDABILITY</small><b id="creditAffordabilityLabel">5,000 F</b></div>
             <div><small>MAX NEXT LOAN</small><b id="creditMaxLoanLabel">2,500 F</b></div>
             <div><small>NEXT LOAN</small><b id="creditCooldownLabel">Ready</b></div>
-            <div><small>PAYMENT HISTORY</small><b id="creditHistoryLabel">0 on-time · 0 missed</b></div>
+            <div><small>FULL PAYOFF HISTORY</small><b id="creditHistoryLabel">0 full · 0 missed</b></div>
             <div><small>VERIFIED EARNINGS</small><b id="creditEarningsLabel">0 F</b></div>
             <div><small>RECENT MEDIANS</small><b id="creditMediansLabel">Bet 0 F · Cash 0 F</b></div>
             <div><small>CREDIT FREEZE</small><b id="creditFreezeLabel">None</b></div>
+            <div><small>LOAN TERMS</small><b id="loanTermsLabel">8% · 10 payments</b></div>
+            <div><small>PAYMENT PROGRESS</small><b id="loanProgressLabel">No active loan</b></div>
           </div>
 
           <div id="loanButtons" class="loan-buttons">
@@ -261,10 +265,10 @@
           </form>
 
           <div class="debt-actions">
-            <button id="repayInstallmentButton" type="button" class="debt-action pressable"><span>PAY DUE</span><small>Manual payment—never automatic</small></button>
-            <button id="repayAllButton" type="button" class="debt-action secondary pressable"><span>REPAY ALL</span><small>Use available balance</small></button>
+            <button id="repayInstallmentButton" type="button" class="debt-action pressable"><span>PAY FIXED AMOUNT</span><small>Keeps current · no tier progress</small></button>
+            <button id="repayAllButton" type="button" class="debt-action secondary pressable"><span>PAY OFF EARLY</span><small>Saves unearned interest · may build tier</small></button>
           </div>
-          <p id="debtMessage" class="debt-message" role="status" aria-live="polite">Starter credit is 5,000 F. Higher limits require verified gameplay and on-time repayments.</p>
+          <p id="debtMessage" class="debt-message" role="status" aria-live="polite">Loans use 8% total interest, ten fixed payments and no early-payoff penalty.</p>
         </section>
 
         <section class="session-panel glass">
@@ -353,6 +357,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=19"></script>
+  <script src="app.js?v=21"></script>
 </body>
 </html>

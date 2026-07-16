@@ -150,7 +150,7 @@ This update adds stronger game feel without using deceptive gambling dark patter
 
 ## Consolidated v11 deployment check
 
-This build includes an unmistakable yellow badge reading **v19 · 15 JUMPS** above the start button.
+This build includes an unmistakable yellow badge reading **v21 · 15 JUMPS** above the start button.
 
 After uploading all files to GitHub Pages, visit:
 
@@ -160,7 +160,7 @@ That helper unregisters old service workers and removes stale cached game files,
 
 The correct build must visibly show:
 
-- `v19 · 15 JUMPS`
+- `v21 · 15 JUMPS`
 - Jump display `0 / 20`
 - Fixed bets: 50, 100, 250, 500
 - Bet tools: ÷2, ×2, CUSTOM, MAX
@@ -371,3 +371,98 @@ These never directly increase credit eligibility:
 - A freeze requires three later on-time payments to clear.
 - Three missed deadlines reduce the repayment tier by one step.
 - Manual 10% installments, overdue level penalties and the level-1 reset remain unchanged.
+
+
+## v20 full-payoff credit tiers
+
+Tier progress is no longer based on installment payments.
+
+### What counts
+
+A tier credit is awarded only when all of the following are true:
+
+- The player selects **PAY OFF DEBT**, not **PAY DUE**.
+- That payment completely clears the outstanding debt.
+- The debt cycle included at least 500 Froggy of borrowing.
+- At least one completed round occurred after the debt cycle began.
+- A single debt cycle can award no more than one full-payoff credit.
+
+Paying the 10% amount due keeps the account current, but gives no tier progress.
+Repeatedly clicking either payment button after debt is cleared cannot add more progress.
+
+### Fast tier ladder
+
+| Qualified full payoffs | Tier | Tier ceiling |
+|---:|---|---:|
+| 0 | Starter | 5,000 F |
+| 1 | Bronze | 10,000 F |
+| 2 | Copper | 20,000 F |
+| 3 | Silver | 50,000 F |
+| 4 | Gold | 100,000 F |
+| 5 | Platinum | 250,000 F |
+| 6 | Emerald | 500,000 F |
+| 7 | Sapphire | 1,000,000 F |
+| 8 | Ruby | 2,000,000 F |
+| 9 | Diamond | 5,000,000 F |
+| 10 | Master | 10,000,000 F |
+| 11 | Grandmaster | 20,000,000 F |
+| 12 | Elite | 50,000,000 F |
+| 13 | Champion | 100,000,000 F |
+| 15 | Hero | 200,000,000 F |
+| 17 | Legend | 350,000,000 F |
+| 19 | Mythic | 500,000,000 F |
+| 22 | Sovereign | 750,000,000 F |
+| 25 | Pond Billionaire | 1,000,000,000 F |
+
+The effective credit limit remains the smaller of the tier ceiling and verified affordability.
+Outstanding debt, the 50% single-loan cap, five-round borrowing cooldown, overdue locks,
+credit freezes and missed-deadline tier penalties remain active.
+
+A credit freeze now requires two qualified full payoffs to recover. PAY DUE payments do not
+remove the freeze or advance the tier.
+
+
+## v21 fixed-payment loan schedule
+
+Froggy uses a simplified fictional installment loan rather than an APR-based calendar loan.
+
+### New-loan terms
+
+- Principal: the Froggy amount received by the player.
+- Total finance charge: 8% of principal, rounded up to a whole Froggy.
+- Scheduled balance: principal plus the 8% finance charge.
+- Term: ten fixed scheduled payments.
+- Fixed payment: `ceil(scheduled balance ÷ 10)`.
+- A payment becomes due every five completed rounds.
+- The final scheduled payment is reduced only when less than the normal fixed amount remains.
+- Only one loan may be active at a time.
+
+Example: a 10,000-Froggy loan has 800 Froggy of scheduled interest, a scheduled
+balance of 10,800 Froggy, and a fixed payment of 1,080 Froggy.
+
+### Early payoff
+
+Froggy charges no prepayment penalty.
+
+Interest is earned gradually over the 50-round scheduled term. PAY OFF EARLY charges:
+
+`remaining principal + earned but unpaid interest − prepaid unearned interest`
+
+All unearned future interest is removed. The debt screen displays the current payoff amount
+and the interest saved by paying immediately.
+
+Example: after three scheduled payments on a 10,000-Froggy loan, the remaining principal is
+7,000 Froggy. Paying off then costs 7,000 Froggy and saves the remaining 560 Froggy of
+scheduled interest.
+
+### Tier progression
+
+- PAY FIXED AMOUNT never advances the credit tier.
+- A qualified PAY OFF EARLY action can add one full-payoff credit.
+- The existing minimum debt-cycle amount, completed-round qualification, affordability limit,
+  one-loan cooldown, overdue level penalty, freeze system and billion-Froggy tier ladder remain.
+
+### Existing v20 loans
+
+An active v20 debt is migrated into ten fixed payments without adding retroactive interest.
+Only loans created in v21 receive the new 8% finance charge.
