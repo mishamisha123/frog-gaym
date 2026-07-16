@@ -150,7 +150,7 @@ This update adds stronger game feel without using deceptive gambling dark patter
 
 ## Consolidated v11 deployment check
 
-This build includes an unmistakable yellow badge reading **v23 · 15 JUMPS** above the start button.
+This build includes an unmistakable yellow badge reading **v25 · 15 JUMPS** above the start button.
 
 After uploading all files to GitHub Pages, visit:
 
@@ -160,7 +160,7 @@ That helper unregisters old service workers and removes stale cached game files,
 
 The correct build must visibly show:
 
-- `v23 · 15 JUMPS`
+- `v25 · 15 JUMPS`
 - Jump display `0 / 20`
 - Fixed bets: 50, 100, 250, 500
 - Bet tools: ÷2, ×2, CUSTOM, MAX
@@ -569,3 +569,107 @@ Existing v22 full-payoff progress migrates to the equivalent v23 tier.
   progress to the next tier and active-loan essentials.
 - The scheduled payment action is renamed **PAY AMOUNT DUE**.
 - Piggy Bank keeps its balance, next-interest estimate, rounds remaining and transfer controls.
+
+
+## v24 Bank controls, XP and collateral
+
+### Piggy transfer repair
+
+The Piggy transfer action was remaining disabled after the slider, exact field or quick buttons
+changed the amount. v24 synchronizes the button state immediately after every amount change.
+
+- Debt does not block deposits or withdrawals.
+- Only an active gameplay round temporarily locks transfers.
+- Slider, exact input, 25%, 50% and MAX all enable the transfer action correctly.
+- Both input and change events are handled for stronger mobile-browser compatibility.
+
+### Paying scheduled amounts early
+
+The scheduled-payment button is now:
+
+- **PAY AMOUNT DUE** when the deadline has arrived.
+- **PAY NEXT PAYMENT EARLY** before the deadline.
+
+An early scheduled payment:
+
+- Uses the same fixed payment amount.
+- Reduces the loan normally.
+- Resets the five-completed-round countdown.
+- Counts toward the repayment tier when the loan has not missed a deadline.
+- Does not waive future interest; only PAY OFF EARLY waives unearned future interest.
+
+### Exact maximum loan
+
+The range input now uses one-Froggy slider resolution internally, so every tier ceiling is
+reachable—including exactly 100,000 rather than stopping at 95,500. A dedicated MAX button
+also selects the exact current tier maximum.
+
+### Bet-scaled XP
+
+Successful gameplay XP now includes:
+
+`wager XP bonus = floor(4 × sqrt(bet ÷ 50))`, capped at 2,000 XP per landing.
+
+- Every successful landing receives the wager bonus.
+- Cash-out XP receives twice the wager bonus.
+- Clearing all fifteen jumps receives three times the wager bonus.
+- Higher bets therefore grant more XP without using an uncapped linear formula.
+- The current per-landing wager XP boost appears on the START ROUND button.
+
+### Skin values and overdue collateral
+
+Paid frog skins have increased shop values:
+
+| Skin | New shop value | Bank collateral value |
+|---|---:|---:|
+| King Frog | 5,000 F | 4,000 F |
+| Robo Frog | 15,000 F | 12,000 F |
+| Ghost Frog | 35,000 F | 28,000 F |
+| Dragon Frog | 80,000 F | 64,000 F |
+| Dino Frog | 150,000 F | 120,000 F |
+| Ninja Frog | 300,000 F | 240,000 F |
+| Alien Frog | 750,000 F | 600,000 F |
+| Rockstar Frog | 2,500,000 F | 2,000,000 F |
+| Owner Frog | 2,000,000,000 F | 1,600,000,000 F |
+
+Collateral rules:
+
+1. On the first completed round while overdue, the Bank liquidates the cheapest owned paid skin.
+2. The Classic Frog is free and can never be seized.
+3. The Bank applies 80% of the skin's shop value to the loan.
+4. Any proceeds beyond the remaining debt are returned to the wallet.
+5. A collateral seizure never increases repayment-tier progress because it happened after default.
+6. Levels are removed only after no paid skin remains.
+7. If the seized skin was equipped, Classic Frog is equipped automatically.
+
+The loan warning now discloses this order before money is redeemed.
+
+
+## v25 uncapped rolling-median wager XP
+
+The 2,000-XP wager-bonus ceiling has been removed.
+
+XP now uses the median of the latest 20 completed wagers. While a round is active, its locked
+wager is included in the median calculation. Before a round begins, the currently selected bet
+is included as the prospective wager.
+
+`landing bonus = floor(4 × sqrt(median wager ÷ 50))`
+
+There is no game-defined maximum. JavaScript's safe-number boundary remains the only technical
+limit inherited from the rest of the game's fictional currency system.
+
+Why median instead of average:
+
+- One unusually large wager cannot distort XP for many rounds.
+- Consistently larger wagers steadily raise the bonus.
+- Lowering wagers consistently also lowers the rolling bonus.
+- The latest 20 completed wagers are retained; older wagers fall out automatically.
+
+The existing multipliers remain:
+
+- Each successful landing receives one wager-XP bonus.
+- A normal cash-out receives two additional wager-XP bonuses.
+- Clearing all fifteen jumps receives three additional wager-XP bonuses.
+
+The Start Round button now shows the rolling median wager and resulting XP per landing.
+Existing saves migrate with an empty history and begin learning from the next completed wagers.

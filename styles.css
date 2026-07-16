@@ -520,7 +520,7 @@ body {
 }
 
 
-/* v23 build marker: confirms that the newest GitHub deployment loaded. */
+/* v25 build marker: confirms that the newest GitHub deployment loaded. */
 .build-version {
   width: max-content;
   margin: 10px auto 2px;
@@ -1999,4 +1999,55 @@ body {
   .simple-quote-grid {
     grid-template-columns:1fr;
   }
+}
+
+
+/* ==========================================================================
+   v24 — working Piggy actions, exact loan MAX, XP scaling, skin collateral
+   ========================================================================== */
+
+.loan-exact-controls {
+  min-width:0;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 65px;
+  gap:7px;
+}
+.loan-maximum-button {
+  min-height:42px;
+  border-radius:12px;
+  color:#10283a;
+  background:#dfff67;
+  font-size:9px;
+  font-weight:1000;
+  cursor:pointer;
+}
+.collateral-value {
+  display:block;
+  width:max-content;
+  max-width:100%;
+  margin:7px auto 9px;
+  padding:5px 8px;
+  border-radius:999px;
+  color:#7b4c16;
+  background:#fff0c9;
+  font-size:6.5px;
+  letter-spacing:.06em;
+  font-weight:1000;
+}
+#piggyTransferButton:not(:disabled) {
+  box-shadow:0 8px 18px rgba(85,137,34,.2);
+}
+#piggyTransferButton:disabled {
+  opacity:.4;
+}
+.simple-loan-rules span:nth-last-child(2) {
+  color:#8b571a;
+  background:#fff0c9;
+}
+
+
+/* v25 — rolling-median wager XP has no game-defined maximum. */
+#startButton small {
+  white-space:normal;
+  text-align:center;
 }

@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=23" />
+  <link rel="stylesheet" href="styles.css?v=25" />
   <title>Froggy Leap Deluxe</title>
 </head>
 <body>
@@ -92,7 +92,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v23 · 15 JUMPS</div>
+          <div class="build-version" aria-label="Installed game version">v25 · 15 JUMPS</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -257,7 +257,7 @@
 
               <div class="debt-actions">
                 <button id="repayInstallmentButton" type="button" class="debt-action pressable">
-                  <span>PAY AMOUNT DUE</span><small>Available when payment is due</small>
+                  <span>PAY NEXT PAYMENT EARLY</span><small>Resets the five-round countdown</small>
                 </button>
                 <button id="repayAllButton" type="button" class="debt-action secondary pressable">
                   <span>PAY OFF EARLY</span><small>Save future interest</small>
@@ -273,7 +273,7 @@
               <span>8% total interest</span>
               <span>10 fixed payments</span>
               <span>Due every 5 rounds</span>
-              <span>Late round: −1 level</span>
+              <span>Overdue: skin first</span><span>Then −1 level</span>
             </div>
           </section>
         </div>
@@ -327,7 +327,7 @@
                 <span>DEPOSIT TO PIGGY</span>
                 <small>No fee · withdraw anytime</small>
               </button>
-              <p id="piggyMessage" class="piggy-message" role="status" aria-live="polite">Store Froggy to earn 0.1% every 20 completed rounds.</p>
+              <p id="piggyMessage" class="piggy-message" role="status" aria-live="polite">Store Froggy to earn 0.1% every 20 completed rounds. Active debt does not block transfers.</p>
             </div>
           </section>
         </div>
@@ -443,7 +443,10 @@
 
         <div class="loan-exact-row">
           <label for="loanAmountInput">EXACT AMOUNT</label>
-          <input id="loanAmountInput" type="number" min="500" step="1" inputmode="numeric" value="500" />
+          <div class="loan-exact-controls">
+            <input id="loanAmountInput" type="number" min="500" step="1" inputmode="numeric" value="500" />
+            <button id="loanMaximumButton" type="button" class="loan-maximum-button pressable">MAX</button>
+          </div>
         </div>
 
         <div class="loan-quote-grid simple-quote-grid">
@@ -478,11 +481,12 @@
         </div>
 
         <div class="loan-warning-list">
-          <p><b>1.</b> A fixed amount is due every five completed rounds.</p>
-          <p><b>2.</b> Pay by the deadline to add that payment to your tier progress.</p>
-          <p><b>3.</b> A completed round while overdue removes one level; below level 1 resets the save.</p>
-          <p><b>4.</b> Paying off early has no penalty and removes unearned future interest.</p>
-          <p><b>5.</b> Froggy is fictional game currency—not real credit or cash.</p>
+          <p><b>1.</b> You may pay the next fixed payment early. Doing so resets the five-round countdown.</p>
+          <p><b>2.</b> Payments made by the deadline or early add the amount paid to your credit-tier progress.</p>
+          <p><b>3.</b> When overdue, the Bank first liquidates your cheapest owned skin at 80% of its shop value. Any unused proceeds return to your wallet.</p>
+          <p><b>4.</b> Only when no paid skin remains does another overdue round remove one level; below level 1 resets the save.</p>
+          <p><b>5.</b> Paying off early has no penalty and removes unearned future interest.</p>
+          <p><b>6.</b> Froggy is fictional game currency—not real credit or cash.</p>
         </div>
 
         <div class="loan-warning-actions">
@@ -500,6 +504,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=23"></script>
+  <script src="app.js?v=25"></script>
 </body>
 </html>
