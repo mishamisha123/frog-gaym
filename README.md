@@ -755,3 +755,31 @@ New loan principal is tagged separately inside the wallet. The player may keep l
 - Scheduled payments require owned funds.
 - Early payoff returns unused tagged loan funds first, then charges only the remaining owned-cash requirement.
 - Existing v27 loans migrate with zero tagged loan funds because old saves did not record which wallet coins remained borrowed.
+
+
+## v29 unified laptop and phone game layout
+
+The Play screen is now a centered vertical container. Lily Leap and Sky Crash own matching responsive layouts.
+
+### Laptop and desktop
+- Lily Leap: large lake on the left, betting controls on the right.
+- Sky Crash: large flight scene on the left, launch controls on the right.
+- Both games are centered and use the available content width.
+- Arcade selection and leverage controls stay above the game instead of becoming side columns.
+- Content maximum increased from 1,180 px to 1,320 px.
+
+### Phone
+- Both games use a matching scene-above-controls layout.
+- The Arcade selector becomes a compact two-button bar.
+- Lily Leap Start, Jump and Cash Out stay inside the viewport.
+- Sky Crash Launch and Eject stay directly below the flight scene.
+- Short phone screens receive tighter scene and control sizing.
+
+## v29 vehicle economy
+
+| Vehicle | New price | New maximum |
+|---|---:|---:|
+| Training Glider | 750,000 F | 7.50× |
+| Pond Prop Plane | 4,000,000 F | 24.00× |
+| Lily Rocket | 20,000,000 F | 75.00× |
+| Cosmic Starship | 120,000,000 F | 300.00× |

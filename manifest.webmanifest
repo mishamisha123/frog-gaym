@@ -1,7 +1,7 @@
 {
   "name": "Froggy Arcade Deluxe",
   "short_name": "Froggy Arcade",
-  "description": "Froggy Arcade with Lily Leap, unlockable Sky Crash, consumable flight vehicles, Piggy savings, risk-priced loans and optional leverage.",
+  "description": "Froggy Arcade with centered matching laptop layouts, phone-safe Lily Leap and Sky Crash, upgraded flying vehicles, leverage controls and offline play.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

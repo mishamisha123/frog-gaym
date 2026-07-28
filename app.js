@@ -3,8 +3,8 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v28';
-  console.info(`Froggy Leap ${BUILD_VERSION}: Froggy Arcade, Sky Crash, vehicles and risk-priced leverage loaded`);
+  const BUILD_VERSION = 'v29';
+  console.info(`Froggy Leap ${BUILD_VERSION}: centered desktop arcade and phone-safe matching game layouts loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
   // The 15-jump curve is intentionally tighter early and highly rewarding at the finish.
@@ -117,10 +117,10 @@
   ]);
 
   const VEHICLES = Object.freeze([
-    {id:'glider',name:'Training Glider',emoji:'🛩️',rarity:'RARE',cost:500000,charges:10,max:2.5,level:5,type:'glider',description:'A light wing pack for short, controlled flights.'},
-    {id:'prop',name:'Pond Prop Plane',emoji:'✈️',rarity:'EPIC',cost:2500000,charges:25,max:8,level:12,type:'plane',description:'A sturdy prop plane with enough fuel for longer multiplier runs.'},
-    {id:'rocket',name:'Lily Rocket',emoji:'🚀',rarity:'LEGENDARY',cost:12000000,charges:50,max:25,level:25,type:'rocket',description:'A loud rocket capsule built for dangerous high-altitude ejects.'},
-    {id:'starship',name:'Cosmic Starship',emoji:'🛸',rarity:'MYTHIC',cost:75000000,charges:100,max:100,level:60,type:'starship',description:'A premium starship with the highest automatic safety ceiling.'}
+    {id:'glider',name:'Training Glider',emoji:'🛩️',rarity:'RARE',cost:750000,charges:10,max:7.5,level:5,type:'glider',description:'A light wing pack for short, controlled flights.'},
+    {id:'prop',name:'Pond Prop Plane',emoji:'✈️',rarity:'EPIC',cost:4000000,charges:25,max:24,level:12,type:'plane',description:'A sturdy prop plane with enough fuel for longer multiplier runs.'},
+    {id:'rocket',name:'Lily Rocket',emoji:'🚀',rarity:'LEGENDARY',cost:20000000,charges:50,max:75,level:25,type:'rocket',description:'A loud rocket capsule built for dangerous high-altitude ejects.'},
+    {id:'starship',name:'Cosmic Starship',emoji:'🛸',rarity:'MYTHIC',cost:120000000,charges:100,max:300,level:60,type:'starship',description:'A premium starship with the highest automatic safety ceiling.'}
   ]);
 
 
@@ -633,7 +633,7 @@
     const current=state.selectedVehicle;els.crashVehicleSelect.innerHTML=VEHICLES.map(v=>`<option value="${v.id}" ${v.id===current?'selected':''} ${vehicleCharges(v.id)<=0?'disabled':''}>${v.name} · ${vehicleCharges(v.id)} flights · ${v.max.toFixed(2)}×</option>`).join('');
   }
   function refreshCrashHud(){
-    const v=selectedVehicle(),m=Math.max(1,state.crashMultiplier||1),payout=Math.floor(state.crashBet*m);els.crashMultiplierLabel.textContent=`${m.toFixed(2)}×`;els.crashPayoutLabel.textContent=`${money(payout)} F`;els.crashCashValue.textContent=`${money(payout)} F`;els.crashVehicleLabel.textContent=v.name;els.crashChargesLabel.textContent=vehicleCharges(v.id);els.crashVehicleMaxLabel.textContent=`${v.max.toFixed(2)}×`;els.crashBetInput.value=String(state.crashBet);els.crashAutoInput.value=Number(state.crashAutoCashout).toFixed(2);els.crashStartButton.classList.toggle('hidden',state.crashActive);els.crashCashButton.classList.toggle('hidden',!state.crashActive);if(!state.crashActive)refreshCrashVehicleOptions();
+    const v=selectedVehicle(),m=Math.max(1,state.crashMultiplier||1),payout=Math.floor(state.crashBet*m);els.crashMultiplierLabel.textContent=`${m.toFixed(2)}×`;els.crashPayoutLabel.textContent=`${money(payout)} F`;els.crashCashValue.textContent=`${money(payout)} F`;els.crashVehicleLabel.textContent=v.name;els.crashChargesLabel.textContent=vehicleCharges(v.id);els.crashVehicleMaxLabel.textContent=`${v.max.toFixed(2)}×`;els.crashBetInput.value=String(state.crashBet);els.crashAutoInput.max=v.max.toFixed(2);els.crashAutoInput.value=Number(state.crashAutoCashout).toFixed(2);els.crashStartButton.classList.toggle('hidden',state.crashActive);els.crashCashButton.classList.toggle('hidden',!state.crashActive);if(!state.crashActive)refreshCrashVehicleOptions();
   }
   function startCrash(){
     if(anyRoundActive()||!gameUnlocked('crash'))return false;const v=selectedVehicle();if(vehicleCharges(v.id)<=0){setCrashStatus('Buy a vehicle flight pack in Collection → Vehicles.','lose');return false;}if(state.crashBet>availableBetBalance()){setCrashStatus('Lower the bet or enable leverage.','lose');return false;}const allocation=allocateRoundStake(state.crashBet);if(!allocation)return false;
@@ -1817,8 +1817,8 @@
       state.vehicleCharges.glider=5;state.selectedVehicle='glider';state.crashBet=100;state.balance=1000;if(!startCrash()||!state.crashActive)throw new Error('crash start failed');state.crashMultiplier=1.5;if(!crashCashOut()||state.crashActive||state.balance<=900)throw new Error('crash cashout failed');closeModal();
       state=deepClone(DEFAULT_STATE);state.onTimeRepaid=75000;state.creditScore=70;if(tierCeiling()!==100000||debtLimit()!==75000)throw new Error('score-adjusted loan limit failed');const q=loanQuote(debtLimit());if(q.rate<=.08||q.rate>.18)throw new Error('risk pricing failed');if(!takeLoan(50000,{skipConfirm:true})||state.borrowedWallet!==50000)throw new Error('borrowed wallet tagging failed');state.leverageEnabled=true;state.bet=10000;const a=allocateRoundStake(10000);if(!a||a.borrowed!==10000)throw new Error('leverage allocation failed');const debtBeforeLoss=state.debt;const loss=finishLeverageLoss();if(loss.fee!==1200||state.debt!==debtBeforeLoss+1200)throw new Error('leverage loss charge failed');
       state=deepClone(DEFAULT_STATE);state.balance=2000;state.borrowedWallet=1000;state.debt=1080;setPiggyTransferMode('deposit');if(piggyTransferMaximum()!==1000)throw new Error('piggy accepted loan funds');
-      state=deepClone(DEFAULT_STATE);state.balance=1000000;state.level=10;collectionMode='vehicles';collectionAction('glider');if(vehicleCharges('glider')!==10)throw new Error('vehicle refill failed');
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v28 Froggy Arcade, Sky Crash, vehicle consumables, score-priced credit and leveraged-loan risk';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      state=deepClone(DEFAULT_STATE);state.balance=1000000;state.level=10;collectionMode='vehicles';collectionAction('glider');if(vehicleCharges('glider')!==10)throw new Error('vehicle refill failed');if(VEHICLES[0].cost!==750000||VEHICLES[0].max!==7.5||VEHICLES[1].cost!==4000000||VEHICLES[1].max!==24||VEHICLES[2].cost!==20000000||VEHICLES[2].max!==75||VEHICLES[3].cost!==120000000||VEHICLES[3].max!==300)throw new Error('v29 vehicle upgrade failed');
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v29 centered desktop arcade, phone-safe matching game layouts, upgraded vehicles, Sky Crash and leverage';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 
