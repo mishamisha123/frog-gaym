@@ -150,7 +150,7 @@ This update adds stronger game feel without using deceptive gambling dark patter
 
 ## Consolidated v11 deployment check
 
-This build includes an unmistakable yellow badge reading **v27 · 15 JUMPS** above the start button.
+This build includes an unmistakable yellow badge reading **v28 · FROGGY ARCADE** above the start button.
 
 After uploading all files to GitHub Pages, visit:
 
@@ -160,7 +160,7 @@ That helper unregisters old service workers and removes stale cached game files,
 
 The correct build must visibly show:
 
-- `v27 · 15 JUMPS`
+- `v28 · FROGGY ARCADE`
 - Jump display `0 / 20`
 - Fixed bets: 50, 100, 250, 500
 - Bet tools: ÷2, ×2, CUSTOM, MAX
@@ -712,3 +712,46 @@ Additional layout behavior:
 - Compact phone layouts reduce button height and type size.
 - Very narrow screens stack the two actions vertically.
 - No loan calculations, deadlines, interest, collateral, tier, XP or Piggy rules changed.
+
+
+## v28 Froggy Arcade — major expansion
+
+### Arcade game system
+
+The Play screen is now Froggy Arcade with game tabs and persistent game licenses. Lily Leap remains free. Sky Crash costs 25,000,000 F in owned wallet funds and includes five starter Training Glider flights. The game-license architecture is designed so future games can be added without rebuilding navigation or save data.
+
+### Sky Crash
+
+- The selected frog visibly climbs through the sky inside the selected plane, rocket, or starship.
+- A multiplier grows in real time from 1.00×.
+- The player may eject manually or set an auto-eject multiplier.
+- The hidden crash point is generated at launch with a 3% house edge.
+- Each vehicle has a multiplier ceiling. Reaching it triggers an automatic safe eject.
+- One vehicle flight is consumed per launch.
+
+### Consumable flight vehicles
+
+| Vehicle | Pack price | Flights | Max multiplier |
+|---|---:|---:|---:|
+| Training Glider | 500,000 F | 10 | 2.50× |
+| Pond Prop Plane | 2,500,000 F | 25 | 8.00× |
+| Lily Rocket | 12,000,000 F | 50 | 25.00× |
+| Cosmic Starship | 75,000,000 F | 100 | 100.00× |
+
+Vehicles are bought and selected in Collection → Vehicles. Loan-tagged money cannot purchase licenses, vehicles, frogs, lakes, or Piggy deposits.
+
+### Credit score and risk pricing
+
+Loan tiers still grow from Froggy repaid on time, but the amount available today is now adjusted by a 0–100 credit score. On-time payments raise the score; missed deadlines and leveraged losses lower it. The total finance charge starts around 8% and rises with limit utilization and weak credit, capped at 18%.
+
+### Optional loan leverage
+
+New loan principal is tagged separately inside the wallet. The player may keep leverage off and risk owned money only, or turn it on in the Arcade.
+
+- At most 35% of the original loan may be used in one round.
+- Borrowed funds are used first when leverage is on.
+- Losing borrowed stake adds a 12% risk charge to debt and moves the due clock one round closer.
+- Winning with borrowed stake automatically sends 25% of profit to debt.
+- Scheduled payments require owned funds.
+- Early payoff returns unused tagged loan funds first, then charges only the remaining owned-cash requirement.
+- Existing v27 loans migrate with zero tagged loan funds because old saves did not record which wallet coins remained borrowed.

@@ -1,7 +1,7 @@
 {
-  "name": "Froggy Leap Deluxe",
-  "short_name": "Froggy Leap",
-  "description": "A polished 15-jump lily-pad game with always-visible loan repayment controls, sticky loan confirmation actions, median-wager XP, Piggy savings and offline play.",
+  "name": "Froggy Arcade Deluxe",
+  "short_name": "Froggy Arcade",
+  "description": "Froggy Arcade with Lily Leap, unlockable Sky Crash, consumable flight vehicles, Piggy savings, risk-priced loans and optional leverage.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

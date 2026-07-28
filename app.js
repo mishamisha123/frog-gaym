@@ -3,8 +3,8 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v27';
-  console.info(`Froggy Leap ${BUILD_VERSION}: always-visible active-loan repayment dock loaded`);
+  const BUILD_VERSION = 'v28';
+  console.info(`Froggy Leap ${BUILD_VERSION}: Froggy Arcade, Sky Crash, vehicles and risk-priced leverage loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
   // The 15-jump curve is intentionally tighter early and highly rewarding at the finish.
@@ -26,6 +26,12 @@
   const MIN_LOAN_AMOUNT = 500;
   const SKIN_COLLATERAL_RATE = 0.80;
   const XP_BET_HISTORY_SIZE = 20;
+  const CRASH_LICENSE_COST = 25000000;
+  const CRASH_HOUSE_EDGE = 0.03;
+  const LEVERAGE_ROUND_CAP_RATE = 0.35;
+  const LEVERAGE_LOSS_CHARGE_RATE = 0.12;
+  const LEVERAGE_WIN_SWEEP_RATE = 0.25;
+  const LOAN_MAX_INTEREST_RATE = 0.18;
   const CREDIT_TIERS = Object.freeze([
     {repaid:0,          limit:5000,       name:'Starter'},
     {repaid:5000,       limit:10000,      name:'Bronze'},
@@ -105,6 +111,19 @@
     { id:'space', name:'Cosmic Pond', emoji:'🪐', rarity:'MYTHIC', cost:12000, level:15, description:'Zero-gravity lily pads under a galaxy sky.', a:'#130d31', b:'#31285b', bank:'#5c4b90', pad:'#6edb8c', glow:'#e8a7ff' }
   ];
 
+  const GAME_LICENSES = Object.freeze([
+    {id:'leap',name:'Lily Leap',cost:0},
+    {id:'crash',name:'Sky Crash',cost:CRASH_LICENSE_COST}
+  ]);
+
+  const VEHICLES = Object.freeze([
+    {id:'glider',name:'Training Glider',emoji:'🛩️',rarity:'RARE',cost:500000,charges:10,max:2.5,level:5,type:'glider',description:'A light wing pack for short, controlled flights.'},
+    {id:'prop',name:'Pond Prop Plane',emoji:'✈️',rarity:'EPIC',cost:2500000,charges:25,max:8,level:12,type:'plane',description:'A sturdy prop plane with enough fuel for longer multiplier runs.'},
+    {id:'rocket',name:'Lily Rocket',emoji:'🚀',rarity:'LEGENDARY',cost:12000000,charges:50,max:25,level:25,type:'rocket',description:'A loud rocket capsule built for dangerous high-altitude ejects.'},
+    {id:'starship',name:'Cosmic Starship',emoji:'🛸',rarity:'MYTHIC',cost:75000000,charges:100,max:100,level:60,type:'starship',description:'A premium starship with the highest automatic safety ceiling.'}
+  ]);
+
+
 
   const WHEEL_SEGMENTS = [
     { label:'300', sub:'FROGGY', color:'#ffca4b', kind:'froggy', amount:300 },
@@ -174,15 +193,34 @@
     piggyLifetimeInterest: 0,
     piggyCycles: 0,
     recentXpBets: [],
-    roundBetForXp: 0
+    roundBetForXp: 0,
+    selectedGame: 'leap',
+    unlockedGames: ['leap'],
+    selectedVehicle: 'glider',
+    vehicleCharges: {glider:0,prop:0,rocket:0,starship:0},
+    crashActive: false,
+    crashMultiplier: 1,
+    crashPoint: 0,
+    crashBet: 100,
+    crashAutoCashout: 2,
+    crashRounds: 0,
+    crashWins: 0,
+    bestCrashMultiplier: 0,
+    borrowedWallet: 0,
+    leverageEnabled: false,
+    roundBorrowedStake: 0,
+    roundOwnStake: 0,
+    creditScore: 70,
+    loanRate: 0.08,
+    loanRiskFees: 0
   };
 
   const $ = (id) => document.getElementById(id);
   const els = {
-    app: $('app'), canvas: $('gameCanvas'), gameFrame: $('gameFrame'), status: $('statusToast'),
-    balance: $('balanceLabel'), collectionBalance: $('collectionBalance'), level: $('levelLabel'), xp: $('xpLabel'), xpNext: $('xpNextLabel'), xpRing: $('xpRing'),
+    app: $('app'), canvas: $('gameCanvas'), gameFrame: $('gameFrame'), status: $('statusToast'), crashCanvas: $('crashCanvas'), crashFrame: $('crashFrame'), crashStatus: $('crashStatus'),
+    balance: $('balanceLabel'), borrowedBalancePill: $('borrowedBalancePill'), borrowedBalanceLabel: $('borrowedBalanceLabel'), collectionBalance: $('collectionBalance'), level: $('levelLabel'), xp: $('xpLabel'), xpNext: $('xpNextLabel'), xpRing: $('xpRing'),
     jump: $('jumpLabel'), multiplier: $('multiplierLabel'), risk: $('riskLabel'), payout: $('payoutLabel'), danger: $('dangerLabel'), riskFill: $('riskFill'), riskMarker: $('riskMarker'),
-    betDisplay: $('betDisplay'), start: $('startButton'), jumpButton: $('jumpButton'), cash: $('cashButton'), cashValue: $('cashButtonValue'), quickBets: $('quickBets'), betAdjusters: $('betAdjusters'), customBetToggle: $('customBetToggle'), customBetRow: $('customBetRow'), customBetInput: $('customBetInput'), customBetClose: $('customBetClose'), customBetError: $('customBetError'),
+    leapGamePane: $('leapGamePane'), crashGamePane: $('crashGamePane'), leapGameTab: $('leapGameTab'), crashGameTab: $('crashGameTab'), crashTabStatus: $('crashTabStatus'), leverageStrip: $('leverageStrip'), leverageToggle: $('leverageToggle'), leverageStatusLabel: $('leverageStatusLabel'), leverageLimitLabel: $('leverageLimitLabel'), crashLicenseCard: $('crashLicenseCard'), crashGameContent: $('crashGameContent'), unlockCrashButton: $('unlockCrashButton'), crashMultiplierLabel: $('crashMultiplierLabel'), crashPayoutLabel: $('crashPayoutLabel'), crashVehicleLabel: $('crashVehicleLabel'), crashChargesLabel: $('crashChargesLabel'), crashVehicleMaxLabel: $('crashVehicleMaxLabel'), crashBetInput: $('crashBetInput'), crashAutoInput: $('crashAutoInput'), crashVehicleSelect: $('crashVehicleSelect'), crashQuickBets: $('crashQuickBets'), crashStartButton: $('crashStartButton'), crashCashButton: $('crashCashButton'), crashCashValue: $('crashCashValue'), betDisplay: $('betDisplay'), start: $('startButton'), jumpButton: $('jumpButton'), cash: $('cashButton'), cashValue: $('cashButtonValue'), quickBets: $('quickBets'), betAdjusters: $('betAdjusters'), customBetToggle: $('customBetToggle'), customBetRow: $('customBetRow'), customBetInput: $('customBetInput'), customBetClose: $('customBetClose'), customBetError: $('customBetError'),
     sound: $('soundButton'), bankShortcut: $('bankShortcutButton'), settingsSound: $('settingsSound'), settingsMotion: $('settingsMotion'), luckyBadge: $('luckyBadge'), luckyCount: $('luckyCount'), debtBadge: $('debtBadge'), debtBadgeAmount: $('debtBadgeAmount'), debtBadgeTurns: $('debtBadgeTurns'), debtBadgeStatus: $('debtBadgeStatus'), debtDueDot: $('debtDueDot'), debtDueFlag: $('debtDueFlag'),
     screens: { play:$('playScreen'), collection:$('collectionScreen'), rewards:$('rewardsScreen'), bank:$('bankScreen'), promo:$('promoScreen'), stats:$('statsScreen') },
     collectionGrid: $('collectionGrid'), spin: $('spinButton'), wheelDisc: $('wheelDisc'), rewardDot: $('rewardDot'), streakLabel: $('streakLabel'), streakDays: $('streakDays'),
@@ -191,9 +229,9 @@
     resultIcon: $('resultIcon'), resultKicker: $('resultKicker'), resultTitle: $('resultTitle'), resultAmount: $('resultAmount'), resultText: $('resultText'), resultButton: $('resultButton'),
     rewardResultTitle: $('rewardResultTitle'), rewardResultText: $('rewardResultText'),
     profileFrog: $('profileFrog'), bigProfileFrog: $('bigProfileFrog'), currentFrogName: $('currentFrogName'),
-    totalJumpsStat: $('totalJumpsStat'), bestJumpStat: $('bestJumpStat'), biggestWinStat: $('biggestWinStat'), roundsStat: $('roundsStat'), nextLevelBonusStat: $('nextLevelBonusStat'), debtAmountLabel: $('debtAmountLabel'), debtInstallmentLabel: $('debtInstallmentLabel'), debtTurnsLabel: $('debtTurnsLabel'), debtPayoffLabel: $('debtPayoffLabel'), debtInterestSavedLabel: $('debtInterestSavedLabel'), debtLimitLabel: $('debtLimitLabel'), creditTierLabel: $('creditTierLabel'), creditTierProgressFill: $('creditTierProgressFill'), creditHistoryLabel: $('creditHistoryLabel'), creditNextTierLabel: $('creditNextTierLabel'), debtMessage: $('debtMessage'), activeLoanCard: $('activeLoanCard'), loanPaymentDock: $('loanPaymentDock'), loanPaymentDockStatus: $('loanPaymentDockStatus'), openLoanBuilderButton: $('openLoanBuilderButton'), loanEntryHeadline: $('loanEntryHeadline'), loanEntrySubtext: $('loanEntrySubtext'), repayInstallmentButton: $('repayInstallmentButton'), repayAllButton: $('repayAllButton'),
+    totalJumpsStat: $('totalJumpsStat'), bestJumpStat: $('bestJumpStat'), biggestWinStat: $('biggestWinStat'), roundsStat: $('roundsStat'), nextLevelBonusStat: $('nextLevelBonusStat'), debtAmountLabel: $('debtAmountLabel'), debtInstallmentLabel: $('debtInstallmentLabel'), debtTurnsLabel: $('debtTurnsLabel'), debtPayoffLabel: $('debtPayoffLabel'), debtInterestSavedLabel: $('debtInterestSavedLabel'), debtLimitLabel: $('debtLimitLabel'), creditTierCeilingLabel: $('creditTierCeilingLabel'), creditScoreLabel: $('creditScoreLabel'), creditScoreGradeLabel: $('creditScoreGradeLabel'), creditLimitFactorLabel: $('creditLimitFactorLabel'), creditTierLabel: $('creditTierLabel'), creditTierProgressFill: $('creditTierProgressFill'), creditHistoryLabel: $('creditHistoryLabel'), creditNextTierLabel: $('creditNextTierLabel'), debtMessage: $('debtMessage'), borrowedWalletBankLabel: $('borrowedWalletBankLabel'), activeLoanRateLabel: $('activeLoanRateLabel'), activeLoanCard: $('activeLoanCard'), loanPaymentDock: $('loanPaymentDock'), loanPaymentDockStatus: $('loanPaymentDockStatus'), openLoanBuilderButton: $('openLoanBuilderButton'), loanEntryHeadline: $('loanEntryHeadline'), loanEntrySubtext: $('loanEntrySubtext'), repayInstallmentButton: $('repayInstallmentButton'), repayAllButton: $('repayAllButton'),
     bankLoansTab: $('bankLoansTab'), bankPiggyTab: $('bankPiggyTab'), bankLoansPane: $('bankLoansPane'), bankPiggyPane: $('bankPiggyPane'), bankTotalWealthLabel: $('bankTotalWealthLabel'), piggyBalanceLabel: $('piggyBalanceLabel'), piggyWalletLabel: $('piggyWalletLabel'), piggyNextInterestLabel: $('piggyNextInterestLabel'), piggyRoundsLabel: $('piggyRoundsLabel'), piggyProgressFill: $('piggyProgressFill'), piggyTransferKicker: $('piggyTransferKicker'), piggyTransferAmountLabel: $('piggyTransferAmountLabel'), piggyTransferSlider: $('piggyTransferSlider'), piggyTransferInput: $('piggyTransferInput'), piggyTransferButton: $('piggyTransferButton'), piggyMessage: $('piggyMessage'),
-    loanBuilderAmountLabel: $('loanBuilderAmountLabel'), loanAmountSlider: $('loanAmountSlider'), loanSliderMinimumLabel: $('loanSliderMinimumLabel'), loanSliderMaximumLabel: $('loanSliderMaximumLabel'), loanAmountInput: $('loanAmountInput'), loanMaximumButton: $('loanMaximumButton'), loanQuoteInterestLabel: $('loanQuoteInterestLabel'), loanQuoteTotalLabel: $('loanQuoteTotalLabel'), loanQuotePaymentLabel: $('loanQuotePaymentLabel'), loanQuotePayoffLabel: $('loanQuotePayoffLabel'), loanBuilderError: $('loanBuilderError'), loanReviewButton: $('loanReviewButton'), loanReviewButtonSubtext: $('loanReviewButtonSubtext'), loanWarningAmountLabel: $('loanWarningAmountLabel'), loanWarningPaymentLabel: $('loanWarningPaymentLabel'), loanWarningTotalLabel: $('loanWarningTotalLabel'), loanWarningCancelButton: $('loanWarningCancelButton'), loanRedeemButton: $('loanRedeemButton'), loanRedeemButtonSubtext: $('loanRedeemButtonSubtext'),
+    loanBuilderAmountLabel: $('loanBuilderAmountLabel'), loanAmountSlider: $('loanAmountSlider'), loanSliderMinimumLabel: $('loanSliderMinimumLabel'), loanSliderMaximumLabel: $('loanSliderMaximumLabel'), loanAmountInput: $('loanAmountInput'), loanMaximumButton: $('loanMaximumButton'), loanQuoteRateLabel: $('loanQuoteRateLabel'), loanQuoteInterestLabel: $('loanQuoteInterestLabel'), loanQuoteLeverageLabel: $('loanQuoteLeverageLabel'), loanQuoteTotalLabel: $('loanQuoteTotalLabel'), loanQuotePaymentLabel: $('loanQuotePaymentLabel'), loanQuotePayoffLabel: $('loanQuotePayoffLabel'), loanBuilderError: $('loanBuilderError'), loanReviewButton: $('loanReviewButton'), loanReviewButtonSubtext: $('loanReviewButtonSubtext'), loanWarningAmountLabel: $('loanWarningAmountLabel'), loanWarningPaymentLabel: $('loanWarningPaymentLabel'), loanWarningTotalLabel: $('loanWarningTotalLabel'), loanWarningCancelButton: $('loanWarningCancelButton'), loanRedeemButton: $('loanRedeemButton'), loanRedeemButtonSubtext: $('loanRedeemButtonSubtext'),
     levelToast: $('levelToast'), levelToastTitle: $('levelToastTitle'), levelToastBonus: $('levelToastBonus'),
     promoForm: $('promoForm'), promoInput: $('promoInput'), promoRedeem: $('promoRedeemButton'), promoMessage: $('promoMessage'), promoUsedCount: $('promoUsedCount'), promoSafeStatus: $('promoSafeStatus'), promoSpinStatus: $('promoSpinStatus'), promoFrogStatus: $('promoFrogStatus'), promoLakeStatus: $('promoLakeStatus'), promoCoinStatus: $('promoCoinStatus'),
     milestoneTrack: $('milestoneTrack'), milestoneFill: $('milestoneFill'), goalGrid: $('goalGrid'), goalSummary: $('goalSummary'),
@@ -212,6 +250,17 @@
   function nextXp(){ return 100 + (state.level-1)*50; }
   function selectedFrog(){ return FROGS.find(x=>x.id===state.selectedFrog) || FROGS[0]; }
   function selectedLake(){ return LAKES.find(x=>x.id===state.selectedLake) || LAKES[0]; }
+  function selectedVehicle(){ return VEHICLES.find(x=>x.id===state.selectedVehicle) || VEHICLES[0]; }
+  function anyRoundActive(){ return Boolean(state.roundActive||state.crashActive); }
+  function ownedWalletBalance(){ return Math.max(0,Math.floor(state.balance-state.borrowedWallet)); }
+  function gameUnlocked(id){ return state.unlockedGames.includes(id); }
+  function vehicleCharges(id=state.selectedVehicle){ return Math.max(0,Math.floor(state.vehicleCharges[id]||0)); }
+  function spendOwnedFunds(amount){
+    const whole=Math.max(0,Math.floor(Number(amount)||0));
+    if(ownedWalletBalance()<whole)return false;
+    state.balance-=whole;
+    return true;
+  }
 
   function levelBonusFor(level){ return Math.round((250 + level * 150) / 50) * 50; }
 
@@ -329,7 +378,20 @@
         ? Math.max(0,Math.floor(raw.roundBetForXp))
         : 0;
       if(!merged.roundActive)merged.roundBetForXp=0;
+      merged.selectedGame=raw.selectedGame==='crash'?'crash':'leap';
+      merged.unlockedGames=Array.isArray(raw.unlockedGames)?Array.from(new Set(['leap',...raw.unlockedGames.filter(id=>GAME_LICENSES.some(game=>game.id===id))])):['leap'];
+      merged.selectedVehicle=VEHICLES.some(vehicle=>vehicle.id===raw.selectedVehicle)?raw.selectedVehicle:'glider';
+      merged.vehicleCharges=Object.fromEntries(VEHICLES.map(vehicle=>[vehicle.id,Math.max(0,Math.floor(Number(raw.vehicleCharges?.[vehicle.id])||0))]));
+      merged.crashActive=false;merged.crashMultiplier=1;merged.crashPoint=0;
+      merged.crashBet=Number.isFinite(raw.crashBet)?Math.max(MIN_BET,Math.floor(raw.crashBet)):100;
+      merged.crashAutoCashout=Number.isFinite(raw.crashAutoCashout)?clamp(Number(raw.crashAutoCashout),1.1,100):2;
+      merged.crashRounds=Math.max(0,Math.floor(Number(raw.crashRounds)||0));merged.crashWins=Math.max(0,Math.floor(Number(raw.crashWins)||0));merged.bestCrashMultiplier=Math.max(0,Number(raw.bestCrashMultiplier)||0);
       merged.balance = Number.isFinite(merged.balance) ? Math.max(0, Math.floor(merged.balance)) : 1000;
+      merged.borrowedWallet=clamp(Math.floor(Number(raw.borrowedWallet)||0),0,merged.balance);
+      merged.leverageEnabled=Boolean(raw.leverageEnabled)&&merged.debt>0;merged.roundBorrowedStake=0;merged.roundOwnStake=0;
+      merged.creditScore=clamp(Math.floor(Number(raw.creditScore)||70),0,100);
+      merged.loanRate=clamp(Number(raw.loanRate)||((merged.loanPrincipalOriginal>0&&merged.loanInterestTotal>0)?merged.loanInterestTotal/merged.loanPrincipalOriginal:LOAN_TOTAL_INTEREST_RATE),LOAN_TOTAL_INTEREST_RATE,LOAN_MAX_INTEREST_RATE);
+      merged.loanRiskFees=Math.max(0,Math.floor(Number(raw.loanRiskFees)||0));
       return merged;
     } catch { return deepClone(DEFAULT_STATE); }
   }
@@ -337,7 +399,7 @@
   let state = loadState();
   function saveState(){
     if (TEST_MODE) return;
-    const stored = Object.assign({}, state, {roundActive:false, animating:false, jump:0, roundSafe:false});
+    const stored = Object.assign({}, state, {roundActive:false, crashActive:false, animating:false, jump:0, roundSafe:false, roundBorrowedStake:0, roundOwnStake:0});
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
   }
 
@@ -536,7 +598,59 @@
     drawParticle(c,p){const x=this.worldToScreenX(p.x),alpha=clamp(p.life/p.max,0,1);c.save();c.globalAlpha=alpha;c.fillStyle=p.color;if(p.kind==='coin'){c.beginPath();c.arc(x,p.y,p.size,0,Math.PI*2);c.fill();c.fillStyle='#986700';c.font=`900 ${Math.max(6,p.size)}px system-ui`;c.textAlign='center';c.fillText('F',x,p.y+2);}else{c.beginPath();c.arc(x,p.y,p.size,0,Math.PI*2);c.fill();}c.restore();}
   }
 
+  class CrashScene {
+    constructor(canvas){this.canvas=canvas;this.ctx=canvas.getContext('2d');this.w=0;this.h=0;this.dpr=1;this.time=0;this.last=performance.now();this.explosion=0;this.resize();new ResizeObserver(()=>this.resize()).observe(canvas.parentElement);requestAnimationFrame(t=>this.loop(t));}
+    resize(){const r=this.canvas.parentElement.getBoundingClientRect();this.dpr=Math.min(2,window.devicePixelRatio||1);this.w=Math.max(300,r.width);this.h=Math.max(300,r.height);this.canvas.width=this.w*this.dpr;this.canvas.height=this.h*this.dpr;this.canvas.style.width=this.w+'px';this.canvas.style.height=this.h+'px';this.ctx.setTransform(this.dpr,0,0,this.dpr,0,0);}
+    start(){this.explosion=0;}
+    crash(){this.explosion=1;}
+    loop(now){const dt=Math.min(.04,(now-this.last)/1000||.016);this.last=now;this.time+=dt;if(this.explosion>0)this.explosion=Math.max(0,this.explosion-dt*.75);tickCrashGame(now);this.draw();requestAnimationFrame(t=>this.loop(t));}
+    draw(){const c=this.ctx,w=this.w,h=this.h,m=Math.max(1,state.crashMultiplier||1),alt=Math.log(m)*135,night=clamp((m-8)/35,0,1),sky=c.createLinearGradient(0,0,0,h);sky.addColorStop(0,night>.2?'#080c28':'#75ccff');sky.addColorStop(1,night>.2?'#3d3e72':'#dff7ff');c.fillStyle=sky;c.fillRect(0,0,w,h);
+      c.globalAlpha=night;for(let i=0;i<55;i++){c.fillStyle=i%4?'#fff':'#c9b8ff';c.fillRect((i*97.3)%w,(i*43.1+this.time*8)%h,2,2);}c.globalAlpha=1;
+      const speed=state.crashActive?35+Math.log(m)*55:15;for(let i=0;i<10;i++){const y=(i*117+this.time*speed)% (h+120)-60,x=(i*173)%w;c.fillStyle='rgba(255,255,255,.58)';c.beginPath();c.ellipse(x,y,55,17,0,0,Math.PI*2);c.ellipse(x+35,y-8,38,23,0,0,Math.PI*2);c.fill();}
+      c.fillStyle='rgba(8,30,57,.22)';for(let i=0;i<12;i++){const y=(i*83+this.time*speed*1.8)%(h+80)-40;c.fillRect((i*137)%w,y,3,25+Math.log(m)*5);}
+      const x=w*.5,y=clamp(h*.72-alt*.32,h*.30,h*.72)+Math.sin(this.time*3)*4;this.drawVehicle(c,x,y,selectedVehicle(),m);if(this.explosion>0){c.globalAlpha=this.explosion;c.fillStyle='#ffce48';c.beginPath();c.arc(x,y,80*(1-this.explosion*.35),0,Math.PI*2);c.fill();c.fillStyle='#f05b43';c.beginPath();c.arc(x,y,45,0,Math.PI*2);c.fill();c.globalAlpha=1;}
+      c.fillStyle='rgba(7,28,50,.55)';c.fillRect(14,18,92,26);c.fillStyle='#fff';c.font='800 11px system-ui';c.fillText(`ALT ${Math.floor(alt)}m`,25,36);
+    }
+    drawVehicle(c,x,y,v,m){c.save();c.translate(x,y);const tilt=Math.sin(this.time*1.7)*.035;c.rotate(tilt);c.shadowColor='rgba(0,20,40,.3)';c.shadowBlur=20;
+      if(v.type==='glider'){c.fillStyle='#f3d762';c.beginPath();c.moveTo(-78,10);c.lineTo(0,-18);c.lineTo(78,10);c.lineTo(10,20);c.closePath();c.fill();c.fillStyle='#426e8b';c.fillRect(-19,-8,38,35);}
+      else if(v.type==='plane'){c.fillStyle='#e7edf2';c.beginPath();c.ellipse(0,0,70,23,0,0,Math.PI*2);c.fill();c.fillStyle='#4e9ac2';c.fillRect(-75,-5,150,13);c.fillStyle='#efb33c';c.beginPath();c.arc(-72,0,18,0,Math.PI*2);c.fill();}
+      else if(v.type==='rocket'){c.fillStyle='#e9eef5';c.beginPath();c.roundRect(-27,-66,54,115,24);c.fill();c.fillStyle='#e85b4d';c.beginPath();c.moveTo(-27,30);c.lineTo(-55,57);c.lineTo(-22,51);c.moveTo(27,30);c.lineTo(55,57);c.lineTo(22,51);c.fill();c.fillStyle='#ffcc45';c.beginPath();c.moveTo(-14,49);c.lineTo(0,90+Math.sin(this.time*18)*12);c.lineTo(14,49);c.fill();}
+      else{c.fillStyle='#cbd9ed';c.beginPath();c.ellipse(0,8,78,27,0,0,Math.PI*2);c.fill();c.fillStyle='#6fe1e8';c.beginPath();c.ellipse(0,-7,33,26,0,Math.PI*2);c.fill();c.fillStyle='#bb8bff';for(let i=-2;i<=2;i++){c.beginPath();c.arc(i*24,22,5,0,Math.PI*2);c.fill();}}
+      const sprite=FROG_IMAGES[state.selectedFrog];if(sprite&&sprite.complete&&sprite.naturalWidth)c.drawImage(sprite,-27,-50,54,54);else{c.font='35px system-ui';c.fillText('🐸',-20,-14);}c.shadowBlur=0;c.restore();
+    }
+  }
+
+  function setCrashStatus(text,kind=''){els.crashStatus.textContent=text;els.crashStatus.classList.remove('win','lose');if(kind)els.crashStatus.classList.add(kind);}
+  function setGameMode(mode){
+    const target=mode==='crash'?'crash':'leap';if(anyRoundActive()&&target!==state.selectedGame){setStatus('Finish the current round before switching games.','lose');return false;}state.selectedGame=target;const leap=target==='leap';els.leapGamePane.classList.toggle('hidden',!leap);els.crashGamePane.classList.toggle('hidden',leap);els.leapGameTab.classList.toggle('active',leap);els.crashGameTab.classList.toggle('active',!leap);els.leapGameTab.setAttribute('aria-selected',String(leap));els.crashGameTab.setAttribute('aria-selected',String(!leap));refresh();return true;
+  }
+  function unlockGame(id){
+    const game=GAME_LICENSES.find(g=>g.id===id);if(!game||gameUnlocked(id))return true;if(anyRoundActive())return false;if(!spendOwnedFunds(game.cost)){setCrashStatus(`You need ${money(game.cost-ownedWalletBalance())} more owned Froggy. Loan funds cannot buy licenses.`,'lose');return false;}state.unlockedGames.push(id);if(id==='crash'){state.vehicleCharges.glider=vehicleCharges('glider')+5;state.selectedVehicle='glider';}audio.reward();confettiBurst(90);setCrashStatus(`${game.name} unlocked with five starter glider flights!`,'win');refresh();return true;
+  }
+  function setCrashBet(raw){if(state.crashActive)return false;const value=raw==='max'?availableBetBalance():Math.floor(Number(raw)||0);if(value<MIN_BET||value>availableBetBalance()){setCrashStatus(`Choose ${money(MIN_BET)}–${money(availableBetBalance())} F.`,'lose');return false;}state.crashBet=value;refreshCrashHud();saveState();return true;}
+  function generateCrashPoint(){return Math.max(1,Math.floor((1-CRASH_HOUSE_EDGE)/Math.max(.000001,Math.random())*100)/100);}
+  function refreshCrashVehicleOptions(){
+    const current=state.selectedVehicle;els.crashVehicleSelect.innerHTML=VEHICLES.map(v=>`<option value="${v.id}" ${v.id===current?'selected':''} ${vehicleCharges(v.id)<=0?'disabled':''}>${v.name} · ${vehicleCharges(v.id)} flights · ${v.max.toFixed(2)}×</option>`).join('');
+  }
+  function refreshCrashHud(){
+    const v=selectedVehicle(),m=Math.max(1,state.crashMultiplier||1),payout=Math.floor(state.crashBet*m);els.crashMultiplierLabel.textContent=`${m.toFixed(2)}×`;els.crashPayoutLabel.textContent=`${money(payout)} F`;els.crashCashValue.textContent=`${money(payout)} F`;els.crashVehicleLabel.textContent=v.name;els.crashChargesLabel.textContent=vehicleCharges(v.id);els.crashVehicleMaxLabel.textContent=`${v.max.toFixed(2)}×`;els.crashBetInput.value=String(state.crashBet);els.crashAutoInput.value=Number(state.crashAutoCashout).toFixed(2);els.crashStartButton.classList.toggle('hidden',state.crashActive);els.crashCashButton.classList.toggle('hidden',!state.crashActive);if(!state.crashActive)refreshCrashVehicleOptions();
+  }
+  function startCrash(){
+    if(anyRoundActive()||!gameUnlocked('crash'))return false;const v=selectedVehicle();if(vehicleCharges(v.id)<=0){setCrashStatus('Buy a vehicle flight pack in Collection → Vehicles.','lose');return false;}if(state.crashBet>availableBetBalance()){setCrashStatus('Lower the bet or enable leverage.','lose');return false;}const allocation=allocateRoundStake(state.crashBet);if(!allocation)return false;
+    state.vehicleCharges[v.id]--;state.crashActive=true;state.crashMultiplier=1;state.crashPoint=generateCrashPoint(v.max);state.roundBetForXp=state.crashBet;state.crashRounds++;state.rounds++;session.rounds++;session.net-=state.crashBet;state.crashStartedAt=performance.now();crashScene.start();setCrashStatus(`${v.name} launched${allocation.borrowed?` with ${money(allocation.borrowed)} F leverage`:''}. Eject before the crash!`);audio.start();refresh();return true;
+  }
+  function tickCrashGame(now){
+    if(!state.crashActive)return;const elapsed=Math.max(0,(now-state.crashStartedAt)/1000);state.crashMultiplier=Math.max(1,Math.exp(elapsed*.32));const v=selectedVehicle();refreshCrashHud();if(state.crashMultiplier>=state.crashPoint){crashLose();return;}if(state.crashAutoCashout>1&&state.crashMultiplier>=Math.min(state.crashAutoCashout,v.max)){crashCashOut(true);return;}if(state.crashMultiplier>=v.max)crashCashOut(true);
+  }
+  function crashCashOut(auto=false){
+    if(!state.crashActive)return false;const multiplier=Math.min(state.crashMultiplier,selectedVehicle().max),payout=Math.floor(state.crashBet*multiplier),leverage=finishLeverageWin(payout,state.crashBet);state.crashActive=false;state.crashMultiplier=multiplier;state.crashWins++;state.bestCrashMultiplier=Math.max(state.bestCrashMultiplier,multiplier);state.biggestWin=Math.max(state.biggestWin,payout);session.wins++;session.lossStreak=0;session.net+=payout-leverage.sweep;addXp(Math.floor(30*Math.log2(Math.max(1,multiplier)))+wagerXpBonus()*2);const debtResult=finishCompletedRound(payout);setCrashStatus(`${auto?'Auto-ejected':'Ejected'} at ${multiplier.toFixed(2)}× for ${money(payout)} F!`,'win');audio.win();confettiBurst(45);refresh();setTimeout(()=>showResult({icon:'🪂',kicker:'SAFE EJECTION',title:`${multiplier.toFixed(2)}× secured`,amount:`+${money(payout)} F`,text:appendDebtResult(`${leverage.sweep?`${money(leverage.sweep)} F of profit was swept to debt. `:''}${selectedVehicle().name} has ${vehicleCharges()} flights left.`,debtResult)}),TEST_MODE?1:180);return true;
+  }
+  function crashLose(){
+    if(!state.crashActive)return false;const crashedAt=state.crashMultiplier,stake=state.crashBet,leverage=finishLeverageLoss();state.crashActive=false;session.losses++;session.lossStreak++;crashScene.crash();const debtResult=finishCompletedRound(0);setCrashStatus(`CRASHED at ${crashedAt.toFixed(2)}×.`,'lose');audio.splash();haptic([30,40,50]);refresh();setTimeout(()=>showResult({icon:'💥',kicker:'FLIGHT LOST',title:`Crashed at ${crashedAt.toFixed(2)}×`,amount:`−${money(stake)} F`,text:appendDebtResult(`${leverage.fee?`Borrowed loss added a ${money(leverage.fee)} F risk charge. `:''}${selectedVehicle().name} has ${vehicleCharges()} flights left.`,debtResult),lose:true}),TEST_MODE?1:240);return true;
+  }
+
   const scene = new Scene(els.canvas);
+  const crashScene = new CrashScene(els.crashCanvas);
   let forcedOutcome = null;
   let installPrompt = null;
   let collectionMode = 'frogs';
@@ -627,30 +741,56 @@
 
   function repaymentTierInfo(){
     let index=0;
-    for(let i=0;i<CREDIT_TIERS.length;i++){
-      if(state.onTimeRepaid>=CREDIT_TIERS[i].repaid)index=i;
-    }
+    for(let i=0;i<CREDIT_TIERS.length;i++)if(state.onTimeRepaid>=CREDIT_TIERS[i].repaid)index=i;
     return {index,tier:CREDIT_TIERS[index],next:CREDIT_TIERS[index+1]||null};
   }
 
   function tierProgressPercent(){
-    const info=repaymentTierInfo();
-    if(!info.next)return 100;
-    const span=Math.max(1,info.next.repaid-info.tier.repaid);
-    return clamp(((state.onTimeRepaid-info.tier.repaid)/span)*100,0,100);
+    const info=repaymentTierInfo();if(!info.next)return 100;
+    return clamp(((state.onTimeRepaid-info.tier.repaid)/Math.max(1,info.next.repaid-info.tier.repaid))*100,0,100);
   }
-
-  function debtLimit(){
-    return repaymentTierInfo().tier.limit;
+  function creditScoreGrade(){
+    if(state.creditScore>=90)return 'Prime';if(state.creditScore>=75)return 'Strong';if(state.creditScore>=60)return 'Stable';if(state.creditScore>=45)return 'Cautious';if(state.creditScore>=30)return 'Risky';return 'Restricted';
   }
-
-  function availableCredit(){
-    return state.debt>0?0:debtLimit();
+  function creditScoreFactor(){
+    if(state.creditScore>=90)return 1;if(state.creditScore>=75)return .9;if(state.creditScore>=60)return .75;if(state.creditScore>=45)return .55;if(state.creditScore>=30)return .35;return .2;
   }
-
-  function maxSingleLoan(){
-    return availableCredit();
+  function adjustCreditScore(delta){state.creditScore=clamp(Math.round(state.creditScore+Number(delta||0)),0,100);return state.creditScore;}
+  function tierCeiling(){return repaymentTierInfo().tier.limit;}
+  function debtLimit(){return Math.max(MIN_LOAN_AMOUNT,Math.floor(tierCeiling()*creditScoreFactor()/100)*100);}
+  function availableCredit(){return state.debt>0?0:debtLimit();}
+  function maxSingleLoan(){return availableCredit();}
+  function loanRateForAmount(amount){
+    const maximum=Math.max(MIN_LOAN_AMOUNT,maxSingleLoan());const utilization=clamp(Number(amount||0)/maximum,0,1);const scorePremium=Math.max(0,60-state.creditScore)*.001;
+    return clamp(LOAN_TOTAL_INTEREST_RATE+.08*utilization*utilization+scorePremium,LOAN_TOTAL_INTEREST_RATE,LOAN_MAX_INTEREST_RATE);
   }
+  function leverageRoundLimit(){return state.debt>0?Math.min(state.borrowedWallet,Math.floor(state.loanPrincipalOriginal*LEVERAGE_ROUND_CAP_RATE)):0;}
+  function availableBetBalance(){return ownedWalletBalance()+(state.leverageEnabled?leverageRoundLimit():0);}
+  function setLeverageEnabled(enabled){
+    state.leverageEnabled=Boolean(enabled)&&state.debt>0&&state.borrowedWallet>0&&!anyRoundActive();refresh();return state.leverageEnabled;
+  }
+  function allocateRoundStake(amount){
+    const stake=Math.max(0,Math.floor(Number(amount)||0));if(stake<=0)return null;
+    const borrowed=state.leverageEnabled?Math.min(stake,leverageRoundLimit()):0;const own=stake-borrowed;
+    if(ownedWalletBalance()<own||state.borrowedWallet<borrowed)return null;
+    state.balance-=stake;state.borrowedWallet-=borrowed;state.roundBorrowedStake=borrowed;state.roundOwnStake=own;return {stake,borrowed,own};
+  }
+  function recalculateLoanInstallment(){
+    if(state.debt<=0){state.loanInstallment=0;return 0;}const remaining=Math.max(1,LOAN_INSTALLMENTS-state.loanInstallmentsPaid);state.loanInstallment=Math.max(1,Math.ceil(state.debt/remaining));if(state.debtDue)state.debtDueAmount=debtInstallment();return state.loanInstallment;
+  }
+  function addLeverageRiskCharge(borrowedStake){
+    const fee=Math.max(1,Math.ceil(Math.max(0,borrowedStake)*LEVERAGE_LOSS_CHARGE_RATE));state.loanRiskFees+=fee;state.loanPrincipalRemaining+=fee;state.debt+=fee;recalculateLoanInstallment();state.debtTurns=Math.min(DEBT_ROUND_INTERVAL,state.debtTurns+1);adjustCreditScore(-5);return fee;
+  }
+  function finishLeverageWin(payout,stake){
+    const borrowed=state.roundBorrowedStake;const profit=Math.max(0,Math.floor(payout-stake));state.balance+=payout;
+    if(borrowed>0)state.borrowedWallet=Math.min(state.balance,state.borrowedWallet+Math.min(borrowed,payout));
+    let sweep=0;if(borrowed>0&&profit>0&&state.debt>0){sweep=Math.min(profit,Math.ceil(profit*LEVERAGE_WIN_SWEEP_RATE),state.debt);state.balance-=sweep;applyForcedDebtPayment(sweep);recalculateLoanInstallment();adjustCreditScore(1);}
+    state.roundBorrowedStake=0;state.roundOwnStake=0;if(state.debt<=0){state.debt=0;state.borrowedWallet=0;clearDebtDue();resetDebtCycle();}return {sweep,borrowed,profit};
+  }
+  function finishLeverageLoss(){
+    const borrowed=state.roundBorrowedStake;const fee=borrowed>0&&state.debt>0?addLeverageRiskCharge(borrowed):0;state.roundBorrowedStake=0;state.roundOwnStake=0;return {borrowed,fee};
+  }
+  function earlyPayoffCashRequired(){return Math.max(0,earlyPayoffAmount()-Math.min(state.borrowedWallet,earlyPayoffAmount()));}
 
   let piggyTransferMode='deposit';
   let piggyTransferAmount=0;
@@ -663,7 +803,7 @@
   }
 
   function piggyTransferMaximum(){
-    return piggyTransferMode==='deposit'?state.balance:state.piggyBalance;
+    return piggyTransferMode==='deposit'?ownedWalletBalance():state.piggyBalance;
   }
 
   function piggyTransferStep(maximum=piggyTransferMaximum()){
@@ -684,7 +824,7 @@
 
   function syncPiggyTransferAction(){
     const maximum=piggyTransferMaximum();
-    const locked=state.roundActive;
+    const locked=anyRoundActive();
     els.piggyTransferButton.disabled=locked||maximum<=0||piggyTransferAmount<=0;
   }
 
@@ -699,7 +839,7 @@
   function updatePiggyTransferControls(){
     const maximum=piggyTransferMaximum();
     const step=piggyTransferStep(maximum);
-    const locked=state.roundActive;
+    const locked=anyRoundActive();
     els.piggyTransferSlider.max=String(maximum);
     els.piggyTransferSlider.step=String(step);
     els.piggyTransferInput.max=String(maximum);
@@ -730,7 +870,7 @@
   }
 
   function transferPiggy(){
-    if(state.roundActive){
+    if(anyRoundActive()){
       setPiggyMessage('Finish the current round before moving savings. Debt itself does not block Piggy transfers.','error');
       return false;
     }
@@ -806,11 +946,9 @@
   }
 
   function loanQuote(rawAmount){
-    const principal=Math.max(0,Math.floor(Number(rawAmount)||0));
-    const interest=principal>0?Math.max(1,Math.ceil(principal*LOAN_TOTAL_INTEREST_RATE)):0;
-    const total=principal+interest;
-    const payment=total>0?Math.max(1,Math.ceil(total/LOAN_INSTALLMENTS)):0;
-    return {principal,interest,total,payment,duration:LOAN_TERM_ROUNDS};
+    const principal=Math.max(0,Math.floor(Number(rawAmount)||0));const rate=principal>0?loanRateForAmount(principal):LOAN_TOTAL_INTEREST_RATE;
+    const interest=principal>0?Math.max(1,Math.ceil(principal*rate)):0;const total=principal+interest;const payment=total>0?Math.max(1,Math.ceil(total/LOAN_INSTALLMENTS)):0;
+    return {principal,rate,interest,total,payment,duration:LOAN_TERM_ROUNDS,leverageCap:Math.floor(principal*LEVERAGE_ROUND_CAP_RATE)};
   }
 
   function loanSliderStep(maximum=maxSingleLoan()){
@@ -849,7 +987,9 @@
 
     const quote=loanQuote(pendingLoanAmount);
     els.loanBuilderAmountLabel.textContent=money(quote.principal);
+    els.loanQuoteRateLabel.textContent=`${(quote.rate*100).toFixed(1)}%`;
     els.loanQuoteInterestLabel.textContent=`${money(quote.interest)} F`;
+    els.loanQuoteLeverageLabel.textContent=`${money(quote.leverageCap)} F per round`;
     els.loanQuoteTotalLabel.textContent=`${money(quote.total)} F`;
     els.loanQuotePaymentLabel.textContent=`${money(quote.payment)} F`;
     els.loanQuotePayoffLabel.textContent=`${money(quote.principal)} F`;
@@ -859,7 +999,7 @@
   }
 
   function loanAvailabilityReason(){
-    if(state.roundActive||state.animating)return 'Finish the current round first.';
+    if(anyRoundActive()||state.animating)return 'Finish the current round first.';
     if(state.debt>0)return 'Only one loan may be active. Pay off the current loan first.';
     if(maxSingleLoan()<MIN_LOAN_AMOUNT)return 'Your tier limit is below the 500-Froggy minimum.';
     return '';
@@ -946,6 +1086,7 @@
       };
     }
     const before=repaymentTierInfo().tier;
+    adjustCreditScore(2);
     state.onTimeRepaid=Math.min(MAX_SAFE_BALANCE,state.onTimeRepaid+paid);
     const after=repaymentTierInfo().tier;
     return {credited:true,amount:paid,advanced:after.limit!==before.limit,before,after};
@@ -960,12 +1101,14 @@
     state.loanInterestPaid=0;
     state.loanInstallment=0;
     state.loanInstallmentsPaid=0;
+    state.loanRate=LOAN_TOTAL_INTEREST_RATE;
+    state.loanRiskFees=0;
+    state.leverageEnabled=false;
+    state.roundBorrowedStake=0;
+    state.roundOwnStake=0;
   }
 
-  function registerMissedDeadline(){
-    state.missedDebtDeadlines++;
-    state.debtCycleMissed=true;
-  }
+  function registerMissedDeadline(){state.missedDebtDeadlines++;state.debtCycleMissed=true;adjustCreditScore(-12);}
 
   function loanRoundsElapsed(){
     if(state.debt<=0)return 0;
@@ -1019,75 +1162,16 @@
   }
 
   function takeLoan(rawAmount,{skipConfirm=false}={}){
-    if(state.roundActive||state.animating){
-      setDebtMessage('Finish the current round before borrowing.','error');
-      haptic(18);
-      return false;
-    }
-    if(state.debt>0){
-      setDebtMessage('Only one fixed-payment loan may be active. Pay off the current loan before borrowing again.','error');
-      haptic([18,45,18]);
-      return false;
-    }
-
-    const maximum=maxSingleLoan();
-    if(maximum<=0){
-      setDebtMessage(`No credit available. Current limit: ${money(debtLimit())} Froggy.`, 'error');
-      haptic(18);
-      return false;
-    }
-
-    const requested=Math.max(0,Math.floor(Number(rawAmount)||0));
-    const amount=Math.min(requested,maximum);
-    if(amount<=0){
-      setDebtMessage('Enter a positive loan amount.','error');
-      haptic(18);
-      return false;
-    }
-
+    if(anyRoundActive()||state.animating){setDebtMessage('Finish the current round before borrowing.','error');haptic(18);return false;}
+    if(state.debt>0){setDebtMessage('Only one loan may be active. Pay it off before borrowing again.','error');haptic([18,45,18]);return false;}
+    const maximum=maxSingleLoan();if(maximum<=0){setDebtMessage('No credit is available today.','error');return false;}
+    const requested=Math.max(0,Math.floor(Number(rawAmount)||0)),amount=Math.min(requested,maximum);if(amount<MIN_LOAN_AMOUNT){setDebtMessage(`Minimum loan is ${money(MIN_LOAN_AMOUNT)} F.`,'error');return false;}
     const quote=loanQuote(amount);
-    const totalInterest=quote.interest;
-    const scheduledTotal=quote.total;
-    const fixedPayment=quote.payment;
-
-    if(!skipConfirm&&!window.confirm(
-      `Borrow ${money(amount)} Froggy?\n\n`+
-      `8% total interest: ${money(totalInterest)} F\n`+
-      `Scheduled total: ${money(scheduledTotal)} F\n`+
-      `Fixed payment: ${money(fixedPayment)} F × up to ${LOAN_INSTALLMENTS}\n`+
-      `Payment frequency: every ${DEBT_ROUND_INTERVAL} completed rounds\n\n`+
-      `Paying off early removes unearned future interest and has no penalty.`
-    ))return false;
-
-    const credited=creditBalance(amount);
-    if(credited<=0){
-      setDebtMessage('The balance is already at its safe technical maximum.','error');
-      return false;
-    }
-
-    state.debt=scheduledTotal;
-    state.loanPrincipalOriginal=credited;
-    state.loanPrincipalRemaining=credited;
-    state.loanInterestTotal=totalInterest;
-    state.loanInterestPaid=0;
-    state.loanInstallment=fixedPayment;
-    state.loanInstallmentsPaid=0;
-
-    state.debtTurns=0;
-    state.debtDue=false;
-    state.debtDueAmount=0;
-    state.debtCycleMissed=false;
-    state.debtCycleStartRound=state.completedRounds;
-
-    const capNote=requested>maximum?` Requested amount was capped at ${money(maximum)} F.`:'';
-    setDebtMessage(
-      `Borrowed ${money(credited)} F.${capNote} Fixed payment: ${money(fixedPayment)} F. `+
-      `Scheduled interest: ${money(totalInterest)} F. Early payoff currently saves ${money(earlyPayoffSavings())} F.`,
-      'success'
-    );
-    setStatus(`Froggy loan received: +${money(credited)} F.`, 'win');
-    audio.coin();haptic([12,30,12]);refresh();
-    return true;
+    if(!skipConfirm&&!window.confirm(`Borrow ${money(amount)} Froggy at ${(quote.rate*100).toFixed(1)}% total charge?`))return false;
+    const credited=creditBalance(amount);if(credited<=0)return false;
+    state.debt=quote.total;state.loanPrincipalOriginal=credited;state.loanPrincipalRemaining=credited;state.loanInterestTotal=quote.interest;state.loanInterestPaid=0;state.loanInstallment=quote.payment;state.loanInstallmentsPaid=0;state.loanRate=quote.rate;state.loanRiskFees=0;
+    state.borrowedWallet=Math.min(state.balance,state.borrowedWallet+credited);state.leverageEnabled=false;state.debtTurns=0;state.debtDue=false;state.debtDueAmount=0;state.debtCycleMissed=false;state.debtCycleStartRound=state.completedRounds;
+    setDebtMessage(`Borrowed ${money(credited)} F at ${(quote.rate*100).toFixed(1)}%. Up to ${money(quote.leverageCap)} F may be leveraged per round.`, 'success');setStatus(`Loan received: +${money(credited)} F. Loan funds are tagged in your wallet.`,'win');audio.coin();haptic([12,30,12]);refresh();return true;
   }
 
   function clearDebtDue(){
@@ -1097,96 +1181,20 @@
   }
 
   function repayDebt(mode='installment'){
-    if(state.debt<=0){
-      setDebtMessage('You have no outstanding loan.','success');
-      return false;
+    if(state.debt<=0){setDebtMessage('You have no outstanding loan.','success');return false;}
+    if(anyRoundActive()||state.animating){setDebtMessage('Finish the current round before making a payment.','error');return false;}
+    const all=mode==='all',early=!all&&!state.debtDue,totalPayoff=earlyPayoffAmount(),returnedLoan=all?Math.min(state.borrowedWallet,totalPayoff):0,requested=all?Math.max(0,totalPayoff-returnedLoan):debtInstallment();
+    if(ownedWalletBalance()<requested){setDebtMessage(`Owned wallet funds needed: ${money(requested)} F. Tagged loan funds cannot make scheduled payments.`, 'error');haptic([18,45,18]);return false;}
+    const savings=all?earlyPayoffSavings():0,qualified=!state.debtCycleMissed&&(all?state.completedRounds>state.debtCycleStartRound:true),tierResult=registerOnTimeRepayment(requested,qualified);
+    if(returnedLoan>0){state.balance-=returnedLoan;state.borrowedWallet-=returnedLoan;}state.balance-=requested;state.debtPayments++;
+    if(all){state.loanInterestPaid=loanEarnedInterest();state.loanPrincipalRemaining=0;state.debt=0;adjustCreditScore(2);}else{
+      const next=Math.min(LOAN_INSTALLMENTS,state.loanInstallmentsPaid+1),targetInterest=scheduledInterestThrough(next),interestPart=Math.min(requested,Math.max(0,targetInterest-state.loanInterestPaid),Math.max(0,state.loanInterestTotal-state.loanInterestPaid)),principalPart=Math.max(0,requested-interestPart);
+      state.loanInterestPaid=Math.min(state.loanInterestTotal,state.loanInterestPaid+interestPart);state.loanPrincipalRemaining=Math.max(0,state.loanPrincipalRemaining-principalPart);state.loanInstallmentsPaid=next;state.debt=state.loanPrincipalRemaining+Math.max(0,state.loanInterestTotal-state.loanInterestPaid);clearDebtDue();recalculateLoanInstallment();if(state.loanInstallmentsPaid>=LOAN_INSTALLMENTS)state.debt=0;
     }
-    if(state.roundActive||state.animating){
-      setDebtMessage('Finish the current round before making a payment.','error');
-      haptic(18);
-      return false;
-    }
-
-    const isEarlyPayoff=mode==='all';
-    const scheduledPaymentEarly=!isEarlyPayoff&&!state.debtDue;
-    const requested=isEarlyPayoff?earlyPayoffAmount():debtInstallment();
-
-    if(state.balance<requested){
-      setDebtMessage(
-        `${isEarlyPayoff?'Early payoff':scheduledPaymentEarly?'Next scheduled payment':'Amount due'}: ${money(requested)} F. `+
-        `Your wallet is short by ${money(requested-state.balance)} F.`,
-        'error'
-      );
-      haptic([18,45,18]);
-      return false;
-    }
-    if(requested<=0)return false;
-
-    const savings=isEarlyPayoff?earlyPayoffSavings():0;
-    const qualifiesForTier=
-      !state.debtCycleMissed&&
-      (isEarlyPayoff?state.completedRounds>state.debtCycleStartRound:true);
-    const tierResult=registerOnTimeRepayment(requested,qualifiesForTier);
-
-    state.balance-=requested;
-    state.debtPayments++;
-
-    if(isEarlyPayoff){
-      state.loanInterestPaid=loanEarnedInterest();
-      state.loanPrincipalRemaining=0;
-      state.debt=0;
-    }else{
-      const nextPaymentNumber=Math.min(LOAN_INSTALLMENTS,state.loanInstallmentsPaid+1);
-      const targetInterestPaid=scheduledInterestThrough(nextPaymentNumber);
-      const interestPortion=Math.min(
-        requested,
-        Math.max(0,targetInterestPaid-state.loanInterestPaid),
-        Math.max(0,state.loanInterestTotal-state.loanInterestPaid)
-      );
-      const principalPortion=Math.max(0,requested-interestPortion);
-      state.loanInterestPaid=Math.min(state.loanInterestTotal,state.loanInterestPaid+interestPortion);
-      state.loanPrincipalRemaining=Math.max(0,state.loanPrincipalRemaining-principalPortion);
-      state.loanInstallmentsPaid=nextPaymentNumber;
-      state.debt=state.loanPrincipalRemaining+Math.max(0,state.loanInterestTotal-state.loanInterestPaid);
-      clearDebtDue();
-
-      if(state.debt>0&&state.loanInstallmentsPaid>=LOAN_INSTALLMENTS){
-        state.loanPrincipalRemaining=0;
-        state.loanInterestPaid=state.loanInterestTotal;
-        state.debt=0;
-      }
-    }
-
-    const nextTier=repaymentTierInfo().next;
-    let tierNote='';
-    if(tierResult.credited){
-      tierNote=tierResult.advanced
-        ? ` Tier advanced to ${tierResult.after.name}: ${money(tierResult.after.limit)} F maximum.`
-        : ` ${money(tierResult.amount)} F added to on-time repayment progress.${nextTier?` ${money(Math.max(0,nextTier.repaid-state.onTimeRepaid))} F remains to ${nextTier.name}.`:' Maximum tier reached.'}`;
-    }else{
-      tierNote=` No tier progress: ${tierResult.reason}`;
-    }
-
-    if(state.debt<=0){
-      state.debt=0;
-      clearDebtDue();
-      const savingsNote=isEarlyPayoff&&savings>0?` Saved ${money(savings)} F in future interest.`:'';
-      setDebtMessage(`Loan cleared with ${money(requested)} F.${savingsNote}${tierNote}`,'success');
-      setStatus(isEarlyPayoff?`Loan paid off early. Saved ${money(savings)} F.`:'Loan fully repaid.','win');
-      confettiBurst(tierResult.advanced?65:35);
-      resetDebtCycle();
-    }else{
-      const action=scheduledPaymentEarly?'Next payment paid early':'Amount due paid';
-      setDebtMessage(
-        `${action}: ${money(requested)} F. The next payment is due after five completed rounds. `+
-        `Remaining balance: ${money(state.debt)} F.${tierNote}`,
-        'success'
-      );
-      setStatus(`${action}: −${money(requested)} F.`, 'win');
-    }
-
-    audio.cash();haptic(18);refresh();
-    return true;
+    const nextTier=repaymentTierInfo().next,tierNote=tierResult.credited?(tierResult.advanced?` Tier advanced to ${tierResult.after.name}.`:` ${money(tierResult.amount)} F added to repayment progress.${nextTier?` ${money(Math.max(0,nextTier.repaid-state.onTimeRepaid))} F to ${nextTier.name}.`:''}`):` No tier progress: ${tierResult.reason}`;
+    if(state.debt<=0){state.debt=0;state.borrowedWallet=0;clearDebtDue();setDebtMessage(`Loan cleared with ${money(requested)} F owned cash${returnedLoan?` plus ${money(returnedLoan)} F returned loan funds`:''}.${savings?` Saved ${money(savings)} F.`:''}${tierNote}`,'success');setStatus('Loan cleared.','win');confettiBurst(tierResult.advanced?65:35);resetDebtCycle();}
+    else{setDebtMessage(`${early?'Next payment paid early':'Amount due paid'}: ${money(requested)} F. Next payment in five rounds.${tierNote}`,'success');}
+    audio.cash();haptic(18);refresh();return true;
   }
 
   function resetAfterDebtDefault(previousDebt){
@@ -1256,6 +1264,7 @@
 
     if(state.debt<=0){
       state.debt=0;
+      state.borrowedWallet=0;
       clearDebtDue();
       resetDebtCycle();
     }else{
@@ -1361,12 +1370,12 @@
   }
 
   function refresh(){
-    const payout=currentPayout(), risk=effectiveRisk(), xpNeeded=nextXp(), frog=selectedFrog(), lake=selectedLake();
-    els.balance.textContent=money(state.balance); els.collectionBalance.textContent=money(state.balance); els.level.textContent=`Lv. ${state.level}`; els.xp.textContent=state.xp; els.xpNext.textContent=xpNeeded; els.xpRing.style.setProperty('--xp',`${clamp(state.xp/xpNeeded*100,0,100)}%`);
+    const payout=currentPayout(), risk=effectiveRisk(), xpNeeded=nextXp(), frog=selectedFrog(), lake=selectedLake(), own=ownedWalletBalance();
+    els.balance.textContent=money(state.balance);els.borrowedBalancePill.classList.toggle('hidden',state.borrowedWallet<=0);els.borrowedBalanceLabel.textContent=money(state.borrowedWallet); els.collectionBalance.textContent=money(own); els.level.textContent=`Lv. ${state.level}`; els.xp.textContent=state.xp; els.xpNext.textContent=xpNeeded; els.xpRing.style.setProperty('--xp',`${clamp(state.xp/xpNeeded*100,0,100)}%`);
     els.jump.textContent=`${state.jump} / ${RISKS.length}`; els.multiplier.textContent=`${MULTIPLIERS[state.jump].toFixed(2)}×`; els.risk.textContent=state.jump>=RISKS.length?'—':`${risk}%`; els.payout.textContent=`${money(payout)} F`; els.cashValue.textContent=`${money(payout)} F`;
     els.betDisplay.textContent=money(state.bet); els.start.querySelector('small').textContent=`Median ${money(xpMedianBet())} F · +${money(wagerXpBonus())} XP/landing`; els.danger.textContent=state.jump>=RISKS.length?'Legendary leap':dangerName(risk); els.riskFill.style.width=`${risk}%`;els.riskMarker.style.left=`${risk}%`;els.riskMarker.style.background=risk<30?'#52c95a':risk<60?'#f3c442':'#eb506b';
-    els.screens.play.classList.toggle('round-live',state.roundActive);els.screens.play.classList.toggle('can-cash',state.roundActive&&state.jump>0);els.start.classList.toggle('hidden',state.roundActive); els.jumpButton.classList.toggle('hidden',!state.roundActive); els.cash.classList.toggle('hidden',!state.roundActive||state.jump===0); els.jumpButton.disabled=state.animating;els.cash.disabled=state.animating;
-    els.quickBets.querySelectorAll('button').forEach(b=>{b.disabled=state.roundActive;b.classList.toggle('selected',Number(b.dataset.bet)===state.bet);});els.betAdjusters.querySelectorAll('button').forEach(b=>b.disabled=state.roundActive);els.customBetInput.disabled=state.roundActive;
+    els.screens.play.classList.toggle('round-live',anyRoundActive());els.screens.play.classList.toggle('can-cash',state.roundActive&&state.jump>0);els.start.classList.toggle('hidden',state.roundActive); els.jumpButton.classList.toggle('hidden',!state.roundActive); els.cash.classList.toggle('hidden',!state.roundActive||state.jump===0); els.jumpButton.disabled=state.animating;els.cash.disabled=state.animating;
+    els.quickBets.querySelectorAll('button').forEach(b=>{b.disabled=anyRoundActive();b.classList.toggle('selected',Number(b.dataset.bet)===state.bet);});els.betAdjusters.querySelectorAll('button').forEach(b=>b.disabled=anyRoundActive());els.customBetInput.disabled=anyRoundActive();
     els.sound.textContent=state.sound?'🔊':'🔇';audio.enabled=state.sound;els.settingsSound.querySelector('b').textContent=state.sound?'On':'Off';els.settingsMotion.querySelector('b').textContent=state.effects?'On':'Reduced';
     els.luckyBadge.classList.toggle('hidden',state.luckyCharges<=0);els.luckyCount.textContent=state.luckyCharges;
     els.debtBadge.classList.toggle('hidden',state.debt<=0);els.debtBadge.classList.toggle('due',state.debtDue);els.debtBadgeAmount.textContent=`${money(state.debt)} F`;els.debtBadgeTurns.textContent=state.debt>0?debtRoundsRemaining():'—';els.debtBadgeStatus.innerHTML=state.debtDue?'! <b>PAYMENT DUE</b>':`due in <b>${debtRoundsRemaining()}</b>`;els.debtDueDot.classList.toggle('hidden',!state.debtDue);els.debtDueFlag.classList.toggle('hidden',!state.debtDue);
@@ -1376,9 +1385,9 @@
     els.debtAmountLabel.textContent=`${money(state.debt)} F`;
     els.debtInstallmentLabel.textContent=`${money(debtInstallment())} F`;
     els.debtTurnsLabel.textContent=state.debtDue?'! DUE NOW':state.debt>0?`Due in ${debtRoundsRemaining()} round${debtRoundsRemaining()===1?'':'s'}`:'No active loan';
-    els.debtPayoffLabel.textContent=`${money(earlyPayoffAmount())} F`;
+    els.debtPayoffLabel.textContent=`${money(earlyPayoffCashRequired())} F`;
     els.debtInterestSavedLabel.textContent=`${money(earlyPayoffSavings())} F`;
-    els.debtLimitLabel.textContent=`${money(debtLimit())} F`;
+    els.debtLimitLabel.textContent=`${money(debtLimit())} F`;els.creditTierCeilingLabel.textContent=`${money(tierCeiling())} F ceiling`;els.creditScoreLabel.textContent=state.creditScore;els.creditScoreGradeLabel.textContent=creditScoreGrade();els.creditLimitFactorLabel.textContent=`${Math.round(creditScoreFactor()*100)}% of tier`;
     els.creditTierLabel.textContent=creditTier.tier.name;
     els.creditTierProgressFill.style.width=`${tierProgressPercent()}%`;
     els.creditHistoryLabel.textContent=`${money(state.onTimeRepaid)} F`;
@@ -1386,20 +1395,20 @@
       ? `${money(Math.max(0,nextTier.repaid-state.onTimeRepaid))} F to ${nextTier.name}`
       : 'Maximum tier reached';
     const hasActiveLoan=state.debt>0;
-    els.activeLoanCard.classList.toggle('hidden',!hasActiveLoan);
+    els.activeLoanCard.classList.toggle('hidden',!hasActiveLoan);els.borrowedWalletBankLabel.textContent=`${money(state.borrowedWallet)} F`;els.activeLoanRateLabel.textContent=`${(state.loanRate*100).toFixed(1)}%`;
     els.loanPaymentDock.classList.toggle('hidden',!hasActiveLoan);
     els.screens.bank.classList.toggle('loan-dock-active',hasActiveLoan);
     els.loanPaymentDockStatus.textContent=state.debtDue
       ? `${money(debtInstallment())} F due now`
       : `${money(debtInstallment())} F next · ${debtRoundsRemaining()} round${debtRoundsRemaining()===1?'':'s'}`;
-    els.repayInstallmentButton.disabled=state.debt<=0||state.balance<debtInstallment()||state.roundActive;
-    els.repayAllButton.disabled=state.debt<=0||state.balance<earlyPayoffAmount()||state.roundActive;
+    els.repayInstallmentButton.disabled=state.debt<=0||own<debtInstallment()||anyRoundActive();
+    els.repayAllButton.disabled=state.debt<=0||own<earlyPayoffCashRequired()||anyRoundActive();
     els.repayInstallmentButton.querySelector('span').textContent=state.debtDue?'PAY AMOUNT DUE':'PAY NEXT PAYMENT EARLY';
     els.repayInstallmentButton.querySelector('small').textContent=state.debtDue
       ? `Pay ${money(debtInstallment())} F now`
       : state.debt>0?`Pay ${money(debtInstallment())} F · reset countdown`:'No active loan';
     els.repayAllButton.querySelector('small').textContent=state.debt>0
-      ? `Pay ${money(earlyPayoffAmount())} F · save ${money(earlyPayoffSavings())} F`
+      ? `Pay ${money(earlyPayoffCashRequired())} F cash · return ${money(Math.min(state.borrowedWallet,earlyPayoffAmount()))} F loan funds`
       : 'No active loan';
     const borrowingLocked=Boolean(loanAvailabilityReason());
     els.openLoanBuilderButton.disabled=borrowingLocked;
@@ -1408,14 +1417,18 @@
       : `Up to ${money(creditMaxLoan)} F available`;
     els.loanEntrySubtext.textContent=state.debt>0
       ? `${money(state.debt)} F remaining · ${money(debtInstallment())} F due amount`
-      : '8% total interest · 10 payments · due every 5 rounds';
+      : 'Risk-priced 8–18% charge · 10 payments · leverage optional';
     els.bankTotalWealthLabel.textContent=`${money(Math.min(MAX_SAFE_BALANCE,state.balance+state.piggyBalance))} F`;
     els.piggyBalanceLabel.textContent=`${money(state.piggyBalance)} F`;
-    els.piggyWalletLabel.textContent=`${money(state.balance)} F`;
+    els.piggyWalletLabel.textContent=`${money(own)} F owned`;
     els.piggyNextInterestLabel.textContent=`${money(estimatedPiggyCycleInterest())} F`;
     els.piggyRoundsLabel.textContent=money(piggyRoundsRemaining());
     els.piggyProgressFill.style.width=`${state.piggyBalance>0?(state.piggyRounds/PIGGY_ROUND_INTERVAL)*100:0}%`;
     updatePiggyTransferControls();
+    const crashUnlocked=gameUnlocked('crash');els.crashLicenseCard.classList.toggle('hidden',crashUnlocked);els.crashGameContent.classList.toggle('hidden',!crashUnlocked);els.crashTabStatus.textContent=crashUnlocked?'UNLOCKED':'25M LICENSE';els.unlockCrashButton.disabled=own<CRASH_LICENSE_COST||anyRoundActive();
+    const leapMode=state.selectedGame!=='crash';els.leapGamePane.classList.toggle('hidden',!leapMode);els.crashGamePane.classList.toggle('hidden',leapMode);els.leapGameTab.classList.toggle('active',leapMode);els.crashGameTab.classList.toggle('active',!leapMode);
+    els.leverageStrip.classList.toggle('hidden',state.debt<=0);els.leverageToggle.classList.toggle('active',state.leverageEnabled);els.leverageToggle.setAttribute('aria-pressed',String(state.leverageEnabled));els.leverageToggle.querySelector('span').textContent=state.leverageEnabled?'ON':'OFF';els.leverageToggle.querySelector('small').textContent=state.leverageEnabled?'Borrowed funds used first':'Owned funds only';els.leverageStatusLabel.textContent=state.leverageEnabled?'Leveraged':'Protected';els.leverageLimitLabel.textContent=`${money(leverageRoundLimit())} F loan funds available this round`;
+    refreshCrashHud();
     refreshDaily(); refreshPromo(); refreshEngagement(); saveState();
   }
 
@@ -1490,24 +1503,24 @@
   }
 
   function setBetAmount(rawValue,{quiet=false}={}){
-    if(state.roundActive)return false;
+    if(anyRoundActive())return false;
     const bet=Math.floor(Number(rawValue));
     if(!Number.isFinite(bet)){els.customBetError.textContent='Enter a whole-number bet.';haptic(18);return false;}
     if(bet<MIN_BET){els.customBetError.textContent=`Minimum bet is ${MIN_BET} Froggy.`;haptic(18);return false;}
-    if(bet>state.balance){els.customBetError.textContent=`You only have ${money(state.balance)} Froggy.`;haptic(18);return false;}
+    if(bet>availableBetBalance()){els.customBetError.textContent=`Available for this round: ${money(availableBetBalance())} Froggy.`;haptic(18);return false;}
     state.bet=bet;els.customBetError.textContent='';if(!quiet)audio.tap();refresh();return true;
   }
 
   function selectBet(value){
-    if(state.roundActive)return false;
-    const bet=value==='max'?state.balance:Number(value);
+    if(anyRoundActive())return false;
+    const bet=value==='max'?availableBetBalance():Number(value);
     return setBetAmount(bet);
   }
 
   function adjustBet(action){
-    if(state.roundActive)return;
+    if(anyRoundActive())return;
     if(action==='half')setBetAmount(Math.max(MIN_BET,Math.floor(state.bet/2)));
-    if(action==='double')setBetAmount(Math.min(state.balance,state.bet*2));
+    if(action==='double')setBetAmount(Math.min(availableBetBalance(),state.bet*2));
   }
 
   function applyCustomBet(){
@@ -1517,10 +1530,11 @@
   }
 
   function startRound(){
-    audio.unlock(); if(state.roundActive||state.animating)return;
-    if(state.balance<MIN_BET){state.balance+=500;setStatus('Pond rescue bonus: +500 Froggy!','win');audio.reward();confettiBurst(25);refresh();return;}
-    if(state.bet>state.balance){state.bet=Math.floor(state.balance/50)*50;setStatus('Bet adjusted to your available Froggy.');refresh();return;}
-    els.customBetRow.classList.add('hidden');    state.roundBetForXp=state.bet;state.balance-=state.bet;session.rounds++;session.net-=state.bet;state.jump=0;state.roundActive=true;state.animating=false;state.roundSafe=state.safeRunCredits>0;if(state.roundSafe)state.safeRunCredits--;state.rounds++;scene.reset();setStatus(`${money(state.bet)} Froggy on the line. Make the first leap!`);audio.start();haptic(20);refresh();
+    audio.unlock();if(anyRoundActive()||state.animating)return;
+    if(ownedWalletBalance()<MIN_BET&&leverageRoundLimit()<MIN_BET){creditBalance(500);setStatus('Pond rescue bonus: +500 Froggy!','win');audio.reward();refresh();return;}
+    if(state.bet>availableBetBalance()){state.bet=Math.max(MIN_BET,Math.floor(availableBetBalance()/50)*50);setStatus('Bet adjusted to available owned and leverage funds.');refresh();return;}
+    const allocation=allocateRoundStake(state.bet);if(!allocation){setStatus('Turn leverage on or lower the bet.','lose');return;}
+    els.customBetRow.classList.add('hidden');state.roundBetForXp=state.bet;session.rounds++;session.net-=state.bet;state.jump=0;state.roundActive=true;state.animating=false;state.roundSafe=state.safeRunCredits>0;if(state.roundSafe)state.safeRunCredits--;state.rounds++;scene.reset();setStatus(`${money(state.bet)} F on the line${allocation.borrowed?` · ${money(allocation.borrowed)} F leveraged`:''}.`);audio.start();haptic(20);refresh();
   }
 
   function jump(){
@@ -1530,19 +1544,19 @@
       state.animating=false;state.totalJumps++;
       if(didFail){
         state.roundActive=false;state.roundSafe=false;state.bestJump=Math.max(state.bestJump,state.jump);session.losses++;session.lossStreak++;setStatus('SPLASH! The lily pad broke.','lose');
-        const lost=state.bet,careNote=session.lossStreak>=3?' Three losses in a row—consider taking a short break before another round.':'',debtResult=finishCompletedRound(0); refresh(); setTimeout(()=>showResult({icon:'💦',kicker:'ROUND OVER',title:'The pad cracked!',amount:`−${money(lost)} F`,text:appendDebtResult(`You reached jump ${state.jump}. The pond keeps this bet.${careNote}`,debtResult),lose:true}),TEST_MODE?1:420);
+        const lost=state.bet,leverageResult=finishLeverageLoss(),careNote=session.lossStreak>=3?' Three losses in a row—consider taking a short break before another round.':'',debtResult=finishCompletedRound(0); refresh(); setTimeout(()=>showResult({icon:'💦',kicker:'ROUND OVER',title:'The pad cracked!',amount:`−${money(lost)} F`,text:appendDebtResult(`You reached jump ${state.jump}. The pond keeps this bet.${leverageResult.fee?` Borrowed loss charge: +${money(leverageResult.fee)} F debt.`:''}${careNote}`,debtResult),lose:true}),TEST_MODE?1:420);
       } else {
         state.jump=next;state.safeJumps++;state.bestJump=Math.max(state.bestJump,state.jump);addXp(10+state.jump*2+wagerXpBonus());audio.coin();haptic(15);screenFeedback('win');
         if([5,10,15].includes(state.jump)){audio.reward();haptic([12,30,18]);confettiBurst(22+state.jump);}
         if(state.jump===RISKS.length){
-          const payout=currentPayout();state.balance+=payout;session.net+=payout;session.wins++;session.lossStreak=0;state.bestCashMultiplier=Math.max(state.bestCashMultiplier,MULTIPLIERS[state.jump]);state.biggestWin=Math.max(state.biggestWin,payout);state.roundActive=false;state.roundSafe=false;addXp(120+wagerXpBonus()*3);const debtResult=finishCompletedRound(payout);setStatus(`LEGENDARY LEAP! ${money(payout)} Froggy at ${MULTIPLIERS[state.jump].toFixed(2)}×!`,'win');audio.win();confettiBurst(120);refresh();setTimeout(()=>showResult({icon:'🏆',kicker:'LEGENDARY LEAP',title:'Every pad cleared!',amount:`+${money(payout)} F`,text:appendDebtResult(`Fifteen golden landings and a ${MULTIPLIERS[state.jump].toFixed(2)}× finish. Absolute frog glory.`,debtResult)}),TEST_MODE?1:500);
+          const payout=currentPayout(),leverageResult=finishLeverageWin(payout,state.bet);session.net+=payout-leverageResult.sweep;session.wins++;session.lossStreak=0;state.bestCashMultiplier=Math.max(state.bestCashMultiplier,MULTIPLIERS[state.jump]);state.biggestWin=Math.max(state.biggestWin,payout);state.roundActive=false;state.roundSafe=false;addXp(120+wagerXpBonus()*3);const debtResult=finishCompletedRound(payout);setStatus(`LEGENDARY LEAP! ${money(payout)} Froggy at ${MULTIPLIERS[state.jump].toFixed(2)}×!`,'win');audio.win();confettiBurst(120);refresh();setTimeout(()=>showResult({icon:'🏆',kicker:'LEGENDARY LEAP',title:'Every pad cleared!',amount:`+${money(payout)} F`,text:appendDebtResult(`Fifteen golden landings and a ${MULTIPLIERS[state.jump].toFixed(2)}× finish. Absolute frog glory.`,debtResult)}),TEST_MODE?1:500);
         } else {const milestoneName={5:'WARM-UP CLEARED',10:'DEEP WATER'}[state.jump];setStatus(milestoneName?`${milestoneName}! ${MULTIPLIERS[state.jump].toFixed(2)}× secured so far.`:`Perfect landing! ${MULTIPLIERS[state.jump].toFixed(2)}× — cash out or leap again.`,'win');refresh();}
       }
     });
   }
 
   function cashOut(){
-    if(!state.roundActive||state.animating||state.jump===0)return;const payout=currentPayout(),profit=payout-state.bet;state.balance+=payout;session.net+=payout;session.wins++;session.lossStreak=0;state.bestCashMultiplier=Math.max(state.bestCashMultiplier,MULTIPLIERS[state.jump]);state.biggestWin=Math.max(state.biggestWin,payout);state.roundActive=false;state.roundSafe=false;addXp(25+state.jump*4+wagerXpBonus()*2);const debtResult=finishCompletedRound(payout);audio.cash();haptic([15,35,20]);screenFeedback('win');confettiBurst(35+state.jump*3);setStatus(`Cashed out ${money(payout)} Froggy!`,'win');refresh();setTimeout(()=>showResult({icon:'🪙',kicker:'SMART CASH-OUT',title:`${MULTIPLIERS[state.jump].toFixed(2)}× secured!`,amount:`+${money(payout)} F`,text:appendDebtResult(`Profit: ${money(profit)} Froggy. Great timing.`,debtResult)}),TEST_MODE?1:220);
+    if(!state.roundActive||state.animating||state.jump===0)return;const payout=currentPayout(),profit=payout-state.bet,leverageResult=finishLeverageWin(payout,state.bet);session.net+=payout-leverageResult.sweep;session.wins++;session.lossStreak=0;state.bestCashMultiplier=Math.max(state.bestCashMultiplier,MULTIPLIERS[state.jump]);state.biggestWin=Math.max(state.biggestWin,payout);state.roundActive=false;state.roundSafe=false;addXp(25+state.jump*4+wagerXpBonus()*2);const debtResult=finishCompletedRound(payout);audio.cash();haptic([15,35,20]);screenFeedback('win');confettiBurst(35+state.jump*3);setStatus(`Cashed out ${money(payout)} Froggy!`,'win');refresh();setTimeout(()=>showResult({icon:'🪙',kicker:'SMART CASH-OUT',title:`${MULTIPLIERS[state.jump].toFixed(2)}× secured!`,amount:`+${money(payout)} F`,text:appendDebtResult(`Profit: ${money(profit)} F.${leverageResult.sweep?` ${money(leverageResult.sweep)} F automatically swept to debt.`:''}`,debtResult)}),TEST_MODE?1:220);
   }
 
   function showResult({icon,kicker,title,amount,text,lose=false}){
@@ -1569,28 +1583,34 @@
 
   function navigate(screen){
     if(screen!=='play')els.customBetRow.classList.add('hidden');
-    Object.entries(els.screens).forEach(([key,node])=>node.classList.toggle('active',key===screen));document.querySelectorAll('.nav-button').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));audio.tap();if(screen==='collection')renderCollection();if(screen==='rewards')refreshDaily();if(screen==='bank'){if(state.debtDue)setBankPane('loans');refresh();}if(screen==='promo')refreshPromo();if(screen==='stats')refresh();
+    Object.entries(els.screens).forEach(([key,node])=>node.classList.toggle('active',key===screen));document.querySelectorAll('.nav-button').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));audio.tap();if(screen==='collection')renderCollection();if(screen==='play')refresh();if(screen==='rewards')refreshDaily();if(screen==='bank'){if(state.debtDue)setBankPane('loans');refresh();}if(screen==='promo')refreshPromo();if(screen==='stats')refresh();
   }
 
   function renderCollection(){
-    const items=collectionMode==='frogs'?FROGS:LAKES, unlocked=collectionMode==='frogs'?state.unlockedFrogs:state.unlockedLakes, selected=collectionMode==='frogs'?state.selectedFrog:state.selectedLake;
-    els.collectionGrid.innerHTML=items.map(item=>{
-      const owned=unlocked.includes(item.id),equipped=selected===item.id,canLevel=state.level>=item.level;let action=equipped?'EQUIPPED':owned?'EQUIP':canLevel?`UNLOCK · ${money(item.cost)} F`:`LEVEL ${item.level} REQUIRED`;
-      const art=collectionMode==='frogs'?frogSvg(item):`<span class="lake-art-emoji">${item.emoji}</span><i class="lake-art-ripple"></i>`;
-      const tier=String(item.rarity||'common').toLowerCase().replace(/[^a-z0-9]+/g,'-');
-      const collateral=collectionMode==='frogs'&&item.id!=='classic'?`<span class="collateral-value">BANK VALUE · ${money(skinCollateralValue(item))} F</span>`:'';
-      return `<article class="collection-card ${collectionMode==='lakes'?'lake':''} tier-${tier} ${equipped?'selected':''}" data-item="${item.id}" style="--card-a:${item.colors?item.colors[0]:item.a};--card-b:${item.colors?item.colors[1]:item.b}"><span class="rarity">${item.rarity}</span><div class="collection-art">${art}<i class="portrait-spark s1"></i><i class="portrait-spark s2"></i></div><h3>${item.name}</h3><p>${item.description}</p>${collateral}<button class="collection-action pressable ${owned?'owned':'locked'}" data-collection-action="${item.id}" ${equipped?'disabled':''}>${action}</button></article>`;
-    }).join('');
+    if(collectionMode==='vehicles'){
+      els.collectionGrid.innerHTML=VEHICLES.map(item=>{const charges=vehicleCharges(item.id),selected=state.selectedVehicle===item.id,canLevel=state.level>=item.level,action=selected&&charges>0?'SELECTED':canLevel?`BUY ${item.charges} FLIGHTS · ${money(item.cost)} F`:`LEVEL ${item.level} REQUIRED`;
+        return `<article class="collection-card vehicle-card tier-${item.rarity.toLowerCase()} ${selected?'selected':''}" data-item="${item.id}"><span class="rarity">${item.rarity}</span><div class="collection-art vehicle-shop-art"><span>${item.emoji}</span><i>${item.max.toFixed(2)}× MAX</i></div><h3>${item.name}</h3><p>${item.description}</p><span class="vehicle-charge-count">${charges} flights owned</span><button class="collection-action pressable ${charges?'owned':'locked'}" data-collection-action="${item.id}" ${!canLevel?'disabled':''}>${action}</button></article>`;}).join('');return;
+    }
+    const items=collectionMode==='frogs'?FROGS:LAKES,unlocked=collectionMode==='frogs'?state.unlockedFrogs:state.unlockedLakes,selected=collectionMode==='frogs'?state.selectedFrog:state.selectedLake;
+    els.collectionGrid.innerHTML=items.map(item=>{const owned=unlocked.includes(item.id),equipped=selected===item.id,canLevel=state.level>=item.level,action=equipped?'EQUIPPED':owned?'EQUIP':canLevel?`UNLOCK · ${money(item.cost)} F`:`LEVEL ${item.level} REQUIRED`,art=collectionMode==='frogs'?frogSvg(item):`<span class="lake-art-emoji">${item.emoji}</span><i class="lake-art-ripple"></i>`,tier=String(item.rarity||'common').toLowerCase().replace(/[^a-z0-9]+/g,'-'),collateral=collectionMode==='frogs'&&item.id!=='classic'?`<span class="collateral-value">BANK VALUE · ${money(skinCollateralValue(item))} F</span>`:'';
+      return `<article class="collection-card ${collectionMode==='lakes'?'lake':''} tier-${tier} ${equipped?'selected':''}" data-item="${item.id}" style="--card-a:${item.colors?item.colors[0]:item.a};--card-b:${item.colors?item.colors[1]:item.b}"><span class="rarity">${item.rarity}</span><div class="collection-art">${art}<i class="portrait-spark s1"></i><i class="portrait-spark s2"></i></div><h3>${item.name}</h3><p>${item.description}</p>${collateral}<button class="collection-action pressable ${owned?'owned':'locked'}" data-collection-action="${item.id}" ${equipped?'disabled':''}>${action}</button></article>`;}).join('');
   }
 
+
   function collectionAction(id){
+    if(anyRoundActive())return;
+    if(collectionMode==='vehicles'){
+      const item=VEHICLES.find(v=>v.id===id);if(!item)return;if(state.level<item.level){setStatus(`Reach level ${item.level} first.`,'lose');return;}if(!spendOwnedFunds(item.cost)){setStatus(`You need ${money(item.cost-ownedWalletBalance())} more owned Froggy. Loan funds cannot buy vehicles.`,'lose');return;}
+      state.vehicleCharges[id]=vehicleCharges(id)+item.charges;state.selectedVehicle=id;audio.reward();confettiBurst(32);setStatus(`${item.name}: +${item.charges} flights.`,'win');refresh();renderCollection();return;
+    }
     const items=collectionMode==='frogs'?FROGS:LAKES,item=items.find(x=>x.id===id);if(!item)return;const unlockKey=collectionMode==='frogs'?'unlockedFrogs':'unlockedLakes',selectKey=collectionMode==='frogs'?'selectedFrog':'selectedLake';
     if(state[unlockKey].includes(id)){state[selectKey]=id;audio.reward();setStatus(`${item.name} equipped!`,'win');}
-    else if(state.level<item.level){setStatus(`Reach level ${item.level} to unlock ${item.name}.`,'lose');haptic(20);}
-    else if(state.balance<item.cost){setStatus(`You need ${money(item.cost-state.balance)} more Froggy.`,'lose');haptic(20);}
-    else{state.balance-=item.cost;state[unlockKey].push(id);state[selectKey]=id;audio.reward();confettiBurst(28);setStatus(`${item.name} unlocked!`,'win');}
+    else if(state.level<item.level){setStatus(`Reach level ${item.level} to unlock ${item.name}.`,'lose');}
+    else if(!spendOwnedFunds(item.cost)){setStatus(`You need ${money(item.cost-ownedWalletBalance())} more owned Froggy. Loan funds cannot buy shop items.`,'lose');}
+    else{state[unlockKey].push(id);state[selectKey]=id;audio.reward();confettiBurst(28);setStatus(`${item.name} unlocked!`,'win');}
     refresh();renderCollection();scene.reset();
   }
+
 
 
   function setPromoMessage(text,kind=''){
@@ -1768,7 +1788,7 @@
   function bind(){
     document.addEventListener('pointerdown',()=>audio.unlock(),{once:true});
     els.quickBets.addEventListener('click',e=>{const b=e.target.closest('[data-bet]');if(b)selectBet(b.dataset.bet);});els.betAdjusters.addEventListener('click',e=>{const betButton=e.target.closest('[data-bet]');if(betButton)selectBet(betButton.dataset.bet);const actionButton=e.target.closest('[data-bet-action]');if(actionButton)adjustBet(actionButton.dataset.betAction);});els.customBetToggle.addEventListener('click',()=>{if(state.roundActive)return;els.customBetRow.classList.toggle('hidden');if(!els.customBetRow.classList.contains('hidden'))setTimeout(()=>els.customBetInput.focus(),30);});els.customBetRow.addEventListener('submit',e=>{e.preventDefault();applyCustomBet();});els.customBetClose.addEventListener('click',()=>{els.customBetRow.classList.add('hidden');els.customBetError.textContent='';});
-    els.start.addEventListener('click',startRound);els.jumpButton.addEventListener('click',jump);els.cash.addEventListener('click',cashOut);els.resultButton.addEventListener('click',()=>{closeModal();state.jump=0;scene.reset();refresh();});
+    els.leapGameTab.addEventListener('click',()=>setGameMode('leap'));els.crashGameTab.addEventListener('click',()=>setGameMode('crash'));els.unlockCrashButton.addEventListener('click',()=>unlockGame('crash'));els.leverageToggle.addEventListener('click',()=>setLeverageEnabled(!state.leverageEnabled));els.crashBetInput.addEventListener('change',()=>setCrashBet(els.crashBetInput.value));els.crashAutoInput.addEventListener('change',()=>{state.crashAutoCashout=clamp(Number(els.crashAutoInput.value)||2,1.1,selectedVehicle().max);refreshCrashHud();});els.crashVehicleSelect.addEventListener('change',()=>{if(!state.crashActive&&vehicleCharges(els.crashVehicleSelect.value)>0){state.selectedVehicle=els.crashVehicleSelect.value;state.crashAutoCashout=Math.min(state.crashAutoCashout,selectedVehicle().max);refresh();}});els.crashQuickBets.addEventListener('click',e=>{const button=e.target.closest('[data-crash-bet]');if(button)setCrashBet(button.dataset.crashBet);});els.crashStartButton.addEventListener('click',startCrash);els.crashCashButton.addEventListener('click',()=>crashCashOut(false));els.start.addEventListener('click',startRound);els.jumpButton.addEventListener('click',jump);els.cash.addEventListener('click',cashOut);els.resultButton.addEventListener('click',()=>{closeModal();state.jump=0;state.crashMultiplier=1;scene.reset();refresh();});
     els.sound.addEventListener('click',toggleSound);els.settingsSound.addEventListener('click',toggleSound);els.settingsMotion.addEventListener('click',()=>{state.effects=!state.effects;refresh();});els.settingsReminders.addEventListener('click',()=>{state.playReminders=!state.playReminders;session.reminded=false;refresh();});els.goalGrid.addEventListener('click',e=>{const button=e.target.closest('[data-goal-claim]');if(button)claimGoal(button.dataset.goalClaim);});
     els.bankShortcut.addEventListener('click',()=>{setBankPane('loans');navigate('bank');});els.bankLoansTab.addEventListener('click',()=>setBankPane('loans'));els.bankPiggyTab.addEventListener('click',()=>setBankPane('piggy'));    els.openLoanBuilderButton.addEventListener('click',openLoanBuilder);els.loanAmountSlider.addEventListener('input',()=>refreshLoanBuilder(els.loanAmountSlider.value));els.loanAmountInput.addEventListener('input',()=>refreshLoanBuilder(els.loanAmountInput.value,{exact:true}));els.loanMaximumButton.addEventListener('click',()=>refreshLoanBuilder(maxSingleLoan(),{exact:true}));els.loanReviewButton.addEventListener('click',reviewLoanWarning);els.loanWarningCancelButton.addEventListener('click',closeModal);els.loanRedeemButton.addEventListener('click',redeemPendingLoan);els.repayInstallmentButton.addEventListener('click',()=>repayDebt('installment'));els.repayAllButton.addEventListener('click',()=>repayDebt('all'));
     document.querySelectorAll('[data-piggy-mode]').forEach(button=>button.addEventListener('click',()=>setPiggyTransferMode(button.dataset.piggyMode)));document.querySelectorAll('[data-piggy-share]').forEach(button=>button.addEventListener('click',()=>setPiggyTransferAmount(Math.floor(piggyTransferMaximum()*Number(button.dataset.piggyShare)/100))));els.piggyTransferSlider.addEventListener('input',()=>setPiggyTransferAmount(els.piggyTransferSlider.value));els.piggyTransferSlider.addEventListener('change',()=>setPiggyTransferAmount(els.piggyTransferSlider.value));els.piggyTransferInput.addEventListener('input',()=>setPiggyTransferAmount(els.piggyTransferInput.value,{fromInput:true}));els.piggyTransferInput.addEventListener('change',()=>setPiggyTransferAmount(els.piggyTransferInput.value));els.piggyTransferButton.addEventListener('click',transferPiggy);els.debtBadge.addEventListener('click',()=>{setBankPane('loans');navigate('bank');});
@@ -1779,7 +1799,7 @@
     els.spin.addEventListener('click',spinDaily);els.installButton.addEventListener('click',installGame);
     els.promoForm.addEventListener('submit',e=>{e.preventDefault();redeemPromo(els.promoInput.value);});
     document.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('click',closeModal));els.modalBackdrop.addEventListener('click',e=>{if(e.target===els.modalBackdrop)closeModal();});
-    window.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();state.roundActive?jump():startRound();}if(e.code==='Escape')state.roundActive?cashOut():closeModal();});
+    window.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();if(state.selectedGame==='crash'){state.crashActive?crashCashOut(false):startCrash();}else{state.roundActive?jump():startRound();}}if(e.code==='Escape'){if(state.crashActive)crashCashOut(false);else state.roundActive?cashOut():closeModal();}});
     window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;els.installButton.classList.remove('hidden');});
     window.addEventListener('appinstalled',()=>els.installButton.classList.add('hidden'));
   }
@@ -1792,27 +1812,20 @@
   async function runSelfTest(){
     try{
       state=deepClone(DEFAULT_STATE);refresh();
-      document.querySelector('[data-bet="250"]').click();if(state.bet!==250)throw new Error('bet button failed');
-      document.querySelector('[data-bet-action="half"]').click();if(state.bet!==125)throw new Error('half bet failed');
-      document.querySelector('[data-bet-action="double"]').click();if(state.bet!==250)throw new Error('double bet failed');
-      els.customBetInput.value='333';if(!applyCustomBet()||state.bet!==333)throw new Error('custom bet failed');
-      els.start.click();if(!state.roundActive||state.balance!==667)throw new Error('start button failed');
-      forcedOutcome=true;els.jumpButton.click();await new Promise(r=>setTimeout(r,500));if(state.jump!==1||!state.roundActive)throw new Error('jump button failed');
-      els.cash.click();await new Promise(r=>setTimeout(r,20));if(state.roundActive||state.balance<=667)throw new Error('cash out failed');closeModal();
-      const before=state.balance;claimDaily({type:'froggy',amount:500});if(state.balance!==before+500||dailyAvailable())throw new Error('daily reward failed');closeModal();
-      state.lastDaily='';state.xp=nextXp()-1;const beforeLevel=state.balance,expectedLevelBonus=levelBonusFor(state.level+1);addXp(1);if(state.balance!==beforeLevel+expectedLevelBonus)throw new Error('level bonus failed');
-      state=deepClone(DEFAULT_STATE);refresh();const promoStart=state.balance;if(!redeemPromo('50000')||!redeemPromo('50000')||state.balance!==promoStart+100000)throw new Error('reusable 50000 promo failed');const customStart=state.balance;if(!redeemPromo('qoostommoney',123456)||!redeemPromo('qoostommoney',44)||state.balance!==customStart+123500)throw new Error('custom money promo failed');if(!redeemPromo('unlockall')||state.unlockedFrogs.length!==FROGS.length)throw new Error('unlockall promo failed');if(!redeemPromo('iwannaswim')||state.unlockedLakes.length!==LAKES.length)throw new Error('lake promo failed');if(!redeemPromo('10')||!redeemPromo('10')||state.freeSpins!==20)throw new Error('reusable 10 promo failed');const levelBeforeFive=state.level,levelBalanceBefore=state.balance;const expectedFiveBonus=cumulativeLevelBonus(levelBeforeFive,levelBeforeFive*5)+cumulativeLevelBonus(levelBeforeFive*5,levelBeforeFive*25);if(!redeemPromo('5')||!redeemPromo('5')||state.level!==levelBeforeFive*25||state.balance!==levelBalanceBefore+expectedFiveBonus)throw new Error('reusable 5 promo or level bonus failed');if(!redeemPromo('luckylily')||state.luckyCharges!==25)throw new Error('luckylily promo failed');const partyBalance=state.balance,partySpins=state.freeSpins;if(!redeemPromo('pondparty')||state.balance!==partyBalance+2500||state.freeSpins!==partySpins+3)throw new Error('pondparty promo failed');const safeBefore=state.safeRunCredits;if(!redeemPromo('lifeguard')||!redeemPromo('lifeguard')||state.safeRunCredits!==safeBefore+6)throw new Error('reusable lifeguard promo failed');if(!redeemPromo('spinall')||!state.unlimitedSpins||freeSpinDisplay()!=='unlimintos'||!dailyAvailable())throw new Error('spinall promo failed');if(!redeemPromo('imtheowner')||state.safeRunCredits!==safeBefore+4)throw new Error('owner promo failed');state.bet=100;startRound();forcedOutcome=false;jump();await new Promise(r=>setTimeout(r,500));if(state.jump!==1||!state.roundActive)throw new Error('owner safe round failed');state.roundActive=false;state.roundSafe=false;closeModal();
-      state=deepClone(DEFAULT_STATE);if(repaymentTierInfo().tier.limit!==5000||debtLimit()!==5000||maxSingleLoan()!==5000)throw new Error('starter tier failed');state.onTimeRepaid=75000;if(repaymentTierInfo().tier.limit!==100000)throw new Error('100k tier failed');refreshLoanBuilder(100000,{exact:true});if(pendingLoanAmount!==100000||Number(els.loanAmountSlider.value)!==100000)throw new Error('loan slider maximum failed');state.recentXpBets=[50,50,50,50,1000000000];state.bet=50;state.roundBetForXp=0;if(xpMedianBet()!==50)throw new Error('median resisted outlier failed');if(xpBonusFromBet(500)<=xpBonusFromBet(50)||xpBonusFromBet(100000)<=xpBonusFromBet(500))throw new Error('median XP scaling failed');if(xpBonusFromBet(1000000000000000)<=2000)throw new Error('XP cap was not removed');state.recentXpBets=Array.from({length:XP_BET_HISTORY_SIZE},(_,i)=>(i+1)*50);state.roundBetForXp=5000;recordXpWager();if(state.recentXpBets.length!==XP_BET_HISTORY_SIZE||state.recentXpBets[state.recentXpBets.length-1]!==5000)throw new Error('XP history limit failed');state=deepClone(DEFAULT_STATE);if(!takeLoan(1000,{skipConfirm:true})||state.debt!==1080||state.loanInstallment!==108)throw new Error('simple loan creation failed');refresh();if(els.loanPaymentDock.classList.contains('hidden')||!els.screens.bank.classList.contains('loan-dock-active'))throw new Error('repayment dock did not activate');const earlyProgress=state.onTimeRepaid;if(!repayDebt('installment')||state.onTimeRepaid!==earlyProgress+108||state.debt!==972||state.debtTurns!==0)throw new Error('early scheduled payment failed');for(let i=0;i<5;i++)finishCompletedRound(0);if(!state.debtDue)throw new Error('amount due did not activate');const dueProgress=state.onTimeRepaid;if(!repayDebt('installment')||state.onTimeRepaid!==dueProgress+108)throw new Error('due payment failed');state=deepClone(DEFAULT_STATE);state.balance=2000;state.debt=108;state.loanPrincipalOriginal=100;state.loanPrincipalRemaining=100;state.loanInterestTotal=8;state.loanInterestPaid=0;setPiggyTransferMode('deposit');setPiggyTransferAmount(1000);if(els.piggyTransferButton.disabled)throw new Error('piggy action stayed disabled');if(!transferPiggy()||state.balance!==1000||state.piggyBalance!==1000)throw new Error('piggy transfer with debt failed');setPiggyTransferMode('withdraw');setPiggyTransferAmount(500);if(els.piggyTransferButton.disabled||!transferPiggy()||state.balance!==1500||state.piggyBalance!==500)throw new Error('piggy withdrawal failed');state=deepClone(DEFAULT_STATE);state.level=5;state.balance=1000;state.unlockedFrogs=['classic','king','robot'];state.selectedFrog='king';state.debt=3000;state.loanPrincipalOriginal=3000;state.loanPrincipalRemaining=3000;state.loanInterestTotal=0;state.loanInterestPaid=0;state.loanInstallment=300;state.debtDue=true;state.debtDueAmount=300;const walletBeforeCollateral=state.balance;const collateralResult=completeDebtTurn();if(!collateralResult?.skinLost||collateralResult.skinId!=='king'||state.unlockedFrogs.includes('king')||state.selectedFrog!=='classic'||state.level!==5||state.debt!==0||state.balance!==walletBeforeCollateral+1000)throw new Error('skin collateral priority failed');const quoteTest=loanQuote(10000);if(quoteTest.interest!==800||quoteTest.total!==10800||quoteTest.payment!==1080||quoteTest.duration!==50)throw new Error('loan quote math failed');state=deepClone(DEFAULT_STATE);state.balance=2000;setPiggyTransferMode('deposit');setPiggyTransferAmount(1000);if(!transferPiggy())throw new Error('piggy deposit failed');for(let i=0;i<20;i++)advancePiggyBankRound();if(state.piggyBalance!==1001||state.piggyLifetimeInterest!==1||state.piggyCycles!==1||state.piggyRounds!==0)throw new Error('piggy interest cycle failed');setBankPane('piggy');if(els.bankPiggyPane.classList.contains('hidden')||!els.bankLoansPane.classList.contains('hidden'))throw new Error('bank pane switch failed');setBankPane('loans');
-            if(MULTIPLIERS.length!==16||RISKS.length!==15||Math.abs(MULTIPLIERS[MULTIPLIERS.length-1]-258.10484412313536)>.000001)throw new Error('15-jump reward curve failed');let curveSurvival=1;for(let i=0;i<RISKS.length;i++){curveSurvival*=1-RISKS[i]/100;if(Math.abs(curveSurvival*MULTIPLIERS[i+1]-TARGET_RTP)>.000000001)throw new Error(`RTP mismatch at jump ${i+1}`);}if(WHEEL_SEGMENTS.length!==10||WHEEL_SEGMENTS.filter(x=>x.amount===50000).length!==1)throw new Error('wheel setup failed');if(FROGS[FROGS.length-1].id!=='owner'||FROGS[FROGS.length-1].cost!==2000000000||FROGS[FROGS.length-1].level!==20000)throw new Error('owner frog setup failed');
-      state.level=3;state.balance=5000;collectionMode='frogs';collectionAction('king');if(state.selectedFrog!=='king'||!state.unlockedFrogs.includes('king'))throw new Error('collection failed');
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v27 fixed repayment dock, fixed loan modal actions, uncapped median XP, Piggy controls, early payments, collateral, loans, tiers, economy, characters, and promos';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      if(!gameUnlocked('leap')||gameUnlocked('crash'))throw new Error('game license defaults failed');
+      state.balance=CRASH_LICENSE_COST+1000000;if(!unlockGame('crash')||!gameUnlocked('crash')||vehicleCharges('glider')!==5)throw new Error('crash unlock failed');
+      state.vehicleCharges.glider=5;state.selectedVehicle='glider';state.crashBet=100;state.balance=1000;if(!startCrash()||!state.crashActive)throw new Error('crash start failed');state.crashMultiplier=1.5;if(!crashCashOut()||state.crashActive||state.balance<=900)throw new Error('crash cashout failed');closeModal();
+      state=deepClone(DEFAULT_STATE);state.onTimeRepaid=75000;state.creditScore=70;if(tierCeiling()!==100000||debtLimit()!==75000)throw new Error('score-adjusted loan limit failed');const q=loanQuote(debtLimit());if(q.rate<=.08||q.rate>.18)throw new Error('risk pricing failed');if(!takeLoan(50000,{skipConfirm:true})||state.borrowedWallet!==50000)throw new Error('borrowed wallet tagging failed');state.leverageEnabled=true;state.bet=10000;const a=allocateRoundStake(10000);if(!a||a.borrowed!==10000)throw new Error('leverage allocation failed');const debtBeforeLoss=state.debt;const loss=finishLeverageLoss();if(loss.fee!==1200||state.debt!==debtBeforeLoss+1200)throw new Error('leverage loss charge failed');
+      state=deepClone(DEFAULT_STATE);state.balance=2000;state.borrowedWallet=1000;state.debt=1080;setPiggyTransferMode('deposit');if(piggyTransferMaximum()!==1000)throw new Error('piggy accepted loan funds');
+      state=deepClone(DEFAULT_STATE);state.balance=1000000;state.level=10;collectionMode='vehicles';collectionAction('glider');if(vehicleCharges('glider')!==10)throw new Error('vehicle refill failed');
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v28 Froggy Arcade, Sky Crash, vehicle consumables, score-priced credit and leveraged-loan risk';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 
-  setInterval(()=>{if(!state.playReminders||session.reminded||state.roundActive)return;if(Date.now()-session.startedAt>=15*60*1000){session.reminded=true;setStatus('Pond check: you have been playing for 15 minutes. Take a break whenever you need one.');refreshEngagement();}},30000);
-  renderWheel();bind();setupInstall();refresh();renderCollection();scene.reset();
+  setInterval(()=>{if(!state.playReminders||session.reminded||anyRoundActive())return;if(Date.now()-session.startedAt>=15*60*1000){session.reminded=true;setStatus('Pond check: you have been playing for 15 minutes. Take a break whenever you need one.');refreshEngagement();}},30000);
+  renderWheel();bind();setupInstall();setGameMode(state.selectedGame);refresh();renderCollection();scene.reset();
   if(!state.tutorialSeen&&!TEST_MODE){state.tutorialSeen=true;saveState();setTimeout(()=>openModal(els.howToModal),600);}
   if(TEST_MODE)runSelfTest();
 
-  window.FroggyGame={version:BUILD_VERSION,getState:()=>deepClone(state),selectBet,setBetAmount,adjustBet,applyCustomBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,spinDaily,redeemPromo,levelBonusFor,cumulativeLevelBonus,creditBalance,takeLoan,repayDebt,completeDebtTurn,debtInstallment,debtLimit,availableCredit,repaymentTierInfo,registerOnTimeRepayment,tierProgressPercent,maxSingleLoan,numericMedian,xpMedianBet,xpBonusFromBet,wagerXpBonus,recordXpWager,skinCollateralValue,availableCollateralFrogs,liquidateSkinCollateral,finishCompletedRound,earlyPayoffAmount,earlyPayoffSavings,loanEarnedInterest,loanQuote,openLoanBuilder,reviewLoanWarning,redeemPendingLoan,transferPiggy,advancePiggyBankRound,piggyRoundsRemaining,estimatedPiggyCycleInterest,setBankPane,wheelSegments:deepClone(WHEEL_SEGMENTS),reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();renderWheel();refresh();}};
+  window.FroggyGame={version:BUILD_VERSION,getState:()=>deepClone(state),setGameMode,unlockGame,startCrash,crashCashOut,crashLose,setCrashBet,selectBet,setBetAmount,adjustBet,applyCustomBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,spinDaily,redeemPromo,creditBalance,takeLoan,repayDebt,completeDebtTurn,debtInstallment,debtLimit,tierCeiling,availableCredit,repaymentTierInfo,creditScoreFactor,loanRateForAmount,maxSingleLoan,setLeverageEnabled,allocateRoundStake,leverageRoundLimit,ownedWalletBalance,finishCompletedRound,earlyPayoffAmount,earlyPayoffCashRequired,earlyPayoffSavings,loanQuote,transferPiggy,advancePiggyBankRound,selectedVehicle,vehicleCharges,setBankPane,wheelSegments:deepClone(WHEEL_SEGMENTS),reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();refresh();}};
 })();
