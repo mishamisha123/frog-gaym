@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=30" />
+  <link rel="stylesheet" href="styles.css?v=31" />
   <title>Froggy Arcade Deluxe</title>
 </head>
 <body>
@@ -102,7 +102,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v30 · FROGGY ARCADE</div>
+          <div class="build-version" aria-label="Installed game version">v31 · FROGGY ARCADE</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -152,6 +152,16 @@
               </div>
             </div>
 
+            <div id="crashFlightDock" class="crash-flight-dock glass hidden" aria-label="Manual flight cash-out control">
+              <div class="crash-flight-dock-copy">
+                <small>MANUAL FLIGHT</small>
+                <b>Watch the aircraft and pull out before failure.</b>
+              </div>
+              <button id="crashCashButton" type="button" class="action-button cash crash-pullout pressable hidden">
+                <span>PULL OUT NOW</span><small id="crashCashValue">Cash out 97 F</small>
+              </button>
+            </div>
+
             <section class="crash-control-panel glass">
               <div class="crash-control-grid manual-crash-grid">
                 <label><small>BET AMOUNT</small><input id="crashBetInput" type="number" min="50" step="1" inputmode="numeric" value="100" /></label>
@@ -165,7 +175,6 @@
               </div>
               <div class="crash-actions">
                 <button id="crashStartButton" type="button" class="action-button start pressable"><span>START FLIGHT</span><small>Consumes one vehicle flight</small></button>
-                <button id="crashCashButton" type="button" class="action-button cash crash-pullout pressable hidden"><span>PULL OUT NOW</span><small id="crashCashValue">97 F</small></button>
               </div>
               <p class="crash-fair-note">Manual flights only. The multiplier rises slowly and smoothly. Pull out before the hidden failure point or your vehicle redline. A 3% flight fee is already reflected in the shown payout.</p>
             </section>
@@ -590,6 +599,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=30"></script>
+  <script src="app.js?v=31"></script>
 </body>
 </html>

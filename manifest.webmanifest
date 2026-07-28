@@ -1,7 +1,7 @@
 {
   "name": "Froggy Arcade Deluxe",
   "short_name": "Froggy Arcade",
-  "description": "Froggy Arcade with asset-backed loans capped at one billion Froggy, manual smooth Sky Crash flights, quick bet controls, detailed vehicles and offline play.",
+  "description": "Froggy Arcade with an unobstructed manual Sky Crash flight view, compact balances, safe green/grey shop actions, confirmed vehicle refills and asset-backed loans.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

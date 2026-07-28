@@ -3,8 +3,8 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v30';
-  console.info(`Froggy Leap ${BUILD_VERSION}: asset-backed loans and smooth manual Sky Crash loaded`);
+  const BUILD_VERSION = 'v31';
+  console.info(`Froggy Leap ${BUILD_VERSION}: clear flight view, compact balances and safe shop purchases loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
   // The 15-jump curve is intentionally tighter early and highly rewarding at the finish.
@@ -222,7 +222,7 @@
     app: $('app'), canvas: $('gameCanvas'), gameFrame: $('gameFrame'), status: $('statusToast'), crashCanvas: $('crashCanvas'), crashFrame: $('crashFrame'), crashStatus: $('crashStatus'),
     balance: $('balanceLabel'), collectionBalance: $('collectionBalance'), level: $('levelLabel'), xp: $('xpLabel'), xpNext: $('xpNextLabel'), xpRing: $('xpRing'),
     jump: $('jumpLabel'), multiplier: $('multiplierLabel'), risk: $('riskLabel'), payout: $('payoutLabel'), danger: $('dangerLabel'), riskFill: $('riskFill'), riskMarker: $('riskMarker'),
-    leapGamePane: $('leapGamePane'), crashGamePane: $('crashGamePane'), leapGameTab: $('leapGameTab'), crashGameTab: $('crashGameTab'), crashTabStatus: $('crashTabStatus'), crashLicenseCard: $('crashLicenseCard'), crashGameContent: $('crashGameContent'), unlockCrashButton: $('unlockCrashButton'), crashMultiplierLabel: $('crashMultiplierLabel'), crashPayoutLabel: $('crashPayoutLabel'), crashVehicleLabel: $('crashVehicleLabel'), crashChargesLabel: $('crashChargesLabel'), crashVehicleMaxLabel: $('crashVehicleMaxLabel'), crashBetInput: $('crashBetInput'), crashVehicleSelect: $('crashVehicleSelect'), crashQuickBets: $('crashQuickBets'), crashStartButton: $('crashStartButton'), crashCashButton: $('crashCashButton'), crashCashValue: $('crashCashValue'), betDisplay: $('betDisplay'), start: $('startButton'), jumpButton: $('jumpButton'), cash: $('cashButton'), cashValue: $('cashButtonValue'), quickBets: $('quickBets'), betAdjusters: $('betAdjusters'), customBetToggle: $('customBetToggle'), customBetRow: $('customBetRow'), customBetInput: $('customBetInput'), customBetClose: $('customBetClose'), customBetError: $('customBetError'),
+    leapGamePane: $('leapGamePane'), crashGamePane: $('crashGamePane'), leapGameTab: $('leapGameTab'), crashGameTab: $('crashGameTab'), crashTabStatus: $('crashTabStatus'), crashLicenseCard: $('crashLicenseCard'), crashGameContent: $('crashGameContent'), unlockCrashButton: $('unlockCrashButton'), crashMultiplierLabel: $('crashMultiplierLabel'), crashPayoutLabel: $('crashPayoutLabel'), crashVehicleLabel: $('crashVehicleLabel'), crashChargesLabel: $('crashChargesLabel'), crashVehicleMaxLabel: $('crashVehicleMaxLabel'), crashBetInput: $('crashBetInput'), crashVehicleSelect: $('crashVehicleSelect'), crashQuickBets: $('crashQuickBets'), crashStartButton: $('crashStartButton'), crashFlightDock: $('crashFlightDock'), crashCashButton: $('crashCashButton'), crashCashValue: $('crashCashValue'), betDisplay: $('betDisplay'), start: $('startButton'), jumpButton: $('jumpButton'), cash: $('cashButton'), cashValue: $('cashButtonValue'), quickBets: $('quickBets'), betAdjusters: $('betAdjusters'), customBetToggle: $('customBetToggle'), customBetRow: $('customBetRow'), customBetInput: $('customBetInput'), customBetClose: $('customBetClose'), customBetError: $('customBetError'),
     sound: $('soundButton'), bankShortcut: $('bankShortcutButton'), settingsSound: $('settingsSound'), settingsMotion: $('settingsMotion'), luckyBadge: $('luckyBadge'), luckyCount: $('luckyCount'), debtBadge: $('debtBadge'), debtBadgeAmount: $('debtBadgeAmount'), debtBadgeTurns: $('debtBadgeTurns'), debtBadgeStatus: $('debtBadgeStatus'), debtDueDot: $('debtDueDot'), debtDueFlag: $('debtDueFlag'),
     screens: { play:$('playScreen'), collection:$('collectionScreen'), rewards:$('rewardsScreen'), bank:$('bankScreen'), promo:$('promoScreen'), stats:$('statsScreen') },
     collectionGrid: $('collectionGrid'), spin: $('spinButton'), wheelDisc: $('wheelDisc'), rewardDot: $('rewardDot'), streakLabel: $('streakLabel'), streakDays: $('streakDays'),
@@ -247,7 +247,28 @@
   function clamp(n,min,max){ return Math.max(min,Math.min(max,n)); }
   function lerp(a,b,t){ return a+(b-a)*t; }
   function easeOutBack(t){ const c1=1.70158,c3=c1+1; return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2); }
-  function money(n){ return Math.floor(n).toLocaleString(); }
+  function money(n){ return Math.floor(Number(n)||0).toLocaleString('en-US'); }
+
+  function compactMoney(n){
+    const value=Math.floor(Number(n)||0),absolute=Math.abs(value);
+    if(absolute<1000)return money(value);
+    const units=[
+      {value:1,suffix:''},{value:1e3,suffix:'K'},{value:1e6,suffix:'M'},
+      {value:1e9,suffix:'B'},{value:1e12,suffix:'T'},{value:1e15,suffix:'Qa'}
+    ];
+    let unitIndex=1;
+    for(let i=1;i<units.length;i++)if(absolute>=units[i].value)unitIndex=i;
+    let scaled=value/units[unitIndex].value;
+    let decimals=Math.abs(scaled)<10?2:Math.abs(scaled)<100?1:0;
+    let rounded=Number(scaled.toFixed(decimals));
+    if(Math.abs(rounded)>=1000&&unitIndex<units.length-1){
+      unitIndex++;scaled=value/units[unitIndex].value;
+      decimals=Math.abs(scaled)<10?2:Math.abs(scaled)<100?1:0;
+      rounded=Number(scaled.toFixed(decimals));
+    }
+    return `${rounded.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:decimals})}${units[unitIndex].suffix}`;
+  }
+
   function currentPayout(){ return Math.floor(state.bet * MULTIPLIERS[state.jump]); }
   function nextXp(){ return 100 + (state.level-1)*50; }
   function selectedFrog(){ return FROGS.find(x=>x.id===state.selectedFrog) || FROGS[0]; }
@@ -667,11 +688,23 @@
     const current=state.selectedVehicle;els.crashVehicleSelect.innerHTML=VEHICLES.map(v=>`<option value="${v.id}" ${v.id===current?'selected':''} ${vehicleCharges(v.id)<=0?'disabled':''}>${v.name} · ${vehicleCharges(v.id)} flights · ${v.max.toFixed(2)}× redline</option>`).join('');
   }
   function refreshCrashHud(){
-    const v=selectedVehicle(),m=Math.max(1,state.crashMultiplier||1),payout=crashPayoutFor(m);els.crashMultiplierLabel.textContent=`${m.toFixed(2)}×`;els.crashPayoutLabel.textContent=`${money(payout)} F`;els.crashCashValue.textContent=`${money(payout)} F`;els.crashVehicleLabel.textContent=v.name;els.crashChargesLabel.textContent=vehicleCharges(v.id);els.crashVehicleMaxLabel.textContent=`${v.max.toFixed(2)}×`;els.crashBetInput.value=String(state.crashBet);els.crashStartButton.classList.toggle('hidden',state.crashActive);els.crashCashButton.classList.toggle('hidden',!state.crashActive);els.crashCashButton.disabled=state.crashActive&&performance.now()<state.crashStartedAt;if(!state.crashActive)refreshCrashVehicleOptions();
+    const v=selectedVehicle(),m=Math.max(1,state.crashMultiplier||1),payout=crashPayoutFor(m),live=state.crashActive;
+    const exactPayout=`${money(payout)} F`;
+    els.crashMultiplierLabel.textContent=`${m.toFixed(2)}×`;
+    els.crashPayoutLabel.textContent=`${compactMoney(payout)} F`;els.crashPayoutLabel.title=exactPayout;
+    els.crashCashValue.textContent=`Cash out ${compactMoney(payout)} F`;els.crashCashValue.title=exactPayout;
+    els.crashVehicleLabel.textContent=v.name;els.crashChargesLabel.textContent=vehicleCharges(v.id);els.crashVehicleMaxLabel.textContent=`${v.max.toFixed(2)}×`;els.crashBetInput.value=String(state.crashBet);
+    els.crashGameContent.classList.toggle('flight-live',live);
+    els.screens.play.classList.toggle('crash-live',live&&state.selectedGame==='crash');
+    els.crashFlightDock.classList.toggle('hidden',!live);
+    els.crashStartButton.classList.toggle('hidden',live);els.crashCashButton.classList.toggle('hidden',!live);els.crashCashButton.disabled=live&&performance.now()<state.crashStartedAt;
+    if(!live)refreshCrashVehicleOptions();
   }
   function startCrash(){
     if(anyRoundActive()||!gameUnlocked('crash'))return false;const v=selectedVehicle();if(vehicleCharges(v.id)<=0){setCrashStatus('Buy a vehicle flight pack in Collection → Vehicles.','lose');return false;}if(state.crashBet>availableBetBalance()){setCrashStatus('Lower the bet or add more Froggy to your wallet.','lose');return false;}const allocation=allocateRoundStake(state.crashBet);if(!allocation)return false;
-    state.vehicleCharges[v.id]--;state.crashActive=true;state.crashMultiplier=1;state.crashPoint=generateCrashPoint(v.max);state.roundBetForXp=state.crashBet;state.crashRounds++;state.rounds++;session.rounds++;session.net-=state.crashBet;state.crashStartedAt=performance.now()+CRASH_LAUNCH_COUNTDOWN_MS;crashScene.start();setCrashStatus(`${v.name} preparing for takeoff. Pull out manually before failure or the ${v.max.toFixed(2)}× redline.`);audio.start();refresh();return true;
+    state.vehicleCharges[v.id]--;state.crashActive=true;state.crashMultiplier=1;state.crashPoint=generateCrashPoint(v.max);state.roundBetForXp=state.crashBet;state.crashRounds++;state.rounds++;session.rounds++;session.net-=state.crashBet;state.crashStartedAt=performance.now()+CRASH_LAUNCH_COUNTDOWN_MS;crashScene.start();setCrashStatus(`FLIGHT LIVE · Pull out before failure or ${v.max.toFixed(2)}×.`);audio.start();refresh();
+    requestAnimationFrame(()=>{els.crashGamePane.scrollTop=0;els.crashFrame.scrollIntoView({block:'start',behavior:state.effects?'smooth':'auto'});});
+    return true;
   }
   function tickCrashGame(now){
     if(!state.crashActive)return;const elapsed=(now-state.crashStartedAt)/1000;if(elapsed<0){state.crashMultiplier=1;refreshCrashHud();return;}state.crashMultiplier=Math.max(1,Math.exp(elapsed*CRASH_GROWTH_RATE));refreshCrashHud();if(state.crashMultiplier>=state.crashPoint)crashLose();
@@ -1224,7 +1257,10 @@
 
   function refresh(){
     const payout=currentPayout(), risk=effectiveRisk(), xpNeeded=nextXp(), frog=selectedFrog(), lake=selectedLake(), own=ownedWalletBalance();
-    els.balance.textContent=money(state.balance);els.collectionBalance.textContent=money(own); els.level.textContent=`Lv. ${state.level}`; els.xp.textContent=state.xp; els.xpNext.textContent=xpNeeded; els.xpRing.style.setProperty('--xp',`${clamp(state.xp/xpNeeded*100,0,100)}%`);
+    const exactWallet=`${money(state.balance)} F`,exactOwned=`${money(own)} F`;
+    els.balance.textContent=compactMoney(state.balance);els.balance.title=exactWallet;els.balance.setAttribute('aria-label',exactWallet);
+    els.collectionBalance.textContent=compactMoney(own);els.collectionBalance.title=exactOwned;els.collectionBalance.setAttribute('aria-label',exactOwned);
+    els.level.textContent=`Lv. ${state.level}`; els.xp.textContent=state.xp; els.xpNext.textContent=xpNeeded; els.xpRing.style.setProperty('--xp',`${clamp(state.xp/xpNeeded*100,0,100)}%`);
     els.jump.textContent=`${state.jump} / ${RISKS.length}`; els.multiplier.textContent=`${MULTIPLIERS[state.jump].toFixed(2)}×`; els.risk.textContent=state.jump>=RISKS.length?'—':`${risk}%`; els.payout.textContent=`${money(payout)} F`; els.cashValue.textContent=`${money(payout)} F`;
     els.betDisplay.textContent=money(state.bet); els.start.querySelector('small').textContent=`Median ${money(xpMedianBet())} F · +${money(wagerXpBonus())} XP/landing`; els.danger.textContent=state.jump>=RISKS.length?'Legendary leap':dangerName(risk); els.riskFill.style.width=`${risk}%`;els.riskMarker.style.left=`${risk}%`;els.riskMarker.style.background=risk<30?'#52c95a':risk<60?'#f3c442':'#eb506b';
     els.screens.play.classList.toggle('round-live',anyRoundActive());els.screens.play.classList.toggle('can-cash',state.roundActive&&state.jump>0);els.start.classList.toggle('hidden',state.roundActive); els.jumpButton.classList.toggle('hidden',!state.roundActive); els.cash.classList.toggle('hidden',!state.roundActive||state.jump===0); els.jumpButton.disabled=state.animating;els.cash.disabled=state.animating;
@@ -1437,20 +1473,57 @@
 
   function renderCollection(){
     if(collectionMode==='vehicles'){
-      els.collectionGrid.innerHTML=VEHICLES.map(item=>{const charges=vehicleCharges(item.id),selected=state.selectedVehicle===item.id,canLevel=state.level>=item.level,action=selected&&charges>0?'SELECTED':canLevel?`BUY ${item.charges} FLIGHTS · ${money(item.cost)} F`:`LEVEL ${item.level} REQUIRED`;
-        return `<article class="collection-card vehicle-card tier-${item.rarity.toLowerCase()} ${selected?'selected':''}" data-item="${item.id}"><span class="rarity">${item.rarity}</span><div class="collection-art vehicle-shop-art">${vehicleSvg(item)}<i>${item.max.toFixed(2)}× REDLINE</i></div><h3>${item.name}</h3><p>${item.description}</p><span class="vehicle-charge-count">${charges} flights · bank value ${money(vehicleCollateralValue(item))} F</span><button class="collection-action pressable ${charges?'owned':'locked'}" data-collection-action="${item.id}" ${!canLevel?'disabled':''}>${action}</button></article>`;}).join('');return;
+      els.collectionGrid.innerHTML=VEHICLES.map(item=>{
+        const charges=vehicleCharges(item.id),owned=state.ownedVehicles.includes(item.id),selected=state.selectedVehicle===item.id,canLevel=state.level>=item.level;
+        let ownershipButton='';
+        if(!canLevel){
+          ownershipButton=`<button class="collection-action shop-unavailable" disabled>LEVEL ${item.level} REQUIRED</button>`;
+        }else if(!owned){
+          ownershipButton=`<button class="collection-action shop-purchase pressable" data-collection-action="${item.id}">BUY VEHICLE + ${item.charges} FLIGHTS · ${money(item.cost)} F</button>`;
+        }else if(selected){
+          ownershipButton='<button class="collection-action shop-owned" disabled>SELECTED · OWNED</button>';
+        }else{
+          ownershipButton=`<button class="collection-action shop-owned pressable" data-vehicle-select="${item.id}">SELECT VEHICLE · OWNED</button>`;
+        }
+        const refillButton=owned
+          ? `<button class="collection-action shop-purchase vehicle-refill-button pressable" data-vehicle-refill="${item.id}">BUY ${item.charges} FLIGHTS · ${money(item.cost)} F</button>`
+          : '';
+        return `<article class="collection-card vehicle-card tier-${item.rarity.toLowerCase()} ${selected?'selected':''}" data-item="${item.id}"><span class="rarity">${item.rarity}</span><div class="collection-art vehicle-shop-art">${vehicleSvg(item)}<i>${item.max.toFixed(2)}× REDLINE</i></div><h3>${item.name}</h3><p>${item.description}</p><span class="vehicle-charge-count">${charges} flights · bank value ${money(vehicleCollateralValue(item))} F</span><div class="vehicle-shop-actions">${ownershipButton}${refillButton}</div></article>`;
+      }).join('');return;
     }
     const items=collectionMode==='frogs'?FROGS:LAKES,unlocked=collectionMode==='frogs'?state.unlockedFrogs:state.unlockedLakes,selected=collectionMode==='frogs'?state.selectedFrog:state.selectedLake;
-    els.collectionGrid.innerHTML=items.map(item=>{const owned=unlocked.includes(item.id),equipped=selected===item.id,canLevel=state.level>=item.level,action=equipped?'EQUIPPED':owned?'EQUIP':canLevel?`UNLOCK · ${money(item.cost)} F`:`LEVEL ${item.level} REQUIRED`,art=collectionMode==='frogs'?frogSvg(item):`<span class="lake-art-emoji">${item.emoji}</span><i class="lake-art-ripple"></i>`,tier=String(item.rarity||'common').toLowerCase().replace(/[^a-z0-9]+/g,'-'),collateral=collectionMode==='frogs'&&item.id!=='classic'?`<span class="collateral-value">BANK VALUE · ${money(skinCollateralValue(item))} F</span>`:collectionMode==='lakes'&&item.cost>0?`<span class="collateral-value">BANK VALUE · ${money(lakeCollateralValue(item))} F</span>`:'';
-      return `<article class="collection-card ${collectionMode==='lakes'?'lake':''} tier-${tier} ${equipped?'selected':''}" data-item="${item.id}" style="--card-a:${item.colors?item.colors[0]:item.a};--card-b:${item.colors?item.colors[1]:item.b}"><span class="rarity">${item.rarity}</span><div class="collection-art">${art}<i class="portrait-spark s1"></i><i class="portrait-spark s2"></i></div><h3>${item.name}</h3><p>${item.description}</p>${collateral}<button class="collection-action pressable ${owned?'owned':'locked'}" data-collection-action="${item.id}" ${equipped?'disabled':''}>${action}</button></article>`;}).join('');
+    els.collectionGrid.innerHTML=items.map(item=>{
+      const owned=unlocked.includes(item.id),equipped=selected===item.id,canLevel=state.level>=item.level;
+      const action=equipped?'EQUIPPED':owned?'EQUIP':canLevel?`UNLOCK · ${money(item.cost)} F`:`LEVEL ${item.level} REQUIRED`;
+      const actionClass=!canLevel&&!owned?'shop-unavailable':owned?'shop-owned':'shop-purchase';
+      const art=collectionMode==='frogs'?frogSvg(item):`<span class="lake-art-emoji">${item.emoji}</span><i class="lake-art-ripple"></i>`,tier=String(item.rarity||'common').toLowerCase().replace(/[^a-z0-9]+/g,'-'),collateral=collectionMode==='frogs'&&item.id!=='classic'?`<span class="collateral-value">BANK VALUE · ${money(skinCollateralValue(item))} F</span>`:collectionMode==='lakes'&&item.cost>0?`<span class="collateral-value">BANK VALUE · ${money(lakeCollateralValue(item))} F</span>`:'';
+      return `<article class="collection-card ${collectionMode==='lakes'?'lake':''} tier-${tier} ${equipped?'selected':''}" data-item="${item.id}" style="--card-a:${item.colors?item.colors[0]:item.a};--card-b:${item.colors?item.colors[1]:item.b}"><span class="rarity">${item.rarity}</span><div class="collection-art">${art}<i class="portrait-spark s1"></i><i class="portrait-spark s2"></i></div><h3>${item.name}</h3><p>${item.description}</p>${collateral}<button class="collection-action pressable ${actionClass}" data-collection-action="${item.id}" ${equipped||(!canLevel&&!owned)?'disabled':''}>${action}</button></article>`;
+    }).join('');
   }
 
+  function selectVehicle(id){
+    if(anyRoundActive())return false;
+    const item=VEHICLES.find(v=>v.id===id);if(!item||!state.ownedVehicles.includes(id))return false;
+    state.selectedVehicle=id;audio.tap();setStatus(`${item.name} selected. No flights were purchased.`,'win');refresh();renderCollection();return true;
+  }
+
+  function buyVehicleFlights(id,{skipConfirm=false}={}){
+    if(anyRoundActive())return false;
+    const item=VEHICLES.find(v=>v.id===id);if(!item||!state.ownedVehicles.includes(id))return false;
+    const current=vehicleCharges(id),message=`Buy ${item.charges} ${item.name} flights for ${money(item.cost)} F?\n\nCurrent flights: ${current}\nAfter purchase: ${current+item.charges}`;
+    if(!skipConfirm&&!window.confirm(message)){setStatus('Flight purchase cancelled.','');return false;}
+    if(!spendOwnedFunds(item.cost)){setStatus(`You need ${money(item.cost-ownedWalletBalance())} more Froggy.`,'lose');return false;}
+    state.vehicleCharges[id]=current+item.charges;audio.reward();confettiBurst(28);setStatus(`${item.name}: purchased ${item.charges} flights for ${money(item.cost)} F.`,'win');refresh();renderCollection();return true;
+  }
 
   function collectionAction(id){
     if(anyRoundActive())return;
     if(collectionMode==='vehicles'){
-      const item=VEHICLES.find(v=>v.id===id);if(!item)return;if(state.level<item.level){setStatus(`Reach level ${item.level} first.`,'lose');return;}if(!spendOwnedFunds(item.cost)){setStatus(`You need ${money(item.cost-ownedWalletBalance())} more Froggy.`,'lose');return;}
-      state.vehicleCharges[id]=vehicleCharges(id)+item.charges;if(!state.ownedVehicles.includes(id))state.ownedVehicles.push(id);state.selectedVehicle=id;audio.reward();confettiBurst(32);setStatus(`${item.name}: +${item.charges} flights.`,'win');refresh();renderCollection();return;
+      const item=VEHICLES.find(v=>v.id===id);if(!item)return;
+      if(state.ownedVehicles.includes(id)){selectVehicle(id);return;}
+      if(state.level<item.level){setStatus(`Reach level ${item.level} first.`,'lose');return;}
+      if(!spendOwnedFunds(item.cost)){setStatus(`You need ${money(item.cost-ownedWalletBalance())} more Froggy.`,'lose');return;}
+      state.vehicleCharges[id]=vehicleCharges(id)+item.charges;state.ownedVehicles.push(id);state.selectedVehicle=id;audio.reward();confettiBurst(32);setStatus(`${item.name} purchased with ${item.charges} flights.`,'win');refresh();renderCollection();return;
     }
     const items=collectionMode==='frogs'?FROGS:LAKES,item=items.find(x=>x.id===id);if(!item)return;const unlockKey=collectionMode==='frogs'?'unlockedFrogs':'unlockedLakes',selectKey=collectionMode==='frogs'?'selectedFrog':'selectedLake';
     if(state[unlockKey].includes(id)){state[selectKey]=id;audio.reward();setStatus(`${item.name} equipped!`,'win');}
@@ -1459,7 +1532,6 @@
     else{state[unlockKey].push(id);state[selectKey]=id;audio.reward();confettiBurst(28);setStatus(`${item.name} unlocked!`,'win');}
     refresh();renderCollection();scene.reset();
   }
-
 
 
   function setPromoMessage(text,kind=''){
@@ -1644,7 +1716,11 @@
     $('howToButton').addEventListener('click',()=>openModal(els.howToModal));$('resetButton').addEventListener('click',resetProgress);$('profileButton').addEventListener('click',()=>navigate('stats'));
     document.querySelectorAll('.nav-button').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.screen)));
     document.querySelectorAll('.segment').forEach(b=>b.addEventListener('click',()=>{collectionMode=b.dataset.collection;document.querySelectorAll('.segment').forEach(x=>x.classList.toggle('active',x===b));renderCollection();audio.tap();}));
-    els.collectionGrid.addEventListener('click',e=>{const b=e.target.closest('[data-collection-action]');if(b)collectionAction(b.dataset.collectionAction);});
+    els.collectionGrid.addEventListener('click',e=>{
+      const refill=e.target.closest('[data-vehicle-refill]');if(refill){buyVehicleFlights(refill.dataset.vehicleRefill);return;}
+      const select=e.target.closest('[data-vehicle-select]');if(select){selectVehicle(select.dataset.vehicleSelect);return;}
+      const b=e.target.closest('[data-collection-action]');if(b)collectionAction(b.dataset.collectionAction);
+    });
     els.spin.addEventListener('click',spinDaily);els.installButton.addEventListener('click',installGame);
     els.promoForm.addEventListener('submit',e=>{e.preventDefault();redeemPromo(els.promoInput.value);});
     document.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('click',closeModal));els.modalBackdrop.addEventListener('click',e=>{if(e.target===els.modalBackdrop)closeModal();});
@@ -1663,10 +1739,10 @@
       state=deepClone(DEFAULT_STATE);refresh();
       if(!gameUnlocked('leap')||gameUnlocked('crash'))throw new Error('game license defaults failed');
       state.balance=CRASH_LICENSE_COST+1000000;if(!unlockGame('crash')||!gameUnlocked('crash')||vehicleCharges('glider')!==5)throw new Error('crash unlock failed');
-      state.vehicleCharges.glider=5;state.ownedVehicles=['glider'];state.selectedVehicle='glider';state.crashBet=100;state.balance=1000;if(!startCrash()||!state.crashActive)throw new Error('crash start failed');state.crashStartedAt=performance.now()-5000;state.crashMultiplier=1.5;if(!crashCashOut()||state.crashActive||state.balance<=900)throw new Error('manual crash cashout failed');closeModal();
+      if(compactMoney(1240000)!=='1.24M'||compactMoney(1000000000)!=='1B'||compactMoney(999)!=='999')throw new Error('compact money formatting failed');state.vehicleCharges.glider=5;state.ownedVehicles=['glider'];state.selectedVehicle='glider';state.crashBet=100;state.balance=1000;if(!startCrash()||!state.crashActive)throw new Error('crash start failed');if(!els.crashGameContent.classList.contains('flight-live')||els.crashFlightDock.classList.contains('hidden'))throw new Error('clear flight layout failed');state.crashStartedAt=performance.now()-5000;state.crashMultiplier=1.5;if(!crashCashOut()||state.crashActive||state.balance<=900)throw new Error('manual crash cashout failed');closeModal();
       state=deepClone(DEFAULT_STATE);state.unlockedFrogs.push('king');state.unlockedLakes.push('swamp');state.ownedVehicles.push('glider');state.unlockedGames.push('crash');state.piggyBalance=1000000;const assets=collateralBreakdown();if(assets.total<=1000000||debtLimit()<=BASE_UNSECURED_CREDIT||debtLimit()>MAX_LOAN_PAYOUT)throw new Error('asset-backed limit failed');if(loanQuote(10000).rate!==.08)throw new Error('fixed loan rate failed');if(!takeLoan(10000,{skipConfirm:true})||state.balance!==11000||state.pledgedPiggy!==1000000)throw new Error('asset-backed loan failed');setPiggyTransferMode('withdraw');if(piggyTransferMaximum()!==0)throw new Error('pledged Piggy was withdrawable');
-      state=deepClone(DEFAULT_STATE);state.balance=1000000;state.level=10;collectionMode='vehicles';collectionAction('glider');if(vehicleCharges('glider')!==10||!vehicleOwned('glider'))throw new Error('vehicle ownership failed');if(VEHICLES[0].cost!==750000||VEHICLES[0].max!==7.5||VEHICLES[1].cost!==4000000||VEHICLES[1].max!==24||VEHICLES[2].cost!==20000000||VEHICLES[2].max!==75||VEHICLES[3].cost!==120000000||VEHICLES[3].max!==300)throw new Error('v29 vehicle upgrade failed');
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v30 asset-backed loans, 1B cap, smooth manual Sky Crash, bet buttons and detailed vehicles';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      state=deepClone(DEFAULT_STATE);state.balance=3000000;state.level=10;collectionMode='vehicles';collectionAction('glider');if(vehicleCharges('glider')!==10||!state.ownedVehicles.includes('glider'))throw new Error('vehicle purchase failed');const afterPurchase=state.balance;collectionAction('glider');if(state.balance!==afterPurchase||vehicleCharges('glider')!==10)throw new Error('vehicle selection accidentally purchased flights');if(!buyVehicleFlights('glider',{skipConfirm:true})||vehicleCharges('glider')!==20)throw new Error('explicit flight refill failed');if(VEHICLES[0].cost!==750000||VEHICLES[0].max!==7.5||VEHICLES[1].cost!==4000000||VEHICLES[1].max!==24||VEHICLES[2].cost!==20000000||VEHICLES[2].max!==75||VEHICLES[3].cost!==120000000||VEHICLES[3].max!==300)throw new Error('v29 vehicle upgrade failed');
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v31 clear flight view, compact balances, safe shop states, confirmed flight refills, asset loans and detailed vehicles';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 
@@ -1675,5 +1751,5 @@
   if(!state.tutorialSeen&&!TEST_MODE){state.tutorialSeen=true;saveState();setTimeout(()=>openModal(els.howToModal),600);}
   if(TEST_MODE)runSelfTest();
 
-  window.FroggyGame={version:BUILD_VERSION,getState:()=>deepClone(state),setGameMode,unlockGame,startCrash,crashCashOut,crashLose,setCrashBet,crashPayoutFor,selectBet,setBetAmount,adjustBet,applyCustomBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,spinDaily,redeemPromo,creditBalance,takeLoan,repayDebt,completeDebtTurn,debtInstallment,debtLimit,availableCredit,maxSingleLoan,collateralBreakdown,collateralLoanLimit,allocateRoundStake,ownedWalletBalance,finishCompletedRound,earlyPayoffAmount,earlyPayoffCashRequired,earlyPayoffSavings,loanQuote,transferPiggy,advancePiggyBankRound,selectedVehicle,vehicleCharges,vehicleOwned,setBankPane,wheelSegments:deepClone(WHEEL_SEGMENTS),reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();refresh();}};
+  window.FroggyGame={version:BUILD_VERSION,compactMoney,selectVehicle,buyVehicleFlights,getState:()=>deepClone(state),setGameMode,unlockGame,startCrash,crashCashOut,crashLose,setCrashBet,crashPayoutFor,selectBet,setBetAmount,adjustBet,applyCustomBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,spinDaily,redeemPromo,creditBalance,takeLoan,repayDebt,completeDebtTurn,debtInstallment,debtLimit,availableCredit,maxSingleLoan,collateralBreakdown,collateralLoanLimit,allocateRoundStake,ownedWalletBalance,finishCompletedRound,earlyPayoffAmount,earlyPayoffCashRequired,earlyPayoffSavings,loanQuote,transferPiggy,advancePiggyBankRound,selectedVehicle,vehicleCharges,vehicleOwned,setBankPane,wheelSegments:deepClone(WHEEL_SEGMENTS),reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();refresh();}};
 })();

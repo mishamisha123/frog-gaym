@@ -2418,3 +2418,66 @@ body {
   .crash-bet-tools button{min-height:36px}
   .asset-credit-summary{grid-template-columns:1fr}
 }
+
+
+/* ========================================================================== 
+   v31 — clear manual flight view, compact balances and safe shop actions
+   ========================================================================== */
+
+.balance-pill strong,.mini-balance b{min-width:0;font-variant-numeric:tabular-nums;letter-spacing:-.02em;white-space:nowrap}
+.balance-pill strong{font-size:clamp(10px,1.1vw,13px)}
+
+/* Purchase meaning is consistent: green buys, grey means owned/selected/locked. */
+.collection-action.shop-purchase{color:#10283a;background:linear-gradient(180deg,#dfff67,#75d853);box-shadow:inset 0 -3px rgba(24,91,46,.13)}
+.collection-action.shop-owned,.collection-action.shop-unavailable{color:#637278;background:#dfe6df;box-shadow:none}
+.collection-action.shop-owned:not(:disabled){cursor:pointer}
+.collection-action.shop-unavailable,.collection-action:disabled{cursor:not-allowed;opacity:.76}
+.vehicle-shop-actions{display:grid;gap:6px;margin-top:8px}
+.vehicle-shop-actions .collection-action{margin-top:0}
+.vehicle-refill-button{border:2px solid rgba(31,121,56,.18)}
+
+.crash-flight-dock{display:grid;grid-template-columns:minmax(0,1fr) minmax(270px,.62fr);align-items:center;gap:12px;padding:10px 12px;border-radius:22px}
+.crash-flight-dock-copy{min-width:0;display:grid;gap:3px;padding-left:5px}
+.crash-flight-dock-copy small{color:var(--green-dark);font-size:6.5px;font-weight:1000;letter-spacing:.14em}
+.crash-flight-dock-copy b{overflow:hidden;color:var(--ink-soft);font-size:10px;text-overflow:ellipsis;white-space:nowrap}
+
+#crashGameContent.flight-live .crash-control-panel{display:none!important}
+#crashGameContent.flight-live{grid-template-columns:1fr!important;grid-template-rows:minmax(0,1fr) auto;gap:10px;align-items:stretch}
+#crashGameContent.flight-live .crash-frame{width:100%;height:clamp(590px,calc(100svh - 230px),820px);min-height:520px;margin:0;border-radius:30px}
+#crashGameContent.flight-live .crash-hud{left:auto;right:12px;top:12px;bottom:auto;width:145px;display:grid;grid-template-columns:1fr;padding:6px;border-radius:14px;background:rgba(255,255,249,.78);box-shadow:0 9px 24px rgba(4,26,47,.16)}
+#crashGameContent.flight-live .crash-hud>div:nth-child(-n+3){display:none}
+#crashGameContent.flight-live .crash-hud>div{padding:5px 7px;text-align:center}
+#crashGameContent.flight-live .crash-hud small{font-size:5px}
+#crashGameContent.flight-live .crash-hud b{font-size:10px}
+#crashGameContent.flight-live .crash-status{left:12px;right:auto;top:12px;max-width:min(360px,44%);padding:8px 11px;overflow:hidden;border-radius:14px;color:#fff;background:rgba(8,31,55,.72);font-size:8px;text-overflow:ellipsis;white-space:nowrap;box-shadow:0 9px 24px rgba(4,26,47,.16)}
+#crashGameContent.flight-live .crash-multiplier{top:15%}
+#crashGameContent.flight-live .crash-multiplier b{font-size:clamp(52px,8vw,82px)}
+#crashGameContent.flight-live .crash-pullout{width:100%;min-height:70px;margin:0}
+#crashGameContent.flight-live .crash-pullout small{font-size:10px;font-weight:1000}
+
+@media(max-width:759px){
+  #playScreen.crash-live{gap:0}
+  #playScreen.crash-live>.arcade-switcher{display:none}
+  #playScreen.crash-live #crashGamePane:not(.hidden){height:100%;overflow:hidden}
+  #playScreen.crash-live #crashGameContent.flight-live{width:100%;height:calc(100svh - 146px - var(--safe-top) - var(--safe-bottom));min-height:390px;display:grid;grid-template-rows:minmax(0,1fr) auto;overflow:hidden}
+  #playScreen.crash-live #crashGameContent.flight-live .crash-frame{height:100%;min-height:0;border-radius:23px}
+  #playScreen.crash-live .crash-flight-dock{grid-template-columns:1fr;gap:0;padding:6px;border-radius:17px}
+  #playScreen.crash-live .crash-flight-dock-copy{display:none}
+  #playScreen.crash-live .crash-pullout{min-height:62px;border-radius:14px}
+  #playScreen.crash-live .crash-pullout span{font-size:16px!important}
+  #crashGameContent.flight-live .crash-status{left:8px;top:8px;max-width:42%;padding:6px 8px;font-size:6.5px}
+  #crashGameContent.flight-live .crash-hud{right:8px;top:8px;width:108px;padding:4px}
+  #crashGameContent.flight-live .crash-multiplier{top:17%}
+  #crashGameContent.flight-live .crash-multiplier small{font-size:6px}
+  #crashGameContent.flight-live .crash-multiplier b{font-size:46px}
+}
+@media(max-width:430px){
+  .balance-pill{min-width:64px;max-width:92px}
+  .balance-pill strong{font-size:11px}
+  #playScreen.crash-live #crashGameContent.flight-live{height:calc(100svh - 139px - var(--safe-top) - var(--safe-bottom));min-height:360px}
+}
+@media(max-width:370px),(max-height:650px){
+  #playScreen.crash-live #crashGameContent.flight-live{height:calc(100svh - 132px - var(--safe-top) - var(--safe-bottom));min-height:330px}
+  #playScreen.crash-live .crash-pullout{min-height:54px}
+  #crashGameContent.flight-live .crash-multiplier b{font-size:40px}
+}

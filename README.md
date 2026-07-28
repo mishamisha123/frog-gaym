@@ -827,3 +827,29 @@ Repayment history is still recorded for stats but no longer increases the borrow
 - Exact typing remains available but is no longer required.
 - All four vehicle models were redrawn with layered vector shapes, metallic gradients, cockpit
   glass, wings/fins, propulsion trails, lighting and frog cockpit placement.
+
+
+## v31 clear flight view and safe shop
+
+### Sky Crash
+
+- Starting a flight hides the entire betting and vehicle setup panel.
+- The sky animation expands across the available game area.
+- PULL OUT NOW sits in a separate dock below the animation, never over the aircraft.
+- On phones, the Arcade selector hides while a flight is active.
+- The four-card HUD collapses to one small redline indicator.
+- The status message becomes a small corner chip.
+- The multiplier remains visible without covering the plane.
+
+### Compact balances
+
+Narrow balance displays use compact values such as 1.24K, 1.24M, 1B and 1.25T. The exact amount remains in title and accessibility metadata. Detailed bank and transaction text still uses full values.
+
+### Shop button safety
+
+- Green always means a purchase will spend Froggy.
+- Grey means locked, selected or already owned.
+- Owned vehicles have a separate grey SELECT VEHICLE button.
+- Buying flights has its own green BUY FLIGHTS button.
+- Selecting a vehicle never purchases flights.
+- Every flight refill shows a native confirmation with price, current flights and resulting flights before charging the wallet.
