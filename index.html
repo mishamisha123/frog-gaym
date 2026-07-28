@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=31" />
+  <link rel="stylesheet" href="styles.css?v=33" />
   <title>Froggy Arcade Deluxe</title>
 </head>
 <body>
@@ -102,7 +102,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v31 · FROGGY ARCADE</div>
+          <div class="build-version" aria-label="Installed game version">v33 · FROGGY ARCADE</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -142,7 +142,7 @@
             <div id="crashFrame" class="crash-frame">
               <canvas id="crashCanvas" aria-label="Animated frog rising in a flying vehicle"></canvas>
               <div class="crash-vignette"></div>
-              <div id="crashStatus" class="crash-status glass">Choose a vehicle and start a manual flight.</div>
+              <div id="crashStatus" class="crash-status glass" tabindex="-1" aria-disabled="true">Choose a vehicle and start a manual flight.</div>
               <div class="crash-multiplier"><small>LIVE MULTIPLIER</small><b id="crashMultiplierLabel">1.00×</b></div>
               <div class="crash-hud glass">
                 <div><small>POTENTIAL</small><b id="crashPayoutLabel">100 F</b></div>
@@ -285,16 +285,17 @@
 
             <div class="simple-tier-card credit-health-card asset-credit-card">
               <div class="credit-health-grid asset-credit-summary">
-                <div><small>APPRAISED ASSETS</small><b id="creditTierLabel">0 F</b><span id="creditTierCeilingLabel">Skins, lakes, vehicles, licenses and Piggy</span></div>
-                <div><small>BANK ADVANCE</small><b id="creditScoreLabel">50%</b><span id="creditScoreGradeLabel">of appraised collateral</span></div>
-                <div><small>MAXIMUM LOAN</small><b id="debtLimitLabel">5,000 F</b><span id="creditLimitFactorLabel">1B F hard cap</span></div>
+                <div><small>TOTAL ASSET VALUE</small><b id="creditTierLabel">0 F</b><span id="creditTierCeilingLabel">Every paid asset uses its full Bank Value</span></div>
+                <div><small>AVAILABLE COLLATERAL</small><b id="creditScoreLabel">0 F</b><span id="creditScoreGradeLabel">Unused purchased flights are included</span></div>
+                <div><small>AVAILABLE TO BORROW</small><b id="debtLimitLabel">5,000 F</b><span id="creditLimitFactorLabel">1B F hard cap</span></div>
               </div>
               <div class="simple-tier-progress"><i id="creditTierProgressFill"></i></div>
-              <p><strong id="creditHistoryLabel">5,000 F</strong> starter allowance · <span id="creditNextTierLabel">More owned assets raise the limit</span></p>
-              <div class="asset-breakdown" aria-label="Collateral breakdown">
-                <span><small>SKINS</small><b id="skinAssetLabel">0 F</b></span>
+              <p><strong id="creditHistoryLabel">5,000 F starter credit</strong> · <span id="creditNextTierLabel">Each 1 F of Bank Value adds 1 F of borrowing capacity</span></p>
+              <div class="asset-breakdown six-part" aria-label="Bank Value breakdown">
+                <span><small>CHARACTERS</small><b id="skinAssetLabel">0 F</b></span>
                 <span><small>LAKES</small><b id="lakeAssetLabel">0 F</b></span>
-                <span><small>VEHICLES</small><b id="vehicleAssetLabel">0 F</b></span>
+                <span><small>VEHICLE MODELS</small><b id="vehicleAssetLabel">0 F</b></span>
+                <span><small>UNUSED FLIGHTS</small><b id="flightAssetLabel">0 F</b></span>
                 <span><small>LICENSES</small><b id="licenseAssetLabel">0 F</b></span>
                 <span><small>PIGGY</small><b id="piggyAssetLabel">0 F</b></span>
               </div>
@@ -321,26 +322,27 @@
                 <div><small>STATUS</small><b id="debtTurnsLabel">No debt</b></div>
                 <div><small>REMAINING</small><b id="debtAmountLabel">0 F</b></div>
                 <div><small>CASH TO PAY OFF</small><b id="debtPayoffLabel">0 F</b></div>
-                <div><small>PLEDGED PIGGY</small><b id="borrowedWalletBankLabel">0 F</b></div>
+                <div><small>PLEDGED COLLATERAL</small><b id="borrowedWalletBankLabel">0 F</b></div>
                 <div><small>LOAN RATE</small><b id="activeLoanRateLabel">8.0%</b></div>
               </div>
 
               <div class="early-savings-line">
                 Paying off now saves <b id="debtInterestSavedLabel">0 F</b> in future interest and releases pledged assets.
               </div>
+              <div id="activePledgeList" class="active-pledge-list">No assets pledged.</div>
 
               <p class="loan-action-location-note">Payment controls stay visible above the navigation bar.</p>
             </div>
 
             <p id="debtMessage" class="debt-message" role="status" aria-live="polite">
-              Your loan limit comes from assets you currently own—not repeated repayment farming.
+              Your available loan equals the Bank Value of collateral you choose to pledge, plus 5,000 F starter credit.
             </p>
 
             <div class="simple-loan-rules">
               <span>8% total interest</span>
               <span>10 fixed payments</span>
               <span>Due every 5 rounds</span>
-              <span>Assets seized before levels</span><span>1B F principal cap</span>
+              <span>Only pledged assets can be seized</span><span>1B F principal cap</span>
             </div>
           </section>
 
@@ -474,6 +476,7 @@
         <small id="resultKicker">ROUND COMPLETE</small>
         <h2 id="resultTitle">Smart cash-out!</h2>
         <div id="resultAmount" class="result-amount">+115 F</div>
+        <div id="resultProfit" class="result-profit hidden"><small>PROFIT</small><b>+15 F</b></div>
         <p id="resultText">You locked in your Froggy.</p>
         <button id="resultButton" class="action-button start pressable"><span>PLAY AGAIN</span><small>Choose another bet</small></button>
       </div>
@@ -540,13 +543,29 @@
             <div><small>AMOUNT DUE</small><b id="loanQuotePaymentLabel">54 F every 5 rounds</b></div>
             <div><small>FULL DURATION</small><b>50 completed rounds</b></div>
             <div><small>PAY OFF TODAY</small><b id="loanQuotePayoffLabel">500 F</b></div>
-            <div><small>COLLATERAL SUPPORT</small><b id="loanQuoteLeverageLabel">1,000 F appraised</b></div>
-            <div><small>LOAN CAP</small><b>Never above 1,000,000,000 F</b></div>
+            <div><small>COLLATERAL REQUIRED</small><b id="loanQuoteLeverageLabel">0 F</b></div>
+            <div><small>PLEDGED VALUE</small><b id="loanQuotePledgedLabel">0 F</b></div>
           </div>
 
+          <section class="loan-collateral-picker" aria-label="Choose loan collateral">
+            <div class="loan-collateral-head">
+              <div><small>SELECT COLLATERAL</small><b>Choose exactly what the Bank may seize.</b></div>
+              <div class="loan-collateral-tools">
+                <button id="loanCollateralAutoButton" type="button" class="pressable">AUTO-PLEDGE</button>
+                <button id="loanCollateralClearButton" type="button" class="pressable">CLEAR</button>
+              </div>
+            </div>
+            <div class="loan-collateral-summary">
+              <span>Required <b id="loanCollateralRequiredLabel">0 F</b></span>
+              <span>Selected <b id="loanCollateralSelectedLabel">0 F</b></span>
+              <span id="loanCollateralShortfallLabel">Fully covered</span>
+            </div>
+            <div id="loanCollateralList" class="loan-collateral-list"></div>
+          </section>
+
           <div class="loan-quote-note">
-            <b>No overlapping loans.</b>
-            <span>Early payoff has no penalty and removes all future interest that has not yet been earned.</span>
+            <b>No lending-rate reduction.</b>
+            <span>Every selected asset contributes its full displayed Bank Value. Unused purchased flights count and pledged flights are reserved until payoff.</span>
           </div>
         </div>
 
@@ -569,15 +588,17 @@
             <span>You receive</span><b id="loanWarningAmountLabel">500 F</b>
             <span>Fixed payment</span><b id="loanWarningPaymentLabel">54 F × 10</b>
             <span>Scheduled total</span><b id="loanWarningTotalLabel">540 F</b>
+            <span>Pledged value</span><b id="loanWarningCollateralLabel">0 F</b>
           </div>
+          <div id="loanWarningPledgeList" class="loan-warning-pledges">No collateral required.</div>
 
           <div class="loan-warning-list">
-            <p><b>1.</b> Your maximum is a 5,000-Froggy starter allowance plus 50% of the bank-appraised value of owned assets, capped at 1 billion Froggy.</p>
-            <p><b>2.</b> Paid skins, lakes, owned vehicle models, paid game licenses, and 90% of Piggy savings contribute collateral value.</p>
-            <p><b>3.</b> Loan money enters the normal wallet. There is no separate leverage mode, tagged balance, loss surcharge, or automatic profit sweep.</p>
-            <p><b>4.</b> The next fixed payment may be paid early and resets the five-round countdown. Early payoff removes unearned interest.</p>
-            <p><b>5.</b> Piggy savings already present when the loan is taken are pledged and cannot be withdrawn until the loan is cleared.</p>
-            <p><b>6.</b> If overdue, pledged Piggy and owned assets are seized before any level penalty. Equipped cosmetics may be removed.</p>
+            <p><b>1.</b> The first 5,000 Froggy is unsecured. Every Froggy above that amount must be covered by selected collateral at its full Bank Value.</p>
+            <p><b>2.</b> Characters, lakes, vehicle models, unused purchased flights, paid game licenses, and selected Piggy savings may be pledged.</p>
+            <p><b>3.</b> Pledged flights are reserved and cannot be used in Sky Crash until the loan is cleared.</p>
+            <p><b>4.</b> Loan money enters the normal wallet. There is no separate leverage toggle, tagged balance, loss surcharge, or automatic profit sweep.</p>
+            <p><b>5.</b> The next fixed payment may be paid early and resets the five-round countdown. Early payoff removes unearned interest.</p>
+            <p><b>6.</b> If overdue, only the assets listed above may be seized before any level penalty.</p>
             <p><b>7.</b> Froggy is fictional game currency—not real credit or cash.</p>
           </div>
         </div>
@@ -599,6 +620,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=31"></script>
+  <script src="app.js?v=33"></script>
 </body>
 </html>

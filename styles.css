@@ -2481,3 +2481,317 @@ body {
   #playScreen.crash-live .crash-pullout{min-height:54px}
   #crashGameContent.flight-live .crash-multiplier b{font-size:40px}
 }
+
+
+/* ==========================================================================
+   v32 — direct selected collateral, reserved flights, clearer results
+   ========================================================================== */
+
+.result-profit {
+  display:inline-grid;
+  grid-template-columns:auto auto;
+  align-items:center;
+  gap:8px;
+  margin:-1px auto 8px;
+  padding:7px 12px;
+  border-radius:999px;
+  background:#e8ffdc;
+  color:#247942;
+}
+.result-profit small {
+  font-size:7px;
+  letter-spacing:.12em;
+  font-weight:1000;
+}
+.result-profit b {
+  font-size:15px;
+}
+
+.asset-breakdown.six-part {
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+
+.active-pledge-list,
+.loan-warning-pledges {
+  display:grid;
+  gap:5px;
+  margin-top:9px;
+  padding:10px;
+  border-radius:14px;
+  background:rgba(16,40,58,.055);
+  color:var(--ink-soft);
+  font-size:8px;
+  line-height:1.35;
+}
+.active-pledge-list span,
+.loan-warning-pledges span {
+  display:block;
+}
+
+.loan-collateral-picker {
+  margin-top:11px;
+  padding:11px;
+  border:1px solid rgba(16,40,58,.09);
+  border-radius:18px;
+  background:#f8fbed;
+}
+.loan-collateral-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+}
+.loan-collateral-head > div:first-child {
+  display:grid;
+  gap:2px;
+}
+.loan-collateral-head small {
+  color:var(--green-dark);
+  font-size:7px;
+  letter-spacing:.1em;
+  font-weight:1000;
+}
+.loan-collateral-head b {
+  font-size:10px;
+}
+.loan-collateral-tools {
+  display:flex;
+  gap:5px;
+}
+.loan-collateral-tools button {
+  min-height:31px;
+  padding:0 9px;
+  border-radius:10px;
+  color:#10283a;
+  background:#dfff67;
+  font-size:7px;
+  font-weight:1000;
+}
+#loanCollateralClearButton {
+  background:#e6ece2;
+}
+.loan-collateral-summary {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:5px;
+  margin:9px 0 7px;
+}
+.loan-collateral-summary span {
+  padding:7px;
+  border-radius:11px;
+  background:white;
+  color:var(--ink-soft);
+  font-size:7px;
+  text-align:center;
+}
+.loan-collateral-summary b {
+  display:block;
+  margin-top:2px;
+  color:var(--ink);
+  font-size:9px;
+}
+#loanCollateralShortfallLabel {
+  display:grid;
+  place-items:center;
+  color:#247942;
+  font-weight:1000;
+}
+#loanCollateralShortfallLabel.short {
+  color:#c73a54;
+  background:#fff0f2;
+}
+.loan-collateral-list {
+  display:grid;
+  gap:6px;
+  max-height:245px;
+  overflow:auto;
+  overscroll-behavior:contain;
+}
+.collateral-choice,
+.collateral-quantity-row {
+  width:100%;
+  min-width:0;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  align-items:center;
+  gap:8px;
+  padding:9px;
+  border-radius:13px;
+  background:white;
+  border:1px solid rgba(16,40,58,.07);
+  text-align:left;
+}
+.collateral-choice.selected {
+  border-color:#68bd55;
+  background:#eaffdf;
+}
+.collateral-choice span,
+.collateral-quantity-row span {
+  min-width:0;
+  display:grid;
+  gap:2px;
+}
+.collateral-choice b,
+.collateral-quantity-row b {
+  overflow:hidden;
+  font-size:9px;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.collateral-choice small,
+.collateral-quantity-row small {
+  color:var(--ink-soft);
+  font-size:7px;
+}
+.collateral-choice strong {
+  font-size:9px;
+}
+.collateral-choice i {
+  width:24px;
+  height:24px;
+  display:grid;
+  place-items:center;
+  border-radius:8px;
+  background:#e7eee2;
+  font-style:normal;
+  font-weight:1000;
+}
+.collateral-choice.selected i {
+  background:#62c356;
+  color:white;
+}
+.collateral-quantity-row {
+  grid-template-columns:minmax(0,1fr) 92px;
+}
+.collateral-quantity-row input {
+  width:100%;
+  height:36px;
+  padding:0 8px;
+  border:1px solid rgba(16,40,58,.12);
+  border-radius:10px;
+  background:#fffef1;
+  font-size:10px;
+  font-weight:900;
+}
+.no-collateral-assets {
+  margin:0 !important;
+  padding:12px;
+  border-radius:12px;
+  background:white;
+  text-align:center;
+}
+
+.pledged-lock {
+  position:absolute;
+  z-index:4;
+  top:38px;
+  right:10px;
+  padding:5px 7px;
+  border-radius:999px;
+  color:#fff;
+  background:#59646a;
+  font-size:6px;
+  font-weight:1000;
+  letter-spacing:.06em;
+}
+.collection-card.bank-pledged {
+  box-shadow:inset 0 0 0 2px rgba(89,100,106,.3);
+}
+
+@media (max-width:520px) {
+  .asset-breakdown.six-part {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .loan-collateral-head {
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  .loan-collateral-tools {
+    width:100%;
+  }
+  .loan-collateral-tools button {
+    flex:1;
+  }
+  .loan-collateral-summary {
+    grid-template-columns:1fr;
+  }
+  .loan-collateral-list {
+    max-height:210px;
+  }
+}
+
+
+/* ==========================================================================
+   v33 — clickable no-flight warning
+   ========================================================================== */
+
+.crash-status.clickable-warning {
+  padding-right:112px;
+  cursor:pointer;
+  user-select:none;
+  outline:none;
+  border:2px solid rgba(255,211,77,.9);
+  background:rgba(104,28,37,.94);
+  box-shadow:
+    0 12px 30px rgba(85,10,25,.28),
+    0 0 0 4px rgba(255,220,94,.16);
+  animation:noFlightAttention 1.35s ease-in-out infinite;
+}
+
+.crash-status.clickable-warning::after {
+  content:'OPEN VEHICLES →';
+  position:absolute;
+  right:9px;
+  top:50%;
+  transform:translateY(-50%);
+  padding:6px 8px;
+  border-radius:9px;
+  color:#10283a;
+  background:#dfff67;
+  font-size:6.5px;
+  font-weight:1000;
+  letter-spacing:.06em;
+  white-space:nowrap;
+}
+
+.crash-status.clickable-warning:hover,
+.crash-status.clickable-warning:focus-visible {
+  transform:translateY(-1px);
+  border-color:#dfff67;
+  box-shadow:
+    0 15px 35px rgba(85,10,25,.34),
+    0 0 0 4px rgba(223,255,103,.3);
+}
+
+@keyframes noFlightAttention {
+  0%,100% { filter:brightness(1); }
+  50% { filter:brightness(1.12); }
+}
+
+.vehicle-card.vehicle-shop-arrival {
+  animation:vehicleShopArrival 1.4s ease;
+  box-shadow:
+    0 0 0 4px rgba(94,195,80,.32),
+    0 22px 50px rgba(25,91,50,.24);
+}
+
+@keyframes vehicleShopArrival {
+  0%,100% { transform:translateY(0); }
+  35% { transform:translateY(-7px); }
+}
+
+@media (max-width:520px) {
+  .crash-status.clickable-warning {
+    left:8px;
+    right:8px;
+    max-width:none;
+    padding-right:98px;
+    font-size:8px;
+  }
+
+  .crash-status.clickable-warning::after {
+    right:6px;
+    padding:5px 6px;
+    font-size:5.8px;
+  }
+}

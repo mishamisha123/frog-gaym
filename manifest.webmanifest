@@ -1,7 +1,7 @@
 {
   "name": "Froggy Arcade Deluxe",
   "short_name": "Froggy Arcade",
-  "description": "Froggy Arcade with an unobstructed manual Sky Crash flight view, compact balances, safe green/grey shop actions, confirmed vehicle refills and asset-backed loans.",
+  "description": "Froggy Arcade with a clickable no-flight vehicle-shop shortcut, direct pledged-asset loans, manual Sky Crash, 10-round Piggy interest and offline play.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

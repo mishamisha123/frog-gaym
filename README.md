@@ -853,3 +853,61 @@ Narrow balance displays use compact values such as 1.24K, 1.24M, 1B and 1.25T. T
 - Buying flights has its own green BUY FLIGHTS button.
 - Selecting a vehicle never purchases flights.
 - Every flight refill shows a native confirmation with price, current flights and resulting flights before charging the wallet.
+
+
+## v32 direct pledged-asset loans
+
+The former appraisal percentages and 50% bank advance were removed.
+
+`available loan = min(1,000,000,000 F, 5,000 F + total Bank Value)`
+
+Every eligible asset contributes its full displayed Bank Value:
+
+- Paid characters: purchase price.
+- Paid lakes: purchase price.
+- Owned vehicle models: model purchase price.
+- Every unused purchased flight: vehicle bundle price divided by flights in the bundle.
+- Paid game licenses: purchase price.
+- Piggy savings: 1 F of Bank Value per 1 F stored.
+
+The loan builder now contains a collateral picker.
+
+- AUTO-PLEDGE selects enough collateral for the chosen principal.
+- CLEAR removes the selection for manual choosing.
+- Characters, lakes, vehicle models and licenses are full-value toggles.
+- Piggy savings and flights can be pledged in exact quantities.
+- The first 5,000 F is unsecured.
+- Only assets explicitly listed in the final warning may be seized.
+- Pledged flights are reserved and cannot be used until payoff.
+- New flights purchased during an active loan remain unpledged and usable.
+- Paying the loan off releases all remaining collateral.
+- The principal hard cap remains 1,000,000,000 F.
+
+Existing active v31 loans migrate by pledging the assets that were already exposed under the
+older all-assets collateral rule.
+
+## v32 Sky Crash result
+
+A successful manual pullout now shows two separate amounts:
+
+- Total Froggy returned.
+- Profit after subtracting the original wager.
+
+## v32 Piggy Bank
+
+Piggy interest remains 0.1%, but the cycle was shortened from twenty completed rounds to ten.
+This gives more frequent saving feedback while preserving the same small individual interest rate.
+
+
+## v33 clickable vehicle warning
+
+When Sky Crash has no usable flights, its warning banner is now an interactive shortcut.
+
+- The warning appears automatically when every vehicle has zero usable flights.
+- It also appears when **START FLIGHT** is pressed without a usable flight.
+- Clicking or tapping the banner opens **Collection → Vehicles** directly.
+- Keyboard users can activate it with Enter or Space.
+- The Vehicles collection tab is selected automatically.
+- The first available purchase or refill action is scrolled into view and briefly highlighted.
+- The warning distinguishes between consumed flights and flights reserved as Bank collateral.
+- The shortcut cannot activate while a game round is active.
