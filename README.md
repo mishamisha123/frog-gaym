@@ -783,3 +783,47 @@ The Play screen is now a centered vertical container. Lily Leap and Sky Crash ow
 | Pond Prop Plane | 4,000,000 F | 24.00× |
 | Lily Rocket | 20,000,000 F | 75.00× |
 | Cosmic Starship | 120,000,000 F | 300.00× |
+
+
+## v30 asset-backed bank
+
+The v28 credit-score and separate leverage system has been removed. Loan money now enters the
+normal wallet and behaves like every other Froggy balance.
+
+Loan maximum:
+
+- 5,000 F starter allowance.
+- Plus 50% of total bank-appraised collateral.
+- Hard principal cap: 1,000,000,000 F.
+- Fixed 8% total interest.
+- One active loan, ten fixed payments, one payment every five completed rounds.
+
+Appraisals:
+
+- Paid skins: 80% of shop value.
+- Paid lakes: 70% of shop value.
+- Owned vehicle models: 50% of pack price.
+- Paid arcade licenses: 60% of license price.
+- Piggy savings: 90% of the saved balance.
+
+Piggy savings present when a loan begins are pledged. New Piggy deposits and interest above the
+pledged amount remain withdrawable. When overdue, the bank seizes pledged Piggy first, followed
+by vehicle models, lakes, skins and paid game licenses. Levels are reduced only when no asset
+collateral remains.
+
+Repayment history is still recorded for stats but no longer increases the borrowing limit.
+
+## v30 manual Sky Crash
+
+- Auto-eject amount and all automatic cash-out logic were removed.
+- The player must press **PULL OUT NOW** before the hidden failure point.
+- Vehicle redlines are dangerous limits, not automatic safe cash-outs.
+- A short launch countdown gives the player time to prepare.
+- Multiplier growth was reduced from `exp(time × 0.32)` to `exp(time × 0.12)`.
+- Canvas altitude uses eased interpolation so the frog vehicle climbs smoothly rather than
+  snapping upward.
+- The displayed payout already includes the 3% flight fee.
+- Bet controls now include **MIN**, **÷2**, **×2**, and **MAX**.
+- Exact typing remains available but is no longer required.
+- All four vehicle models were redrawn with layered vector shapes, metallic gradients, cockpit
+  glass, wings/fins, propulsion trails, lighting and frog cockpit placement.

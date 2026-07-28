@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=29" />
+  <link rel="stylesheet" href="styles.css?v=30" />
   <title>Froggy Arcade Deluxe</title>
 </head>
 <body>
@@ -35,7 +35,6 @@
           <span class="coin-icon">F</span>
           <strong id="balanceLabel">1,000</strong>
         </div>
-        <div id="borrowedBalancePill" class="borrowed-balance-pill hidden" title="Loan funds still in your wallet"><small>LOAN</small><b id="borrowedBalanceLabel">0</b></div>
       </div>
     </header>
 
@@ -47,11 +46,6 @@
             <button id="leapGameTab" type="button" class="active pressable" data-game-mode="leap" role="tab" aria-selected="true"><span>🐸</span><b>Lily Leap</b><small>FREE</small></button>
             <button id="crashGameTab" type="button" class="pressable" data-game-mode="crash" role="tab" aria-selected="false"><span>🚀</span><b>Sky Crash</b><small id="crashTabStatus">25M LICENSE</small></button>
           </div>
-        </section>
-
-        <section id="leverageStrip" class="leverage-strip glass hidden" aria-label="Loan leverage controls">
-          <div><small>LOAN LEVERAGE</small><b id="leverageStatusLabel">Protected</b><span id="leverageLimitLabel">0 F available for risk</span></div>
-          <button id="leverageToggle" type="button" class="leverage-toggle pressable" aria-pressed="false"><span>OFF</span><small>Use owned funds only</small></button>
         </section>
 
         <div id="leapGamePane" class="arcade-game-pane">
@@ -108,7 +102,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v29 · FROGGY ARCADE</div>
+          <div class="build-version" aria-label="Installed game version">v30 · FROGGY ARCADE</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -148,30 +142,32 @@
             <div id="crashFrame" class="crash-frame">
               <canvas id="crashCanvas" aria-label="Animated frog rising in a flying vehicle"></canvas>
               <div class="crash-vignette"></div>
-              <div id="crashStatus" class="crash-status glass">Choose a vehicle and launch.</div>
+              <div id="crashStatus" class="crash-status glass">Choose a vehicle and start a manual flight.</div>
               <div class="crash-multiplier"><small>LIVE MULTIPLIER</small><b id="crashMultiplierLabel">1.00×</b></div>
               <div class="crash-hud glass">
                 <div><small>POTENTIAL</small><b id="crashPayoutLabel">100 F</b></div>
                 <div><small>VEHICLE</small><b id="crashVehicleLabel">Training Glider</b></div>
                 <div><small>FLIGHTS</small><b id="crashChargesLabel">0</b></div>
-                <div><small>MAX HEIGHT</small><b id="crashVehicleMaxLabel">7.50×</b></div>
+                <div><small>VEHICLE REDLINE</small><b id="crashVehicleMaxLabel">7.50×</b></div>
               </div>
             </div>
 
             <section class="crash-control-panel glass">
-              <div class="crash-control-grid">
-                <label><small>CRASH BET</small><input id="crashBetInput" type="number" min="50" step="1" inputmode="numeric" value="100" /></label>
-                <label><small>AUTO EJECT</small><input id="crashAutoInput" type="number" min="1.10" step="0.10" inputmode="decimal" value="2.00" /></label>
+              <div class="crash-control-grid manual-crash-grid">
+                <label><small>BET AMOUNT</small><input id="crashBetInput" type="number" min="50" step="1" inputmode="numeric" value="100" /></label>
                 <label><small>FLIGHT VEHICLE</small><select id="crashVehicleSelect"></select></label>
               </div>
-              <div class="crash-quick-bets" id="crashQuickBets">
-                <button type="button" class="pressable" data-crash-bet="100">100</button><button type="button" class="pressable" data-crash-bet="1000">1K</button><button type="button" class="pressable" data-crash-bet="10000">10K</button><button type="button" class="pressable" data-crash-bet="max">MAX</button>
+              <div class="crash-bet-tools" id="crashQuickBets" aria-label="Crash bet controls">
+                <button type="button" class="pressable" data-crash-bet="min"><span>MIN</span><small>50 F</small></button>
+                <button type="button" class="pressable" data-crash-bet="half"><span>÷2</span><small>Half bet</small></button>
+                <button type="button" class="pressable" data-crash-bet="double"><span>×2</span><small>Double bet</small></button>
+                <button type="button" class="pressable" data-crash-bet="max"><span>MAX</span><small>Wallet</small></button>
               </div>
               <div class="crash-actions">
-                <button id="crashStartButton" type="button" class="action-button start pressable"><span>LAUNCH FROG</span><small>Consumes one vehicle flight</small></button>
-                <button id="crashCashButton" type="button" class="action-button cash pressable hidden"><span>EJECT & CASH OUT</span><small id="crashCashValue">100 F</small></button>
+                <button id="crashStartButton" type="button" class="action-button start pressable"><span>START FLIGHT</span><small>Consumes one vehicle flight</small></button>
+                <button id="crashCashButton" type="button" class="action-button cash crash-pullout pressable hidden"><span>PULL OUT NOW</span><small id="crashCashValue">97 F</small></button>
               </div>
-              <p class="crash-fair-note">The crash point is generated when the flight begins. The 3% house edge is not changed by animations, vehicles, loans, or previous results.</p>
+              <p class="crash-fair-note">Manual flights only. The multiplier rises slowly and smoothly. Pull out before the hidden failure point or your vehicle redline. A 3% flight fee is already reflected in the shown payout.</p>
             </section>
           </div>
         </section>
@@ -278,23 +274,30 @@
               </div>
             </div>
 
-            <div class="simple-tier-card credit-health-card">
-              <div class="credit-health-grid">
-                <div><small>REPAYMENT TIER</small><b id="creditTierLabel">Starter</b><span id="creditTierCeilingLabel">5,000 F ceiling</span></div>
-                <div><small>CREDIT SCORE</small><b id="creditScoreLabel">70</b><span id="creditScoreGradeLabel">Stable</span></div>
-                <div><small>AVAILABLE TODAY</small><b id="debtLimitLabel">4,250 F</b><span id="creditLimitFactorLabel">85% of tier</span></div>
+            <div class="simple-tier-card credit-health-card asset-credit-card">
+              <div class="credit-health-grid asset-credit-summary">
+                <div><small>APPRAISED ASSETS</small><b id="creditTierLabel">0 F</b><span id="creditTierCeilingLabel">Skins, lakes, vehicles, licenses and Piggy</span></div>
+                <div><small>BANK ADVANCE</small><b id="creditScoreLabel">50%</b><span id="creditScoreGradeLabel">of appraised collateral</span></div>
+                <div><small>MAXIMUM LOAN</small><b id="debtLimitLabel">5,000 F</b><span id="creditLimitFactorLabel">1B F hard cap</span></div>
               </div>
               <div class="simple-tier-progress"><i id="creditTierProgressFill"></i></div>
-              <p><strong id="creditHistoryLabel">0 F</strong> repaid on time · <span id="creditNextTierLabel">5,000 F to Bronze</span></p>
+              <p><strong id="creditHistoryLabel">5,000 F</strong> starter allowance · <span id="creditNextTierLabel">More owned assets raise the limit</span></p>
+              <div class="asset-breakdown" aria-label="Collateral breakdown">
+                <span><small>SKINS</small><b id="skinAssetLabel">0 F</b></span>
+                <span><small>LAKES</small><b id="lakeAssetLabel">0 F</b></span>
+                <span><small>VEHICLES</small><b id="vehicleAssetLabel">0 F</b></span>
+                <span><small>LICENSES</small><b id="licenseAssetLabel">0 F</b></span>
+                <span><small>PIGGY</small><b id="piggyAssetLabel">0 F</b></span>
+              </div>
             </div>
 
             <div class="loan-entry-card">
               <div class="loan-entry-copy">
-                <span class="loan-entry-icon">🪷</span>
+                <span class="loan-entry-icon">🏛️</span>
                 <div>
-                  <small>NEW LOAN</small>
+                  <small>ASSET-BACKED LOAN</small>
                   <b id="loanEntryHeadline">Up to 5,000 F available</b>
-                  <p id="loanEntrySubtext">8–18% risk-priced charge · 10 payments · due every 5 rounds</p>
+                  <p id="loanEntrySubtext">8% total interest · assets stand behind the loan · 1B F maximum</p>
                 </div>
               </div>
               <button id="openLoanBuilderButton" type="button" class="loan-open-button pressable">
@@ -303,38 +306,32 @@
               </button>
             </div>
 
-            <div class="bank-leverage-card">
-              <div><small>LEVERAGED PLAY</small><b>Borrowed money can be risked—but it bites back.</b></div>
-              <div class="bank-leverage-metrics"><span><small>PER-ROUND CAP</small><b>35% of original loan</b></span><span><small>LOSS CHARGE</small><b>+12% of borrowed stake</b></span><span><small>WIN SWEEP</small><b>25% of profit to debt</b></span></div>
-              <p>Game licenses, vehicles, skins, Piggy deposits, and scheduled payments require owned wallet funds.</p>
-            </div>
-
             <div id="activeLoanCard" class="active-loan-card hidden">
               <div class="simple-loan-summary">
                 <div><small>AMOUNT DUE</small><b id="debtInstallmentLabel">0 F</b></div>
                 <div><small>STATUS</small><b id="debtTurnsLabel">No debt</b></div>
                 <div><small>REMAINING</small><b id="debtAmountLabel">0 F</b></div>
                 <div><small>CASH TO PAY OFF</small><b id="debtPayoffLabel">0 F</b></div>
-                <div><small>LOAN FUNDS LEFT</small><b id="borrowedWalletBankLabel">0 F</b></div>
+                <div><small>PLEDGED PIGGY</small><b id="borrowedWalletBankLabel">0 F</b></div>
                 <div><small>LOAN RATE</small><b id="activeLoanRateLabel">8.0%</b></div>
               </div>
 
               <div class="early-savings-line">
-                Paying off now saves <b id="debtInterestSavedLabel">0 F</b> in future interest. Unused loan funds are returned first.
+                Paying off now saves <b id="debtInterestSavedLabel">0 F</b> in future interest and releases pledged assets.
               </div>
 
               <p class="loan-action-location-note">Payment controls stay visible above the navigation bar.</p>
             </div>
 
             <p id="debtMessage" class="debt-message" role="status" aria-live="polite">
-              Your tier increases only from Froggy repaid on time.
+              Your loan limit comes from assets you currently own—not repeated repayment farming.
             </p>
 
             <div class="simple-loan-rules">
               <span>8% total interest</span>
               <span>10 fixed payments</span>
               <span>Due every 5 rounds</span>
-              <span>Overdue: skin first</span><span>Then −1 level</span>
+              <span>Assets seized before levels</span><span>1B F principal cap</span>
             </div>
           </section>
 
@@ -534,8 +531,8 @@
             <div><small>AMOUNT DUE</small><b id="loanQuotePaymentLabel">54 F every 5 rounds</b></div>
             <div><small>FULL DURATION</small><b>50 completed rounds</b></div>
             <div><small>PAY OFF TODAY</small><b id="loanQuotePayoffLabel">500 F</b></div>
-            <div><small>LEVERAGE CAP</small><b id="loanQuoteLeverageLabel">175 F per round</b></div>
-            <div><small>CREDIT EFFECT</small><b>On-time payments raise score and tier</b></div>
+            <div><small>COLLATERAL SUPPORT</small><b id="loanQuoteLeverageLabel">1,000 F appraised</b></div>
+            <div><small>LOAN CAP</small><b>Never above 1,000,000,000 F</b></div>
           </div>
 
           <div class="loan-quote-note">
@@ -566,12 +563,12 @@
           </div>
 
           <div class="loan-warning-list">
-            <p><b>1.</b> Your credit score changes the amount available today. Using most of the limit also raises the total charge, from about 8% up to 18%.</p>
-            <p><b>2.</b> The next fixed payment may be paid early. Payments require owned funds and reset the five-round countdown.</p>
-            <p><b>3.</b> Leverage is optional. At most 35% of the original loan can be risked in one round.</p>
-            <p><b>4.</b> Losing borrowed stake adds a 12% risk charge and moves the payment clock one round closer. Winning sweeps 25% of profit directly to debt.</p>
-            <p><b>5.</b> Piggy deposits, shop items, vehicles, and arcade licenses cannot be bought with tagged loan funds.</p>
-            <p><b>6.</b> When overdue, paid skins are liquidated before levels. Paying off early returns unused loan funds and removes unearned interest.</p>
+            <p><b>1.</b> Your maximum is a 5,000-Froggy starter allowance plus 50% of the bank-appraised value of owned assets, capped at 1 billion Froggy.</p>
+            <p><b>2.</b> Paid skins, lakes, owned vehicle models, paid game licenses, and 90% of Piggy savings contribute collateral value.</p>
+            <p><b>3.</b> Loan money enters the normal wallet. There is no separate leverage mode, tagged balance, loss surcharge, or automatic profit sweep.</p>
+            <p><b>4.</b> The next fixed payment may be paid early and resets the five-round countdown. Early payoff removes unearned interest.</p>
+            <p><b>5.</b> Piggy savings already present when the loan is taken are pledged and cannot be withdrawn until the loan is cleared.</p>
+            <p><b>6.</b> If overdue, pledged Piggy and owned assets are seized before any level penalty. Equipped cosmetics may be removed.</p>
             <p><b>7.</b> Froggy is fictional game currency—not real credit or cash.</p>
           </div>
         </div>
@@ -593,6 +590,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=29"></script>
+  <script src="app.js?v=30"></script>
 </body>
 </html>

@@ -2373,3 +2373,48 @@ body {
   #crashGameContent:not(.hidden){grid-template-rows:minmax(155px,1fr) auto}
   #leapGamePane .bet-panel,#crashGameContent .crash-control-panel{padding-top:5px;padding-bottom:6px}
 }
+
+
+/* ==========================================================================
+   v30 — asset-backed bank and manual Sky Crash
+   ========================================================================== */
+
+.manual-crash-grid{grid-template-columns:minmax(0,1fr) minmax(190px,1.15fr)}
+.crash-bet-tools{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:10px 0}
+.crash-bet-tools button{min-height:48px;padding:6px;border-radius:13px;background:linear-gradient(180deg,#f6faef,#dce9d5);border:1px solid rgba(16,40,58,.08);cursor:pointer}
+.crash-bet-tools button span,.crash-bet-tools button small{display:block}
+.crash-bet-tools button span{font-size:13px;font-weight:1000;color:#10283a}
+.crash-bet-tools button small{margin-top:2px;font-size:6px;color:#66777f;font-weight:900}
+.crash-bet-tools button:last-child{background:linear-gradient(180deg,#e9ff79,#c6ef4f)}
+.crash-pullout{min-height:76px;background:linear-gradient(180deg,#ffe873,#ffbd35)!important;box-shadow:0 12px 28px rgba(205,121,21,.26)}
+.crash-pullout span{font-size:18px!important}
+.crash-pullout:disabled{opacity:.6;filter:saturate(.6)}
+.vehicle-model-svg{width:min(190px,92%);height:118px;filter:drop-shadow(0 14px 12px rgba(13,38,55,.22))}
+.vehicle-model-svg .accent{fill:none;stroke-width:8;stroke-linecap:round}
+.vehicle-model-svg .glass{fill:#9de9f0;stroke:#17364c}
+.vehicle-shop-art{min-height:165px;align-content:center;gap:4px}
+.vehicle-shop-art>span{display:none!important}
+
+.asset-credit-card{background:linear-gradient(145deg,#123d3f,#10283a)!important}
+.asset-credit-summary{grid-template-columns:1.1fr .8fr 1fr}
+.asset-breakdown{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:10px}
+.asset-breakdown span{min-width:0;padding:8px 6px;border-radius:12px;background:rgba(255,255,255,.09);text-align:center}
+.asset-breakdown small{display:block;color:#abc5c7;font-size:5.5px;font-weight:1000}
+.asset-breakdown b{display:block;overflow:hidden;margin-top:3px;color:#fff;font-size:8px;text-overflow:ellipsis;white-space:nowrap}
+.asset-credit-card .simple-tier-progress i{background:linear-gradient(90deg,#dfff67,#56d9b3)}
+
+@media(max-width:759px){
+  .manual-crash-grid{grid-template-columns:1fr 1fr!important}
+  .crash-bet-tools{gap:5px;margin:6px 0}
+  .crash-bet-tools button{min-height:39px;padding:4px}
+  .crash-bet-tools button span{font-size:10px}
+  .crash-pullout{min-height:59px}
+  .asset-breakdown{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .asset-breakdown span:last-child{grid-column:1/-1}
+}
+@media(max-width:430px){
+  .manual-crash-grid{grid-template-columns:1fr!important}
+  .crash-bet-tools button small{display:none}
+  .crash-bet-tools button{min-height:36px}
+  .asset-credit-summary{grid-template-columns:1fr}
+}
