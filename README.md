@@ -979,3 +979,15 @@ The promo changes affect future elapsed time. Already credited Piggy interest is
 
 - Removed the public Promo tab and Promo screen. Legacy public promo-code redemption is no longer available.
 - Preserved the v35 Sky Crash unlock, vehicle economy, Bank rules, saves, and time-based Piggy behavior.
+
+
+## v37 protected loan reserve and trusted Piggy clock
+
+- While a loan is active, the exact current early-payoff amount is reserved in the wallet and cannot be deposited into the Piggy Bank.
+- The deposit limit updates after every completed round because earned loan interest changes the early-payoff amount.
+- Denied deposits explain the reserved payoff amount, the remaining depositable surplus, and why the reserve can rise.
+- Open-app Piggy time now uses the browser's monotonic session timer, so changing the device clock while playing has no effect.
+- Closed-time Piggy interest is calculated only from a same-origin trusted server timestamp. When trusted time is unavailable, closed interest pauses while open-app interest continues.
+- If the Piggy balance changes before trusted time is available, any unverified closed-time gap is discarded instead of being applied retroactively to the new balance.
+- The first v37 online launch establishes the trusted-clock baseline; unverified pre-upgrade closed time is not credited.
+- The service worker bypasses its cache for trusted-time checks.
