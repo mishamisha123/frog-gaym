@@ -1,6 +1,8 @@
-# Froggy Leap v41
+# Froggy Leap v42
 
-Full-screen Job update with a larger, swept bag-mouth hitbox, improved rim/body collision physics, readable shift earnings, and the supplied fry/bag artwork.
+Current release: a full-screen Job and Sky Crash presentation, rapid fry queuing, clean illustrated bag rendering, uncapped but gradually scaling Job pay and XP, stackable fry boosts, Bank-aware Job attempts, clear protected-flight status, and a fair Sky Crash payout that returns the full stake at 1.00×.
+
+> **Current-behavior note:** The v42 code and the latest version sections near the end of this README are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
 # Froggy Leap Deluxe — Visual Upgrade
 
@@ -1024,6 +1026,18 @@ The promo changes affect future elapsed time. Already credited Piggy interest is
 - Removed the Tung Tung Tung Sahur event.
 - Main navigation remains on one line across phone widths.
 
+
+
+## v42 Job and Sky Crash polish
+
+- Job HUD cards use light surfaces with crisp black outlines instead of dark filled tiles and heavy shadows.
+- The compact boost readout shows only the active multiplier, such as `2×F`, `4×F`, or `2×XP`. Catching another matching special fry before its 20-second boost expires doubles the matching boost and resets its timer.
+- Job pay no longer stops at 250 F per fry. Pay and base XP continue increasing with Job Level using diminishing growth so high levels remain rewarding without rising linearly out of control; active XP boosts multiply the scaled XP reward.
+- Grabbing a fry immediately prepares the next fry above the line, keeping the shift fast while the released fry falls.
+- Every resolved Job attempt counts as a completed gameplay round, including successful catches, misses, caught bombs, and deliberately discarded bombs. This advances Bank payment timing and other round-based systems.
+- The illustrated bag asset was cleaned of stray low-alpha pixels, and its moving render avoids filtered transparent layers that can leave texture trails on some mobile browsers.
+- Sky Crash fills the available game viewport without page scrolling. Before launch, the compact status clearly states whether the next flight is protected; during flight, the top-left badge appears only for an active protected round.
+- The Sky Crash fee applies only to profit. Pulling out at 1.00× returns the complete stake instead of returning less than the amount wagered.
 
 ## v41 full-screen Job and collision fairness
 

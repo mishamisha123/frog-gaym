@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=41" />
+  <link rel="stylesheet" href="styles.css?v=42" />
   <title>Froggy Leap Deluxe</title>
 </head>
 <body>
@@ -102,7 +102,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v41 · FROGGY LEAP</div>
+          <div class="build-version" aria-label="Installed game version">v42 · FROGGY LEAP</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -142,7 +142,7 @@
             <div id="crashFrame" class="crash-frame">
               <canvas id="crashCanvas" aria-label="Animated frog rising in a flying vehicle"></canvas>
               <div class="crash-vignette"></div>
-              <div id="crashStatus" class="crash-status glass" tabindex="-1" aria-disabled="true">Choose a vehicle and start a manual flight.</div>
+              <div id="crashStatus" class="crash-status glass hidden" tabindex="-1" aria-disabled="true"></div>
               <div class="crash-multiplier"><small>LIVE MULTIPLIER</small><b id="crashMultiplierLabel">1.00×</b></div>
               <div class="crash-hud glass">
                 <div><small>POTENTIAL</small><b id="crashPayoutLabel">100 F</b></div>
@@ -158,7 +158,7 @@
                 <b>Watch the aircraft and pull out before failure.</b>
               </div>
               <button id="crashCashButton" type="button" class="action-button cash crash-pullout pressable hidden">
-                <span>PULL OUT NOW</span><small id="crashCashValue">Cash out 97 F</small>
+                <span>PULL OUT NOW</span><small id="crashCashValue">Cash out 100 F</small>
               </button>
             </div>
 
@@ -176,7 +176,7 @@
               <div class="crash-actions">
                 <button id="crashStartButton" type="button" class="action-button start pressable"><span>START FLIGHT</span><small>Consumes one vehicle flight</small></button>
               </div>
-              <p class="crash-fair-note">Manual flights only. The multiplier rises slowly and smoothly. Pull out before the hidden failure point or your vehicle redline. A 3% flight fee is already reflected in the shown payout.</p>
+              <p class="crash-fair-note">Manual flights only. The multiplier rises slowly and smoothly. Pull out before the hidden failure point or your vehicle redline. A 3% flight fee applies only to profit, so pulling out at 1.00× returns the full stake.</p>
             </section>
           </div>
         </section>
@@ -189,11 +189,15 @@
             <span><small>SHIFT MONEY</small><b id="jobShiftMoney">0 F</b></span>
             <span><small>FRIES BAGGED</small><b id="jobFriesBagged">0</b></span>
             <span class="job-level-hud"><small>JOB</small><b><i id="jobLevelLabel">Lv 1</i><em id="jobPayLabel">25 F/fry</em></b><em id="jobXpLabel">0 / 100 XP</em><div class="job-xp-track"><i id="jobXpFill"></i></div></span>
-            <span><small>BOOSTS</small><b id="jobBoostLabel">None</b></span>
+            <span class="job-boost-hud"><small>BOOST</small><b id="jobBoostLabel">1×</b></span>
           </div>
           <div id="jobPlayfield" class="job-playfield" aria-label="Position a fry above the line, then release it to drop into the moving bag">
             <div class="job-drop-guide"><span>DRAG ABOVE THE LINE · RELEASE TO DROP</span></div>
             <div id="jobFry" class="job-fry hidden" role="button" tabindex="0" aria-label="Drag this fry above the line, then release it">
+              <img src="assets/job-fry.png" alt="" draggable="false" />
+              <i class="job-bomb-fuse" aria-hidden="true"></i>
+            </div>
+            <div id="jobQueuedFry" class="job-fry job-queued-fry hidden" aria-hidden="true">
               <img src="assets/job-fry.png" alt="" draggable="false" />
               <i class="job-bomb-fuse" aria-hidden="true"></i>
             </div>
@@ -625,6 +629,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=41"></script>
+  <script src="app.js?v=42"></script>
 </body>
 </html>

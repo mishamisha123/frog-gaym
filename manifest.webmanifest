@@ -1,7 +1,7 @@
 {
   "name": "Froggy Leap Deluxe",
   "short_name": "Froggy Leap",
-  "description": "Froggy Leap v41 with a full-screen fry job, forgiving bag-mouth physics, special boosts, and bomb disposal.",
+  "description": "Froggy Leap v42 with full-screen Job and Sky Crash play, rapid fry queues, stackable boosts, uncapped gradual Job rewards, clean bag rendering, and fair 1.00× Crash returns.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

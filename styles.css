@@ -3090,3 +3090,228 @@ body {
   #jobScreen .job-shift-hud b{font-size:11px}
   #jobScreen .job-level-hud b em{font-size:6.4px}
 }
+
+/* v42 — outlined Job HUD, concise stacking boosts, clean moving bag */
+#jobScreen .job-shift-hud>span{
+  background:rgba(255,255,255,.92)!important;
+  border:2px solid #101820!important;
+  box-shadow:none!important;
+  color:#101820!important;
+}
+#jobScreen .job-shift-hud small,
+#jobScreen .job-shift-hud b,
+#jobScreen .job-level-hud b i,
+#jobScreen .job-level-hud b em,
+#jobScreen .job-level-hud>em{
+  color:#101820!important;
+  text-shadow:none!important;
+}
+#jobScreen .job-level-hud .job-xp-track{
+  height:5px!important;
+  border:1px solid #101820;
+  background:#fff!important;
+}
+#jobScreen .job-level-hud .job-xp-track i{
+  background:linear-gradient(90deg,#62c94d,#d8ef52)!important;
+}
+#jobScreen .job-boost-hud b{
+  font-size:clamp(13px,2vw,18px)!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  letter-spacing:-.02em;
+}
+.job-bag{
+  will-change:auto!important;
+  filter:none!important;
+  isolation:isolate;
+}
+.job-bag img{
+  filter:none!important;
+  image-rendering:auto;
+  backface-visibility:hidden;
+}
+.job-bag:after{
+  content:"";
+  display:block!important;
+  position:absolute;
+  z-index:-1;
+  left:15%;right:15%;bottom:1%;height:10%;
+  border-radius:50%;
+  background:rgba(55,34,7,.24);
+  filter:blur(8px);
+  pointer-events:none;
+}
+@media(max-width:759px){
+  #jobScreen .job-shift-hud>span{border-width:1.7px!important}
+  #jobScreen .job-boost-hud b{font-size:11.5px!important}
+}
+
+/* v42 continued — kitchen-style Job scene, rapid queue, clean bag compositing, full-screen Crash */
+#jobScreen .job-playfield{
+  background:
+    radial-gradient(circle at 17% 12%,rgba(255,246,177,.92) 0 4%,transparent 4.6%),
+    radial-gradient(circle at 82% 11%,rgba(255,246,177,.9) 0 4%,transparent 4.6%),
+    repeating-linear-gradient(90deg,rgba(58,35,25,.88) 0 16%,rgba(225,205,165,.95) 16% 28%,rgba(72,42,27,.9) 28% 44%) 0 0/100% 23% no-repeat,
+    linear-gradient(180deg,#f5d990 0 23%,#c87d2b 23% 25.5%,#e5c59a 25.5% 62%,#9b5a22 62% 65%,#d6aa75 65% 100%);
+  box-shadow:inset 0 0 80px rgba(80,41,13,.18);
+}
+#jobScreen .job-playfield:after{display:none!important}
+.job-queued-fry{
+  z-index:7!important;
+  pointer-events:none!important;
+  opacity:.78;
+  transform:translate(-50%,-50%) rotate(var(--fry-rotation)) scale(.92)!important;
+}
+.job-queued-fry.fry-red{animation:bombPulse .55s ease-in-out infinite alternate}
+.job-bag{
+  contain:layout paint style;
+  transform:translateX(-50%);
+  opacity:1;
+}
+.job-bag img{
+  display:block;
+  transform:none!important;
+  filter:none!important;
+  contain:paint;
+}
+.job-bag:after{
+  filter:none!important;
+  background:radial-gradient(ellipse at center,rgba(55,34,7,.28) 0 34%,rgba(55,34,7,.11) 52%,transparent 72%)!important;
+}
+
+#playScreen.crash-mode.active{
+  height:calc(100svh - var(--safe-top) - 66px - 76px - var(--safe-bottom));
+  min-height:520px;
+  padding:7px 10px;
+  gap:6px;
+  overflow:hidden!important;
+}
+#playScreen.crash-mode>.arcade-switcher{
+  flex:0 0 auto;
+  margin:0;
+  padding:5px;
+  border-radius:17px;
+}
+#playScreen.crash-mode #crashGamePane:not(.hidden){
+  display:flex;
+  flex:1 1 auto;
+  min-height:0;
+  width:100%;
+  overflow:hidden!important;
+}
+#playScreen.crash-mode #crashGameContent:not(.hidden){
+  display:grid;
+  flex:1 1 auto;
+  grid-template-columns:minmax(0,1.82fr) minmax(285px,.72fr);
+  grid-template-rows:minmax(0,1fr);
+  gap:8px;
+  width:100%;
+  height:100%;
+  min-height:0;
+  overflow:hidden;
+}
+#playScreen.crash-mode #crashGameContent .crash-frame,
+#playScreen.crash-mode #crashGameContent .crash-control-panel{
+  width:100%;
+  height:100%;
+  min-height:0;
+  margin:0;
+}
+#playScreen.crash-mode #crashGameContent .crash-control-panel{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:15px;
+  overflow:hidden;
+}
+#playScreen.crash-mode #crashStatus{
+  left:10px;
+  right:auto;
+  top:10px;
+  width:auto;
+  max-width:min(340px,72%);
+  padding:7px 10px;
+  border:2px solid rgba(16,38,58,.24);
+  background:rgba(255,255,255,.9);
+  color:#10263a;
+  font-size:8px;
+  font-weight:1000;
+  text-align:left;
+  white-space:normal;
+  box-shadow:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+#playScreen.crash-mode #crashStatus.win{
+  border-color:#2d9b52;
+  background:#eaffdf;
+  color:#17733c;
+}
+#playScreen.crash-mode #crashStatus.lose{
+  border-color:#dc4f68;
+  background:#fff0f2;
+  color:#b22d49;
+}
+#crashGameContent.flight-live .crash-status:not(.hidden){
+  max-width:210px!important;
+  color:#174d2b!important;
+  background:rgba(225,255,219,.94)!important;
+  border-color:#32a75a!important;
+  box-shadow:none!important;
+  text-align:center!important;
+}
+#crashGameContent.flight-live .crash-status:not(.hidden)::before{content:"🛡️ ";}
+#crashGameContent.flight-live .crash-hud{
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+@media(max-width:759px){
+  #playScreen.crash-mode.active{
+    height:100%;
+    min-height:0;
+    padding:4px 5px;
+    gap:4px;
+    overflow:hidden!important;
+  }
+  #playScreen.crash-mode>.arcade-switcher{padding:3px;border-radius:14px}
+  #playScreen.crash-mode #crashGamePane:not(.hidden){height:auto;min-height:0;overflow:hidden!important}
+  #playScreen.crash-mode #crashGameContent:not(.hidden){
+    height:100%;
+    min-height:0;
+    grid-template-columns:1fr;
+    grid-template-rows:minmax(0,1fr) auto;
+    gap:0;
+    overflow:hidden;
+  }
+  #playScreen.crash-mode #crashGameContent .crash-frame{
+    height:100%;
+    min-height:0;
+    border-radius:20px 20px 13px 13px;
+  }
+  #playScreen.crash-mode #crashGameContent .crash-control-panel{
+    height:auto;
+    min-height:0;
+    margin:-5px 0 0;
+    padding:6px 7px 7px;
+    border-radius:14px 14px 19px 19px;
+    justify-content:flex-start;
+  }
+  #playScreen.crash-mode #crashGameContent .crash-control-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px}
+  #playScreen.crash-mode #crashGameContent .crash-control-grid input,
+  #playScreen.crash-mode #crashGameContent .crash-control-grid select{height:34px;font-size:9px}
+  #playScreen.crash-mode #crashGameContent .crash-bet-tools{margin:4px 0;gap:4px}
+  #playScreen.crash-mode #crashGameContent .crash-bet-tools button{min-height:32px}
+  #playScreen.crash-mode #crashGameContent .crash-actions{margin-top:3px}
+  #playScreen.crash-mode #crashGameContent .crash-actions .action-button{min-height:48px}
+  #playScreen.crash-mode #crashStatus{left:7px;top:7px;max-width:75%;padding:5px 7px;font-size:6.5px}
+  #playScreen.crash-mode #crashGameContent.flight-live{height:100%!important;min-height:0!important;grid-template-rows:minmax(0,1fr) auto!important}
+  #playScreen.crash-mode #crashGameContent.flight-live .crash-frame{height:100%!important;min-height:0!important}
+}
+@media(max-width:390px){
+  #playScreen.crash-mode #crashGameContent .crash-control-grid input,
+  #playScreen.crash-mode #crashGameContent .crash-control-grid select{height:31px;font-size:8px}
+  #playScreen.crash-mode #crashGameContent .crash-bet-tools button{min-height:29px}
+  #playScreen.crash-mode #crashGameContent .crash-actions .action-button{min-height:44px}
+}

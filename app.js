@@ -3,8 +3,8 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v41';
-  console.info(`Froggy Leap ${BUILD_VERSION}: full-screen fry job, generous bag physics, and Job Level owner controls loaded`);
+  const BUILD_VERSION = 'v42';
+  console.info(`Froggy Leap ${BUILD_VERSION}: full-screen Crash, fair 1× returns, rapid fry queue, uncapped Job pay, and stacking boosts loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
   // The 15-jump curve is intentionally tighter early and highly rewarding at the finish.
@@ -262,7 +262,7 @@
     levelToast: $('levelToast'), levelToastTitle: $('levelToastTitle'), levelToastBonus: $('levelToastBonus'),
     milestoneTrack: $('milestoneTrack'), milestoneFill: $('milestoneFill'), goalGrid: $('goalGrid'), goalSummary: $('goalSummary'),
     sessionRoundsStat: $('sessionRoundsStat'), sessionWinsStat: $('sessionWinsStat'), sessionNetStat: $('sessionNetStat'), sessionTimeStat: $('sessionTimeStat'), pondRankLabel: $('pondRankLabel'), achievementGrid: $('achievementGrid'), settingsReminders: $('settingsReminders'),
-    confetti: $('confettiLayer'), flash: $('flashLayer'), jobPlayfield:$('jobPlayfield'), jobFry:$('jobFry'), jobBag:$('jobBag'), jobIntro:$('jobIntro'), jobStartButton:$('jobStartButton'), jobShiftMoney:$('jobShiftMoney'), jobFriesBagged:$('jobFriesBagged'), jobBoostLabel:$('jobBoostLabel'), jobLevelLabel:$('jobLevelLabel'), jobPayLabel:$('jobPayLabel'), jobXpFill:$('jobXpFill'), jobXpLabel:$('jobXpLabel'), jobRewardBurst:$('jobRewardBurst'), jobExplosion:$('jobExplosion'), jobResult:$('jobResult'), jobResultIcon:$('jobResultIcon'), jobResultTitle:$('jobResultTitle'), jobResultMoney:$('jobResultMoney'), jobResultText:$('jobResultText'), jobAgainButton:$('jobAgainButton'),
+    confetti: $('confettiLayer'), flash: $('flashLayer'), jobPlayfield:$('jobPlayfield'), jobFry:$('jobFry'), jobQueuedFry:$('jobQueuedFry'), jobBag:$('jobBag'), jobIntro:$('jobIntro'), jobStartButton:$('jobStartButton'), jobShiftMoney:$('jobShiftMoney'), jobFriesBagged:$('jobFriesBagged'), jobBoostLabel:$('jobBoostLabel'), jobLevelLabel:$('jobLevelLabel'), jobPayLabel:$('jobPayLabel'), jobXpFill:$('jobXpFill'), jobXpLabel:$('jobXpLabel'), jobRewardBurst:$('jobRewardBurst'), jobExplosion:$('jobExplosion'), jobResult:$('jobResult'), jobResultIcon:$('jobResultIcon'), jobResultTitle:$('jobResultTitle'), jobResultMoney:$('jobResultMoney'), jobResultText:$('jobResultText'), jobAgainButton:$('jobAgainButton'),
     selfTest: $('selfTestResult')
   };
 
@@ -823,7 +823,7 @@
     return true;
   }
   function setGameMode(mode){
-    const target=mode==='crash'?'crash':'leap';if(anyRoundActive()&&target!==state.selectedGame){setStatus('Finish the current round before switching games.','lose');return false;}state.selectedGame=target;const leap=target==='leap';els.leapGamePane.classList.toggle('hidden',!leap);els.crashGamePane.classList.toggle('hidden',leap);els.leapGameTab.classList.toggle('active',leap);els.crashGameTab.classList.toggle('active',!leap);els.leapGameTab.setAttribute('aria-selected',String(leap));els.crashGameTab.setAttribute('aria-selected',String(!leap));refresh();return true;
+    const target=mode==='crash'?'crash':'leap';if(anyRoundActive()&&target!==state.selectedGame){setStatus('Finish the current round before switching games.','lose');return false;}state.selectedGame=target;const leap=target==='leap';els.screens.play.classList.toggle('crash-mode',!leap);els.leapGamePane.classList.toggle('hidden',!leap);els.crashGamePane.classList.toggle('hidden',leap);els.leapGameTab.classList.toggle('active',leap);els.crashGameTab.classList.toggle('active',!leap);els.leapGameTab.setAttribute('aria-selected',String(leap));els.crashGameTab.setAttribute('aria-selected',String(!leap));refresh();return true;
   }
   function grantGameLicense(id){
     if(gameUnlocked(id))return false;
@@ -868,7 +868,7 @@
     if(value<MIN_BET||value>availableBetBalance()){setCrashStatus(`Choose ${money(MIN_BET)}–${money(availableBetBalance())} F.`,'lose');return false;}
     state.crashBet=value;refreshCrashHud();saveState();return true;
   }
-  function crashPayoutFor(multiplier=state.crashMultiplier){return Math.max(0,Math.floor(state.crashBet*Math.max(1,Number(multiplier)||1)*(1-CRASH_HOUSE_EDGE)));}
+  function crashPayoutFor(multiplier=state.crashMultiplier){const m=Math.max(1,Number(multiplier)||1),stake=Math.max(0,Math.floor(state.crashBet));return Math.max(stake,stake+Math.floor(stake*(m-1)*(1-CRASH_HOUSE_EDGE)));}
   function generateCrashPoint(maximum=selectedVehicle().max){const raw=1/Math.max(.000001,Math.random());return Math.min(maximum,Math.max(CRASH_MIN_POINT,Math.floor(raw*100)/100));}
   function refreshCrashVehicleOptions(){
     const current=state.selectedVehicle;els.crashVehicleSelect.innerHTML=VEHICLES.map(v=>`<option value="${v.id}" ${v.id===current?'selected':''} ${availableVehicleFlights(v.id)<=0?'disabled':''}>${v.name} · ${availableVehicleFlights(v.id)} flights · ${v.range[0].toFixed(2)}–${v.range[1].toFixed(2)}× suggested · ${v.max.toFixed(0)}× redline</option>`).join('');
@@ -881,12 +881,29 @@
     els.crashCashValue.textContent=`Cash out ${compactMoney(payout)} F`;els.crashCashValue.title=exactPayout;
     els.crashVehicleLabel.textContent=v.name;els.crashChargesLabel.textContent=availableVehicleFlights(v.id);els.crashVehicleMaxLabel.textContent=`${v.max.toFixed(2)}×`;els.crashBetInput.value=String(state.crashBet);
     els.crashGameContent.classList.toggle('flight-live',live);
+    els.screens.play.classList.toggle('crash-mode',state.selectedGame==='crash');
     els.screens.play.classList.toggle('crash-live',live&&state.selectedGame==='crash');
     els.crashFlightDock.classList.toggle('hidden',!live);
     els.crashStartButton.classList.toggle('hidden',live);els.crashCashButton.classList.toggle('hidden',!live);els.crashCashButton.disabled=live&&performance.now()<state.crashStartedAt;
-    if(!live){
+    if(!live)els.crashStartButton.querySelector('small').textContent=state.safeRunCredits>0?'Consumes one flight · PROTECTED':'Consumes one flight';
+    if(live){
+      if(state.roundSafe){
+        if(els.crashStatus.textContent!=='PROTECTED ROUND'||els.crashStatus.dataset.action)setCrashStatus('PROTECTED ROUND','win');
+        els.crashStatus.classList.remove('hidden');
+      }else{
+        els.crashStatus.classList.add('hidden');
+      }
+    }else{
       refreshCrashVehicleOptions();
-      if(gameUnlocked('crash')&&noUsableVehicleFlights())setCrashStatus(noFlightWarningText(),'lose','vehicles');
+      if(gameUnlocked('crash')&&noUsableVehicleFlights()){
+        setCrashStatus(noFlightWarningText(),'lose','vehicles');
+      }else if(gameUnlocked('crash')&&state.safeRunCredits>0){
+        setCrashStatus('NEXT FLIGHT · PROTECTED','win');
+        els.crashStatus.classList.remove('hidden');
+      }else{
+        setCrashStatus('');
+        els.crashStatus.classList.add('hidden');
+      }
     }
   }
   function crashMultiplierAtElapsed(elapsed,vehicle=selectedVehicle()){
@@ -895,13 +912,10 @@
     return Math.max(1,Math.exp(base*seconds+(base*.018*seconds*seconds)));
   }
   function crashProtectionActive(){return Boolean(state.crashActive&&state.roundSafe);}
-  function crashLiveStatus(vehicle=selectedVehicle()){
-    return `${crashProtectionActive()?'PROTECTED ROUND · ':''}FLIGHT LIVE · Pull out before failure or automatic redline payout at ${vehicle.max.toFixed(2)}×.`;
-  }
   function startCrash(){
     if(anyRoundActive()||!gameUnlocked('crash'))return false;const v=selectedVehicle();if(availableVehicleFlights(v.id)<=0){setCrashStatus(noFlightWarningText(),'lose','vehicles');haptic([18,35,18]);return false;}if(state.crashBet>availableBetBalance()){setCrashStatus('Lower the bet or add more Froggy to your wallet.','lose');return false;}const allocation=allocateRoundStake(state.crashBet);if(!allocation)return false;
-    state.vehicleCharges[v.id]--;state.crashActive=true;state.crashMultiplier=1;state.crashPoint=generateCrashPoint(v.max);state.roundSafe=state.safeRunCredits>0;if(state.roundSafe)state.safeRunCredits--;state.roundBetForXp=state.crashBet;state.crashRounds++;state.rounds++;session.rounds++;session.net-=state.crashBet;state.crashStartedAt=performance.now()+CRASH_LAUNCH_COUNTDOWN_MS;crashScene.start();setCrashStatus(crashLiveStatus(v),state.roundSafe?'win':'');audio.start();refresh();
-    requestAnimationFrame(()=>{els.crashGamePane.scrollTop=0;els.crashFrame.scrollIntoView({block:'start',behavior:state.effects?'smooth':'auto'});});
+    state.vehicleCharges[v.id]--;state.crashActive=true;state.crashMultiplier=1;state.crashPoint=generateCrashPoint(v.max);state.roundSafe=state.safeRunCredits>0;if(state.roundSafe)state.safeRunCredits--;state.roundBetForXp=state.crashBet;state.crashRounds++;state.rounds++;session.rounds++;session.net-=state.crashBet;state.crashStartedAt=performance.now()+CRASH_LAUNCH_COUNTDOWN_MS;crashScene.start();setCrashStatus(state.roundSafe?'PROTECTED ROUND':'',state.roundSafe?'win':'');audio.start();refresh();
+    requestAnimationFrame(()=>{els.crashGamePane.scrollTop=0;});
     return true;
   }
   function tickCrashGame(now){
@@ -1933,14 +1947,16 @@
 
   const jobRuntime={
     active:false,dragging:false,falling:false,resolving:false,type:'normal',
-    shiftMoney:0,fries:0,moneyBoostUntil:0,xpBoostUntil:0,
+    shiftMoney:0,fries:0,moneyBoostUntil:0,xpBoostUntil:0,moneyBoostMultiplier:1,xpBoostMultiplier:1,
     bagX:0,bagTarget:0,bagVelocity:0,lastBagX:0,lastFrame:0,raf:0,
     pointerId:null,fryX:0,fryY:0,fryVx:0,fryVy:0,fryRotation:0,frySpin:0,
     lastPointerX:0,lastPointerY:0,lastPointerTime:0,bombExpiresAt:0,
+    queued:null,attemptCounted:false,lastDebtResult:null,
     rimCooldownUntil:0,rewardTimer:0,spawnTimer:0
   };
   function jobXpNeeded(level=state.jobLevel){return 100+Math.max(0,level-1)*40;}
-  function jobPay(){return Math.min(250,25+Math.floor((Math.max(1,state.jobLevel)-1)*2.5));}
+  function jobPay(){return 25+Math.floor(10*Math.sqrt(Math.max(0,Math.max(1,state.jobLevel)-1)));}
+  function jobXpPerFry(){return Math.max(10,Math.floor(10*jobPay()/25));}
   function renderJob(){
     if(!els.jobLevelLabel)return;
     const needed=jobXpNeeded();
@@ -1951,9 +1967,11 @@
     els.jobShiftMoney.textContent=`${money(jobRuntime.shiftMoney)} F`;
     els.jobFriesBagged.textContent=money(jobRuntime.fries);
     const now=performance.now(),boosts=[];
-    if(jobRuntime.moneyBoostUntil>now)boosts.push(`💚 2× money ${Math.ceil((jobRuntime.moneyBoostUntil-now)/1000)}s`);
-    if(jobRuntime.xpBoostUntil>now)boosts.push(`💛 2× XP ${Math.ceil((jobRuntime.xpBoostUntil-now)/1000)}s`);
-    els.jobBoostLabel.textContent=boosts.join(' · ')||'None';
+    if(jobRuntime.moneyBoostUntil<=now){jobRuntime.moneyBoostUntil=0;jobRuntime.moneyBoostMultiplier=1;}
+    if(jobRuntime.xpBoostUntil<=now){jobRuntime.xpBoostUntil=0;jobRuntime.xpBoostMultiplier=1;}
+    if(jobRuntime.moneyBoostMultiplier>1)boosts.push(`${money(jobRuntime.moneyBoostMultiplier)}×F`);
+    if(jobRuntime.xpBoostMultiplier>1)boosts.push(`${money(jobRuntime.xpBoostMultiplier)}×XP`);
+    els.jobBoostLabel.textContent=boosts.join(' · ')||'1×';
   }
   function addJobXp(amount){
     state.jobXp+=Math.max(0,Math.floor(amount));
@@ -1974,18 +1992,39 @@
     els.jobFry.style.top=`${jobRuntime.fryY}px`;
     els.jobFry.style.setProperty('--fry-rotation',`${jobRuntime.fryRotation}deg`);
   }
-  function positionJobBag(){els.jobBag.style.left=`${jobRuntime.bagX}px`;}
+  function positionJobBag(){els.jobBag.style.left=`${Math.round(jobRuntime.bagX)}px`;}
+  function hideQueuedJobFry(){
+    jobRuntime.queued=null;
+    els.jobQueuedFry.className='job-fry job-queued-fry hidden';
+  }
+  function prepareQueuedJobFry(){
+    if(!jobRuntime.active||jobRuntime.queued)return;
+    const m=jobFieldMetrics();
+    const queued={
+      type:chooseFryType(),
+      x:m.fryWidth*.7+Math.random()*Math.max(1,m.width-m.fryWidth*1.4),
+      y:Math.max(m.fryHeight*.54,Math.min(m.lineY-m.fryHeight*.54,m.lineY*.48)),
+      rotation:-10+Math.random()*20
+    };
+    jobRuntime.queued=queued;
+    els.jobQueuedFry.className=`job-fry job-queued-fry fry-${queued.type}`;
+    els.jobQueuedFry.style.left=`${queued.x}px`;
+    els.jobQueuedFry.style.top=`${queued.y}px`;
+    els.jobQueuedFry.style.setProperty('--fry-rotation',`${queued.rotation}deg`);
+    els.jobQueuedFry.classList.remove('hidden');
+  }
   function spawnJobFry(){
     clearTimeout(jobRuntime.spawnTimer);
     if(!jobRuntime.active)return;
-    const m=jobFieldMetrics();
-    jobRuntime.type=chooseFryType();
-    jobRuntime.dragging=false;jobRuntime.falling=false;jobRuntime.resolving=false;
-    jobRuntime.fryX=m.fryWidth*.7+Math.random()*Math.max(1,m.width-m.fryWidth*1.4);
-    jobRuntime.fryY=Math.max(m.fryHeight*.54,Math.min(m.lineY-m.fryHeight*.54,m.lineY*.48));
-    jobRuntime.fryVx=0;jobRuntime.fryVy=0;jobRuntime.fryRotation=-10+Math.random()*20;jobRuntime.frySpin=0;
+    const m=jobFieldMetrics(),queued=jobRuntime.queued;
+    jobRuntime.type=queued?.type||chooseFryType();
+    jobRuntime.dragging=false;jobRuntime.falling=false;jobRuntime.resolving=false;jobRuntime.attemptCounted=false;jobRuntime.lastDebtResult=null;
+    jobRuntime.fryX=queued?.x??(m.fryWidth*.7+Math.random()*Math.max(1,m.width-m.fryWidth*1.4));
+    jobRuntime.fryY=queued?.y??Math.max(m.fryHeight*.54,Math.min(m.lineY-m.fryHeight*.54,m.lineY*.48));
+    jobRuntime.fryVx=0;jobRuntime.fryVy=0;jobRuntime.fryRotation=queued?.rotation??(-10+Math.random()*20);jobRuntime.frySpin=0;
     jobRuntime.rimCooldownUntil=0;
     jobRuntime.bombExpiresAt=jobRuntime.type==='red'?performance.now()+4800:0;
+    hideQueuedJobFry();
     els.jobFry.className=`job-fry fry-${jobRuntime.type}`;
     els.jobFry.classList.remove('hidden','bagged','discarded','dropping');
     els.jobFry.setAttribute('aria-label',jobRuntime.type==='red'?'Bomb fry: drag it above the line and drop it away from the bag':'Drag this fry above the line, then release it');
@@ -1994,10 +2033,10 @@
   function startJobShift(){
     closeJobResult();clearTimeout(jobRuntime.spawnTimer);clearTimeout(jobRuntime.rewardTimer);
     jobRuntime.active=true;jobRuntime.dragging=false;jobRuntime.falling=false;jobRuntime.resolving=false;
-    jobRuntime.shiftMoney=0;jobRuntime.fries=0;jobRuntime.moneyBoostUntil=0;jobRuntime.xpBoostUntil=0;
+    jobRuntime.shiftMoney=0;jobRuntime.fries=0;jobRuntime.moneyBoostUntil=0;jobRuntime.xpBoostUntil=0;jobRuntime.moneyBoostMultiplier=1;jobRuntime.xpBoostMultiplier=1;jobRuntime.queued=null;jobRuntime.attemptCounted=false;jobRuntime.lastDebtResult=null;
     const m=jobFieldMetrics();
     jobRuntime.bagX=m.width*.5;jobRuntime.lastBagX=jobRuntime.bagX;jobRuntime.bagTarget=m.width*(.2+Math.random()*.6);
-    els.jobIntro.classList.add('hidden');els.jobBag.classList.remove('hidden');els.jobExplosion.classList.add('hidden');
+    els.jobIntro.classList.add('hidden');els.jobBag.classList.remove('hidden');els.jobExplosion.classList.add('hidden');hideQueuedJobFry();
     audio.start();renderJob();positionJobBag();spawnJobFry();
     jobRuntime.lastFrame=performance.now();cancelAnimationFrame(jobRuntime.raf);jobRuntime.raf=requestAnimationFrame(jobLoop);
   }
@@ -2010,7 +2049,7 @@
     event.preventDefault();audio.unlock();jobRuntime.dragging=true;jobRuntime.pointerId=event.pointerId;
     els.jobFry.setPointerCapture?.(event.pointerId);audio.fryGrab();els.jobFry.classList.add('dragging');
     const p=jobPointerPosition(event),now=performance.now();
-    jobRuntime.lastPointerX=p.x;jobRuntime.lastPointerY=p.y;jobRuntime.lastPointerTime=now;
+    jobRuntime.lastPointerX=p.x;jobRuntime.lastPointerY=p.y;jobRuntime.lastPointerTime=now;prepareQueuedJobFry();
   }
   function moveFryDrag(event){
     if(!jobRuntime.dragging||event.pointerId!==jobRuntime.pointerId)return;
@@ -2073,13 +2112,26 @@
     jobRuntime.rimCooldownUntil=performance.now()+105;
     audio.fryRim();haptic(7);
   }
+  function finishJobAttempt(outcome='neutral'){
+    if(jobRuntime.attemptCounted)return jobRuntime.lastDebtResult;
+    jobRuntime.attemptCounted=true;
+    state.rounds++;state.completedRounds++;session.rounds++;
+    if(outcome==='win'){session.wins++;session.lossStreak=0;}
+    if(outcome==='loss'){session.losses++;session.lossStreak++;}
+    const debtResult=completeDebtTurn();
+    jobRuntime.lastDebtResult=debtResult;
+    if(debtResult)setStatus(debtResult.message,debtResult.due||debtResult.assetLost||debtResult.levelLost?'lose':'');
+    return debtResult;
+  }
   function resolveJobDrop(kind){
     if(jobRuntime.resolving)return;
     jobRuntime.resolving=true;jobRuntime.falling=false;els.jobFry.classList.remove('dropping');
     if(kind==='bag'){
+      finishJobAttempt(jobRuntime.type==='red'?'loss':'win');
       if(jobRuntime.type==='red'){explodeJobBomb();return;}
       bagJobFry();return;
     }
+    finishJobAttempt(jobRuntime.type==='red'?'neutral':'loss');
     if(jobRuntime.type==='red'){discardJobBomb();return;}
     endJobShift('miss');
   }
@@ -2158,23 +2210,30 @@
   }
   function bagJobFry(){
     const now=performance.now(),type=jobRuntime.type;
-    if(type==='green'){jobRuntime.moneyBoostUntil=Math.max(jobRuntime.moneyBoostUntil,now)+20000;audio.boost();}
-    if(type==='yellow'){jobRuntime.xpBoostUntil=Math.max(jobRuntime.xpBoostUntil,now)+20000;audio.boost();}
-    const moneyMultiplier=jobRuntime.moneyBoostUntil>now?2:1,xpMultiplier=jobRuntime.xpBoostUntil>now?2:1;
-    const earned=jobPay()*moneyMultiplier,xp=10*xpMultiplier;
-    creditBalance(earned);addXp(xp);addJobXp(10*xpMultiplier);
-    jobRuntime.shiftMoney+=earned;jobRuntime.fries++;state.jobLifetimeFries++;state.jobLifetimeEarnings+=earned;
-    audio.fryBag();haptic(12);showJobReward(earned,xp);els.jobFry.classList.add('bagged');renderJob();saveState();
-    jobRuntime.spawnTimer=setTimeout(()=>{els.jobFry.classList.remove('bagged');spawnJobFry();},260);
+    if(type==='green'){
+      jobRuntime.moneyBoostMultiplier=jobRuntime.moneyBoostUntil>now?Math.min(Number.MAX_SAFE_INTEGER,jobRuntime.moneyBoostMultiplier*2):2;
+      jobRuntime.moneyBoostUntil=now+20000;audio.boost();
+    }
+    if(type==='yellow'){
+      jobRuntime.xpBoostMultiplier=jobRuntime.xpBoostUntil>now?Math.min(Number.MAX_SAFE_INTEGER,jobRuntime.xpBoostMultiplier*2):2;
+      jobRuntime.xpBoostUntil=now+20000;audio.boost();
+    }
+    const moneyMultiplier=jobRuntime.moneyBoostUntil>now?jobRuntime.moneyBoostMultiplier:1;
+    const xpMultiplier=jobRuntime.xpBoostUntil>now?jobRuntime.xpBoostMultiplier:1;
+    const earned=Math.min(MAX_SAFE_BALANCE,jobPay()*moneyMultiplier),xp=Math.min(MAX_SAFE_BALANCE,jobXpPerFry()*xpMultiplier);
+    creditBalance(earned);addXp(xp);addJobXp(xp);
+    jobRuntime.shiftMoney+=earned;jobRuntime.fries++;state.jobLifetimeFries++;state.jobLifetimeEarnings+=earned;session.net+=earned;
+    audio.fryBag();haptic(12);showJobReward(earned,xp);els.jobFry.classList.add('bagged');refresh();renderJob();saveState();
+    jobRuntime.spawnTimer=setTimeout(()=>{els.jobFry.classList.remove('bagged');spawnJobFry();},60);
   }
   function discardJobBomb(){
     els.jobFry.classList.add('discarded');audio.bombDiscard();haptic(10);
-    setStatus('Bomb discarded. Back to work.','win');
-    jobRuntime.spawnTimer=setTimeout(()=>spawnJobFry(),260);
+    setStatus('Bomb discarded. Back to work.','win');refresh();
+    jobRuntime.spawnTimer=setTimeout(()=>spawnJobFry(),60);
   }
   function explodeJobBomb(){
     jobRuntime.active=false;jobRuntime.dragging=false;jobRuntime.falling=false;
-    cancelAnimationFrame(jobRuntime.raf);els.jobFry.classList.add('hidden');
+    cancelAnimationFrame(jobRuntime.raf);els.jobFry.classList.add('hidden');hideQueuedJobFry();
     els.jobExplosion.style.left=`${jobRuntime.bagX}px`;els.jobExplosion.classList.remove('hidden','explode');
     void els.jobExplosion.offsetWidth;els.jobExplosion.classList.add('explode');
     els.jobPlayfield.classList.add('job-bomb-shake');audio.explosion();haptic([100,45,160,60,220]);
@@ -2183,16 +2242,16 @@
   function endJobShift(reason='miss',alreadyStopped=false){
     if(!jobRuntime.active&&!alreadyStopped)return;
     jobRuntime.active=false;jobRuntime.dragging=false;jobRuntime.falling=false;jobRuntime.resolving=true;
-    cancelAnimationFrame(jobRuntime.raf);clearTimeout(jobRuntime.spawnTimer);els.jobFry.classList.add('hidden');
+    cancelAnimationFrame(jobRuntime.raf);clearTimeout(jobRuntime.spawnTimer);els.jobFry.classList.add('hidden');hideQueuedJobFry();
     if(reason!=='bomb'){audio.jobFail();haptic([80,40,120]);}
     els.jobResultIcon.textContent=reason==='bomb'?'💥':'💔';
     els.jobResultTitle.textContent=reason==='bomb'?'YOU CAUGHT A BOMB':'bro had one job💔';
     els.jobResultMoney.textContent=`${money(jobRuntime.shiftMoney)} F`;
     els.jobResultText.textContent=reason==='bomb'
       ?`The red fry exploded in the bag. You made ${money(jobRuntime.shiftMoney)} F before the blast, and it is already in your wallet.`
-      :`You bagged ${money(jobRuntime.fries)} ${jobRuntime.fries===1?'fry':'fries'} before missing. Your earnings are already in the wallet.`;
+      :`You bagged ${money(jobRuntime.fries)} ${jobRuntime.fries===1?'fry':'fries'} before missing. Your earnings are already in the wallet.${jobRuntime.lastDebtResult?` ${jobRuntime.lastDebtResult.message}`:''}`;
     setTimeout(()=>els.jobResult.classList.remove('hidden'),reason==='bomb'?220:0);
-    renderJob();saveState();
+    refresh();renderJob();saveState();
   }
   function closeJobResult(){els.jobResult.classList.add('hidden');els.jobExplosion.classList.add('hidden');}
 
@@ -2514,17 +2573,17 @@
       if(compactMoney(1240000)!=='1.24M'||compactMoney(1000000000)!=='1B'||compactMoney(999)!=='999')throw new Error('compact money formatting failed');
       if(VEHICLES[0].refillCost!==25000||VEHICLES[1].refillCost!==150000||VEHICLES[2].refillCost!==750000||VEHICLES[3].refillCost!==4000000)throw new Error('refill prices failed');
       if(VEHICLES[0].max!==5||VEHICLES[1].max!==12||VEHICLES[2].max!==30||VEHICLES[3].max!==100)throw new Error('realistic redlines failed');
-      state.vehicleCharges.glider=5;state.ownedVehicles=['glider'];state.selectedVehicle='glider';state.crashBet=100;state.balance=1000;if(!startCrash()||!state.crashActive)throw new Error('crash start failed');state.crashStartedAt=performance.now()-5000;state.crashMultiplier=1.5;if(!crashCashOut()||state.crashActive||state.balance<=900)throw new Error('manual crash cashout failed');closeModal();state=deepClone(DEFAULT_STATE);state.unlockedGames=['leap','crash'];state.ownedVehicles=['glider'];state.vehicleCharges.glider=2;state.balance=1000;state.crashBet=100;state.safeRunCredits=1;if(!startCrash()||!state.roundSafe||state.safeRunCredits!==0)throw new Error('Crash protected-round activation failed');state.crashStartedAt=performance.now()-5000;state.crashMultiplier=1.5;if(!crashCashOut({automatic:true,reason:'protected'})||state.roundSafe)throw new Error('Crash protected payout failed');closeModal();if(crashMultiplierAtElapsed(10,VEHICLES[0])<=Math.exp(10*VEHICLES[0].growth))throw new Error('accelerating Crash curve failed');
+      state.vehicleCharges.glider=5;state.ownedVehicles=['glider'];state.selectedVehicle='glider';state.crashBet=100;state.balance=1000;if(crashPayoutFor(1)!==100||crashPayoutFor(2)!==197)throw new Error('Crash 1x stake return failed');if(!startCrash()||!state.crashActive)throw new Error('crash start failed');state.crashStartedAt=performance.now()-5000;state.crashMultiplier=1.5;if(!crashCashOut()||state.crashActive||state.balance<=900)throw new Error('manual crash cashout failed');closeModal();state=deepClone(DEFAULT_STATE);state.unlockedGames=['leap','crash'];state.ownedVehicles=['glider'];state.vehicleCharges.glider=2;state.balance=1000;state.crashBet=100;state.safeRunCredits=1;if(!startCrash()||!state.roundSafe||state.safeRunCredits!==0)throw new Error('Crash protected-round activation failed');state.crashStartedAt=performance.now()-5000;state.crashMultiplier=1.5;if(!crashCashOut({automatic:true,reason:'protected'})||state.roundSafe)throw new Error('Crash protected payout failed');closeModal();if(crashMultiplierAtElapsed(10,VEHICLES[0])<=Math.exp(10*VEHICLES[0].growth))throw new Error('accelerating Crash curve failed');
       state=deepClone(DEFAULT_STATE);state.unlockedFrogs.push('king');state.unlockedLakes.push('swamp');state.ownedVehicles.push('glider');state.vehicleCharges.glider=10;state.unlockedGames.push('crash');state.piggyBalance=1000000;const assets=collateralBreakdown();if(assets.skins!==5000||assets.lakes!==1500||assets.vehicles!==750000||assets.licenses!==500000||assets.piggy!==1000000||'flights' in assets)throw new Error('flight-free Bank Values failed');if(debtLimit()!==Math.min(MAX_LOAN_PAYOUT,BASE_UNSECURED_CREDIT+assets.total))throw new Error('direct asset-backed limit failed');const pledge=emptyCollateralSelection();if('flights' in pledge)throw new Error('flights remained pledgeable');pledge.piggy=5000;if(!takeLoan(10000,{skipConfirm:true,pledge})||state.pledgedPiggy!==5000)throw new Error('selected collateral loan failed');
       state=deepClone(DEFAULT_STATE);state.balance=1000000;state.level=10;collectionMode='vehicles';collectionAction('glider');const afterModel=state.balance;if(!buyVehicleFlights('glider',{skipConfirm:true})||state.balance!==afterModel-25000||vehicleCharges('glider')!==20)throw new Error('cheap refill failed');state.debt=1000;state.pledgedFlights.glider=20;if(availableVehicleFlights('glider')!==20||pledgedVehicleFlights('glider')!==0)throw new Error('old flight pledges were not ignored');
       state=deepClone(DEFAULT_STATE);state.balance=20000;state.debt=10800;state.loanPrincipalOriginal=10000;state.loanPrincipalRemaining=10000;state.loanInterestTotal=800;state.loanInterestPaid=0;state.loanInstallment=1080;state.loanInstallmentsPaid=0;state.debtCycleStartRound=0;state.completedRounds=0;piggyTransferMode='deposit';if(earlyPayoffAmount()!==10000||piggyTransferMaximum()!==10000)throw new Error('initial loan Piggy reserve failed');state.completedRounds=3;if(earlyPayoffAmount()!==10048||piggyTransferMaximum()!==9952)throw new Error('round-adjusted loan Piggy reserve failed');if(trustedClosedElapsed(3600000,0,0)!==3600000||trustedClosedElapsed(4600000,1000000,600000)!==3000000)throw new Error('trusted closed-time calculation failed');
       state=deepClone(DEFAULT_STATE);piggyTrustedAnchorMs=0;state.piggyTrustedTimestamp=123456;state.piggyUntrustedOpenMs=789;invalidateUntrustedClosedAccrual();if(state.piggyTrustedTimestamp!==0||state.piggyUntrustedOpenMs!==0)throw new Error('untrusted Piggy balance-change invalidation failed');piggyTrustedAnchorMs=Date.now();piggyTrustedAnchorPerformance=performance.now();
       state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;state.piggyLastTimestamp=Date.now();let result=advancePiggyTime(PIGGY_CYCLE_MS,piggyOpenRate(),'open');if(result.interest!==2000||state.piggyBalance!==1002000)throw new Error('open-app Piggy rate failed');state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;result=advancePiggyTime(PIGGY_CYCLE_MS,piggyClosedRate(),'closed');if(result.interest!==1000||state.piggyBalance!==1001000)throw new Error('closed-app Piggy rate failed');state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;advancePiggyTime(PIGGY_CYCLE_MS/2,piggyOpenRate(),'open');result=advancePiggyTime(PIGGY_CYCLE_MS/2,piggyClosedRate(),'closed');if(result.interest!==1500)throw new Error('mixed Piggy cycle failed');state=deepClone(DEFAULT_STATE);state.piggyInterestRateBonus+=PIGGY_OWNER_RATE_STEP;state.piggyInterestRateBonus+=PIGGY_OWNER_RATE_STEP;if(state.piggyInterestRateBonus!==0.02||piggyOpenRate()!==0.022||piggyClosedRate()!==0.021)throw new Error('repeatable Piggy owner boost failed');state.piggyBalance=1000000;result=advancePiggyTime(PIGGY_CYCLE_MS,piggyOpenRate(),'open');if(result.interest!==22000)throw new Error('stacked Piggy rate failed');state.piggyInterestRateBonus=0;if(piggyOpenRate()!==PIGGY_OPEN_RATE||piggyClosedRate()!==PIGGY_CLOSED_RATE)throw new Error('Piggy owner reset failed');if(!ownerAccessModal||!ownerPanelModal)throw new Error('maintenance UI failed');
       const testMetrics={bagWidth:200,bagHeight:260};const testGeometry={bagTop:100};jobRuntime.bagX=200;if(jobMouthRimY(200,testGeometry,testMetrics)<=jobMouthRimY(120,testGeometry,testMetrics))throw new Error('bag mouth curve failed');
-      state=deepClone(DEFAULT_STATE);state.jobLevel=1;const baseJobPay=jobPay();state.jobLevel=11;if(jobPay()<=baseJobPay||jobPay()>250)throw new Error('Job pay progression failed');
+      state=deepClone(DEFAULT_STATE);state.jobLevel=1;const baseJobPay=jobPay(),baseJobXp=jobXpPerFry();state.jobLevel=2000;if(jobPay()<=250||jobPay()<=baseJobPay||jobXpPerFry()<=baseJobXp)throw new Error('uncapped Job pay/XP progression failed');
       state=deepClone(DEFAULT_STATE);state.ownedVehicles=['rocket'];state.vehicleCharges.rocket=0;state.vehicleFlightCompletions.rocket=9;const perk=completeVehicleFlight('rocket');if(perk.bonus!==1||vehicleCharges('rocket')!==1)throw new Error('free-flight perk failed');if(vehicleCrashXp(VEHICLES[3],100)!==114&&vehicleCrashXp(VEHICLES[3],100)!==115)throw new Error('vehicle XP perk failed');
       showResult({icon:'🪂',kicker:'TEST',title:'Crash profit',amount:'150 F returned',profit:'+50 F',text:'Profit is separate.'});if(els.resultProfit.classList.contains('hidden')||els.resultProfit.querySelector('b').textContent!=='+50 F')throw new Error('separate Crash profit failed');closeModal();
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v41 full-screen Job layout, generous swept bag collision, rim physics, readable results, and Job Level owner control';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v42 full-screen Crash, protected-status visibility, full 1x stake return, rapid fry queue, uncapped Job pay/XP, stacking boosts, clean bag rendering, and Job rounds';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 
@@ -2547,5 +2606,5 @@
   if(!state.tutorialSeen&&!TEST_MODE){state.tutorialSeen=true;saveState();setTimeout(()=>openModal(els.howToModal),600);}
   if(TEST_MODE)runSelfTest();
 
-  window.FroggyGame={version:BUILD_VERSION,jobPay,jobXpNeeded,startJobShift,endJobShift,compactMoney,selectVehicle,buyVehicleFlights,getState:()=>deepClone(state),setGameMode,unlockGame,startCrash,crashCashOut,crashLose,setCrashBet,crashPayoutFor,selectBet,setBetAmount,adjustBet,applyCustomBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,spinDaily,creditBalance,takeLoan,repayDebt,completeDebtTurn,debtInstallment,debtLimit,availableCredit,maxSingleLoan,collateralBreakdown,collateralLoanLimit,allocateRoundStake,ownedWalletBalance,finishCompletedRound,earlyPayoffAmount,earlyPayoffCashRequired,earlyPayoffSavings,loanQuote,piggyLoanReserve,piggyTransferMaximum,transferPiggy,advancePiggyBankRound,selectedVehicle,vehicleCharges,pledgedVehicleFlights,availableVehicleFlights,vehicleOwned,collateralSelectionValue,completeVehicleFlight,vehicleCrashXp,advancePiggyTime,tickPiggyClock,trustedClosedElapsed,piggyOpenRate,piggyClosedRate,ensureCrashLevelUnlock,autoSelectCollateral,noUsableVehicleFlights,openVehicleShop,setBankPane,wheelSegments:deepClone(WHEEL_SEGMENTS),reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();refresh();}};
+  window.FroggyGame={version:BUILD_VERSION,jobPay,jobXpPerFry,jobXpNeeded,startJobShift,endJobShift,compactMoney,selectVehicle,buyVehicleFlights,getState:()=>deepClone(state),setGameMode,unlockGame,startCrash,crashCashOut,crashLose,setCrashBet,crashPayoutFor,selectBet,setBetAmount,adjustBet,applyCustomBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,spinDaily,creditBalance,takeLoan,repayDebt,completeDebtTurn,debtInstallment,debtLimit,availableCredit,maxSingleLoan,collateralBreakdown,collateralLoanLimit,allocateRoundStake,ownedWalletBalance,finishCompletedRound,earlyPayoffAmount,earlyPayoffCashRequired,earlyPayoffSavings,loanQuote,piggyLoanReserve,piggyTransferMaximum,transferPiggy,advancePiggyBankRound,selectedVehicle,vehicleCharges,pledgedVehicleFlights,availableVehicleFlights,vehicleOwned,collateralSelectionValue,completeVehicleFlight,vehicleCrashXp,advancePiggyTime,tickPiggyClock,trustedClosedElapsed,piggyOpenRate,piggyClosedRate,ensureCrashLevelUnlock,autoSelectCollateral,noUsableVehicleFlights,openVehicleShop,setBankPane,wheelSegments:deepClone(WHEEL_SEGMENTS),reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();refresh();}};
 })();
