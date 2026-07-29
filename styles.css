@@ -2795,3 +2795,92 @@ body {
     font-size:5.8px;
   }
 }
+
+
+/* ==========================================================================
+   v34 — practical vehicle economy and time-based Piggy
+   ========================================================================== */
+
+.asset-breakdown.five-part {
+  grid-template-columns:repeat(5,minmax(0,1fr));
+}
+
+.simple-piggy-metrics {
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+
+.piggy-rate {
+  max-width:245px;
+  text-align:right;
+  line-height:1.25;
+}
+
+.vehicle-economy-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:6px;
+  margin:8px 0;
+}
+
+.vehicle-economy-grid span {
+  min-width:0;
+  display:grid;
+  gap:2px;
+  padding:8px;
+  border-radius:12px;
+  background:rgba(16,40,58,.055);
+}
+
+.vehicle-economy-grid small {
+  color:var(--ink-soft);
+  font-size:6px;
+  letter-spacing:.08em;
+  font-weight:1000;
+}
+
+.vehicle-economy-grid b {
+  overflow:hidden;
+  color:var(--ink);
+  font-size:8px;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.vehicle-perk-line {
+  display:block;
+  min-height:30px;
+  margin-top:6px;
+  padding:8px 9px;
+  border-radius:12px;
+  color:#247942;
+  background:#e8ffdc;
+  font-size:6.8px;
+  line-height:1.35;
+  font-weight:1000;
+  letter-spacing:.03em;
+}
+
+.vehicle-charge-count {
+  line-height:1.35;
+}
+
+@media (max-width:760px) {
+  .asset-breakdown.five-part {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media (max-width:520px) {
+  .simple-piggy-metrics {
+    grid-template-columns:1fr;
+  }
+
+  .piggy-rate {
+    max-width:180px;
+    font-size:6px;
+  }
+
+  .vehicle-economy-grid {
+    grid-template-columns:1fr;
+  }
+}

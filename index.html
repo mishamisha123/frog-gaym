@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=33" />
+  <link rel="stylesheet" href="styles.css?v=35" />
   <title>Froggy Arcade Deluxe</title>
 </head>
 <body>
@@ -44,7 +44,7 @@
           <div class="arcade-title"><small>FROGGY ARCADE</small><h1>Choose a game</h1></div>
           <div class="arcade-tabs" role="tablist" aria-label="Arcade games">
             <button id="leapGameTab" type="button" class="active pressable" data-game-mode="leap" role="tab" aria-selected="true"><span>🐸</span><b>Lily Leap</b><small>FREE</small></button>
-            <button id="crashGameTab" type="button" class="pressable" data-game-mode="crash" role="tab" aria-selected="false"><span>🚀</span><b>Sky Crash</b><small id="crashTabStatus">25M LICENSE</small></button>
+            <button id="crashGameTab" type="button" class="pressable" data-game-mode="crash" role="tab" aria-selected="false"><span>🚀</span><b>Sky Crash</b><small id="crashTabStatus">500K / LV35</small></button>
           </div>
         </section>
 
@@ -102,7 +102,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v33 · FROGGY ARCADE</div>
+          <div class="build-version" aria-label="Installed game version">v35 · FROGGY ARCADE</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -134,8 +134,8 @@
         <section id="crashGamePane" class="arcade-game-pane hidden" aria-label="Sky Crash game">
           <article id="crashLicenseCard" class="crash-license-card glass">
             <div class="license-art" aria-hidden="true"><span>🐸</span><i>🚀</i></div>
-            <div class="license-copy"><small>EXPENSIVE ARCADE LICENSE</small><h2>Sky Crash</h2><p>Launch your frog into the sky, watch the multiplier climb, and eject before the vehicle crashes.</p><div class="license-perks"><span>Animated vertical flight</span><span>Five starter glider flights</span><span>Vehicles set multiplier ceilings</span></div></div>
-            <div class="license-buy"><small>LICENSE PRICE</small><b>25,000,000 F</b><button id="unlockCrashButton" type="button" class="crash-unlock-button pressable">UNLOCK SKY CRASH</button><span>Owned wallet funds only</span></div>
+            <div class="license-copy"><small>FLEXIBLE ARCADE UNLOCK</small><h2>Sky Crash</h2><p>Launch your frog into the sky, watch the multiplier climb, and eject before the vehicle crashes.</p><div class="license-perks"><span>Pay 500,000 F to unlock early</span><span>Or reach Level 35 to unlock free</span><span>Five starter glider flights included</span></div></div>
+            <div class="license-buy"><small>CHOOSE ONE PATH</small><b>500,000 F</b><button id="unlockCrashButton" type="button" class="crash-unlock-button pressable">PAY 500,000 F TO UNLOCK</button><span>Money or Level 35 — never both</span></div>
           </article>
 
           <div id="crashGameContent" class="hidden">
@@ -237,7 +237,7 @@
           <div class="promo-copy">
             <small>HAVE A SECRET CODE?</small>
             <h2>Unlock a pond surprise.</h2>
-            <p>Promo codes are case-insensitive. Codes 5, 10, 50000, lifeguard, and qoostommoney are reusable.</p>
+            <p>Promo codes are case-insensitive. Codes 5, 10, 50000, lifeguard, qoostommoney, +1, and reset are reusable.</p>
           </div>
 
           <form id="promoForm" class="promo-form" autocomplete="off">
@@ -256,6 +256,7 @@
           <article class="promo-status-card glass"><span class="promo-status-icon">🐸</span><small>CHARACTERS</small><b id="promoFrogStatus">1 / 10 frogs</b><p>See every owned character in the Collection tab.</p></article>
           <article class="promo-status-card glass"><span class="promo-status-icon">🌊</span><small>LAKES</small><b id="promoLakeStatus">1 / 7 lakes</b><p>The code iwannaswim opens every lake theme.</p></article>
           <article class="promo-status-card glass"><span class="promo-status-icon">🪙</span><small>BONUS FROGGY</small><b id="promoCoinStatus">Reusable coin vaults</b><p>Use 50000 for a fixed reward or qoostommoney to enter a custom amount.</p></article>
+          <article class="promo-status-card glass"><span class="promo-status-icon">🐷</span><small>PIGGY BOOST</small><b id="promoPiggyStatus">Normal rates</b><p>Use +1 for one extra percentage point. Use reset to restore normal rates.</p></article>
         </div>
 
         <p class="virtual-note">Promo rewards affect only fictional in-game Froggy currency and progression.</p>
@@ -286,16 +287,15 @@
             <div class="simple-tier-card credit-health-card asset-credit-card">
               <div class="credit-health-grid asset-credit-summary">
                 <div><small>TOTAL ASSET VALUE</small><b id="creditTierLabel">0 F</b><span id="creditTierCeilingLabel">Every paid asset uses its full Bank Value</span></div>
-                <div><small>AVAILABLE COLLATERAL</small><b id="creditScoreLabel">0 F</b><span id="creditScoreGradeLabel">Unused purchased flights are included</span></div>
+                <div><small>AVAILABLE COLLATERAL</small><b id="creditScoreLabel">0 F</b><span id="creditScoreGradeLabel">Consumable flights never count as collateral</span></div>
                 <div><small>AVAILABLE TO BORROW</small><b id="debtLimitLabel">5,000 F</b><span id="creditLimitFactorLabel">1B F hard cap</span></div>
               </div>
               <div class="simple-tier-progress"><i id="creditTierProgressFill"></i></div>
               <p><strong id="creditHistoryLabel">5,000 F starter credit</strong> · <span id="creditNextTierLabel">Each 1 F of Bank Value adds 1 F of borrowing capacity</span></p>
-              <div class="asset-breakdown six-part" aria-label="Bank Value breakdown">
+              <div class="asset-breakdown five-part" aria-label="Bank Value breakdown">
                 <span><small>CHARACTERS</small><b id="skinAssetLabel">0 F</b></span>
                 <span><small>LAKES</small><b id="lakeAssetLabel">0 F</b></span>
                 <span><small>VEHICLE MODELS</small><b id="vehicleAssetLabel">0 F</b></span>
-                <span><small>UNUSED FLIGHTS</small><b id="flightAssetLabel">0 F</b></span>
                 <span><small>LICENSES</small><b id="licenseAssetLabel">0 F</b></span>
                 <span><small>PIGGY</small><b id="piggyAssetLabel">0 F</b></span>
               </div>
@@ -369,7 +369,7 @@
                 <span class="piggy-icon" aria-hidden="true">🐷</span>
                 <div><small>PIGGY SAVINGS</small><h2>Piggy Bank</h2></div>
               </div>
-              <span class="piggy-rate">+0.1% every 20 rounds</span>
+              <span id="piggyRateSummary" class="piggy-rate">+0.2% OPEN · +0.1% CLOSED · EVERY 20 MIN</span>
             </div>
 
             <div class="piggy-balance-card">
@@ -380,7 +380,8 @@
 
             <div class="piggy-metrics simple-piggy-metrics">
               <div><small>NEXT INTEREST</small><b id="piggyNextInterestLabel">0 F</b></div>
-              <div><small>ROUNDS LEFT</small><b id="piggyRoundsLabel">20</b></div>
+              <div><small>TIME LEFT</small><b id="piggyRoundsLabel">20:00</b></div>
+              <div><small>CURRENT RATE</small><b id="piggyRateModeLabel">0.2% OPEN</b></div>
             </div>
 
             <div class="piggy-progress" aria-label="Piggy Bank interest progress">
@@ -411,7 +412,7 @@
                 <span>DEPOSIT TO PIGGY</span>
                 <small>No fee · withdraw anytime</small>
               </button>
-              <p id="piggyMessage" class="piggy-message" role="status" aria-live="polite">Store Froggy to earn 0.1% every 20 completed rounds. Active debt does not block transfers.</p>
+              <p id="piggyMessage" class="piggy-message" role="status" aria-live="polite">Keep the app open to earn 0.2% every 20 minutes. While the app is closed, savings earn 0.1% every 20 minutes.</p>
             </div>
           </section>
         </div>
@@ -565,7 +566,7 @@
 
           <div class="loan-quote-note">
             <b>No lending-rate reduction.</b>
-            <span>Every selected asset contributes its full displayed Bank Value. Unused purchased flights count and pledged flights are reserved until payoff.</span>
+            <span>Every selected permanent asset contributes its full displayed Bank Value. Flights remain usable consumables and never enter the loan calculation.</span>
           </div>
         </div>
 
@@ -594,8 +595,8 @@
 
           <div class="loan-warning-list">
             <p><b>1.</b> The first 5,000 Froggy is unsecured. Every Froggy above that amount must be covered by selected collateral at its full Bank Value.</p>
-            <p><b>2.</b> Characters, lakes, vehicle models, unused purchased flights, paid game licenses, and selected Piggy savings may be pledged.</p>
-            <p><b>3.</b> Pledged flights are reserved and cannot be used in Sky Crash until the loan is cleared.</p>
+            <p><b>2.</b> Characters, lakes, permanent vehicle models, paid game licenses, and selected Piggy savings may be pledged. Flights are never collateral.</p>
+            <p><b>3.</b> Flights are consumables. They are never pledged, reserved, or seized by the Bank.</p>
             <p><b>4.</b> Loan money enters the normal wallet. There is no separate leverage toggle, tagged balance, loss surcharge, or automatic profit sweep.</p>
             <p><b>5.</b> The next fixed payment may be paid early and resets the five-round countdown. Early payoff removes unearned interest.</p>
             <p><b>6.</b> If overdue, only the assets listed above may be seized before any level penalty.</p>
@@ -620,6 +621,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=33"></script>
+  <script src="app.js?v=35"></script>
 </body>
 </html>

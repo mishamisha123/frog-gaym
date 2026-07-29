@@ -911,3 +911,65 @@ When Sky Crash has no usable flights, its warning banner is now an interactive s
 - The first available purchase or refill action is scrolled into view and briefly highlighted.
 - The warning distinguishes between consumed flights and flights reserved as Bank collateral.
 - The shortcut cannot activate while a game round is active.
+
+
+## v34 vehicle economy
+
+Permanent vehicle models and consumable flights are now completely separate.
+
+| Vehicle | Model price | Refill pack | Redline | Suggested pullout |
+|---|---:|---:|---:|---:|
+| Training Glider | 750,000 F | 10 flights / 25,000 F | 5× | 1.30×–2.50× |
+| Pond Prop Plane | 4,000,000 F | 25 flights / 150,000 F | 12× | 1.50×–4.00× |
+| Lily Rocket | 20,000,000 F | 50 flights / 750,000 F | 30× | 2.00×–8.00× |
+| Cosmic Starship | 120,000,000 F | 100 flights / 4,000,000 F | 100× | 3.00×–15.00× |
+
+Vehicle perks:
+
+- Training Glider has the slowest, easiest-to-read multiplier animation.
+- Pond Prop Plane awards 5% additional Sky Crash XP on successful pullout.
+- Lily Rocket awards 10% additional XP and one free flight every ten completed flights.
+- Cosmic Starship awards 15% additional XP and two free flights every ten completed flights.
+- Completing a flight means either pulling out or crashing; milestone progress is never lost.
+
+Flights are no longer part of Bank Value.
+
+- Flights cannot be selected as collateral.
+- Flights cannot be reserved.
+- Flights cannot be seized after default.
+- Existing v32/v33 flight pledges are automatically released.
+- Permanent vehicle models retain their full purchase-price Bank Value.
+
+## v34 time-based Piggy Bank
+
+Round-based Piggy interest was removed.
+
+- While the app is running: 0.2% per completed 20-minute cycle.
+- While the app is closed: 0.1% per completed 20-minute cycle.
+- Closing the app means no game page is running. No interaction timer is used.
+- Partial time carries across closing and reopening.
+- A mixed cycle receives proportional interest. For example, ten open minutes and ten closed minutes produce approximately 0.15%.
+- Interest compounds whenever a 20-minute cycle finishes.
+- The Piggy screen shows the live time remaining, expected next interest and current open-app rate.
+- If savings reach zero, the timer restarts when a new deposit is made.
+
+The browser stores a timestamp every few seconds and on normal page close. On the next launch,
+the elapsed closed-app time is processed at the 0.1% rate.
+
+## v35 fair Sky Crash unlock and Piggy promo rates
+
+Sky Crash now has two independent unlock paths. The player chooses either path; they are never combined.
+
+- Pay **500,000 F** to unlock Sky Crash early.
+- Reach **Level 35** to unlock Sky Crash free.
+- Either unlock path includes five starter Training Glider flights.
+- Reaching Level 35 automatically grants the license if it is still locked.
+- The Sky Crash license Bank Value now follows the new 500,000 F license price.
+
+Two reusable Piggy Bank promo codes were added:
+
+- `+1` — adds one percentage point to both Piggy rates, changing open time from 0.2% to 1.2% and closed time from 0.1% to 1.1% per 20-minute cycle.
+- `reset` — restores the normal 0.2% open and 0.1% closed rates.
+
+The promo changes affect future elapsed time. Already credited Piggy interest is never removed.
+
