@@ -991,3 +991,19 @@ The promo changes affect future elapsed time. Already credited Piggy interest is
 - If the Piggy balance changes before trusted time is available, any unverified closed-time gap is discarded instead of being applied retroactively to the new balance.
 - The first v37 online launch establishes the trusted-clock baseline; unverified pre-upgrade closed time is not credited.
 - The service worker bypasses its cache for trusted-time checks.
+
+
+## v38 gameplay reliability and Sky Crash update
+
+- Restored resilient Web Audio initialization across touch, mouse, keyboard and app resume.
+- Sky Crash acceleration now increases during the climb.
+- Reaching a vehicle redline safely triggers an automatic pullout instead of a loss.
+- Protected rounds now apply consistently across arcade gameplay.
+
+## v38 audio and Sky Crash update
+
+- Restored Web Audio startup across touch, mouse, and keyboard interactions, including suspended-context recovery on mobile browsers.
+- Sky Crash now accelerates more strongly as the multiplier rises.
+- Reaching a vehicle's redline automatically secures the payout instead of causing a loss.
+- Protected rounds now apply to Sky Crash. When active, the flight displays “PROTECTED ROUND”; a would-be crash becomes an automatic protected payout.
+- Protected-round wording appears in the game only while protection is active.
