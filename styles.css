@@ -2915,5 +2915,120 @@ body {
 
 
 /* v39 · Froggy Fry Job */
-.job-screen{padding-bottom:120px}.job-header{display:grid;grid-template-columns:1fr minmax(230px,320px);gap:18px;padding:22px;margin-bottom:16px}.job-header h1{margin:4px 0 8px;font-size:clamp(28px,4vw,46px)}.job-header p{margin:0;max-width:700px;color:var(--muted)}.job-level-card{display:flex;flex-direction:column;gap:5px;padding:16px;border-radius:20px;background:rgba(9,45,57,.82);border:1px solid rgba(255,255,255,.16)}.job-level-card>b{font-size:38px}.job-level-card>span{font-weight:900;color:#ffe66c}.job-xp-track{height:9px;border-radius:20px;background:rgba(255,255,255,.13);overflow:hidden}.job-xp-track i{display:block;height:100%;width:0;background:linear-gradient(90deg,#b8ef55,#ffe45f);border-radius:inherit}.job-game-card{padding:16px}.job-shift-hud{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}.job-shift-hud span{display:flex;flex-direction:column;padding:11px 13px;border-radius:15px;background:rgba(8,43,54,.76)}.job-shift-hud small{color:var(--muted);font-weight:900}.job-shift-hud b{font-size:18px}.job-playfield{position:relative;height:min(64vh,620px);min-height:430px;border-radius:25px;overflow:hidden;touch-action:none;background:linear-gradient(#fff2c4 0 25%,#f2a64c 25% 27%,#b9e5ef 27% 100%);border:4px solid rgba(20,61,58,.5);box-shadow:inset 0 0 70px rgba(14,65,74,.16)}.job-playfield:after{content:"";position:absolute;inset:27% 0 auto;height:4px;background:repeating-linear-gradient(90deg,#b93c39 0 18px,#fff 18px 34px);z-index:2}.job-no-drag-zone{position:absolute;inset:0 0 auto;height:27%;display:flex;justify-content:center;align-items:flex-end;padding-bottom:12px;color:#87372f;font-weight:1000;letter-spacing:.08em;z-index:1}.job-fry{position:absolute;transform:translate(-50%,-50%);font-size:64px;z-index:8;cursor:grab;filter:drop-shadow(0 8px 5px rgba(60,35,0,.25));user-select:none}.job-fry.dragging{cursor:grabbing;transform:translate(-50%,-50%) scale(1.12)}.job-fry.bagged{transition:.18s;transform:translate(-50%,80px) scale(.25);opacity:0}.job-fry.fry-green{filter:drop-shadow(0 0 16px #35ff73)}.job-fry.fry-yellow{filter:drop-shadow(0 0 16px #ffe63f)}.job-fry.fry-red{filter:drop-shadow(0 0 18px #ff3b30)}.job-bag{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);width:128px;height:112px;z-index:5;background:linear-gradient(145deg,#e8342d,#a90d16);clip-path:polygon(8% 0,92% 0,100% 100%,0 100%);border-radius:8px 8px 22px 22px;display:grid;place-items:center;color:#fff;font-weight:1000;text-align:center;line-height:1.05;box-shadow:0 16px 20px rgba(64,12,12,.28);transition:left .08s linear}.job-bag:before{content:"";position:absolute;left:12%;right:12%;top:-11px;height:22px;border-radius:50%;background:#7d0b10;border:4px solid #f7d66e}.job-intro{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;background:rgba(9,43,53,.84);backdrop-filter:blur(8px);color:white}.job-intro h2{font-size:38px;margin:5px 0}.job-intro p{max-width:590px}.job-mascot{font-size:78px}.job-tip{margin:12px 4px 0;color:var(--muted);font-weight:700}.job-result{position:fixed;inset:0;z-index:1000;background:rgba(2,19,25,.76);display:grid;place-items:center;padding:20px}.job-result-card{width:min(440px,100%);padding:28px;text-align:center}.job-result-card h2{font-size:36px;margin:6px 0 18px}.job-result-card>b{display:block;font-size:42px;color:#ffe35b;margin:5px}.job-result-icon{font-size:56px}.sahur-hit{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;flex-direction:column;background:rgba(128,8,8,.68);color:#fff;text-shadow:0 5px 0 #4b0505;pointer-events:none}.sahur-hit b,.sahur-hit strong{font-size:clamp(34px,8vw,76px)}.sahur-hit span{font-size:110px}.sahur-shake{animation:sahurShake .12s linear 8}@keyframes sahurShake{25%{transform:translate(10px,-6px) rotate(.6deg)}50%{transform:translate(-9px,7px) rotate(-.6deg)}75%{transform:translate(7px,4px)}}
+.job-screen{padding-bottom:120px}.job-header{display:grid;grid-template-columns:1fr minmax(230px,320px);gap:18px;padding:22px;margin-bottom:16px}.job-header h1{margin:4px 0 8px;font-size:clamp(28px,4vw,46px)}.job-header p{margin:0;max-width:700px;color:var(--muted)}.job-level-card{display:flex;flex-direction:column;gap:5px;padding:16px;border-radius:20px;background:rgba(9,45,57,.82);border:1px solid rgba(255,255,255,.16)}.job-level-card>b{font-size:38px}.job-level-card>span{font-weight:900;color:#ffe66c}.job-xp-track{height:9px;border-radius:20px;background:rgba(255,255,255,.13);overflow:hidden}.job-xp-track i{display:block;height:100%;width:0;background:linear-gradient(90deg,#b8ef55,#ffe45f);border-radius:inherit}.job-game-card{padding:16px}.job-shift-hud{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}.job-shift-hud span{display:flex;flex-direction:column;padding:11px 13px;border-radius:15px;background:rgba(8,43,54,.76)}.job-shift-hud small{color:var(--muted);font-weight:900}.job-shift-hud b{font-size:18px}.job-playfield{position:relative;height:min(64vh,620px);min-height:430px;border-radius:25px;overflow:hidden;touch-action:none;background:linear-gradient(#fff2c4 0 25%,#f2a64c 25% 27%,#b9e5ef 27% 100%);border:4px solid rgba(20,61,58,.5);box-shadow:inset 0 0 70px rgba(14,65,74,.16)}.job-playfield:after{content:"";position:absolute;inset:27% 0 auto;height:4px;background:repeating-linear-gradient(90deg,#b93c39 0 18px,#fff 18px 34px);z-index:2}.job-no-drag-zone{position:absolute;inset:0 0 auto;height:27%;display:flex;justify-content:center;align-items:flex-end;padding-bottom:12px;color:#87372f;font-weight:1000;letter-spacing:.08em;z-index:1}.job-fry{position:absolute;transform:translate(-50%,-50%);font-size:64px;z-index:8;cursor:grab;filter:drop-shadow(0 8px 5px rgba(60,35,0,.25));user-select:none}.job-fry.dragging{cursor:grabbing;transform:translate(-50%,-50%) scale(1.12)}.job-fry.bagged{transition:.18s;transform:translate(-50%,80px) scale(.25);opacity:0}.job-fry.fry-green{filter:drop-shadow(0 0 16px #35ff73)}.job-fry.fry-yellow{filter:drop-shadow(0 0 16px #ffe63f)}.job-fry.fry-red{filter:drop-shadow(0 0 18px #ff3b30)}.job-bag{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);width:128px;height:112px;z-index:5;background:linear-gradient(145deg,#e8342d,#a90d16);clip-path:polygon(8% 0,92% 0,100% 100%,0 100%);border-radius:8px 8px 22px 22px;display:grid;place-items:center;color:#fff;font-weight:1000;text-align:center;line-height:1.05;box-shadow:0 16px 20px rgba(64,12,12,.28);transition:left .08s linear}.job-bag:before{content:"";position:absolute;left:12%;right:12%;top:-11px;height:22px;border-radius:50%;background:#7d0b10;border:4px solid #f7d66e}.job-intro{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;background:rgba(9,43,53,.84);backdrop-filter:blur(8px);color:white}.job-intro h2{font-size:38px;margin:5px 0}.job-intro p{max-width:590px}.job-mascot{font-size:78px}.job-tip{margin:12px 4px 0;color:var(--muted);font-weight:700}.job-result{position:fixed;inset:0;z-index:1000;background:rgba(2,19,25,.76);display:grid;place-items:center;padding:20px}.job-result-card{width:min(440px,100%);padding:28px;text-align:center}.job-result-card h2{font-size:36px;margin:6px 0 18px}.job-result-card>b{display:block;font-size:42px;color:#ffe35b;margin:5px}.job-result-icon{font-size:56px}
 @media(max-width:720px){.job-header{grid-template-columns:1fr;padding:15px}.job-level-card{display:grid;grid-template-columns:auto 1fr;align-items:center}.job-level-card>b{grid-row:2/5;font-size:44px;margin-right:12px}.job-xp-track{grid-column:2}.job-shift-hud{grid-template-columns:1fr 1fr}.job-shift-hud span:last-child{grid-column:1/-1}.job-playfield{height:58vh;min-height:420px}.job-fry{font-size:54px}.job-bag{width:105px;height:94px}.bottom-nav{overflow-x:auto;justify-content:flex-start}.bottom-nav .nav-button{min-width:68px}}
+
+
+/* v40 — Illustrated fry-drop physics, bomb disposal, and single-line navigation */
+.bottom-nav{
+  grid-template-columns:repeat(6,minmax(0,1fr)) !important;
+  overflow:hidden !important;
+  justify-content:stretch !important;
+  padding-left:4px !important;
+  padding-right:4px !important;
+}
+.bottom-nav .nav-button{min-width:0 !important;padding-inline:1px !important}
+.bottom-nav .nav-button span{font-size:clamp(15px,4.8vw,21px) !important}
+.bottom-nav .nav-button small{font-size:clamp(5.4px,1.75vw,8px) !important;white-space:nowrap}
+
+.job-screen{padding-top:4px;padding-bottom:110px}
+.job-game-card{padding:10px;margin-top:0}
+.job-shift-hud{margin-bottom:8px}
+.job-playfield{
+  height:min(72vh,690px);
+  min-height:470px;
+  background:
+    linear-gradient(180deg,rgba(255,252,232,.98) 0 26.5%,rgba(245,183,88,.93) 26.5% 27.4%,rgba(187,230,239,.98) 27.4% 100%);
+  border-width:3px;
+}
+.job-drop-guide{
+  position:absolute;left:0;right:0;top:26.5%;height:0;z-index:3;
+  border-top:4px dashed #b73333;pointer-events:none;
+}
+.job-drop-guide span{
+  position:absolute;right:10px;bottom:8px;padding:5px 9px;border-radius:999px;
+  background:rgba(255,255,255,.88);color:#8f302c;font-size:10px;font-weight:1000;letter-spacing:.04em;
+  box-shadow:0 3px 10px rgba(57,20,12,.12)
+}
+.job-fry{
+  --fry-rotation:0deg;
+  width:clamp(34px,8.5vw,52px);height:clamp(102px,24vw,154px);
+  font-size:0;transform:translate(-50%,-50%) rotate(var(--fry-rotation));
+  transform-origin:50% 55%;filter:drop-shadow(0 8px 5px rgba(60,35,0,.28));
+  will-change:left,top,transform,opacity;touch-action:none;
+}
+.job-fry img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none}
+.job-fry.dragging{transform:translate(-50%,-50%) rotate(var(--fry-rotation)) scale(1.08)}
+.job-fry.dropping{cursor:default}
+.job-fry.bagged{transition:transform .24s cubic-bezier(.2,.8,.2,1),opacity .24s;transform:translate(-50%,28px) rotate(var(--fry-rotation)) scale(.18);opacity:0}
+.job-fry.discarded{transition:transform .24s ease-out,opacity .24s;transform:translate(-50%,60px) rotate(90deg) scale(.65);opacity:0}
+.job-fry.fry-green img{filter:hue-rotate(58deg) saturate(1.6) brightness(.9)}
+.job-fry.fry-green{filter:drop-shadow(0 0 16px #32e267) drop-shadow(0 8px 5px rgba(28,75,18,.3))}
+.job-fry.fry-yellow img{filter:saturate(1.3) brightness(1.08)}
+.job-fry.fry-yellow{filter:drop-shadow(0 0 17px #ffe63f) drop-shadow(0 8px 5px rgba(80,58,0,.25))}
+.job-fry.fry-red img{filter:hue-rotate(318deg) saturate(2.2) brightness(.76)}
+.job-fry.fry-red{filter:drop-shadow(0 0 18px #ff372f) drop-shadow(0 8px 5px rgba(92,0,0,.38));animation:bombPulse .55s ease-in-out infinite alternate}
+.job-bomb-fuse{display:none}
+.job-fry.fry-red .job-bomb-fuse{
+  display:block;position:absolute;right:-8px;top:0;width:19px;height:19px;border-radius:50%;
+  background:radial-gradient(circle,#fff 0 12%,#ffd53d 14% 35%,#ff5a20 38% 64%,transparent 67%);
+  box-shadow:0 0 16px #ff5722;animation:fuseSpark .22s steps(2,end) infinite
+}
+@keyframes bombPulse{to{transform:translate(-50%,-50%) rotate(var(--fry-rotation)) scale(1.035)}}
+@keyframes fuseSpark{to{transform:scale(.65) rotate(80deg);opacity:.72}}
+
+.job-bag{
+  left:50%;bottom:5.5%;width:clamp(138px,34vw,210px);height:auto;
+  background:none;clip-path:none;border-radius:0;box-shadow:none;display:block;
+  transform:translateX(-50%);transition:none;will-change:left;
+}
+.job-bag:before{display:none}
+.job-bag img{display:block;width:100%;height:auto;pointer-events:none;user-select:none;filter:drop-shadow(0 15px 12px rgba(58,37,8,.3))}
+.job-reward-burst{
+  position:absolute;top:auto;bottom:33%;z-index:16;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;pointer-events:none;opacity:0
+}
+.job-reward-burst b{font-size:clamp(25px,6vw,38px);color:#1d9a42;text-shadow:0 2px 0 #fff,0 4px 12px rgba(15,86,34,.34)}
+.job-reward-burst span{font-size:clamp(16px,4vw,23px);font-weight:1000;color:#285fba;text-shadow:0 2px 0 #fff}
+.job-reward-burst.show{animation:jobRewardFloat .85s ease-out forwards}
+@keyframes jobRewardFloat{0%{opacity:0;transform:translate(-50%,20px) scale(.72)}18%{opacity:1;transform:translate(-50%,0) scale(1.08)}100%{opacity:0;transform:translate(-50%,-68px) scale(.94)}}
+
+.job-explosion{
+  position:absolute;bottom:9%;z-index:40;width:1px;height:1px;pointer-events:none;transform:translateX(-50%)
+}
+.job-explosion b{position:absolute;left:-70px;top:-110px;font-size:140px;filter:drop-shadow(0 0 28px #ff771e);opacity:0}
+.job-explosion i{position:absolute;width:18px;height:18px;border-radius:50%;background:#ffce32;opacity:0}
+.job-explosion.explode b{animation:jobExplosionCore .72s ease-out forwards}
+.job-explosion.explode i{animation:jobExplosionParticle .72s ease-out forwards}
+.job-explosion.explode i:nth-child(1){--ex:-125px;--ey:-120px}
+.job-explosion.explode i:nth-child(2){--ex:118px;--ey:-105px}
+.job-explosion.explode i:nth-child(3){--ex:-155px;--ey:-20px}
+.job-explosion.explode i:nth-child(4){--ex:145px;--ey:15px}
+.job-explosion.explode i:nth-child(5){--ex:-70px;--ey:82px}
+.job-explosion.explode i:nth-child(6){--ex:82px;--ey:92px}
+@keyframes jobExplosionCore{0%{opacity:0;transform:scale(.1) rotate(-20deg)}18%{opacity:1;transform:scale(1.35) rotate(8deg)}100%{opacity:0;transform:scale(2.2) rotate(24deg)}}
+@keyframes jobExplosionParticle{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--ex),var(--ey)) scale(.15)}}
+.job-bomb-shake{animation:jobBombShake .09s linear 8}
+@keyframes jobBombShake{25%{transform:translate(8px,-5px) rotate(.4deg)}50%{transform:translate(-8px,6px) rotate(-.4deg)}75%{transform:translate(5px,4px)}}
+
+.job-header{margin-top:12px;margin-bottom:0}
+.job-tip{margin:8px 4px 0}
+
+@media(max-width:720px){
+  .job-screen{padding-top:0}
+  .job-game-card{padding:7px;border-radius:18px}
+  .job-shift-hud{gap:5px}
+  .job-shift-hud span{padding:7px 8px}
+  .job-shift-hud b{font-size:15px}
+  .job-playfield{height:calc(100dvh - 185px);min-height:430px;max-height:660px;border-radius:18px}
+  .job-bag{bottom:7%}
+  .job-header{margin-top:8px;padding:12px}
+  .job-header h1{font-size:24px}
+  .job-header p{font-size:12px}
+  .job-level-card{padding:10px}
+  .job-drop-guide span{font-size:8px;right:6px}
+}
+@media(max-width:390px){
+  .bottom-nav .nav-button small{font-size:5.3px !important}
+  .job-playfield{height:calc(100dvh - 175px);min-height:405px}
+}

@@ -3,8 +3,8 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v39';
-  console.info(`Froggy Arcade ${BUILD_VERSION}: Froggy Fry Job, special fries, separate job levels, and no rescue refill loaded`);
+  const BUILD_VERSION = 'v40';
+  console.info(`Froggy Arcade ${BUILD_VERSION}: illustrated fry-drop physics, moving bag collisions, bomb disposal, and one-line navigation loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
   // The 15-jump curve is intentionally tighter early and highly rewarding at the finish.
@@ -262,7 +262,7 @@
     levelToast: $('levelToast'), levelToastTitle: $('levelToastTitle'), levelToastBonus: $('levelToastBonus'),
     milestoneTrack: $('milestoneTrack'), milestoneFill: $('milestoneFill'), goalGrid: $('goalGrid'), goalSummary: $('goalSummary'),
     sessionRoundsStat: $('sessionRoundsStat'), sessionWinsStat: $('sessionWinsStat'), sessionNetStat: $('sessionNetStat'), sessionTimeStat: $('sessionTimeStat'), pondRankLabel: $('pondRankLabel'), achievementGrid: $('achievementGrid'), settingsReminders: $('settingsReminders'),
-    confetti: $('confettiLayer'), flash: $('flashLayer'), jobPlayfield:$('jobPlayfield'), jobFry:$('jobFry'), jobBag:$('jobBag'), jobIntro:$('jobIntro'), jobStartButton:$('jobStartButton'), jobShiftMoney:$('jobShiftMoney'), jobFriesBagged:$('jobFriesBagged'), jobBoostLabel:$('jobBoostLabel'), jobLevelLabel:$('jobLevelLabel'), jobPayLabel:$('jobPayLabel'), jobXpFill:$('jobXpFill'), jobXpLabel:$('jobXpLabel'), sahurHit:$('sahurHit'), jobResult:$('jobResult'), jobResultMoney:$('jobResultMoney'), jobResultText:$('jobResultText'), jobAgainButton:$('jobAgainButton'),
+    confetti: $('confettiLayer'), flash: $('flashLayer'), jobPlayfield:$('jobPlayfield'), jobFry:$('jobFry'), jobBag:$('jobBag'), jobIntro:$('jobIntro'), jobStartButton:$('jobStartButton'), jobShiftMoney:$('jobShiftMoney'), jobFriesBagged:$('jobFriesBagged'), jobBoostLabel:$('jobBoostLabel'), jobLevelLabel:$('jobLevelLabel'), jobPayLabel:$('jobPayLabel'), jobXpFill:$('jobXpFill'), jobXpLabel:$('jobXpLabel'), jobRewardBurst:$('jobRewardBurst'), jobExplosion:$('jobExplosion'), jobResult:$('jobResult'), jobResultIcon:$('jobResultIcon'), jobResultTitle:$('jobResultTitle'), jobResultMoney:$('jobResultMoney'), jobResultText:$('jobResultText'), jobAgainButton:$('jobAgainButton'),
     selfTest: $('selfTestResult')
   };
 
@@ -570,10 +570,13 @@
     win(){ [0,1,2,3,4,5].forEach(i=>this.tone([392,494,587,784,988,1175][i],.24,'triangle',.065,80,i*.09)); }
     reward(){ [0,1,2,3].forEach(i=>this.tone(520+i*130,.18,'sine',.05,80,i*.09)); }
     fryGrab(){this.tone(760,.06,'square',.025,-80);}
+    fryDrop(){this.tone(420,.1,'triangle',.035,-180);}
+    fryRim(){this.tone(240,.075,'square',.04,90);this.tone(480,.07,'triangle',.025,-120,.025);}
     fryBag(){this.tone(330,.07,'triangle',.05,120);this.tone(660,.12,'sine',.04,160,.04);}
     jobFail(){this.noise(.42,.11);this.tone(150,.4,'sawtooth',.06,-80);}
     boost(){[0,1,2,3].forEach(i=>this.tone(500+i*170,.12,'sine',.045,80,i*.055));}
-    sahur(){[0,.16,.32].forEach((d,i)=>{this.tone(92+i*8,.13,'square',.09,-20,d);this.noise(.08,.08);});}
+    bombDiscard(){this.tone(310,.08,'triangle',.04,120);this.tone(620,.12,'sine',.035,160,.05);}
+    explosion(){this.noise(.72,.18);this.tone(115,.55,'sawtooth',.11,-65);this.tone(58,.7,'square',.07,-20,.04);}
     croak(){ this.tone(105,.16,'sawtooth',.018,-30); this.tone(92,.22,'triangle',.018,-20,.13); }
   }
   const audio = new AudioEngine();
@@ -1927,7 +1930,15 @@
   }
 
 
-  const jobRuntime={active:false,dragging:false,type:'normal',shiftMoney:0,fries:0,moneyBoostUntil:0,xpBoostUntil:0,bagX:50,bagTarget:50,lastFrame:0,raf:0,pointerId:null,fryX:50,fryY:10};
+
+  const jobRuntime={
+    active:false,dragging:false,falling:false,resolving:false,type:'normal',
+    shiftMoney:0,fries:0,moneyBoostUntil:0,xpBoostUntil:0,
+    bagX:0,bagTarget:0,bagVelocity:0,lastBagX:0,lastFrame:0,raf:0,
+    pointerId:null,fryX:0,fryY:0,fryVx:0,fryVy:0,fryRotation:0,frySpin:0,
+    lastPointerX:0,lastPointerY:0,lastPointerTime:0,bombExpiresAt:0,
+    rimCooldownUntil:0,rewardTimer:0,spawnTimer:0
+  };
   function jobXpNeeded(level=state.jobLevel){return 100+Math.max(0,level-1)*40;}
   function jobPay(){return Math.min(250,25+Math.floor((Math.max(1,state.jobLevel)-1)*2.5));}
   function renderJob(){
@@ -1951,58 +1962,211 @@
     if(leveled){audio.reward();setStatus(`Job Level ${money(state.jobLevel)}! Fries now pay ${money(jobPay())} F.`,'win');}
   }
   function chooseFryType(){const r=Math.random();return r<.08?'green':r<.15?'yellow':r<.20?'red':'normal';}
-  function fryVisual(type){return type==='green'?'🥬':type==='yellow'?'✨':type==='red'?'🟥':'🍟';}
+  function jobFieldMetrics(){
+    const width=els.jobPlayfield.clientWidth||320,height=els.jobPlayfield.clientHeight||460;
+    const fryWidth=els.jobFry.offsetWidth||42,fryHeight=els.jobFry.offsetHeight||116;
+    const bagWidth=els.jobBag.offsetWidth||150,bagHeight=els.jobBag.offsetHeight||190;
+    const lineY=height*.265;
+    return{width,height,fryWidth,fryHeight,bagWidth,bagHeight,lineY};
+  }
+  function positionJobFry(){
+    els.jobFry.style.left=`${jobRuntime.fryX}px`;
+    els.jobFry.style.top=`${jobRuntime.fryY}px`;
+    els.jobFry.style.setProperty('--fry-rotation',`${jobRuntime.fryRotation}deg`);
+  }
+  function positionJobBag(){els.jobBag.style.left=`${jobRuntime.bagX}px`;}
   function spawnJobFry(){
+    clearTimeout(jobRuntime.spawnTimer);
     if(!jobRuntime.active)return;
-    jobRuntime.type=chooseFryType();jobRuntime.dragging=false;jobRuntime.fryX=15+Math.random()*70;jobRuntime.fryY=8;
-    els.jobFry.className=`job-fry fry-${jobRuntime.type}`;els.jobFry.textContent=fryVisual(jobRuntime.type);els.jobFry.classList.remove('hidden');
+    const m=jobFieldMetrics();
+    jobRuntime.type=chooseFryType();
+    jobRuntime.dragging=false;jobRuntime.falling=false;jobRuntime.resolving=false;
+    jobRuntime.fryX=m.fryWidth*.7+Math.random()*Math.max(1,m.width-m.fryWidth*1.4);
+    jobRuntime.fryY=Math.max(m.fryHeight*.54,Math.min(m.lineY-m.fryHeight*.54,m.lineY*.48));
+    jobRuntime.fryVx=0;jobRuntime.fryVy=0;jobRuntime.fryRotation=-10+Math.random()*20;jobRuntime.frySpin=0;
+    jobRuntime.rimCooldownUntil=0;
+    jobRuntime.bombExpiresAt=jobRuntime.type==='red'?performance.now()+4800:0;
+    els.jobFry.className=`job-fry fry-${jobRuntime.type}`;
+    els.jobFry.classList.remove('hidden','bagged','discarded','dropping');
+    els.jobFry.setAttribute('aria-label',jobRuntime.type==='red'?'Bomb fry: drag it above the line and drop it away from the bag':'Drag this fry above the line, then release it');
     positionJobFry();
   }
-  function positionJobFry(){els.jobFry.style.left=`${jobRuntime.fryX}%`;els.jobFry.style.top=`${jobRuntime.fryY}%`;}
   function startJobShift(){
-    closeJobResult();jobRuntime.active=true;jobRuntime.dragging=false;jobRuntime.shiftMoney=0;jobRuntime.fries=0;jobRuntime.moneyBoostUntil=0;jobRuntime.xpBoostUntil=0;jobRuntime.bagX=50;jobRuntime.bagTarget=20+Math.random()*60;
-    els.jobIntro.classList.add('hidden');els.jobBag.classList.remove('hidden');audio.start();renderJob();spawnJobFry();
+    closeJobResult();clearTimeout(jobRuntime.spawnTimer);clearTimeout(jobRuntime.rewardTimer);
+    jobRuntime.active=true;jobRuntime.dragging=false;jobRuntime.falling=false;jobRuntime.resolving=false;
+    jobRuntime.shiftMoney=0;jobRuntime.fries=0;jobRuntime.moneyBoostUntil=0;jobRuntime.xpBoostUntil=0;
+    const m=jobFieldMetrics();
+    jobRuntime.bagX=m.width*.5;jobRuntime.lastBagX=jobRuntime.bagX;jobRuntime.bagTarget=m.width*(.2+Math.random()*.6);
+    els.jobIntro.classList.add('hidden');els.jobBag.classList.remove('hidden');els.jobExplosion.classList.add('hidden');
+    audio.start();renderJob();positionJobBag();spawnJobFry();
     jobRuntime.lastFrame=performance.now();cancelAnimationFrame(jobRuntime.raf);jobRuntime.raf=requestAnimationFrame(jobLoop);
+  }
+  function jobPointerPosition(event){
+    const r=els.jobPlayfield.getBoundingClientRect();
+    return{x:event.clientX-r.left,y:event.clientY-r.top};
+  }
+  function beginFryDrag(event){
+    if(!jobRuntime.active||jobRuntime.dragging||jobRuntime.falling||jobRuntime.resolving)return;
+    event.preventDefault();audio.unlock();jobRuntime.dragging=true;jobRuntime.pointerId=event.pointerId;
+    els.jobFry.setPointerCapture?.(event.pointerId);audio.fryGrab();els.jobFry.classList.add('dragging');
+    const p=jobPointerPosition(event),now=performance.now();
+    jobRuntime.lastPointerX=p.x;jobRuntime.lastPointerY=p.y;jobRuntime.lastPointerTime=now;
+  }
+  function moveFryDrag(event){
+    if(!jobRuntime.dragging||event.pointerId!==jobRuntime.pointerId)return;
+    event.preventDefault();
+    const p=jobPointerPosition(event),m=jobFieldMetrics(),now=performance.now(),dt=Math.max(.008,(now-jobRuntime.lastPointerTime)/1000);
+    const halfW=m.fryWidth*.5,halfH=m.fryHeight*.5;
+    const nextX=clamp(p.x,halfW+3,m.width-halfW-3);
+    const nextY=clamp(p.y,halfH+3,m.lineY-halfH-4);
+    jobRuntime.fryVx=clamp((nextX-jobRuntime.lastPointerX)/dt,-520,520);
+    jobRuntime.fryX=nextX;jobRuntime.fryY=nextY;
+    jobRuntime.fryRotation=clamp(jobRuntime.fryVx*.018,-16,16);
+    jobRuntime.lastPointerX=nextX;jobRuntime.lastPointerY=nextY;jobRuntime.lastPointerTime=now;
+    positionJobFry();
+  }
+  function endFryDrag(event){
+    if(!jobRuntime.dragging||event.pointerId!==jobRuntime.pointerId)return;
+    event.preventDefault();jobRuntime.dragging=false;jobRuntime.falling=true;
+    els.jobFry.classList.remove('dragging');els.jobFry.classList.add('dropping');
+    const m=jobFieldMetrics();
+    jobRuntime.fryVx=clamp(jobRuntime.fryVx*.28,-145,145);
+    jobRuntime.fryVy=Math.max(720,m.height*1.45);
+    jobRuntime.frySpin=jobRuntime.fryVx*.18+(-35+Math.random()*70);
+    audio.fryDrop();
+  }
+  function segmentCollision(px,py,r,x1,y1,x2,y2){
+    const dx=x2-x1,dy=y2-y1,len2=dx*dx+dy*dy||1;
+    const t=clamp(((px-x1)*dx+(py-y1)*dy)/len2,0,1);
+    const qx=x1+t*dx,qy=y1+t*dy,nx=px-qx,ny=py-qy,dist=Math.hypot(nx,ny);
+    if(dist>=r||dist===0)return null;
+    return{nx:nx/dist,ny:ny/dist,penetration:r-dist};
+  }
+  function reflectFryOnRim(hit){
+    const dot=jobRuntime.fryVx*hit.nx+jobRuntime.fryVy*hit.ny;
+    if(dot>=0)return;
+    const restitution=.36;
+    jobRuntime.fryVx-=(1+restitution)*dot*hit.nx;
+    jobRuntime.fryVy-=(1+restitution)*dot*hit.ny;
+    jobRuntime.fryVx+=jobRuntime.bagVelocity*.42;
+    jobRuntime.fryX+=hit.nx*(hit.penetration+1.5);
+    jobRuntime.fryY+=hit.ny*(hit.penetration+1.5);
+    jobRuntime.frySpin+=jobRuntime.fryVx*.22;
+    jobRuntime.rimCooldownUntil=performance.now()+90;
+    audio.fryRim();haptic(7);
+  }
+  function resolveJobDrop(kind){
+    if(jobRuntime.resolving)return;
+    jobRuntime.resolving=true;jobRuntime.falling=false;els.jobFry.classList.remove('dropping');
+    if(kind==='bag'){
+      if(jobRuntime.type==='red'){explodeJobBomb();return;}
+      bagJobFry();return;
+    }
+    if(jobRuntime.type==='red'){discardJobBomb();return;}
+    endJobShift('miss');
   }
   function jobLoop(now){
     if(!jobRuntime.active)return;
-    const dt=Math.min(.05,(now-jobRuntime.lastFrame)/1000||.016);jobRuntime.lastFrame=now;
-    const delta=jobRuntime.bagTarget-jobRuntime.bagX;jobRuntime.bagX+=clamp(delta,-18*dt,18*dt);
-    if(Math.abs(delta)<1.2)jobRuntime.bagTarget=12+Math.random()*76;
-    els.jobBag.style.left=`${jobRuntime.bagX}%`;renderJob();jobRuntime.raf=requestAnimationFrame(jobLoop);
+    const dt=Math.min(.035,(now-jobRuntime.lastFrame)/1000||.016);jobRuntime.lastFrame=now;
+    const m=jobFieldMetrics();
+    const maxBagSpeed=Math.max(42,Math.min(62,m.width*.12));
+    const delta=jobRuntime.bagTarget-jobRuntime.bagX;
+    jobRuntime.lastBagX=jobRuntime.bagX;
+    jobRuntime.bagX+=clamp(delta,-maxBagSpeed*dt,maxBagSpeed*dt);
+    jobRuntime.bagVelocity=(jobRuntime.bagX-jobRuntime.lastBagX)/Math.max(.001,dt);
+    const bagHalf=m.bagWidth*.5;
+    jobRuntime.bagX=clamp(jobRuntime.bagX,bagHalf+6,m.width-bagHalf-6);
+    if(Math.abs(delta)<2)jobRuntime.bagTarget=bagHalf+8+Math.random()*Math.max(1,m.width-m.bagWidth-16);
+    positionJobBag();
+
+    if(jobRuntime.type==='red'&&!jobRuntime.dragging&&!jobRuntime.falling&&!jobRuntime.resolving&&jobRuntime.bombExpiresAt&&now>=jobRuntime.bombExpiresAt){
+      jobRuntime.resolving=true;els.jobFry.classList.add('discarded');audio.bombDiscard();
+      jobRuntime.spawnTimer=setTimeout(()=>spawnJobFry(),240);
+    }
+
+    if(jobRuntime.falling){
+      jobRuntime.fryVy+=1750*dt;
+      jobRuntime.fryVx*=Math.pow(.986,dt*60);
+      jobRuntime.fryX+=jobRuntime.fryVx*dt;
+      jobRuntime.fryY+=jobRuntime.fryVy*dt;
+      jobRuntime.fryRotation+=jobRuntime.frySpin*dt;
+      const halfW=m.fryWidth*.36,halfH=m.fryHeight*.46;
+      if(jobRuntime.fryX<halfW){jobRuntime.fryX=halfW;jobRuntime.fryVx=Math.abs(jobRuntime.fryVx)*.45;jobRuntime.frySpin+=70;}
+      if(jobRuntime.fryX>m.width-halfW){jobRuntime.fryX=m.width-halfW;jobRuntime.fryVx=-Math.abs(jobRuntime.fryVx)*.45;jobRuntime.frySpin-=70;}
+
+      const bagLeft=jobRuntime.bagX-m.bagWidth*.5,bagTop=els.jobBag.offsetTop;
+      const tipX=jobRuntime.fryX,tipY=jobRuntime.fryY+halfH*.82;
+      const rimRadius=Math.max(8,m.fryWidth*.18);
+      const mouthLeft=bagLeft+m.bagWidth*.24,mouthRight=bagLeft+m.bagWidth*.76;
+      const mouthY=bagTop+m.bagHeight*.29,mouthBottom=bagTop+m.bagHeight*.47;
+
+      if(tipY>=mouthY&&tipY<=mouthBottom&&tipX>mouthLeft&&tipX<mouthRight&&jobRuntime.fryVy>0){
+        resolveJobDrop('bag');
+      }else if(now>=jobRuntime.rimCooldownUntil&&tipY>bagTop+m.bagHeight*.16&&tipY<bagTop+m.bagHeight*.49){
+        const leftHit=segmentCollision(tipX,tipY,rimRadius,bagLeft+m.bagWidth*.08,bagTop+m.bagHeight*.20,bagLeft+m.bagWidth*.30,bagTop+m.bagHeight*.43);
+        const rightHit=segmentCollision(tipX,tipY,rimRadius,bagLeft+m.bagWidth*.92,bagTop+m.bagHeight*.20,bagLeft+m.bagWidth*.70,bagTop+m.bagHeight*.43);
+        if(leftHit||rightHit)reflectFryOnRim(leftHit||rightHit);
+      }
+
+      if(jobRuntime.fryY-halfH>m.height+18)resolveJobDrop('outside');
+      positionJobFry();
+    }
+    renderJob();
+    jobRuntime.raf=requestAnimationFrame(jobLoop);
   }
-  function jobPointerPosition(event){const r=els.jobPlayfield.getBoundingClientRect();return{x:clamp((event.clientX-r.left)/r.width*100,4,96),y:clamp((event.clientY-r.top)/r.height*100,4,92)};}
-  function beginFryDrag(event){if(!jobRuntime.active||jobRuntime.dragging)return;event.preventDefault();jobRuntime.dragging=true;jobRuntime.pointerId=event.pointerId;els.jobFry.setPointerCapture?.(event.pointerId);audio.fryGrab();els.jobFry.classList.add('dragging');}
-  function moveFryDrag(event){if(!jobRuntime.dragging||event.pointerId!==jobRuntime.pointerId)return;event.preventDefault();const p=jobPointerPosition(event);jobRuntime.fryY=p.y;if(p.y>25)jobRuntime.fryX=p.x;positionJobFry();}
-  function endFryDrag(event){
-    if(!jobRuntime.dragging||event.pointerId!==jobRuntime.pointerId)return;jobRuntime.dragging=false;els.jobFry.classList.remove('dragging');
-    const fryRect=els.jobFry.getBoundingClientRect(),bagRect=els.jobBag.getBoundingClientRect();
-    const cx=fryRect.left+fryRect.width/2,cy=fryRect.top+fryRect.height/2;
-    const hit=cx>bagRect.left+8&&cx<bagRect.right-8&&cy>bagRect.top-12&&cy<bagRect.bottom+8;
-    if(hit)bagJobFry();else endJobShift();
+  function showJobReward(earned,xp){
+    clearTimeout(jobRuntime.rewardTimer);
+    els.jobRewardBurst.querySelector('b').textContent=`+${money(earned)} F`;
+    els.jobRewardBurst.querySelector('span').textContent=`+${money(xp)} XP`;
+    els.jobRewardBurst.style.left=`${jobRuntime.bagX}px`;
+    els.jobRewardBurst.classList.remove('hidden','show');
+    void els.jobRewardBurst.offsetWidth;els.jobRewardBurst.classList.add('show');
+    jobRuntime.rewardTimer=setTimeout(()=>els.jobRewardBurst.classList.add('hidden'),900);
   }
-  function triggerSahur(){els.sahurHit.classList.remove('hidden');els.jobPlayfield.classList.add('sahur-shake');audio.sahur();haptic([60,45,60,45,90]);setTimeout(()=>{els.sahurHit.classList.add('hidden');els.jobPlayfield.classList.remove('sahur-shake');},1150);}
   function bagJobFry(){
     const now=performance.now(),type=jobRuntime.type;
     if(type==='green'){jobRuntime.moneyBoostUntil=Math.max(jobRuntime.moneyBoostUntil,now)+20000;audio.boost();}
     if(type==='yellow'){jobRuntime.xpBoostUntil=Math.max(jobRuntime.xpBoostUntil,now)+20000;audio.boost();}
-    if(type==='red')triggerSahur();
     const moneyMultiplier=jobRuntime.moneyBoostUntil>now?2:1,xpMultiplier=jobRuntime.xpBoostUntil>now?2:1;
     const earned=jobPay()*moneyMultiplier,xp=10*xpMultiplier;
     creditBalance(earned);addXp(xp);addJobXp(10*xpMultiplier);
     jobRuntime.shiftMoney+=earned;jobRuntime.fries++;state.jobLifetimeFries++;state.jobLifetimeEarnings+=earned;
-    audio.fryBag();haptic(12);els.jobFry.classList.add('bagged');renderJob();saveState();
-    setTimeout(()=>{els.jobFry.classList.remove('bagged');spawnJobFry();},180);
+    audio.fryBag();haptic(12);showJobReward(earned,xp);els.jobFry.classList.add('bagged');renderJob();saveState();
+    jobRuntime.spawnTimer=setTimeout(()=>{els.jobFry.classList.remove('bagged');spawnJobFry();},260);
   }
-  function endJobShift(){
-    if(!jobRuntime.active)return;jobRuntime.active=false;jobRuntime.dragging=false;cancelAnimationFrame(jobRuntime.raf);els.jobFry.classList.add('hidden');audio.jobFail();haptic([80,40,120]);
-    els.jobResultMoney.textContent=`${money(jobRuntime.shiftMoney)} F`;els.jobResultText.textContent=`You bagged ${money(jobRuntime.fries)} ${jobRuntime.fries===1?'fry':'fries'} before missing. Your earnings are already in the wallet.`;els.jobResult.classList.remove('hidden');renderJob();saveState();
+  function discardJobBomb(){
+    els.jobFry.classList.add('discarded');audio.bombDiscard();haptic(10);
+    setStatus('Bomb discarded. Back to work.','win');
+    jobRuntime.spawnTimer=setTimeout(()=>spawnJobFry(),260);
   }
-  function closeJobResult(){els.jobResult.classList.add('hidden');}
+  function explodeJobBomb(){
+    jobRuntime.active=false;jobRuntime.dragging=false;jobRuntime.falling=false;
+    cancelAnimationFrame(jobRuntime.raf);els.jobFry.classList.add('hidden');
+    els.jobExplosion.style.left=`${jobRuntime.bagX}px`;els.jobExplosion.classList.remove('hidden','explode');
+    void els.jobExplosion.offsetWidth;els.jobExplosion.classList.add('explode');
+    els.jobPlayfield.classList.add('job-bomb-shake');audio.explosion();haptic([100,45,160,60,220]);
+    setTimeout(()=>{els.jobPlayfield.classList.remove('job-bomb-shake');endJobShift('bomb',true);},720);
+  }
+  function endJobShift(reason='miss',alreadyStopped=false){
+    if(!jobRuntime.active&&!alreadyStopped)return;
+    jobRuntime.active=false;jobRuntime.dragging=false;jobRuntime.falling=false;jobRuntime.resolving=true;
+    cancelAnimationFrame(jobRuntime.raf);clearTimeout(jobRuntime.spawnTimer);els.jobFry.classList.add('hidden');
+    if(reason!=='bomb'){audio.jobFail();haptic([80,40,120]);}
+    els.jobResultIcon.textContent=reason==='bomb'?'💥':'💔';
+    els.jobResultTitle.textContent=reason==='bomb'?'YOU CAUGHT A BOMB':'bro had one job💔';
+    els.jobResultMoney.textContent=`${money(jobRuntime.shiftMoney)} F`;
+    els.jobResultText.textContent=reason==='bomb'
+      ?`The red fry exploded in the bag. You made ${money(jobRuntime.shiftMoney)} F before the blast, and it is already in your wallet.`
+      :`You bagged ${money(jobRuntime.fries)} ${jobRuntime.fries===1?'fry':'fries'} before missing. Your earnings are already in the wallet.`;
+    setTimeout(()=>els.jobResult.classList.remove('hidden'),reason==='bomb'?220:0);
+    renderJob();saveState();
+  }
+  function closeJobResult(){els.jobResult.classList.add('hidden');els.jobExplosion.classList.add('hidden');}
+
 
   function navigate(screen){
     if(screen!=='play')els.customBetRow.classList.add('hidden');
-    Object.entries(els.screens).forEach(([key,node])=>node.classList.toggle('active',key===screen));document.querySelectorAll('.nav-button').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));audio.tap();if(screen!=='job'&&jobRuntime.active)endJobShift();if(screen==='job')renderJob();if(screen==='collection')renderCollection();if(screen==='play')refresh();if(screen==='rewards')refreshDaily();if(screen==='bank'){if(state.debtDue)setBankPane('loans');refresh();}if(screen==='stats')refresh();
+    Object.entries(els.screens).forEach(([key,node])=>node.classList.toggle('active',key===screen));document.querySelectorAll('.nav-button').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));audio.tap();if(screen!=='job'&&jobRuntime.active)endJobShift();if(screen==='job'){renderJob();requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'auto'}));}if(screen==='collection')renderCollection();if(screen==='play')refresh();if(screen==='rewards')refreshDaily();if(screen==='bank'){if(state.debtDue)setBankPane('loans');refresh();}if(screen==='stats')refresh();
   }
 
   function renderCollection(){
@@ -2276,7 +2440,7 @@
   }
 
   function bind(){
-    els.jobStartButton.addEventListener('click',startJobShift);els.jobAgainButton.addEventListener('click',startJobShift);els.jobFry.addEventListener('pointerdown',beginFryDrag);els.jobFry.addEventListener('pointermove',moveFryDrag);els.jobFry.addEventListener('pointerup',endFryDrag);els.jobFry.addEventListener('pointercancel',endFryDrag);
+    els.jobStartButton.addEventListener('click',startJobShift);els.jobAgainButton.addEventListener('click',startJobShift);els.jobFry.addEventListener('pointerdown',beginFryDrag);els.jobPlayfield.addEventListener('pointermove',moveFryDrag);els.jobPlayfield.addEventListener('pointerup',endFryDrag);els.jobPlayfield.addEventListener('pointercancel',endFryDrag);
     document.addEventListener('pointerdown',()=>audio.unlock(),{capture:true});document.addEventListener('keydown',()=>audio.unlock(),{capture:true});document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.sound)audio.unlock();});
     document.addEventListener('pointerdown',event=>{if(!event.target.closest('#bankShortcutButton')){ownerTapCount=0;ownerTapDeadline=0;}},true);
     els.quickBets.addEventListener('click',e=>{const b=e.target.closest('[data-bet]');if(b)selectBet(b.dataset.bet);});els.betAdjusters.addEventListener('click',e=>{const betButton=e.target.closest('[data-bet]');if(betButton)selectBet(betButton.dataset.bet);const actionButton=e.target.closest('[data-bet-action]');if(actionButton)adjustBet(actionButton.dataset.betAction);});els.customBetToggle.addEventListener('click',()=>{if(state.roundActive)return;els.customBetRow.classList.toggle('hidden');if(!els.customBetRow.classList.contains('hidden'))setTimeout(()=>els.customBetInput.focus(),30);});els.customBetRow.addEventListener('submit',e=>{e.preventDefault();applyCustomBet();});els.customBetClose.addEventListener('click',()=>{els.customBetRow.classList.add('hidden');els.customBetError.textContent='';});
@@ -2323,7 +2487,7 @@
       state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;state.piggyLastTimestamp=Date.now();let result=advancePiggyTime(PIGGY_CYCLE_MS,piggyOpenRate(),'open');if(result.interest!==2000||state.piggyBalance!==1002000)throw new Error('open-app Piggy rate failed');state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;result=advancePiggyTime(PIGGY_CYCLE_MS,piggyClosedRate(),'closed');if(result.interest!==1000||state.piggyBalance!==1001000)throw new Error('closed-app Piggy rate failed');state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;advancePiggyTime(PIGGY_CYCLE_MS/2,piggyOpenRate(),'open');result=advancePiggyTime(PIGGY_CYCLE_MS/2,piggyClosedRate(),'closed');if(result.interest!==1500)throw new Error('mixed Piggy cycle failed');state=deepClone(DEFAULT_STATE);state.piggyInterestRateBonus+=PIGGY_OWNER_RATE_STEP;state.piggyInterestRateBonus+=PIGGY_OWNER_RATE_STEP;if(state.piggyInterestRateBonus!==0.02||piggyOpenRate()!==0.022||piggyClosedRate()!==0.021)throw new Error('repeatable Piggy owner boost failed');state.piggyBalance=1000000;result=advancePiggyTime(PIGGY_CYCLE_MS,piggyOpenRate(),'open');if(result.interest!==22000)throw new Error('stacked Piggy rate failed');state.piggyInterestRateBonus=0;if(piggyOpenRate()!==PIGGY_OPEN_RATE||piggyClosedRate()!==PIGGY_CLOSED_RATE)throw new Error('Piggy owner reset failed');if(!ownerAccessModal||!ownerPanelModal)throw new Error('maintenance UI failed');
       state=deepClone(DEFAULT_STATE);state.ownedVehicles=['rocket'];state.vehicleCharges.rocket=0;state.vehicleFlightCompletions.rocket=9;const perk=completeVehicleFlight('rocket');if(perk.bonus!==1||vehicleCharges('rocket')!==1)throw new Error('free-flight perk failed');if(vehicleCrashXp(VEHICLES[3],100)!==114&&vehicleCrashXp(VEHICLES[3],100)!==115)throw new Error('vehicle XP perk failed');
       showResult({icon:'🪂',kicker:'TEST',title:'Crash profit',amount:'150 F returned',profit:'+50 F',text:'Profit is separate.'});if(els.resultProfit.classList.contains('hidden')||els.resultProfit.querySelector('b').textContent!=='+50 F')throw new Error('separate Crash profit failed');closeModal();
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v39 Fry Job, separate job levels, special fry boosts, audio, no rescue refill, Crash and Piggy protections';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v40 illustrated fry physics, fast drops, moving-bag rim collisions, safe bomb disposal, explosion loss, one-line navigation';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 

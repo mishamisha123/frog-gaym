@@ -1,4 +1,4 @@
-# Froggy Arcade v39
+# Froggy Arcade v40
 
 Adds the Froggy Fry Job game, separate job progression, moving-bag drag gameplay, special fries and sound effects. Removes the automatic 500 F low-balance rescue.
 
@@ -1011,3 +1011,15 @@ The promo changes affect future elapsed time. Already credited Piggy interest is
 - Reaching a vehicle's redline automatically secures the payout instead of causing a loss.
 - Protected rounds now apply to Sky Crash. When active, the flight displays “PROTECTED ROUND”; a would-be crash becomes an automatic protected payout.
 - Protected-round wording appears in the game only while protection is active.
+
+
+## v40 fry-drop physics and illustrated Job update
+
+- Uses the supplied illustrated fry and paper-bag artwork.
+- The Job game is the first content shown on the Job tab; job progression appears below it.
+- Fries can move freely only above the drop line. Releasing starts a fast gravity-driven drop.
+- The moving bag has rim collision physics: edge hits can deflect a fry inward or outward.
+- Successful drops show the exact Froggy and regular XP earned.
+- Red fries are bombs. They may be dropped away safely or expire on their own; catching one triggers an explosion and ends the shift with “YOU CAUGHT A BOMB.”
+- Removed the Tung Tung Tung Sahur event.
+- Main navigation remains on one line across phone widths.
