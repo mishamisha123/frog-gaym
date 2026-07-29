@@ -3,8 +3,8 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v35';
-  console.info(`Froggy Leap ${BUILD_VERSION}: fair Sky Crash unlocks and Piggy promo-rate controls loaded`);
+  const BUILD_VERSION = 'v36';
+  console.info(`Froggy Arcade ${BUILD_VERSION}: navigation and maintenance update loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
   // The 15-jump curve is intentionally tighter early and highly rewarding at the finish.
@@ -20,8 +20,8 @@
     return values;
   })();
   const MIN_BET = 50;
-  const REPEATABLE_PROMOS = new Set(['5','10','50000','lifeguard','qoostommoney','+1','reset']);
-  const MAX_PROMO_LEVEL = 1000000000;
+  const LEGACY_REPEATABLE_CODES = new Set(['5','10','50000','lifeguard','qoostommoney','+1','reset']);
+  const MAX_OWNER_LEVEL = 1000000000;
   const MAX_SAFE_BALANCE = 9000000000000000;
   const MIN_LOAN_AMOUNT = 500;
   const XP_BET_HISTORY_SIZE = 20;
@@ -73,7 +73,11 @@
   const PIGGY_CYCLE_MS = 20 * 60 * 1000;
   const PIGGY_OPEN_RATE = 0.002;
   const PIGGY_CLOSED_RATE = 0.001;
-  const PIGGY_PROMO_RATE_BONUS = 0.01;
+  const PIGGY_OWNER_RATE_STEP = 0.01;
+  const MAX_PIGGY_RATE_BONUS = 10000;
+  const OWNER_TAP_TARGET = 20;
+  const OWNER_TAP_TIMEOUT_MS = 5000;
+  const OWNER_ACCESS_DIGEST = '1797be407d2e491ff0ef174a7b447d24fc07ed18429059721c94a1d3e72bb7b6';
   const LEGACY_PIGGY_ROUND_INTERVAL = 10;
   const PIGGY_CLOCK_VERSION = 1;
 
@@ -237,7 +241,7 @@
     jump: $('jumpLabel'), multiplier: $('multiplierLabel'), risk: $('riskLabel'), payout: $('payoutLabel'), danger: $('dangerLabel'), riskFill: $('riskFill'), riskMarker: $('riskMarker'),
     leapGamePane: $('leapGamePane'), crashGamePane: $('crashGamePane'), leapGameTab: $('leapGameTab'), crashGameTab: $('crashGameTab'), crashTabStatus: $('crashTabStatus'), crashLicenseCard: $('crashLicenseCard'), crashGameContent: $('crashGameContent'), unlockCrashButton: $('unlockCrashButton'), crashMultiplierLabel: $('crashMultiplierLabel'), crashPayoutLabel: $('crashPayoutLabel'), crashVehicleLabel: $('crashVehicleLabel'), crashChargesLabel: $('crashChargesLabel'), crashVehicleMaxLabel: $('crashVehicleMaxLabel'), crashBetInput: $('crashBetInput'), crashVehicleSelect: $('crashVehicleSelect'), crashQuickBets: $('crashQuickBets'), crashStartButton: $('crashStartButton'), crashFlightDock: $('crashFlightDock'), crashCashButton: $('crashCashButton'), crashCashValue: $('crashCashValue'), betDisplay: $('betDisplay'), start: $('startButton'), jumpButton: $('jumpButton'), cash: $('cashButton'), cashValue: $('cashButtonValue'), quickBets: $('quickBets'), betAdjusters: $('betAdjusters'), customBetToggle: $('customBetToggle'), customBetRow: $('customBetRow'), customBetInput: $('customBetInput'), customBetClose: $('customBetClose'), customBetError: $('customBetError'),
     sound: $('soundButton'), bankShortcut: $('bankShortcutButton'), settingsSound: $('settingsSound'), settingsMotion: $('settingsMotion'), luckyBadge: $('luckyBadge'), luckyCount: $('luckyCount'), debtBadge: $('debtBadge'), debtBadgeAmount: $('debtBadgeAmount'), debtBadgeTurns: $('debtBadgeTurns'), debtBadgeStatus: $('debtBadgeStatus'), debtDueDot: $('debtDueDot'), debtDueFlag: $('debtDueFlag'),
-    screens: { play:$('playScreen'), collection:$('collectionScreen'), rewards:$('rewardsScreen'), bank:$('bankScreen'), promo:$('promoScreen'), stats:$('statsScreen') },
+    screens: { play:$('playScreen'), collection:$('collectionScreen'), rewards:$('rewardsScreen'), bank:$('bankScreen'), stats:$('statsScreen') },
     collectionGrid: $('collectionGrid'), spin: $('spinButton'), wheelDisc: $('wheelDisc'), rewardDot: $('rewardDot'), streakLabel: $('streakLabel'), streakDays: $('streakDays'),
     rewardHeadline: $('rewardHeadline'), rewardSubtext: $('rewardSubtext'), freeSpinCounter: $('freeSpinCounter'), installButton: $('installButton'),
     modalBackdrop: $('modalBackdrop'), resultModal: $('resultModal'), howToModal: $('howToModal'), installModal: $('installModal'), rewardModal: $('rewardModal'), loanBuilderModal: $('loanBuilderModal'), loanWarningModal: $('loanWarningModal'),
@@ -248,7 +252,6 @@
     bankLoansTab: $('bankLoansTab'), bankPiggyTab: $('bankPiggyTab'), bankLoansPane: $('bankLoansPane'), bankPiggyPane: $('bankPiggyPane'), bankTotalWealthLabel: $('bankTotalWealthLabel'), piggyBalanceLabel: $('piggyBalanceLabel'), piggyWalletLabel: $('piggyWalletLabel'), piggyNextInterestLabel: $('piggyNextInterestLabel'), piggyRoundsLabel: $('piggyRoundsLabel'), piggyRateModeLabel: $('piggyRateModeLabel'), piggyRateSummary: $('piggyRateSummary'), piggyProgressFill: $('piggyProgressFill'), piggyTransferKicker: $('piggyTransferKicker'), piggyTransferAmountLabel: $('piggyTransferAmountLabel'), piggyTransferSlider: $('piggyTransferSlider'), piggyTransferInput: $('piggyTransferInput'), piggyTransferButton: $('piggyTransferButton'), piggyMessage: $('piggyMessage'),
     loanBuilderAmountLabel: $('loanBuilderAmountLabel'), loanAmountSlider: $('loanAmountSlider'), loanSliderMinimumLabel: $('loanSliderMinimumLabel'), loanSliderMaximumLabel: $('loanSliderMaximumLabel'), loanAmountInput: $('loanAmountInput'), loanMaximumButton: $('loanMaximumButton'), loanQuoteRateLabel: $('loanQuoteRateLabel'), loanQuoteInterestLabel: $('loanQuoteInterestLabel'), loanQuoteLeverageLabel: $('loanQuoteLeverageLabel'), loanQuotePledgedLabel: $('loanQuotePledgedLabel'), loanCollateralAutoButton: $('loanCollateralAutoButton'), loanCollateralClearButton: $('loanCollateralClearButton'), loanCollateralList: $('loanCollateralList'), loanCollateralRequiredLabel: $('loanCollateralRequiredLabel'), loanCollateralSelectedLabel: $('loanCollateralSelectedLabel'), loanCollateralShortfallLabel: $('loanCollateralShortfallLabel'), loanQuoteTotalLabel: $('loanQuoteTotalLabel'), loanQuotePaymentLabel: $('loanQuotePaymentLabel'), loanQuotePayoffLabel: $('loanQuotePayoffLabel'), loanBuilderError: $('loanBuilderError'), loanReviewButton: $('loanReviewButton'), loanReviewButtonSubtext: $('loanReviewButtonSubtext'), loanWarningAmountLabel: $('loanWarningAmountLabel'), loanWarningPaymentLabel: $('loanWarningPaymentLabel'), loanWarningTotalLabel: $('loanWarningTotalLabel'), loanWarningCollateralLabel: $('loanWarningCollateralLabel'), loanWarningPledgeList: $('loanWarningPledgeList'), loanWarningCancelButton: $('loanWarningCancelButton'), loanRedeemButton: $('loanRedeemButton'), loanRedeemButtonSubtext: $('loanRedeemButtonSubtext'),
     levelToast: $('levelToast'), levelToastTitle: $('levelToastTitle'), levelToastBonus: $('levelToastBonus'),
-    promoForm: $('promoForm'), promoInput: $('promoInput'), promoRedeem: $('promoRedeemButton'), promoMessage: $('promoMessage'), promoUsedCount: $('promoUsedCount'), promoSafeStatus: $('promoSafeStatus'), promoSpinStatus: $('promoSpinStatus'), promoFrogStatus: $('promoFrogStatus'), promoLakeStatus: $('promoLakeStatus'), promoCoinStatus: $('promoCoinStatus'), promoPiggyStatus: $('promoPiggyStatus'),
     milestoneTrack: $('milestoneTrack'), milestoneFill: $('milestoneFill'), goalGrid: $('goalGrid'), goalSummary: $('goalSummary'),
     sessionRoundsStat: $('sessionRoundsStat'), sessionWinsStat: $('sessionWinsStat'), sessionNetStat: $('sessionNetStat'), sessionTimeStat: $('sessionTimeStat'), pondRankLabel: $('pondRankLabel'), achievementGrid: $('achievementGrid'), settingsReminders: $('settingsReminders'),
     confetti: $('confettiLayer'), flash: $('flashLayer'), selfTest: $('selfTestResult')
@@ -363,7 +366,7 @@
       merged.animating = false;
       merged.jump = 0;
       merged.roundSafe = false;
-      merged.redeemedCodes = Array.isArray(merged.redeemedCodes) ? merged.redeemedCodes.map(String).filter(code=>!REPEATABLE_PROMOS.has(code)) : [];
+      merged.redeemedCodes = Array.isArray(merged.redeemedCodes) ? merged.redeemedCodes.map(String).filter(code=>!LEGACY_REPEATABLE_CODES.has(code)) : [];
       merged.safeRunCredits = Number.isFinite(merged.safeRunCredits) ? Math.max(0, Math.floor(merged.safeRunCredits)) : 0;
       merged.unlimitedSpins = Boolean(merged.unlimitedSpins);
       merged.freeSpins = Number.isFinite(merged.freeSpins) ? Math.max(0, Math.floor(merged.freeSpins)) : 0;
@@ -428,7 +431,7 @@
         ? Math.floor(raw.piggyLastTimestamp)
         : Date.now();
       merged.piggyClockVersion=PIGGY_CLOCK_VERSION;
-      merged.piggyInterestRateBonus=Number(raw.piggyInterestRateBonus)>=PIGGY_PROMO_RATE_BONUS?PIGGY_PROMO_RATE_BONUS:0;
+      merged.piggyInterestRateBonus=Number.isFinite(Number(raw.piggyInterestRateBonus))?clamp(Number(raw.piggyInterestRateBonus),0,MAX_PIGGY_RATE_BONUS):0;
       merged.piggyOpenMilliseconds=Number.isFinite(raw.piggyOpenMilliseconds)?Math.max(0,Math.floor(raw.piggyOpenMilliseconds)):0;
       merged.piggyClosedMilliseconds=Number.isFinite(raw.piggyClosedMilliseconds)?Math.max(0,Math.floor(raw.piggyClosedMilliseconds)):0;
       merged.recentXpBets=Array.isArray(raw.recentXpBets)
@@ -1499,7 +1502,6 @@
     scene.reset();
     renderWheel();
     renderCollection();
-    setPromoMessage('Enter a valid code to reveal its reward.');
     setDebtMessage(`Debt default on ${money(previousDebt)} F reset the save. Fresh start: level 1 and 1,000 Froggy.`,'error');
     setStatus('Debt default: progress reset to a fresh pond.','lose');
   }
@@ -1595,7 +1597,7 @@
     const crashUnlocked=gameUnlocked('crash'),crashFree=crashUnlockIsFree();els.crashLicenseCard.classList.toggle('hidden',crashUnlocked);els.crashGameContent.classList.toggle('hidden',!crashUnlocked);els.crashTabStatus.textContent=crashUnlocked?'UNLOCKED':`${compactMoney(CRASH_LICENSE_COST)} / LV${CRASH_UNLOCK_LEVEL}`;els.unlockCrashButton.textContent=crashFree?`UNLOCK FREE AT LEVEL ${CRASH_UNLOCK_LEVEL}`:`PAY ${money(CRASH_LICENSE_COST)} F TO UNLOCK`;els.unlockCrashButton.disabled=anyRoundActive()||(!crashFree&&own<CRASH_LICENSE_COST);
     const leapMode=state.selectedGame!=='crash';els.leapGamePane.classList.toggle('hidden',!leapMode);els.crashGamePane.classList.toggle('hidden',leapMode);els.leapGameTab.classList.toggle('active',leapMode);els.crashGameTab.classList.toggle('active',!leapMode);
     refreshCrashHud();
-    refreshDaily(); refreshPromo(); refreshEngagement(); saveState();
+    refreshDaily(); refreshEngagement(); saveState();
   }
 
   let levelToastTimer=0;
@@ -1731,7 +1733,7 @@
     els.resultProfit.classList.toggle('hidden',!profit);els.resultProfit.querySelector('b').textContent=profit||'';
     els.resultText.textContent=text;openModal(els.resultModal);
   }
-  function modalCards(){return [els.resultModal,els.howToModal,els.installModal,els.rewardModal,els.loanBuilderModal,els.loanWarningModal];}
+  function modalCards(){return [els.resultModal,els.howToModal,els.installModal,els.rewardModal,els.loanBuilderModal,els.loanWarningModal,ownerAccessModal,ownerPanelModal].filter(Boolean);}
   function openModal(modal){els.modalBackdrop.classList.remove('hidden');modalCards().forEach(m=>m.classList.add('hidden'));modal.classList.remove('hidden');}
   function closeModal(){els.modalBackdrop.classList.add('hidden');modalCards().forEach(m=>m.classList.add('hidden'));}
   function screenFeedback(kind){if(!state.effects)return;els.flash.className=`flash-layer flash-${kind}`;els.gameFrame.classList.toggle('shake',kind==='lose');setTimeout(()=>{els.flash.className='flash-layer';els.gameFrame.classList.remove('shake');},500);}
@@ -1752,7 +1754,7 @@
 
   function navigate(screen){
     if(screen!=='play')els.customBetRow.classList.add('hidden');
-    Object.entries(els.screens).forEach(([key,node])=>node.classList.toggle('active',key===screen));document.querySelectorAll('.nav-button').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));audio.tap();if(screen==='collection')renderCollection();if(screen==='play')refresh();if(screen==='rewards')refreshDaily();if(screen==='bank'){if(state.debtDue)setBankPane('loans');refresh();}if(screen==='promo')refreshPromo();if(screen==='stats')refresh();
+    Object.entries(els.screens).forEach(([key,node])=>node.classList.toggle('active',key===screen));document.querySelectorAll('.nav-button').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));audio.tap();if(screen==='collection')renderCollection();if(screen==='play')refresh();if(screen==='rewards')refreshDaily();if(screen==='bank'){if(state.debtDue)setBankPane('loans');refresh();}if(screen==='stats')refresh();
   }
 
   function renderCollection(){
@@ -1824,129 +1826,149 @@
   }
 
 
-  function setPromoMessage(text,kind=''){
-    els.promoMessage.textContent=text;
-    els.promoMessage.classList.remove('success','error');
-    if(kind)els.promoMessage.classList.add(kind);
+
+  let ownerAccessModal=null;
+  let ownerPanelModal=null;
+  let ownerTapCount=0;
+  let ownerTapDeadline=0;
+
+  function ownerWhole(raw,{minimum=1,maximum=MAX_SAFE_BALANCE}={}){
+    const normalized=String(raw??'').replace(/[,\s_]/g,'');
+    const value=Number(normalized);
+    return Number.isSafeInteger(value)&&value>=minimum?Math.min(value,maximum):0;
   }
 
-  function refreshPromo(){
-    if(!els.promoUsedCount)return;
-    els.promoUsedCount.textContent=state.redeemedCodes.length;
-    els.promoSafeStatus.textContent=state.safeRunCredits>0?`${state.safeRunCredits} protected round${state.safeRunCredits===1?'':'s'}`:state.roundSafe?'Active this round':'Not active';
-    els.promoSpinStatus.textContent=state.unlimitedSpins?'unlimintos':`${state.freeSpins} free spin${state.freeSpins===1?'':'s'}`;
-    els.promoFrogStatus.textContent=`${state.unlockedFrogs.length} / ${FROGS.length} frogs`;
-    els.promoLakeStatus.textContent=`${state.unlockedLakes.length} / ${LAKES.length} lakes`;
-    els.promoCoinStatus.textContent=state.promoCoinClaimed?'Reusable coin vault used':'Reusable coin vaults';
-    if(els.promoPiggyStatus)els.promoPiggyStatus.textContent=state.piggyInterestRateBonus>0?`${formatPiggyRate(piggyOpenRate())} open · ${formatPiggyRate(piggyClosedRate())} closed`:'Normal rates';
+  function ownerStatus(message,kind='success'){
+    const node=ownerPanelModal?.querySelector('[data-owner-status]');
+    if(node){node.textContent=message;node.dataset.kind=kind;}
+    setStatus(message,kind==='error'?'lose':'win');
   }
 
-  function redeemPromo(rawCode, suppliedCustomAmount=null){
-    const code=String(rawCode||'').trim().toLowerCase();
-    const repeatable=REPEATABLE_PROMOS.has(code);
-    if(!code){setPromoMessage('Type a promo code first.','error');haptic(18);return false;}
-    if(!repeatable&&state.redeemedCodes.includes(code)){setPromoMessage('That one-time code has already been redeemed on this save.','error');haptic(20);return false;}
+  function refreshOwnerPanel(){
+    if(!ownerPanelModal)return;
+    const rates=ownerPanelModal.querySelector('[data-owner-rates]');
+    const summary=ownerPanelModal.querySelector('[data-owner-summary]');
+    const unlimited=ownerPanelModal.querySelector('[data-owner-unlimited]');
+    if(rates)rates.textContent=`${formatPiggyRate(piggyOpenRate())} open · ${formatPiggyRate(piggyClosedRate())} closed · +${formatPiggyRate(state.piggyInterestRateBonus)} boost`;
+    if(summary)summary.textContent=`Level ${money(state.level)} · ${money(state.xp)} XP · ${money(state.balance)} F wallet · ${money(state.piggyBalance)} F Piggy`;
+    if(unlimited)unlimited.textContent=state.unlimitedSpins?'Disable unlimited spins':'Enable unlimited spins';
+  }
 
-    let message='';
-    let confettiCount=55;
-
-    if(code==='+1'){
-      state.piggyInterestRateBonus=PIGGY_PROMO_RATE_BONUS;
-      message=`Piggy boost activated. Future time now earns ${formatPiggyRate(piggyOpenRate())} while open and ${formatPiggyRate(piggyClosedRate())} while closed.`;
-    }else if(code==='reset'){
-      state.piggyInterestRateBonus=0;
-      message=`Piggy rates reset to normal: ${formatPiggyRate(piggyOpenRate())} while open and ${formatPiggyRate(piggyClosedRate())} while closed.`;
-    }else if(code==='imtheowner'){
-      state.safeRunCredits+=1;
-      message='Owner Pass armed. Your next complete round is protected while every displayed risk percentage stays normal.';
-    }else if(code==='50000'){
-      const credited=creditBalance(50000);
-      state.promoCoinClaimed=true;
-      confettiCount=120;
-      message=`Vault opened: +${money(credited)} Froggy added. This code is reusable.`;
-    }else if(code==='qoostommoney'){
-      let rawAmount=suppliedCustomAmount;
-      if(rawAmount===null||rawAmount===undefined||rawAmount===''){
-        rawAmount=window.prompt(
-          'How many Froggy should be added?\nEnter a positive whole number.',
-          '1000000'
-        );
-      }
-      if(rawAmount===null){
-        setPromoMessage('Custom Froggy reward cancelled.','error');
-        return false;
-      }
-
-      const normalized=String(rawAmount).replace(/[,\s_]/g,'');
-      const requested=Number(normalized);
-      if(!Number.isSafeInteger(requested)||requested<=0){
-        setPromoMessage(`Enter a positive whole number no greater than ${money(MAX_SAFE_BALANCE)}.`, 'error');
-        haptic([18,45,18]);
-        return false;
-      }
-
-      const credited=creditBalance(requested);
-      if(credited<=0){
-        setPromoMessage('Your Froggy balance has reached the safe maximum.', 'error');
-        haptic([18,45,18]);
-        return false;
-      }
-
-      state.promoCoinClaimed=true;
-      confettiCount=140;
-      message=credited===requested
-        ? `Custom vault opened: +${money(credited)} Froggy. This code is reusable.`
-        : `Balance cap reached: +${money(credited)} Froggy was added.`;
-    }else if(code==='unlockall'){
-      state.unlockedFrogs=FROGS.map(f=>f.id);
-      message='Character vault opened. Every frog is now unlocked!';
-    }else if(code==='iwannaswim'){
-      state.unlockedLakes=LAKES.map(lake=>lake.id);
-      message='Every lake is unlocked. Pick a new pond in the Collection tab!';
-    }else if(code==='spinall'){
-      state.unlimitedSpins=true;
-      message='Unlimited wheel mode activated. The counter now shows unlimintos!';
-    }else if(code==='10'){
-      state.freeSpins+=10;
-      message=`Ten free spins added. You now have ${state.freeSpins} free spins. This code is reusable.`;
-    }else if(code==='5'){
-      const previousLevel=state.level;
-      const targetLevel=Math.min(MAX_PROMO_LEVEL,Math.max(1,Math.floor(state.level*5)));
-      const rewards=grantLevelBonuses(previousLevel,targetLevel);
-      state.level=targetLevel;
-      state.xp=0;
-      const crashUnlockedFree=ensureCrashLevelUnlock();
-
-      if(rewards.credited>0)showLevelBonus(state.level,rewards.credited);
-      message=(state.level===previousLevel
-        ? `Maximum promo level reached: ${money(state.level)}.`
-        : `Level multiplied: ${money(previousLevel)} → ${money(state.level)}. Level bonuses added: +${money(rewards.credited)} Froggy.`)+
-        (crashUnlockedFree?` Sky Crash unlocked free at Level ${CRASH_UNLOCK_LEVEL} with five starter flights.`:'');
-    }else if(code==='luckylily'){
-      state.luckyCharges+=25;
-      message='Lucky Lily activated: +25 lucky jumps with reduced failure risk.';
-    }else if(code==='pondparty'){
-      const credited=creditBalance(2500);
-      state.freeSpins+=3;
-      message=`Pond Party bundle: +${money(credited)} Froggy and +3 free spins!`;
-    }else if(code==='xpfrog'){
-      const credited=addXp(1000);
-      message=`XP Frog delivered +1,000 XP. Level rewards added: +${money(credited)} Froggy.`;
-    }else if(code==='lifeguard'){
-      state.safeRunCredits+=3;
-      message=`Lifeguard added three protected rounds. You now have ${state.safeRunCredits}. This code is reusable.`;
-    }else{
-      setPromoMessage('That promo code was not recognized. Check the spelling and try again.','error');
-      haptic([18,45,18]);
-      return false;
+  function unlockOwnerContent(kind='everything'){
+    if(kind==='frogs'||kind==='everything')state.unlockedFrogs=FROGS.map(item=>item.id);
+    if(kind==='lakes'||kind==='everything')state.unlockedLakes=LAKES.map(item=>item.id);
+    if(kind==='vehicles'||kind==='everything'){
+      state.ownedVehicles=VEHICLES.map(item=>item.id);
+      VEHICLES.forEach(item=>{state.vehicleCharges[item.id]=Math.max(vehicleCharges(item.id),item.charges);});
+      if(!VEHICLES.some(item=>item.id===state.selectedVehicle))state.selectedVehicle='glider';
     }
+    if(kind==='games'||kind==='everything'){
+      state.unlockedGames=GAME_LICENSES.map(item=>item.id);
+      if(!state.ownedVehicles.includes('glider'))state.ownedVehicles.push('glider');
+      state.vehicleCharges.glider=Math.max(vehicleCharges('glider'),5);
+    }
+    refresh();renderCollection();scene.reset();saveState();
+    ownerStatus(kind==='everything'?'All frogs, lakes, vehicles, and games unlocked.':`${kind[0].toUpperCase()+kind.slice(1)} unlocked.`);
+    refreshOwnerPanel();
+  }
 
-    if(!repeatable)state.redeemedCodes.push(code);
-    els.promoInput.value='';
-    setPromoMessage(message,'success');
-    setStatus(message,'win');
-    audio.reward();haptic([12,35,22]);confettiBurst(confettiCount);screenFeedback('win');
-    refresh();renderCollection();
+  function clearOwnerDebt(){
+    state.debt=0;state.debtTurns=0;state.debtPayments=0;state.debtDue=false;state.debtDueAmount=0;state.debtCycleMissed=false;
+    state.loanPrincipalOriginal=0;state.loanPrincipalRemaining=0;state.loanInterestTotal=0;state.loanInterestPaid=0;state.loanInstallment=0;state.loanInstallmentsPaid=0;
+    state.pledgedPiggy=0;state.pledgedFrogs=[];state.pledgedLakes=[];state.pledgedVehicles=[];state.pledgedLicenses=[];state.pledgedFlights={glider:0,prop:0,rocket:0,starship:0};state.loanCollateralAtOrigination=0;
+    refresh();saveState();ownerStatus('Active loan and every collateral pledge cleared.');refreshOwnerPanel();
+  }
+
+  function runOwnerAction(action,button){
+    const group=button.closest('[data-owner-group]');
+    const input=group?.querySelector('input');
+    let amount=ownerWhole(input?.value,{maximum:MAX_SAFE_BALANCE});
+    let message='';
+    if(action==='wallet'){
+      const credited=creditBalance(amount);if(!amount||credited<=0)return ownerStatus('Enter a positive whole-number amount with available balance room.','error');message=`Added ${money(credited)} F to the wallet.`;
+    }else if(action==='piggy'){
+      if(!amount)return ownerStatus('Enter a positive whole-number Piggy amount.','error');const room=Math.max(0,MAX_SAFE_BALANCE-state.piggyBalance);const credited=Math.min(amount,room);if(credited<=0)return ownerStatus('Piggy Bank is already at the safe maximum.','error');const wasEmpty=state.piggyBalance<=0;state.piggyBalance+=credited;if(wasEmpty){state.piggyCycleElapsedMs=0;state.piggyCycleInterest=0;state.piggyLastTimestamp=Date.now();}message=`Added ${money(credited)} F directly to Piggy savings.`;
+    }else if(action==='xp'){
+      if(!amount)return ownerStatus('Enter a positive whole-number XP amount.','error');addXp(amount);message=`Added ${money(amount)} XP.`;
+    }else if(action==='levels'){
+      amount=ownerWhole(input?.value,{maximum:MAX_OWNER_LEVEL});if(!amount)return ownerStatus('Enter a positive whole-number level amount.','error');const before=state.level;const target=Math.min(MAX_OWNER_LEVEL,before+amount);const rewards=grantLevelBonuses(before,target);state.level=target;state.xp=0;ensureCrashLevelUnlock();message=`Added ${money(target-before)} level${target-before===1?'':'s'} and ${money(rewards.credited)} F in level rewards.`;
+    }else if(action==='spins'){
+      if(!amount)return ownerStatus('Enter a positive whole-number spin amount.','error');state.freeSpins=Math.min(Number.MAX_SAFE_INTEGER,state.freeSpins+amount);message=`Added ${money(amount)} free spins.`;
+    }else if(action==='safe'){
+      if(!amount)return ownerStatus('Enter a positive whole-number protected-round amount.','error');state.safeRunCredits=Math.min(Number.MAX_SAFE_INTEGER,state.safeRunCredits+amount);message=`Added ${money(amount)} protected rounds.`;
+    }else if(action==='lucky'){
+      if(!amount)return ownerStatus('Enter a positive whole-number lucky-jump amount.','error');state.luckyCharges=Math.min(Number.MAX_SAFE_INTEGER,state.luckyCharges+amount);message=`Added ${money(amount)} lucky jumps.`;
+    }else if(action==='piggy-plus'){
+      tickPiggyClock();state.piggyInterestRateBonus=Math.min(MAX_PIGGY_RATE_BONUS,Math.max(0,state.piggyInterestRateBonus)+PIGGY_OWNER_RATE_STEP);message=`Piggy boost increased by 1 percentage point. Rates are now ${formatPiggyRate(piggyOpenRate())} open and ${formatPiggyRate(piggyClosedRate())} closed.`;
+    }else if(action==='piggy-reset'){
+      tickPiggyClock();state.piggyInterestRateBonus=0;message=`Piggy boost removed. Rates are back to ${formatPiggyRate(piggyOpenRate())} open and ${formatPiggyRate(piggyClosedRate())} closed.`;
+    }else if(action==='flights'){
+      VEHICLES.forEach(item=>{state.ownedVehicles.includes(item.id)||state.ownedVehicles.push(item.id);state.vehicleCharges[item.id]=Math.min(Number.MAX_SAFE_INTEGER,vehicleCharges(item.id)+100);});message='Added 100 flights to every vehicle.';
+    }else if(action==='unlimited'){
+      state.unlimitedSpins=!state.unlimitedSpins;message=state.unlimitedSpins?'Unlimited wheel spins enabled.':'Unlimited wheel spins disabled.';
+    }else if(action==='debt'){
+      clearOwnerDebt();return;
+    }else if(action.startsWith('unlock-')){
+      unlockOwnerContent(action.slice(7));return;
+    }else return;
+    refresh();renderCollection();scene.reset();saveState();audio.reward();haptic([12,28,12]);ownerStatus(message);refreshOwnerPanel();
+  }
+
+  async function sha256Hex(value){
+    if(!globalThis.crypto?.subtle)return '';
+    const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value));
+    return Array.from(new Uint8Array(bytes),byte=>byte.toString(16).padStart(2,'0')).join('');
+  }
+
+  async function submitOwnerAccess(event){
+    event.preventDefault();
+    const input=ownerAccessModal.querySelector('input');
+    const message=ownerAccessModal.querySelector('[data-owner-access-message]');
+    const candidate=String(input.value||'').trim();
+    input.value='';
+    if(!candidate){message.textContent='Enter the access key.';return;}
+    const digest=await sha256Hex(candidate);
+    if(digest!==OWNER_ACCESS_DIGEST){message.textContent='Access denied.';haptic([18,45,18]);return;}
+    message.textContent='';
+    refreshOwnerPanel();
+    openModal(ownerPanelModal);
+    setTimeout(()=>ownerPanelModal.querySelector('input')?.focus(),30);
+  }
+
+  function createOwnerUi(){
+    ownerAccessModal=document.createElement('section');
+    ownerAccessModal.className='modal-card owner-access-card hidden';
+    ownerAccessModal.setAttribute('role','dialog');ownerAccessModal.setAttribute('aria-modal','true');ownerAccessModal.setAttribute('aria-label','Authorization');
+    ownerAccessModal.innerHTML=`<small>AUTHORIZATION</small><h2>Access key</h2><p>Enter the private key.</p><form data-owner-access-form autocomplete="off"><input type="password" maxlength="160" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Access key"><button class="owner-primary pressable" type="submit">CONTINUE</button></form><p class="owner-access-message" data-owner-access-message role="status" aria-live="polite"></p><button class="owner-close pressable" type="button" data-close-modal>Close</button>`;
+
+    ownerPanelModal=document.createElement('section');
+    ownerPanelModal.className='modal-card owner-panel-card hidden';
+    ownerPanelModal.setAttribute('role','dialog');ownerPanelModal.setAttribute('aria-modal','true');ownerPanelModal.setAttribute('aria-label','Owner console');
+    ownerPanelModal.innerHTML=`
+      <div class="owner-panel-head"><div><small>PRIVATE</small><h2>Owner Console</h2></div><button class="owner-x pressable" type="button" data-close-modal aria-label="Close">×</button></div>
+      <p class="owner-summary" data-owner-summary></p>
+      <div class="owner-grid">
+        <section data-owner-group><b>Wallet / Piggy</b><input value="1000000" inputmode="numeric" aria-label="Froggy amount"><div><button data-owner-action="wallet">Add wallet F</button><button data-owner-action="piggy">Add Piggy F</button></div></section>
+        <section data-owner-group><b>Progression</b><input value="1000" inputmode="numeric" aria-label="XP or levels amount"><div><button data-owner-action="xp">Add XP</button><button data-owner-action="levels">Add levels</button></div></section>
+        <section data-owner-group><b>Rewards</b><input value="10" inputmode="numeric" aria-label="Reward amount"><div><button data-owner-action="spins">Free spins</button><button data-owner-action="safe">Protected rounds</button><button data-owner-action="lucky">Lucky jumps</button></div></section>
+        <section data-owner-group><b>Piggy interest</b><span data-owner-rates></span><div><button data-owner-action="piggy-plus">+1% boost</button><button data-owner-action="piggy-reset">Remove boost</button></div></section>
+        <section data-owner-group><b>Unlock content</b><div><button data-owner-action="unlock-frogs">All frogs</button><button data-owner-action="unlock-lakes">All lakes</button><button data-owner-action="unlock-vehicles">All vehicles</button><button data-owner-action="unlock-games">All games</button><button data-owner-action="unlock-everything">Unlock everything</button></div></section>
+        <section data-owner-group><b>Extras</b><div><button data-owner-action="flights">+100 all flights</button><button data-owner-action="unlimited" data-owner-unlimited>Enable unlimited spins</button><button data-owner-action="debt">Clear loan</button></div></section>
+      </div>
+      <p class="owner-status" data-owner-status role="status" aria-live="polite">Ready.</p>`;
+    els.modalBackdrop.append(ownerAccessModal,ownerPanelModal);
+    ownerAccessModal.querySelector('[data-owner-access-form]').addEventListener('submit',submitOwnerAccess);
+    ownerPanelModal.addEventListener('click',event=>{const button=event.target.closest('[data-owner-action]');if(button)runOwnerAction(button.dataset.ownerAction,button);});
+    [ownerAccessModal,ownerPanelModal].forEach(modal=>modal.querySelectorAll('[data-close-modal]').forEach(button=>button.addEventListener('click',closeModal)));
+  }
+
+  function recordOwnerBankTap(){
+    const now=Date.now();
+    if(now>ownerTapDeadline)ownerTapCount=0;
+    ownerTapCount+=1;ownerTapDeadline=now+OWNER_TAP_TIMEOUT_MS;
+    if(ownerTapCount<OWNER_TAP_TARGET)return false;
+    ownerTapCount=0;ownerTapDeadline=0;
+    openModal(ownerAccessModal);setTimeout(()=>ownerAccessModal.querySelector('input')?.focus(),30);
     return true;
   }
 
@@ -1998,7 +2020,7 @@
   }
 
   function toggleSound(){state.sound=!state.sound;audio.enabled=state.sound;if(state.sound)audio.tap();refresh();}
-  function resetProgress(){if(!confirm('Reset all Froggy, skins, lakes, stats, and daily progress?'))return;wheelSpinning=false;currentSpinSource=null;state=deepClone(DEFAULT_STATE);localStorage.removeItem(STORAGE_KEY);scene.reset();renderWheel();refresh();renderCollection();setPromoMessage('Enter a valid code to reveal its reward.');setStatus('Fresh pond, fresh start.');navigate('play');}
+  function resetProgress(){if(!confirm('Reset all Froggy, skins, lakes, stats, and daily progress?'))return;wheelSpinning=false;currentSpinSource=null;state=deepClone(DEFAULT_STATE);localStorage.removeItem(STORAGE_KEY);scene.reset();renderWheel();refresh();renderCollection();setStatus('Fresh pond, fresh start.');navigate('play');}
 
   function installGame(){
     if(installPrompt){installPrompt.prompt();installPrompt.userChoice.finally(()=>{installPrompt=null;els.installButton.classList.add('hidden');});}
@@ -2007,10 +2029,11 @@
 
   function bind(){
     document.addEventListener('pointerdown',()=>audio.unlock(),{once:true});
+    document.addEventListener('pointerdown',event=>{if(!event.target.closest('#bankShortcutButton')){ownerTapCount=0;ownerTapDeadline=0;}},true);
     els.quickBets.addEventListener('click',e=>{const b=e.target.closest('[data-bet]');if(b)selectBet(b.dataset.bet);});els.betAdjusters.addEventListener('click',e=>{const betButton=e.target.closest('[data-bet]');if(betButton)selectBet(betButton.dataset.bet);const actionButton=e.target.closest('[data-bet-action]');if(actionButton)adjustBet(actionButton.dataset.betAction);});els.customBetToggle.addEventListener('click',()=>{if(state.roundActive)return;els.customBetRow.classList.toggle('hidden');if(!els.customBetRow.classList.contains('hidden'))setTimeout(()=>els.customBetInput.focus(),30);});els.customBetRow.addEventListener('submit',e=>{e.preventDefault();applyCustomBet();});els.customBetClose.addEventListener('click',()=>{els.customBetRow.classList.add('hidden');els.customBetError.textContent='';});
     els.leapGameTab.addEventListener('click',()=>setGameMode('leap'));els.crashGameTab.addEventListener('click',()=>setGameMode('crash'));els.unlockCrashButton.addEventListener('click',()=>unlockGame('crash'));els.crashBetInput.addEventListener('input',()=>setCrashBet(els.crashBetInput.value));els.crashBetInput.addEventListener('change',()=>setCrashBet(els.crashBetInput.value));els.crashVehicleSelect.addEventListener('change',()=>{if(!state.crashActive&&availableVehicleFlights(els.crashVehicleSelect.value)>0){state.selectedVehicle=els.crashVehicleSelect.value;refresh();}});els.crashQuickBets.addEventListener('click',e=>{const button=e.target.closest('[data-crash-bet]');if(button)setCrashBet(button.dataset.crashBet);});els.crashStartButton.addEventListener('click',startCrash);els.crashCashButton.addEventListener('click',crashCashOut);els.start.addEventListener('click',startRound);els.jumpButton.addEventListener('click',jump);els.cash.addEventListener('click',cashOut);els.resultButton.addEventListener('click',()=>{closeModal();state.jump=0;state.crashMultiplier=1;scene.reset();refresh();});
     els.sound.addEventListener('click',toggleSound);els.settingsSound.addEventListener('click',toggleSound);els.settingsMotion.addEventListener('click',()=>{state.effects=!state.effects;refresh();});els.settingsReminders.addEventListener('click',()=>{state.playReminders=!state.playReminders;session.reminded=false;refresh();});els.goalGrid.addEventListener('click',e=>{const button=e.target.closest('[data-goal-claim]');if(button)claimGoal(button.dataset.goalClaim);});
-    els.bankShortcut.addEventListener('click',()=>{setBankPane('loans');navigate('bank');});els.bankLoansTab.addEventListener('click',()=>setBankPane('loans'));els.bankPiggyTab.addEventListener('click',()=>setBankPane('piggy'));    els.openLoanBuilderButton.addEventListener('click',openLoanBuilder);els.loanAmountSlider.addEventListener('input',()=>refreshLoanBuilder(els.loanAmountSlider.value));els.loanAmountInput.addEventListener('input',()=>refreshLoanBuilder(els.loanAmountInput.value,{exact:true}));els.loanMaximumButton.addEventListener('click',()=>refreshLoanBuilder(maxSingleLoan(),{exact:true}));els.loanCollateralAutoButton.addEventListener('click',()=>{pendingCollateralMode='auto';autoSelectCollateral(pendingLoanAmount);renderLoanCollateralPicker();});els.loanCollateralClearButton.addEventListener('click',clearPendingCollateral);els.loanCollateralList.addEventListener('click',e=>{const button=e.target.closest('[data-pledge-asset]');if(!button)return;const [type,id]=button.dataset.pledgeAsset.split('|');togglePendingCollateralAsset(type,id);});els.loanCollateralList.addEventListener('input',e=>{if(e.target.matches('[data-pledge-piggy]')){pendingCollateralMode='manual';pendingCollateral.piggy=clamp(Math.floor(Number(e.target.value)||0),0,state.piggyBalance);renderLoanCollateralPicker();}});els.loanReviewButton.addEventListener('click',reviewLoanWarning);els.loanWarningCancelButton.addEventListener('click',closeModal);els.loanRedeemButton.addEventListener('click',redeemPendingLoan);els.repayInstallmentButton.addEventListener('click',()=>repayDebt('installment'));els.repayAllButton.addEventListener('click',()=>repayDebt('all'));
+    els.bankShortcut.addEventListener('click',()=>{recordOwnerBankTap();setBankPane('loans');navigate('bank');});els.bankLoansTab.addEventListener('click',()=>setBankPane('loans'));els.bankPiggyTab.addEventListener('click',()=>setBankPane('piggy'));    els.openLoanBuilderButton.addEventListener('click',openLoanBuilder);els.loanAmountSlider.addEventListener('input',()=>refreshLoanBuilder(els.loanAmountSlider.value));els.loanAmountInput.addEventListener('input',()=>refreshLoanBuilder(els.loanAmountInput.value,{exact:true}));els.loanMaximumButton.addEventListener('click',()=>refreshLoanBuilder(maxSingleLoan(),{exact:true}));els.loanCollateralAutoButton.addEventListener('click',()=>{pendingCollateralMode='auto';autoSelectCollateral(pendingLoanAmount);renderLoanCollateralPicker();});els.loanCollateralClearButton.addEventListener('click',clearPendingCollateral);els.loanCollateralList.addEventListener('click',e=>{const button=e.target.closest('[data-pledge-asset]');if(!button)return;const [type,id]=button.dataset.pledgeAsset.split('|');togglePendingCollateralAsset(type,id);});els.loanCollateralList.addEventListener('input',e=>{if(e.target.matches('[data-pledge-piggy]')){pendingCollateralMode='manual';pendingCollateral.piggy=clamp(Math.floor(Number(e.target.value)||0),0,state.piggyBalance);renderLoanCollateralPicker();}});els.loanReviewButton.addEventListener('click',reviewLoanWarning);els.loanWarningCancelButton.addEventListener('click',closeModal);els.loanRedeemButton.addEventListener('click',redeemPendingLoan);els.repayInstallmentButton.addEventListener('click',()=>repayDebt('installment'));els.repayAllButton.addEventListener('click',()=>repayDebt('all'));
     document.querySelectorAll('[data-piggy-mode]').forEach(button=>button.addEventListener('click',()=>setPiggyTransferMode(button.dataset.piggyMode)));document.querySelectorAll('[data-piggy-share]').forEach(button=>button.addEventListener('click',()=>setPiggyTransferAmount(Math.floor(piggyTransferMaximum()*Number(button.dataset.piggyShare)/100))));els.piggyTransferSlider.addEventListener('input',()=>setPiggyTransferAmount(els.piggyTransferSlider.value));els.piggyTransferSlider.addEventListener('change',()=>setPiggyTransferAmount(els.piggyTransferSlider.value));els.piggyTransferInput.addEventListener('input',()=>setPiggyTransferAmount(els.piggyTransferInput.value,{fromInput:true}));els.piggyTransferInput.addEventListener('change',()=>setPiggyTransferAmount(els.piggyTransferInput.value));els.piggyTransferButton.addEventListener('click',transferPiggy);els.debtBadge.addEventListener('click',()=>{setBankPane('loans');navigate('bank');});
     $('howToButton').addEventListener('click',()=>openModal(els.howToModal));$('resetButton').addEventListener('click',resetProgress);$('profileButton').addEventListener('click',()=>navigate('stats'));
     document.querySelectorAll('.nav-button').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.screen)));
@@ -2023,7 +2046,6 @@
       const b=e.target.closest('[data-collection-action]');if(b)collectionAction(b.dataset.collectionAction);
     });
     els.spin.addEventListener('click',spinDaily);els.installButton.addEventListener('click',installGame);
-    els.promoForm.addEventListener('submit',e=>{e.preventDefault();redeemPromo(els.promoInput.value);});
     document.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('click',closeModal));els.modalBackdrop.addEventListener('click',e=>{if(e.target===els.modalBackdrop)closeModal();});
     window.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();if(state.selectedGame==='crash'){state.crashActive?crashCashOut():startCrash();}else{state.roundActive?jump():startRound();}}if(e.code==='Escape'){if(state.crashActive)crashCashOut();else state.roundActive?cashOut():closeModal();}});
     window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;els.installButton.classList.remove('hidden');});
@@ -2047,10 +2069,10 @@
       state.vehicleCharges.glider=5;state.ownedVehicles=['glider'];state.selectedVehicle='glider';state.crashBet=100;state.balance=1000;if(!startCrash()||!state.crashActive)throw new Error('crash start failed');state.crashStartedAt=performance.now()-5000;state.crashMultiplier=1.5;if(!crashCashOut()||state.crashActive||state.balance<=900)throw new Error('manual crash cashout failed');closeModal();
       state=deepClone(DEFAULT_STATE);state.unlockedFrogs.push('king');state.unlockedLakes.push('swamp');state.ownedVehicles.push('glider');state.vehicleCharges.glider=10;state.unlockedGames.push('crash');state.piggyBalance=1000000;const assets=collateralBreakdown();if(assets.skins!==5000||assets.lakes!==1500||assets.vehicles!==750000||assets.licenses!==500000||assets.piggy!==1000000||'flights' in assets)throw new Error('flight-free Bank Values failed');if(debtLimit()!==Math.min(MAX_LOAN_PAYOUT,BASE_UNSECURED_CREDIT+assets.total))throw new Error('direct asset-backed limit failed');const pledge=emptyCollateralSelection();if('flights' in pledge)throw new Error('flights remained pledgeable');pledge.piggy=5000;if(!takeLoan(10000,{skipConfirm:true,pledge})||state.pledgedPiggy!==5000)throw new Error('selected collateral loan failed');
       state=deepClone(DEFAULT_STATE);state.balance=1000000;state.level=10;collectionMode='vehicles';collectionAction('glider');const afterModel=state.balance;if(!buyVehicleFlights('glider',{skipConfirm:true})||state.balance!==afterModel-25000||vehicleCharges('glider')!==20)throw new Error('cheap refill failed');state.debt=1000;state.pledgedFlights.glider=20;if(availableVehicleFlights('glider')!==20||pledgedVehicleFlights('glider')!==0)throw new Error('old flight pledges were not ignored');
-      state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;state.piggyLastTimestamp=Date.now();let result=advancePiggyTime(PIGGY_CYCLE_MS,piggyOpenRate(),'open');if(result.interest!==2000||state.piggyBalance!==1002000)throw new Error('open-app Piggy rate failed');state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;result=advancePiggyTime(PIGGY_CYCLE_MS,piggyClosedRate(),'closed');if(result.interest!==1000||state.piggyBalance!==1001000)throw new Error('closed-app Piggy rate failed');state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;advancePiggyTime(PIGGY_CYCLE_MS/2,piggyOpenRate(),'open');result=advancePiggyTime(PIGGY_CYCLE_MS/2,piggyClosedRate(),'closed');if(result.interest!==1500)throw new Error('mixed Piggy cycle failed');state=deepClone(DEFAULT_STATE);if(!redeemPromo('+1')||state.piggyInterestRateBonus!==PIGGY_PROMO_RATE_BONUS||piggyOpenRate()!==0.012||piggyClosedRate()!==0.011)throw new Error('+1 Piggy promo failed');state.piggyBalance=1000000;result=advancePiggyTime(PIGGY_CYCLE_MS,piggyOpenRate(),'open');if(result.interest!==12000)throw new Error('boosted Piggy rate failed');if(!redeemPromo('reset')||state.piggyInterestRateBonus!==0||piggyOpenRate()!==PIGGY_OPEN_RATE||piggyClosedRate()!==PIGGY_CLOSED_RATE)throw new Error('Piggy reset promo failed');
+      state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;state.piggyLastTimestamp=Date.now();let result=advancePiggyTime(PIGGY_CYCLE_MS,piggyOpenRate(),'open');if(result.interest!==2000||state.piggyBalance!==1002000)throw new Error('open-app Piggy rate failed');state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;result=advancePiggyTime(PIGGY_CYCLE_MS,piggyClosedRate(),'closed');if(result.interest!==1000||state.piggyBalance!==1001000)throw new Error('closed-app Piggy rate failed');state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;advancePiggyTime(PIGGY_CYCLE_MS/2,piggyOpenRate(),'open');result=advancePiggyTime(PIGGY_CYCLE_MS/2,piggyClosedRate(),'closed');if(result.interest!==1500)throw new Error('mixed Piggy cycle failed');state=deepClone(DEFAULT_STATE);state.piggyInterestRateBonus+=PIGGY_OWNER_RATE_STEP;state.piggyInterestRateBonus+=PIGGY_OWNER_RATE_STEP;if(state.piggyInterestRateBonus!==0.02||piggyOpenRate()!==0.022||piggyClosedRate()!==0.021)throw new Error('repeatable Piggy owner boost failed');state.piggyBalance=1000000;result=advancePiggyTime(PIGGY_CYCLE_MS,piggyOpenRate(),'open');if(result.interest!==22000)throw new Error('stacked Piggy rate failed');state.piggyInterestRateBonus=0;if(piggyOpenRate()!==PIGGY_OPEN_RATE||piggyClosedRate()!==PIGGY_CLOSED_RATE)throw new Error('Piggy owner reset failed');if(!ownerAccessModal||!ownerPanelModal)throw new Error('maintenance UI failed');
       state=deepClone(DEFAULT_STATE);state.ownedVehicles=['rocket'];state.vehicleCharges.rocket=0;state.vehicleFlightCompletions.rocket=9;const perk=completeVehicleFlight('rocket');if(perk.bonus!==1||vehicleCharges('rocket')!==1)throw new Error('free-flight perk failed');if(vehicleCrashXp(VEHICLES[3],100)!==114&&vehicleCrashXp(VEHICLES[3],100)!==115)throw new Error('vehicle XP perk failed');
       showResult({icon:'🪂',kicker:'TEST',title:'Crash profit',amount:'150 F returned',profit:'+50 F',text:'Profit is separate.'});if(els.resultProfit.classList.contains('hidden')||els.resultProfit.querySelector('b').textContent!=='+50 F')throw new Error('separate Crash profit failed');closeModal();
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v35 500K-or-Level-35 Sky Crash unlock, +1/reset Piggy promos, vehicle economy, flight-free collateral and manual Crash';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v36 navigation cleanup, Piggy rate calculations, fair Sky Crash unlock, vehicle economy and manual Crash';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 
@@ -2066,10 +2088,10 @@
   setInterval(saveState,5000);
   window.addEventListener('pagehide',()=>{tickPiggyClock();saveState();});
   window.addEventListener('beforeunload',()=>{tickPiggyClock();saveState();});
-  renderWheel();bind();setupInstall();setGameMode(state.selectedGame);refresh();renderCollection();scene.reset();
+  renderWheel();createOwnerUi();bind();setupInstall();setGameMode(state.selectedGame);refresh();renderCollection();scene.reset();
   if(pendingOfflinePiggyResult?.cycles>0){setPiggyMessage(pendingOfflinePiggyResult.message,pendingOfflinePiggyResult.interest>0?'success':'');if(pendingOfflinePiggyResult.interest>0)setStatus(pendingOfflinePiggyResult.message,'win');}
   if(!state.tutorialSeen&&!TEST_MODE){state.tutorialSeen=true;saveState();setTimeout(()=>openModal(els.howToModal),600);}
   if(TEST_MODE)runSelfTest();
 
-  window.FroggyGame={version:BUILD_VERSION,compactMoney,selectVehicle,buyVehicleFlights,getState:()=>deepClone(state),setGameMode,unlockGame,startCrash,crashCashOut,crashLose,setCrashBet,crashPayoutFor,selectBet,setBetAmount,adjustBet,applyCustomBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,spinDaily,redeemPromo,creditBalance,takeLoan,repayDebt,completeDebtTurn,debtInstallment,debtLimit,availableCredit,maxSingleLoan,collateralBreakdown,collateralLoanLimit,allocateRoundStake,ownedWalletBalance,finishCompletedRound,earlyPayoffAmount,earlyPayoffCashRequired,earlyPayoffSavings,loanQuote,transferPiggy,advancePiggyBankRound,selectedVehicle,vehicleCharges,pledgedVehicleFlights,availableVehicleFlights,vehicleOwned,collateralSelectionValue,completeVehicleFlight,vehicleCrashXp,advancePiggyTime,tickPiggyClock,piggyOpenRate,piggyClosedRate,ensureCrashLevelUnlock,autoSelectCollateral,noUsableVehicleFlights,openVehicleShop,setBankPane,wheelSegments:deepClone(WHEEL_SEGMENTS),reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();refresh();}};
+  window.FroggyGame={version:BUILD_VERSION,compactMoney,selectVehicle,buyVehicleFlights,getState:()=>deepClone(state),setGameMode,unlockGame,startCrash,crashCashOut,crashLose,setCrashBet,crashPayoutFor,selectBet,setBetAmount,adjustBet,applyCustomBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,spinDaily,creditBalance,takeLoan,repayDebt,completeDebtTurn,debtInstallment,debtLimit,availableCredit,maxSingleLoan,collateralBreakdown,collateralLoanLimit,allocateRoundStake,ownedWalletBalance,finishCompletedRound,earlyPayoffAmount,earlyPayoffCashRequired,earlyPayoffSavings,loanQuote,transferPiggy,advancePiggyBankRound,selectedVehicle,vehicleCharges,pledgedVehicleFlights,availableVehicleFlights,vehicleOwned,collateralSelectionValue,completeVehicleFlight,vehicleCrashXp,advancePiggyTime,tickPiggyClock,piggyOpenRate,piggyClosedRate,ensureCrashLevelUnlock,autoSelectCollateral,noUsableVehicleFlights,openVehicleShop,setBankPane,wheelSegments:deepClone(WHEEL_SEGMENTS),reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();refresh();}};
 })();

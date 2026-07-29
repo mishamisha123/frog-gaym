@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=35" />
+  <link rel="stylesheet" href="styles.css?v=36" />
   <title>Froggy Arcade Deluxe</title>
 </head>
 <body>
@@ -102,7 +102,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v35 · FROGGY ARCADE</div>
+          <div class="build-version" aria-label="Installed game version">v36 · FROGGY ARCADE</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -222,46 +222,6 @@
           <div id="streakDays" class="streak-days"></div>
         </div>
       </section>
-
-
-      <section id="promoScreen" class="screen" aria-label="Promo codes">
-        <div class="section-heading">
-          <div><small>SECRET POND</small><h1>Promo Codes</h1></div>
-          <span class="promo-vault-chip">🎟️ <b id="promoUsedCount">0</b> one-time codes</span>
-        </div>
-
-        <div class="promo-hero glass">
-          <div class="promo-ticket-art" aria-hidden="true">
-            <span>★</span><b>FROGGY</b><small>VIP PASS</small>
-          </div>
-          <div class="promo-copy">
-            <small>HAVE A SECRET CODE?</small>
-            <h2>Unlock a pond surprise.</h2>
-            <p>Promo codes are case-insensitive. Codes 5, 10, 50000, lifeguard, qoostommoney, +1, and reset are reusable.</p>
-          </div>
-
-          <form id="promoForm" class="promo-form" autocomplete="off">
-            <label for="promoInput">PROMO CODE</label>
-            <div class="promo-entry-row">
-              <input id="promoInput" type="text" maxlength="32" inputmode="text" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="ENTER CODE" aria-describedby="promoMessage" />
-              <button id="promoRedeemButton" class="promo-redeem pressable" type="submit"><span>REDEEM</span><small>Activate</small></button>
-            </div>
-          </form>
-          <p id="promoMessage" class="promo-message" role="status" aria-live="polite">Enter a valid code to reveal its reward.</p>
-        </div>
-
-        <div class="promo-status-grid">
-          <article class="promo-status-card glass"><span class="promo-status-icon">🛡️</span><small>OWNER PASS</small><b id="promoSafeStatus">Not active</b><p>Protects one complete round while the normal risk display remains unchanged.</p></article>
-          <article class="promo-status-card glass"><span class="promo-status-icon">🎡</span><small>REWARD WHEEL</small><b id="promoSpinStatus">0 free spins</b><p>Use code 10 for ten extra spins. Unlimited mode shows as “unlimintos”.</p></article>
-          <article class="promo-status-card glass"><span class="promo-status-icon">🐸</span><small>CHARACTERS</small><b id="promoFrogStatus">1 / 10 frogs</b><p>See every owned character in the Collection tab.</p></article>
-          <article class="promo-status-card glass"><span class="promo-status-icon">🌊</span><small>LAKES</small><b id="promoLakeStatus">1 / 7 lakes</b><p>The code iwannaswim opens every lake theme.</p></article>
-          <article class="promo-status-card glass"><span class="promo-status-icon">🪙</span><small>BONUS FROGGY</small><b id="promoCoinStatus">Reusable coin vaults</b><p>Use 50000 for a fixed reward or qoostommoney to enter a custom amount.</p></article>
-          <article class="promo-status-card glass"><span class="promo-status-icon">🐷</span><small>PIGGY BOOST</small><b id="promoPiggyStatus">Normal rates</b><p>Use +1 for one extra percentage point. Use reset to restore normal rates.</p></article>
-        </div>
-
-        <p class="virtual-note">Promo rewards affect only fictional in-game Froggy currency and progression.</p>
-      </section>
-
 
       <section id="bankScreen" class="screen" aria-label="Bank">
         <div class="section-heading bank-heading">
@@ -462,7 +422,6 @@
       <button class="nav-button pressable" data-screen="collection"><span>🎒</span><small>Collection</small></button>
       <button class="nav-button pressable" data-screen="rewards"><span>🎁</span><small>Rewards</small><i id="rewardDot" class="notification-dot"></i></button>
       <button class="nav-button bank-nav-button pressable" data-screen="bank"><span>🏦</span><small>BANK</small><i id="debtDueDot" class="debt-alert hidden" aria-label="Debt payment due">!</i></button>
-      <button class="nav-button pressable" data-screen="promo"><span>🎟️</span><small>Promo</small></button>
       <button class="nav-button pressable" data-screen="stats"><span>🏆</span><small>Profile</small></button>
     </nav>
 
@@ -621,6 +580,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=35"></script>
+  <script src="app.js?v=36"></script>
 </body>
 </html>

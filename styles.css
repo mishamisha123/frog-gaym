@@ -2884,3 +2884,31 @@ body {
     grid-template-columns:1fr;
   }
 }
+
+
+/* v36 — public navigation cleanup */
+.bottom-nav { grid-template-columns:repeat(5,1fr); }
+.owner-access-card { width:min(360px,100%); }
+.owner-access-card form { display:grid; gap:10px; margin-top:16px; }
+.owner-access-card input,
+.owner-panel-card input { width:100%; min-width:0; height:48px; padding:0 13px; border:2px solid rgba(16,40,58,.14); border-radius:14px; background:white; font:800 15px/1 inherit; color:var(--ink); }
+.owner-primary,.owner-close,.owner-grid button,.owner-x { border:0; font-family:inherit; font-weight:1000; cursor:pointer; }
+.owner-primary { min-height:48px; border-radius:14px; background:#dfff67; color:#10283a; }
+.owner-close { margin-top:8px; padding:10px 18px; background:transparent; color:var(--ink-soft); }
+.owner-access-message { min-height:20px; margin:10px 0 0; color:#c73551; font-weight:900; }
+.owner-panel-card { width:min(720px,100%); max-height:90svh; padding:20px; text-align:left; }
+.owner-panel-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.owner-panel-head small { display:block; color:var(--green-dark); font-size:8px; letter-spacing:.18em; font-weight:1000; }
+.owner-panel-head h2 { margin:2px 0 0; }
+.owner-x { width:40px; height:40px; border-radius:50%; background:rgba(16,40,58,.08); font-size:24px; }
+.owner-summary { margin:9px 0 13px; color:var(--ink-soft); font-size:11px; font-weight:850; }
+.owner-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.owner-grid section { display:grid; gap:8px; padding:12px; border:1px solid rgba(16,40,58,.09); border-radius:16px; background:rgba(222,255,103,.09); }
+.owner-grid section>b { font-size:11px; text-transform:uppercase; letter-spacing:.08em; }
+.owner-grid section>span { color:var(--ink-soft); font-size:10px; font-weight:850; }
+.owner-grid section>div { display:flex; flex-wrap:wrap; gap:7px; }
+.owner-grid button { flex:1 1 120px; min-height:40px; padding:8px 10px; border-radius:12px; background:#dfff67; color:#10283a; font-size:10px; }
+.owner-grid button[data-owner-action="piggy-reset"],.owner-grid button[data-owner-action="debt"] { background:#eef1ec; }
+.owner-status { min-height:22px; margin:12px 2px 0; font-size:11px; font-weight:900; color:var(--green-dark); }
+.owner-status[data-kind="error"] { color:#c73551; }
+@media (max-width:620px){.owner-panel-card{padding:15px}.owner-grid{grid-template-columns:1fr}.owner-grid section{padding:10px}.owner-grid button{flex-basis:105px}}

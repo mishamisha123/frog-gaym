@@ -1,7 +1,7 @@
 {
   "name": "Froggy Arcade Deluxe",
   "short_name": "Froggy Arcade",
-  "description": "Froggy Arcade with a 500K-or-Level-35 Sky Crash unlock, manual pullout, flight-free collateral and optional Piggy interest promo boosts.",
+  "description": "Froggy Arcade with a 500K-or-Level-35 Sky Crash unlock, manual pullout, time-based Piggy savings and flight-free collateral.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

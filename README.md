@@ -973,3 +973,9 @@ Two reusable Piggy Bank promo codes were added:
 
 The promo changes affect future elapsed time. Already credited Piggy interest is never removed.
 
+
+
+## v36 navigation cleanup
+
+- Removed the public Promo tab and Promo screen. Legacy public promo-code redemption is no longer available.
+- Preserved the v35 Sky Crash unlock, vehicle economy, Bank rules, saves, and time-based Piggy behavior.
