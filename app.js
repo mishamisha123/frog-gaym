@@ -3,8 +3,8 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v40';
-  console.info(`Froggy Arcade ${BUILD_VERSION}: illustrated fry-drop physics, moving bag collisions, bomb disposal, and one-line navigation loaded`);
+  const BUILD_VERSION = 'v41';
+  console.info(`Froggy Leap ${BUILD_VERSION}: full-screen fry job, generous bag physics, and Job Level owner controls loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
   // The 15-jump curve is intentionally tighter early and highly rewarding at the finish.
@@ -1944,9 +1944,9 @@
   function renderJob(){
     if(!els.jobLevelLabel)return;
     const needed=jobXpNeeded();
-    els.jobLevelLabel.textContent=money(state.jobLevel);
-    els.jobPayLabel.textContent=`${money(jobPay())} F per standard fry`;
-    els.jobXpLabel.textContent=`${money(state.jobXp)} / ${money(needed)} job XP`;
+    els.jobLevelLabel.textContent=`Lv ${money(state.jobLevel)}`;
+    els.jobPayLabel.textContent=`${money(jobPay())} F/fry`;
+    els.jobXpLabel.textContent=`${money(state.jobXp)} / ${money(needed)} XP`;
     els.jobXpFill.style.width=`${clamp(state.jobXp/needed*100,0,100)}%`;
     els.jobShiftMoney.textContent=`${money(jobRuntime.shiftMoney)} F`;
     els.jobFriesBagged.textContent=money(jobRuntime.fries);
@@ -2042,17 +2042,35 @@
     if(dist>=r||dist===0)return null;
     return{nx:nx/dist,ny:ny/dist,penetration:r-dist};
   }
+  function jobBagGeometry(m){
+    const bagLeft=jobRuntime.bagX-m.bagWidth*.5;
+    const bagTop=els.jobBag.offsetTop;
+    return{
+      bagLeft,bagTop,bagRight:bagLeft+m.bagWidth,
+      mouthLeft:bagLeft+m.bagWidth*.09,
+      mouthRight:bagLeft+m.bagWidth*.91
+    };
+  }
+  function jobMouthRimY(x,geometry,m){
+    const half=m.bagWidth*.43;
+    const normalized=clamp(Math.abs(x-jobRuntime.bagX)/Math.max(1,half),0,1);
+    return geometry.bagTop+m.bagHeight*(.46-.27*Math.pow(normalized,1.55));
+  }
+  function jobFryHorizontalRadius(m){
+    const angle=Math.abs(Math.sin(jobRuntime.fryRotation*Math.PI/180));
+    return Math.max(m.fryWidth*.34,m.fryWidth*.27+angle*m.fryHeight*.22);
+  }
   function reflectFryOnRim(hit){
     const dot=jobRuntime.fryVx*hit.nx+jobRuntime.fryVy*hit.ny;
     if(dot>=0)return;
-    const restitution=.36;
+    const restitution=.34;
     jobRuntime.fryVx-=(1+restitution)*dot*hit.nx;
     jobRuntime.fryVy-=(1+restitution)*dot*hit.ny;
-    jobRuntime.fryVx+=jobRuntime.bagVelocity*.42;
-    jobRuntime.fryX+=hit.nx*(hit.penetration+1.5);
-    jobRuntime.fryY+=hit.ny*(hit.penetration+1.5);
-    jobRuntime.frySpin+=jobRuntime.fryVx*.22;
-    jobRuntime.rimCooldownUntil=performance.now()+90;
+    jobRuntime.fryVx+=jobRuntime.bagVelocity*.34;
+    jobRuntime.fryX+=hit.nx*(Math.max(0,hit.penetration)+2.5);
+    jobRuntime.fryY+=hit.ny*(Math.max(0,hit.penetration)+2.5);
+    jobRuntime.frySpin+=jobRuntime.fryVx*.20;
+    jobRuntime.rimCooldownUntil=performance.now()+105;
     audio.fryRim();haptic(7);
   }
   function resolveJobDrop(kind){
@@ -2069,7 +2087,8 @@
     if(!jobRuntime.active)return;
     const dt=Math.min(.035,(now-jobRuntime.lastFrame)/1000||.016);jobRuntime.lastFrame=now;
     const m=jobFieldMetrics();
-    const maxBagSpeed=Math.max(42,Math.min(62,m.width*.12));
+    const normalBagSpeed=Math.max(38,Math.min(54,m.width*.105));
+    const maxBagSpeed=jobRuntime.falling?normalBagSpeed*.42:normalBagSpeed;
     const delta=jobRuntime.bagTarget-jobRuntime.bagX;
     jobRuntime.lastBagX=jobRuntime.bagX;
     jobRuntime.bagX+=clamp(delta,-maxBagSpeed*dt,maxBagSpeed*dt);
@@ -2085,26 +2104,40 @@
     }
 
     if(jobRuntime.falling){
+      const previousX=jobRuntime.fryX,previousY=jobRuntime.fryY;
       jobRuntime.fryVy+=1750*dt;
       jobRuntime.fryVx*=Math.pow(.986,dt*60);
       jobRuntime.fryX+=jobRuntime.fryVx*dt;
       jobRuntime.fryY+=jobRuntime.fryVy*dt;
       jobRuntime.fryRotation+=jobRuntime.frySpin*dt;
-      const halfW=m.fryWidth*.36,halfH=m.fryHeight*.46;
+      const halfW=jobFryHorizontalRadius(m),halfH=m.fryHeight*.46;
       if(jobRuntime.fryX<halfW){jobRuntime.fryX=halfW;jobRuntime.fryVx=Math.abs(jobRuntime.fryVx)*.45;jobRuntime.frySpin+=70;}
       if(jobRuntime.fryX>m.width-halfW){jobRuntime.fryX=m.width-halfW;jobRuntime.fryVx=-Math.abs(jobRuntime.fryVx)*.45;jobRuntime.frySpin-=70;}
 
-      const bagLeft=jobRuntime.bagX-m.bagWidth*.5,bagTop=els.jobBag.offsetTop;
-      const tipX=jobRuntime.fryX,tipY=jobRuntime.fryY+halfH*.82;
-      const rimRadius=Math.max(8,m.fryWidth*.18);
-      const mouthLeft=bagLeft+m.bagWidth*.24,mouthRight=bagLeft+m.bagWidth*.76;
-      const mouthY=bagTop+m.bagHeight*.29,mouthBottom=bagTop+m.bagHeight*.47;
+      const geometry=jobBagGeometry(m);
+      const previousBottom=previousY+halfH*.82;
+      const currentBottom=jobRuntime.fryY+halfH*.82;
+      const fryLeft=jobRuntime.fryX-halfW,fryRight=jobRuntime.fryX+halfW;
+      const overlap=Math.max(0,Math.min(fryRight,geometry.mouthRight)-Math.max(fryLeft,geometry.mouthLeft));
+      const overlapRatio=overlap/Math.max(1,halfW*2);
+      const contactX=clamp(jobRuntime.fryX,geometry.mouthLeft,geometry.mouthRight);
+      const rimY=jobMouthRimY(contactX,geometry,m);
+      const sweptAcrossRim=previousBottom<=rimY+6&&currentBottom>=rimY-6&&jobRuntime.fryVy>0;
+      const settledInsideMouth=currentBottom>=rimY-4&&jobRuntime.fryY<geometry.bagTop+m.bagHeight*.58&&jobRuntime.fryVy>0;
+      const visiblyOverOpening=overlapRatio>=.18&&jobRuntime.fryX>geometry.mouthLeft-halfW*.30&&jobRuntime.fryX<geometry.mouthRight+halfW*.30;
 
-      if(tipY>=mouthY&&tipY<=mouthBottom&&tipX>mouthLeft&&tipX<mouthRight&&jobRuntime.fryVy>0){
+      // Swept contact prevents a fast fry from skipping through the opening between frames.
+      // The fallback catches a fry that physics already nudged inside the visible mouth.
+      if((sweptAcrossRim||settledInsideMouth)&&visiblyOverOpening){
         resolveJobDrop('bag');
-      }else if(now>=jobRuntime.rimCooldownUntil&&tipY>bagTop+m.bagHeight*.16&&tipY<bagTop+m.bagHeight*.49){
-        const leftHit=segmentCollision(tipX,tipY,rimRadius,bagLeft+m.bagWidth*.08,bagTop+m.bagHeight*.20,bagLeft+m.bagWidth*.30,bagTop+m.bagHeight*.43);
-        const rightHit=segmentCollision(tipX,tipY,rimRadius,bagLeft+m.bagWidth*.92,bagTop+m.bagHeight*.20,bagLeft+m.bagWidth*.70,bagTop+m.bagHeight*.43);
+      }else if(now>=jobRuntime.rimCooldownUntil&&sweptAcrossRim&&fryRight>geometry.bagLeft&&fryLeft<geometry.bagRight){
+        const side=jobRuntime.fryX<jobRuntime.bagX?-1:1;
+        reflectFryOnRim({nx:side*.72,ny:-.69,penetration:Math.max(1,Math.min(halfW,overlap||halfW*.25))});
+      }else if(now>=jobRuntime.rimCooldownUntil&&currentBottom>geometry.bagTop+m.bagHeight*.18){
+        const collisionRadius=Math.max(7,halfW*.45);
+        const probeY=jobRuntime.fryY+halfH*.28;
+        const leftHit=segmentCollision(jobRuntime.fryX,probeY,collisionRadius,geometry.bagLeft+m.bagWidth*.04,geometry.bagTop+m.bagHeight*.20,geometry.bagLeft+m.bagWidth*.18,geometry.bagTop+m.bagHeight*.94);
+        const rightHit=segmentCollision(jobRuntime.fryX,probeY,collisionRadius,geometry.bagRight-m.bagWidth*.04,geometry.bagTop+m.bagHeight*.20,geometry.bagRight-m.bagWidth*.18,geometry.bagTop+m.bagHeight*.94);
         if(leftHit||rightHit)reflectFryOnRim(leftHit||rightHit);
       }
 
@@ -2262,7 +2295,7 @@
     const summary=ownerPanelModal.querySelector('[data-owner-summary]');
     const unlimited=ownerPanelModal.querySelector('[data-owner-unlimited]');
     if(rates)rates.textContent=`${formatPiggyRate(piggyOpenRate())} open · ${formatPiggyRate(piggyClosedRate())} closed · +${formatPiggyRate(state.piggyInterestRateBonus)} boost`;
-    if(summary)summary.innerHTML=`<b>Level ${money(state.level)}</b> · ${money(state.xp)} XP · ${money(state.balance)} F wallet · ${money(state.piggyBalance)} F Piggy<br><span>${money(state.freeSpins)} free spins · ${money(state.safeRunCredits)} protected rounds · ${money(state.luckyCharges)} lucky jumps · ${state.unlimitedSpins?'unlimited spins ON':'unlimited spins off'} · ${money(state.debt)} F debt</span><br><span>Frogs ${state.unlockedFrogs.length}/${FROGS.length} · Lakes ${state.unlockedLakes.length}/${LAKES.length} · Vehicles ${state.ownedVehicles.length}/${VEHICLES.length} · Games ${state.unlockedGames.length}/${GAME_LICENSES.length} · Flights ${money(VEHICLES.reduce((total,item)=>total+vehicleCharges(item.id),0))}</span>`;
+    if(summary)summary.innerHTML=`<b>Level ${money(state.level)}</b> · ${money(state.xp)} XP · <b>Job Lv ${money(state.jobLevel)}</b> · ${money(state.jobXp)} Job XP · ${money(jobPay())} F/fry<br><span>${money(state.balance)} F wallet · ${money(state.piggyBalance)} F Piggy · ${money(state.freeSpins)} free spins · ${money(state.safeRunCredits)} protected rounds · ${money(state.luckyCharges)} lucky jumps · ${state.unlimitedSpins?'unlimited spins ON':'unlimited spins off'} · ${money(state.debt)} F debt</span><br><span>Frogs ${state.unlockedFrogs.length}/${FROGS.length} · Lakes ${state.unlockedLakes.length}/${LAKES.length} · Vehicles ${state.ownedVehicles.length}/${VEHICLES.length} · Games ${state.unlockedGames.length}/${GAME_LICENSES.length} · Flights ${money(VEHICLES.reduce((total,item)=>total+vehicleCharges(item.id),0))}</span>`;
     if(unlimited)unlimited.textContent=state.unlimitedSpins?'Disable unlimited spins':'Enable unlimited spins';
   }
 
@@ -2304,6 +2337,8 @@
       if(!amount)return ownerStatus('Enter a positive whole-number XP amount.','error');addXp(amount);message=`Added ${money(amount)} XP.`;
     }else if(action==='levels'){
       amount=ownerWhole(input?.value,{maximum:MAX_OWNER_LEVEL});if(!amount)return ownerStatus('Enter a positive whole-number level amount.','error');const before=state.level;const target=Math.min(MAX_OWNER_LEVEL,before+amount);const rewards=grantLevelBonuses(before,target);state.level=target;state.xp=0;ensureCrashLevelUnlock();message=`Added ${money(target-before)} level${target-before===1?'':'s'} and ${money(rewards.credited)} F in level rewards.`;
+    }else if(action==='job-levels'){
+      amount=ownerWhole(input?.value,{maximum:MAX_OWNER_LEVEL});if(!amount)return ownerStatus('Enter a positive whole-number Job Level amount.','error');const before=Math.max(1,state.jobLevel);state.jobLevel=Math.min(MAX_OWNER_LEVEL,before+amount);state.jobXp=0;message=`Added ${money(state.jobLevel-before)} Job Level${state.jobLevel-before===1?'':'s'}. Job pay is now ${money(jobPay())} F per fry.`;
     }else if(action==='spins'){
       if(!amount)return ownerStatus('Enter a positive whole-number spin amount.','error');state.freeSpins=Math.min(Number.MAX_SAFE_INTEGER,state.freeSpins+amount);message=`Added ${money(amount)} free spins.`;
     }else if(action==='safe'){
@@ -2361,7 +2396,7 @@
       <p class="owner-summary" data-owner-summary></p>
       <div class="owner-grid">
         <section data-owner-group><b>Wallet / Piggy</b><input value="1000000" inputmode="numeric" aria-label="Froggy amount"><div><button data-owner-action="wallet">Add wallet F</button><button data-owner-action="piggy">Add Piggy F</button></div></section>
-        <section data-owner-group><b>Progression</b><input value="1000" inputmode="numeric" aria-label="XP or levels amount"><div><button data-owner-action="xp">Add XP</button><button data-owner-action="levels">Add levels</button></div></section>
+        <section data-owner-group><b>Progression</b><input value="1000" inputmode="numeric" aria-label="XP or levels amount"><div><button data-owner-action="xp">Add XP</button><button data-owner-action="levels">Add levels</button><button data-owner-action="job-levels">Add Job levels</button></div></section>
         <section data-owner-group><b>Rewards</b><input value="10" inputmode="numeric" aria-label="Reward amount"><div><button data-owner-action="spins">Free spins</button><button data-owner-action="safe">Protected rounds</button><button data-owner-action="lucky">Lucky jumps</button></div></section>
         <section data-owner-group><b>Piggy interest</b><span data-owner-rates></span><div><button data-owner-action="piggy-plus">+1% boost</button><button data-owner-action="piggy-reset">Remove boost</button></div></section>
         <section data-owner-group><b>Unlock content</b><div><button data-owner-action="unlock-frogs">All frogs</button><button data-owner-action="unlock-lakes">All lakes</button><button data-owner-action="unlock-vehicles">All vehicles</button><button data-owner-action="unlock-games">All games</button><button data-owner-action="unlock-everything">Unlock everything</button></div></section>
@@ -2485,9 +2520,11 @@
       state=deepClone(DEFAULT_STATE);state.balance=20000;state.debt=10800;state.loanPrincipalOriginal=10000;state.loanPrincipalRemaining=10000;state.loanInterestTotal=800;state.loanInterestPaid=0;state.loanInstallment=1080;state.loanInstallmentsPaid=0;state.debtCycleStartRound=0;state.completedRounds=0;piggyTransferMode='deposit';if(earlyPayoffAmount()!==10000||piggyTransferMaximum()!==10000)throw new Error('initial loan Piggy reserve failed');state.completedRounds=3;if(earlyPayoffAmount()!==10048||piggyTransferMaximum()!==9952)throw new Error('round-adjusted loan Piggy reserve failed');if(trustedClosedElapsed(3600000,0,0)!==3600000||trustedClosedElapsed(4600000,1000000,600000)!==3000000)throw new Error('trusted closed-time calculation failed');
       state=deepClone(DEFAULT_STATE);piggyTrustedAnchorMs=0;state.piggyTrustedTimestamp=123456;state.piggyUntrustedOpenMs=789;invalidateUntrustedClosedAccrual();if(state.piggyTrustedTimestamp!==0||state.piggyUntrustedOpenMs!==0)throw new Error('untrusted Piggy balance-change invalidation failed');piggyTrustedAnchorMs=Date.now();piggyTrustedAnchorPerformance=performance.now();
       state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;state.piggyLastTimestamp=Date.now();let result=advancePiggyTime(PIGGY_CYCLE_MS,piggyOpenRate(),'open');if(result.interest!==2000||state.piggyBalance!==1002000)throw new Error('open-app Piggy rate failed');state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;result=advancePiggyTime(PIGGY_CYCLE_MS,piggyClosedRate(),'closed');if(result.interest!==1000||state.piggyBalance!==1001000)throw new Error('closed-app Piggy rate failed');state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;advancePiggyTime(PIGGY_CYCLE_MS/2,piggyOpenRate(),'open');result=advancePiggyTime(PIGGY_CYCLE_MS/2,piggyClosedRate(),'closed');if(result.interest!==1500)throw new Error('mixed Piggy cycle failed');state=deepClone(DEFAULT_STATE);state.piggyInterestRateBonus+=PIGGY_OWNER_RATE_STEP;state.piggyInterestRateBonus+=PIGGY_OWNER_RATE_STEP;if(state.piggyInterestRateBonus!==0.02||piggyOpenRate()!==0.022||piggyClosedRate()!==0.021)throw new Error('repeatable Piggy owner boost failed');state.piggyBalance=1000000;result=advancePiggyTime(PIGGY_CYCLE_MS,piggyOpenRate(),'open');if(result.interest!==22000)throw new Error('stacked Piggy rate failed');state.piggyInterestRateBonus=0;if(piggyOpenRate()!==PIGGY_OPEN_RATE||piggyClosedRate()!==PIGGY_CLOSED_RATE)throw new Error('Piggy owner reset failed');if(!ownerAccessModal||!ownerPanelModal)throw new Error('maintenance UI failed');
+      const testMetrics={bagWidth:200,bagHeight:260};const testGeometry={bagTop:100};jobRuntime.bagX=200;if(jobMouthRimY(200,testGeometry,testMetrics)<=jobMouthRimY(120,testGeometry,testMetrics))throw new Error('bag mouth curve failed');
+      state=deepClone(DEFAULT_STATE);state.jobLevel=1;const baseJobPay=jobPay();state.jobLevel=11;if(jobPay()<=baseJobPay||jobPay()>250)throw new Error('Job pay progression failed');
       state=deepClone(DEFAULT_STATE);state.ownedVehicles=['rocket'];state.vehicleCharges.rocket=0;state.vehicleFlightCompletions.rocket=9;const perk=completeVehicleFlight('rocket');if(perk.bonus!==1||vehicleCharges('rocket')!==1)throw new Error('free-flight perk failed');if(vehicleCrashXp(VEHICLES[3],100)!==114&&vehicleCrashXp(VEHICLES[3],100)!==115)throw new Error('vehicle XP perk failed');
       showResult({icon:'🪂',kicker:'TEST',title:'Crash profit',amount:'150 F returned',profit:'+50 F',text:'Profit is separate.'});if(els.resultProfit.classList.contains('hidden')||els.resultProfit.querySelector('b').textContent!=='+50 F')throw new Error('separate Crash profit failed');closeModal();
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v40 illustrated fry physics, fast drops, moving-bag rim collisions, safe bomb disposal, explosion loss, one-line navigation';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v41 full-screen Job layout, generous swept bag collision, rim physics, readable results, and Job Level owner control';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 

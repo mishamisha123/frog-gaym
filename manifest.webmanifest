@@ -1,7 +1,7 @@
 {
-  "name": "Froggy Arcade Deluxe",
-  "short_name": "Froggy Arcade",
-  "description": "Froggy Arcade v40 with illustrated fry-drop physics, moving-bag rim collisions, special boosts, and bomb disposal.",
+  "name": "Froggy Leap Deluxe",
+  "short_name": "Froggy Leap",
+  "description": "Froggy Leap v41 with a full-screen fry job, forgiving bag-mouth physics, special boosts, and bomb disposal.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

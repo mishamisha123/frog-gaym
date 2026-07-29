@@ -1,6 +1,6 @@
-# Froggy Arcade v40
+# Froggy Leap v41
 
-Adds the Froggy Fry Job game, separate job progression, moving-bag drag gameplay, special fries and sound effects. Removes the automatic 500 F low-balance rescue.
+Full-screen Job update with a larger, swept bag-mouth hitbox, improved rim/body collision physics, readable shift earnings, and the supplied fry/bag artwork.
 
 # Froggy Leap Deluxe — Visual Upgrade
 
@@ -1023,3 +1023,12 @@ The promo changes affect future elapsed time. Already credited Piggy interest is
 - Red fries are bombs. They may be dropped away safely or expire on their own; catching one triggers an explosion and ends the shift with “YOU CAUGHT A BOMB.”
 - Removed the Tung Tung Tung Sahur event.
 - Main navigation remains on one line across phone widths.
+
+
+## v41 full-screen Job and collision fairness
+
+- Renames the current product presentation to Froggy Leap.
+- Makes the Job game fill the available screen between the top bar and navigation, with all Job information in the fixed HUD.
+- Expands the bag opening to match the visible artwork and uses swept collision checks so fast fries cannot skip through it between frames.
+- Adds physical rim and outer-side reactions while slowing bag movement during a falling fry for fairer catches.
+- Changes shift earnings to green with a dark outline for readability on the white result card.

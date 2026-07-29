@@ -11,8 +11,8 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=40" />
-  <title>Froggy Arcade Deluxe</title>
+  <link rel="stylesheet" href="styles.css?v=41" />
+  <title>Froggy Leap Deluxe</title>
 </head>
 <body>
   <div id="app" class="app" data-theme="forest">
@@ -25,7 +25,7 @@
 
       <div class="brand" aria-label="Froggy Leap Deluxe">
         <span class="brand-kicker">FROGGY</span>
-        <strong>ARCADE</strong>
+        <strong>LEAP</strong>
       </div>
 
       <div class="top-actions">
@@ -39,10 +39,10 @@
     </header>
 
     <main class="screen-stack">
-      <section id="playScreen" class="screen active" aria-label="Froggy Arcade">
+      <section id="playScreen" class="screen active" aria-label="Froggy Leap games">
         <section class="arcade-switcher glass">
-          <div class="arcade-title"><small>FROGGY ARCADE</small><h1>Choose a game</h1></div>
-          <div class="arcade-tabs" role="tablist" aria-label="Arcade games">
+          <div class="arcade-title"><small>FROGGY LEAP</small><h1>Choose a game</h1></div>
+          <div class="arcade-tabs" role="tablist" aria-label="Froggy Leap games">
             <button id="leapGameTab" type="button" class="active pressable" data-game-mode="leap" role="tab" aria-selected="true"><span>🐸</span><b>Lily Leap</b><small>FREE</small></button>
             <button id="crashGameTab" type="button" class="pressable" data-game-mode="crash" role="tab" aria-selected="false"><span>🚀</span><b>Sky Crash</b><small id="crashTabStatus">500K / LV35</small></button>
           </div>
@@ -102,7 +102,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v40 · FROGGY ARCADE</div>
+          <div class="build-version" aria-label="Installed game version">v41 · FROGGY LEAP</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -188,6 +188,7 @@
           <div class="job-shift-hud">
             <span><small>SHIFT MONEY</small><b id="jobShiftMoney">0 F</b></span>
             <span><small>FRIES BAGGED</small><b id="jobFriesBagged">0</b></span>
+            <span class="job-level-hud"><small>JOB</small><b><i id="jobLevelLabel">Lv 1</i><em id="jobPayLabel">25 F/fry</em></b><em id="jobXpLabel">0 / 100 XP</em><div class="job-xp-track"><i id="jobXpFill"></i></div></span>
             <span><small>BOOSTS</small><b id="jobBoostLabel">None</b></span>
           </div>
           <div id="jobPlayfield" class="job-playfield" aria-label="Position a fry above the line, then release it to drop into the moving bag">
@@ -210,13 +211,8 @@
               <button id="jobStartButton" class="action-button start pressable" type="button"><span>START SHIFT</span><small>Line it up and let it fall</small></button>
             </div>
           </div>
-          <p class="job-tip">The bag moves gently. Fries use real drop and edge-collision physics, so clipping the rim can knock a fry into or out of the bag.</p>
         </section>
 
-        <section class="job-header glass">
-          <div><small>FROGGY FRY SHIFT</small><h1>Put the fries in the bag.</h1><p>Standard fries begin at 25 F and 10 XP. Job progression is separate from your regular level and is shown only here.</p></div>
-          <div class="job-level-card"><small>JOB LEVEL</small><b id="jobLevelLabel">1</b><span id="jobPayLabel">25 F per fry</span><div class="job-xp-track"><i id="jobXpFill"></i></div><small id="jobXpLabel">0 / 100 job XP</small></div>
-        </section>
 
         <div id="jobResult" class="job-result hidden" role="dialog" aria-modal="true" aria-labelledby="jobResultTitle">
           <div class="job-result-card glass">
@@ -466,7 +462,7 @@
     </main>
 
     <nav class="bottom-nav glass" aria-label="Main navigation">
-      <button class="nav-button active pressable" data-screen="play"><span>🎮</span><small>Arcade</small></button>
+      <button class="nav-button active pressable" data-screen="play"><span>🎮</span><small>Games</small></button>
       <button class="nav-button pressable" data-screen="job"><span>🍟</span><small>Job</small></button>
       <button class="nav-button pressable" data-screen="collection"><span>🎒</span><small>Collection</small></button>
       <button class="nav-button pressable" data-screen="rewards"><span>🎁</span><small>Rewards</small><i id="rewardDot" class="notification-dot"></i></button>
@@ -629,6 +625,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=40"></script>
+  <script src="app.js?v=41"></script>
 </body>
 </html>
