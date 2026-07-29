@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=38" />
+  <link rel="stylesheet" href="styles.css?v=39" />
   <title>Froggy Arcade Deluxe</title>
 </head>
 <body>
@@ -102,7 +102,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v38 · FROGGY ARCADE</div>
+          <div class="build-version" aria-label="Installed game version">v39 · FROGGY ARCADE</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -181,6 +181,35 @@
           </div>
         </section>
 
+      </section>
+
+
+      <section id="jobScreen" class="screen job-screen" aria-label="Froggy Fry Job">
+        <section class="job-header glass">
+          <div><small>FROGGY FRY SHIFT</small><h1>Put the fries in the bag.</h1><p>Drag each fry below the drop line and land it inside the moving bag. Miss once and your shift is over.</p></div>
+          <div class="job-level-card"><small>JOB LEVEL</small><b id="jobLevelLabel">1</b><span id="jobPayLabel">25 F per fry</span><div class="job-xp-track"><i id="jobXpFill"></i></div><small id="jobXpLabel">0 / 100 job XP</small></div>
+        </section>
+        <section class="job-game-card glass">
+          <div class="job-shift-hud">
+            <span><small>SHIFT MONEY</small><b id="jobShiftMoney">0 F</b></span>
+            <span><small>FRIES BAGGED</small><b id="jobFriesBagged">0</b></span>
+            <span><small>BOOSTS</small><b id="jobBoostLabel">None</b></span>
+          </div>
+          <div id="jobPlayfield" class="job-playfield" aria-label="Drag fries into the moving bag">
+            <div class="job-no-drag-zone"><span>DROP FROM ABOVE THIS LINE ↓</span></div>
+            <div id="jobFry" class="job-fry hidden" role="button" tabindex="0" aria-label="Drag this fry into the bag">🍟</div>
+            <div id="jobBag" class="job-bag" aria-label="Moving fry bag"><span>FROGGY<br>FRIES</span></div>
+            <div id="sahurHit" class="sahur-hit hidden" aria-hidden="true"><b>TUNG TUNG TUNG</b><span>🥁</span><strong>SAHUR!</strong></div>
+            <div id="jobIntro" class="job-intro">
+              <div class="job-mascot">🐸🍟</div><h2>Clock in?</h2><p>Standard fries pay 25 F and 10 XP. Green fries boost money for 20 seconds, yellow fries boost XP, and red fries summon trouble.</p>
+              <button id="jobStartButton" class="action-button start pressable" type="button"><span>START SHIFT</span><small>Try not to fumble one fry</small></button>
+            </div>
+          </div>
+          <p class="job-tip">The bag moves randomly, but never too fast. Above the line, the fry stays in its lane; cross the line before aiming for the bag.</p>
+        </section>
+        <div id="jobResult" class="job-result hidden" role="dialog" aria-modal="true" aria-labelledby="jobResultTitle">
+          <div class="job-result-card glass"><div class="job-result-icon">💔</div><small>SHIFT OVER</small><h2 id="jobResultTitle">bro had one job💔</h2><span>MONEY MADE</span><b id="jobResultMoney">0 F</b><p id="jobResultText">You missed the bag.</p><button id="jobAgainButton" class="action-button start pressable" type="button"><span>WORK AGAIN</span><small>One more shift</small></button></div>
+        </div>
       </section>
 
       <section id="collectionScreen" class="screen" aria-label="Collection">
@@ -419,6 +448,7 @@
 
     <nav class="bottom-nav glass" aria-label="Main navigation">
       <button class="nav-button active pressable" data-screen="play"><span>🎮</span><small>Arcade</small></button>
+      <button class="nav-button pressable" data-screen="job"><span>🍟</span><small>Job</small></button>
       <button class="nav-button pressable" data-screen="collection"><span>🎒</span><small>Collection</small></button>
       <button class="nav-button pressable" data-screen="rewards"><span>🎁</span><small>Rewards</small><i id="rewardDot" class="notification-dot"></i></button>
       <button class="nav-button bank-nav-button pressable" data-screen="bank"><span>🏦</span><small>BANK</small><i id="debtDueDot" class="debt-alert hidden" aria-label="Debt payment due">!</i></button>
@@ -580,6 +610,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=38"></script>
+  <script src="app.js?v=39"></script>
 </body>
 </html>

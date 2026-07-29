@@ -1,3 +1,7 @@
+# Froggy Arcade v39
+
+Adds the Froggy Fry Job game, separate job progression, moving-bag drag gameplay, special fries and sound effects. Removes the automatic 500 F low-balance rescue.
+
 # Froggy Leap Deluxe — Visual Upgrade
 
 A mobile-first, installable HTML5 game for GitHub Pages. It uses only HTML, CSS, JavaScript, Canvas, Web Audio, and generated PNG icons—there are no external libraries or paid assets.
@@ -993,7 +997,7 @@ The promo changes affect future elapsed time. Already credited Piggy interest is
 - The service worker bypasses its cache for trusted-time checks.
 
 
-## v38 gameplay reliability and Sky Crash update
+## v39 gameplay reliability and Sky Crash update
 
 - Restored resilient Web Audio initialization across touch, mouse, keyboard and app resume.
 - Sky Crash acceleration now increases during the climb.

@@ -1,7 +1,7 @@
 {
   "name": "Froggy Arcade Deluxe",
   "short_name": "Froggy Arcade",
-  "description": "Froggy Arcade v38 with restored audio, accelerating Sky Crash flights, redline auto-pullout and protected Crash rounds.",
+  "description": "Froggy Arcade v39 with restored audio, accelerating Sky Crash flights, redline auto-pullout and protected Crash rounds.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
