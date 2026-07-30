@@ -1,17 +1,19 @@
-# Froggy Leap v43
+# Froggy Leap v44
 
-Current release: a polished fast-food kitchen Job presentation, much slower and safer Job XP growth, rapid fry queuing, clean illustrated bag rendering, uncapped but gradually scaling Job pay, stackable fry boosts, Bank-aware Job attempts, full-screen play, and a fair Sky Crash payout that returns the full stake at 1.00×.
+Current release: seven substantially redesigned lake environments with unique scenery, water, lighting, atmosphere, and premium Collection previews; balanced Job XP; uncapped gradual Job pay; and rarer stackable money/XP boost fries.
 
-> **Current-behavior note:** The v43 code and the latest version sections near the end of this README are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+> **Current-behavior note:** The v44 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
+## v44 — Premium lakes and rarer Job boosts
 
-## v43 — Job XP balance and kitchen presentation
-
-- Replaced the plain Job playfield treatment with a purpose-built warm fast-food kitchen backdrop while preserving the live bag, fry physics, reward text, and collision layers.
-- Kept the scene readable with a soft vignette and contrast treatment rather than baking interface elements into the background.
-- Rebalanced standard Job XP from pay-proportional growth to slow logarithmic growth: it starts at 10 XP and rises gently with Job Level.
-- Job Level 2,000 now awards about 31 base XP per standard fry before temporary XP boosts, instead of roughly 188 XP.
-- Money pay remains uncapped and continues following the gradual square-root progression.
+- Rebuilt all seven Lily Leap lake themes as distinct premium environments rather than simple palette swaps.
+- Added lake-specific scenery, atmosphere, reflections, water treatments, environmental particles, themed pads, and stronger visual depth.
+- Replaced simple lake emoji art in Collection with sophisticated miniature environment previews for every lake.
+- Preserved gameplay clarity: the frog, landing pads, NEXT marker, payout HUD, and active controls remain visually dominant.
+- Green money and yellow XP boosts remain fully stackable: collecting the same boost again before expiry doubles it and resets its 20-second timer.
+- Boost fries are now much rarer—**2.5% green and 2.5% yellow**, down from a combined 15%—so high stacked multipliers require considerably more luck.
+- Bomb fries remain at 5%; ordinary fries now make up 90% of spawns.
+- Standard Job XP keeps the slower logarithmic v43 progression, while Job pay remains uncapped.
 
 # Froggy Leap Deluxe — Visual Upgrade
 
