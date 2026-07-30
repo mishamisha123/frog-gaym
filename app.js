@@ -3,8 +3,8 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v42';
-  console.info(`Froggy Leap ${BUILD_VERSION}: full-screen Crash, fair 1× returns, rapid fry queue, uncapped Job pay, and stacking boosts loaded`);
+  const BUILD_VERSION = 'v43';
+  console.info(`Froggy Leap ${BUILD_VERSION}: balanced Job XP, polished kitchen scene, full-screen Crash, rapid fry queue, uncapped Job pay, and stacking boosts loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
   // The 15-jump curve is intentionally tighter early and highly rewarding at the finish.
@@ -1956,7 +1956,7 @@
   };
   function jobXpNeeded(level=state.jobLevel){return 100+Math.max(0,level-1)*40;}
   function jobPay(){return 25+Math.floor(10*Math.sqrt(Math.max(0,Math.max(1,state.jobLevel)-1)));}
-  function jobXpPerFry(){return Math.max(10,Math.floor(10*jobPay()/25));}
+  function jobXpPerFry(){const level=Math.max(1,Number(state.jobLevel)||1);return Math.max(10,Math.floor(10+2*Math.log2(level)));}
   function renderJob(){
     if(!els.jobLevelLabel)return;
     const needed=jobXpNeeded();
@@ -2580,10 +2580,10 @@
       state=deepClone(DEFAULT_STATE);piggyTrustedAnchorMs=0;state.piggyTrustedTimestamp=123456;state.piggyUntrustedOpenMs=789;invalidateUntrustedClosedAccrual();if(state.piggyTrustedTimestamp!==0||state.piggyUntrustedOpenMs!==0)throw new Error('untrusted Piggy balance-change invalidation failed');piggyTrustedAnchorMs=Date.now();piggyTrustedAnchorPerformance=performance.now();
       state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;state.piggyLastTimestamp=Date.now();let result=advancePiggyTime(PIGGY_CYCLE_MS,piggyOpenRate(),'open');if(result.interest!==2000||state.piggyBalance!==1002000)throw new Error('open-app Piggy rate failed');state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;result=advancePiggyTime(PIGGY_CYCLE_MS,piggyClosedRate(),'closed');if(result.interest!==1000||state.piggyBalance!==1001000)throw new Error('closed-app Piggy rate failed');state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;advancePiggyTime(PIGGY_CYCLE_MS/2,piggyOpenRate(),'open');result=advancePiggyTime(PIGGY_CYCLE_MS/2,piggyClosedRate(),'closed');if(result.interest!==1500)throw new Error('mixed Piggy cycle failed');state=deepClone(DEFAULT_STATE);state.piggyInterestRateBonus+=PIGGY_OWNER_RATE_STEP;state.piggyInterestRateBonus+=PIGGY_OWNER_RATE_STEP;if(state.piggyInterestRateBonus!==0.02||piggyOpenRate()!==0.022||piggyClosedRate()!==0.021)throw new Error('repeatable Piggy owner boost failed');state.piggyBalance=1000000;result=advancePiggyTime(PIGGY_CYCLE_MS,piggyOpenRate(),'open');if(result.interest!==22000)throw new Error('stacked Piggy rate failed');state.piggyInterestRateBonus=0;if(piggyOpenRate()!==PIGGY_OPEN_RATE||piggyClosedRate()!==PIGGY_CLOSED_RATE)throw new Error('Piggy owner reset failed');if(!ownerAccessModal||!ownerPanelModal)throw new Error('maintenance UI failed');
       const testMetrics={bagWidth:200,bagHeight:260};const testGeometry={bagTop:100};jobRuntime.bagX=200;if(jobMouthRimY(200,testGeometry,testMetrics)<=jobMouthRimY(120,testGeometry,testMetrics))throw new Error('bag mouth curve failed');
-      state=deepClone(DEFAULT_STATE);state.jobLevel=1;const baseJobPay=jobPay(),baseJobXp=jobXpPerFry();state.jobLevel=2000;if(jobPay()<=250||jobPay()<=baseJobPay||jobXpPerFry()<=baseJobXp)throw new Error('uncapped Job pay/XP progression failed');
+      state=deepClone(DEFAULT_STATE);state.jobLevel=1;const baseJobPay=jobPay(),baseJobXp=jobXpPerFry();state.jobLevel=2000;const highJobXp=jobXpPerFry();if(jobPay()<=250||jobPay()<=baseJobPay||highJobXp<=baseJobXp||highJobXp>=100)throw new Error('uncapped Job pay or balanced Job XP progression failed');
       state=deepClone(DEFAULT_STATE);state.ownedVehicles=['rocket'];state.vehicleCharges.rocket=0;state.vehicleFlightCompletions.rocket=9;const perk=completeVehicleFlight('rocket');if(perk.bonus!==1||vehicleCharges('rocket')!==1)throw new Error('free-flight perk failed');if(vehicleCrashXp(VEHICLES[3],100)!==114&&vehicleCrashXp(VEHICLES[3],100)!==115)throw new Error('vehicle XP perk failed');
       showResult({icon:'🪂',kicker:'TEST',title:'Crash profit',amount:'150 F returned',profit:'+50 F',text:'Profit is separate.'});if(els.resultProfit.classList.contains('hidden')||els.resultProfit.querySelector('b').textContent!=='+50 F')throw new Error('separate Crash profit failed');closeModal();
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v42 full-screen Crash, protected-status visibility, full 1x stake return, rapid fry queue, uncapped Job pay/XP, stacking boosts, clean bag rendering, and Job rounds';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v43 balanced Job XP, polished kitchen background, full-screen Crash, protected-status visibility, full 1x stake return, rapid fry queue, uncapped Job pay, stacking boosts, clean bag rendering, and Job rounds';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 

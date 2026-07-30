@@ -3315,3 +3315,43 @@ body {
   #playScreen.crash-mode #crashGameContent .crash-bet-tools button{min-height:29px}
   #playScreen.crash-mode #crashGameContent .crash-actions .action-button{min-height:44px}
 }
+
+
+/* v43 — polished fast-food kitchen scene and calmer Job presentation */
+#jobScreen .job-playfield{
+  background-color:#171411!important;
+  background-image:
+    linear-gradient(180deg,rgba(8,10,12,.10) 0%,rgba(8,10,12,.02) 42%,rgba(8,10,12,.28) 100%),
+    url("assets/job-kitchen-bg.webp")!important;
+  background-size:cover!important;
+  background-position:center center!important;
+  background-repeat:no-repeat!important;
+  border:3px solid #101820!important;
+  box-shadow:inset 0 0 0 1px rgba(255,238,184,.34),inset 0 -90px 100px rgba(18,11,7,.24),0 12px 28px rgba(19,18,16,.18)!important;
+}
+#jobScreen .job-playfield:before{
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:
+    radial-gradient(ellipse at 50% 28%,rgba(255,221,142,.13),transparent 42%),
+    linear-gradient(90deg,rgba(5,8,10,.17),transparent 22%,transparent 78%,rgba(5,8,10,.17));
+}
+#jobScreen .job-drop-guide{z-index:4;border-top:3px dashed rgba(255,245,217,.96);filter:drop-shadow(0 2px 2px rgba(0,0,0,.72))}
+#jobScreen .job-drop-guide span{
+  color:#151515;background:rgba(255,247,222,.94);border:1.5px solid #101820;box-shadow:0 3px 0 rgba(16,24,32,.28);
+}
+#jobScreen .job-intro{
+  background:linear-gradient(180deg,rgba(10,15,17,.70),rgba(18,12,7,.82));
+  backdrop-filter:blur(4px);
+}
+#jobScreen .job-shift-hud>span{
+  background:linear-gradient(180deg,#fff8e8,#f2dfbd)!important;
+  border-color:#101820!important;
+  box-shadow:0 3px 0 rgba(16,24,32,.18)!important;
+}
+#jobScreen .job-boost-hud b{color:#278c35!important}
+#jobScreen .job-fry{z-index:9}
+#jobScreen .job-bag{z-index:6}
+@media(max-width:759px){
+  #jobScreen .job-playfield{background-position:center center!important}
+  #jobScreen .job-drop-guide span{max-width:62%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}

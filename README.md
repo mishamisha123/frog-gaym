@@ -1,8 +1,17 @@
-# Froggy Leap v42
+# Froggy Leap v43
 
-Current release: a full-screen Job and Sky Crash presentation, rapid fry queuing, clean illustrated bag rendering, uncapped but gradually scaling Job pay and XP, stackable fry boosts, Bank-aware Job attempts, clear protected-flight status, and a fair Sky Crash payout that returns the full stake at 1.00×.
+Current release: a polished fast-food kitchen Job presentation, much slower and safer Job XP growth, rapid fry queuing, clean illustrated bag rendering, uncapped but gradually scaling Job pay, stackable fry boosts, Bank-aware Job attempts, full-screen play, and a fair Sky Crash payout that returns the full stake at 1.00×.
 
-> **Current-behavior note:** The v42 code and the latest version sections near the end of this README are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+> **Current-behavior note:** The v43 code and the latest version sections near the end of this README are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+
+
+## v43 — Job XP balance and kitchen presentation
+
+- Replaced the plain Job playfield treatment with a purpose-built warm fast-food kitchen backdrop while preserving the live bag, fry physics, reward text, and collision layers.
+- Kept the scene readable with a soft vignette and contrast treatment rather than baking interface elements into the background.
+- Rebalanced standard Job XP from pay-proportional growth to slow logarithmic growth: it starts at 10 XP and rises gently with Job Level.
+- Job Level 2,000 now awards about 31 base XP per standard fry before temporary XP boosts, instead of roughly 188 XP.
+- Money pay remains uncapped and continues following the gradual square-root progression.
 
 # Froggy Leap Deluxe — Visual Upgrade
 

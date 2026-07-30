@@ -1,5 +1,5 @@
-const CACHE='froggy-leap-v42-job-crash-polish';
-const CORE=['./','./index.html','./styles.css?v=42','./app.js?v=42','./manifest.webmanifest','./refresh.html','./icons/icon-192.png','./icons/icon-512.png','./assets/job-fry.png','./assets/job-bag.png'];
+const CACHE='froggy-leap-v43-job-kitchen-balance';
+const CORE=['./','./index.html','./styles.css?v=43','./app.js?v=43','./manifest.webmanifest','./refresh.html','./icons/icon-192.png','./icons/icon-512.png','./assets/job-fry.png','./assets/job-bag.png','./assets/job-kitchen-bg.webp'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{
