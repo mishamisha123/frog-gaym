@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=50-shift-timer-sales" />
+  <link rel="stylesheet" href="styles.css?v=52-app-alert-fix" />
   <title>Froggy Leap</title>
 </head>
 <body>
@@ -102,7 +102,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v50 · FROGGY LEAP</div>
+          <div class="build-version" aria-label="Installed game version">v52 · FROGGY LEAP</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -140,6 +140,10 @@
 
           <div id="crashGameContent" class="hidden">
             <div id="crashFrame" class="crash-frame">
+              <div id="crashNoFlights" class="crash-no-flights hidden" role="button" tabindex="-1" aria-live="polite" aria-label="No flights. Open Vehicles.">
+                <div><b id="crashNoFlightsTitle">NO FLIGHTS</b><span id="crashNoFlightsText">Tap to refill.</span></div>
+                <button id="crashVehicleShopButton" type="button" class="pressable">VEHICLES →</button>
+              </div>
               <canvas id="crashCanvas" aria-label="Animated frog rising in a flying vehicle"></canvas>
               <div class="crash-vignette"></div>
               <div id="crashStatus" class="crash-status glass hidden" tabindex="-1" aria-disabled="true"></div>
@@ -163,10 +167,6 @@
             </div>
 
             <section class="crash-control-panel glass">
-              <div id="crashNoFlights" class="crash-no-flights hidden" role="status" aria-live="polite">
-                <div><b id="crashNoFlightsTitle">NO FLIGHTS LEFT</b><span id="crashNoFlightsText">Buy more to launch again.</span></div>
-                <button id="crashVehicleShopButton" type="button" class="pressable">OPEN VEHICLES</button>
-              </div>
               <div class="crash-control-grid manual-crash-grid">
                 <label><small>BET AMOUNT</small><input id="crashBetInput" type="number" min="50" step="1" inputmode="numeric" value="100" /></label>
                 <label><small>FLIGHT VEHICLE</small><select id="crashVehicleSelect"></select></label>
@@ -225,6 +225,7 @@
 
         <div id="jobResult" class="job-result hidden" role="dialog" aria-modal="true" aria-labelledby="jobResultTitle">
           <div class="job-result-card glass">
+            <button id="jobResultClose" class="job-result-close pressable" type="button" aria-label="Close Shift Over">×</button>
             <div id="jobResultIcon" class="job-result-icon">💔</div>
             <small>SHIFT OVER</small>
             <h2 id="jobResultTitle">bro had one job💔</h2>
@@ -639,6 +640,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=50-shift-timer-sales"></script>
+  <script src="app.js?v=52-app-alert-fix"></script>
 </body>
 </html>

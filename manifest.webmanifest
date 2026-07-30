@@ -1,7 +1,7 @@
 {
   "name": "Froggy Leap",
   "short_name": "Froggy Leap",
-  "description": "Froggy Leap v50 with timed one-round Job shifts, exact automatic Piggy installments, collection selling, clear loan reminders, and save compatibility.",
+  "description": "Froggy Leap v52 with an app-visible no-flights shortcut, reliable Shift Over dismissal, timed Job shifts, exact Piggy installments, and save compatibility.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

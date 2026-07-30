@@ -1,6 +1,21 @@
-# Froggy Leap v50
+# Froggy Leap v52
 
-> **Current-behavior note:** The v50 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+> **Current-behavior note:** The v52 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+
+
+
+## v52 — Installed-app alert visibility and reliable Shift Over closing
+
+- The no-flights shortcut now lives inside the top of the Sky Crash play area, so it remains visible in the installed Home Screen/PWA layout instead of being pushed below the viewport.
+- The alert is intentionally compact: **NO FLIGHTS · VEHICLES →**. Tapping any part opens the Vehicles collection.
+- The Shift Over screen now closes by tapping its dark backdrop on touch devices, and it also includes a small × close control.
+- CSS and JavaScript asset URLs and the service-worker cache were bumped so installed apps do not keep the older hidden-alert layout.
+
+## v51 — Dismissible Shift Over screen
+
+- Tapping the dark backdrop outside the Shift Over card now closes the result screen.
+- Taps inside the result card, including **WORK AGAIN**, continue to behave normally.
+- This uses pointer input so it works with mouse, touch, and stylus controls.
 
 ## v50 — Timed Job shifts, exact automatic installments, and selling
 

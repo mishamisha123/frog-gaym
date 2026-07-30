@@ -3689,3 +3689,80 @@ body {
   #jobScreen .job-boost-hud{grid-column:auto!important}
   #jobScreen .job-timer-hud em{font-size:5.7px}
 }
+
+
+/* v51 — Shift Over can be dismissed by tapping its dark backdrop */
+#jobResult.job-result{cursor:pointer}
+#jobResult .job-result-card{cursor:default}
+
+
+/* ==========================================================================
+   v52 — app-visible Crash alert and reliable Shift Over dismissal
+   ========================================================================== */
+#crashFrame #crashNoFlights.crash-no-flights{
+  position:absolute!important;
+  z-index:45!important;
+  left:50%!important;
+  right:auto!important;
+  top:max(8px,env(safe-area-inset-top,0px))!important;
+  bottom:auto!important;
+  width:auto!important;
+  max-width:calc(100% - 16px)!important;
+  min-height:36px!important;
+  margin:0!important;
+  padding:5px 6px 5px 10px!important;
+  display:flex;
+  align-items:center;
+  gap:8px!important;
+  border:1px solid rgba(255,255,255,.9)!important;
+  border-radius:999px!important;
+  background:rgba(126,24,48,.96)!important;
+  box-shadow:0 8px 24px rgba(37,5,17,.38)!important;
+  transform:translateX(-50%)!important;
+  animation:flightBadgeFrameIn .2s ease both!important;
+  -webkit-tap-highlight-color:transparent;
+}
+#crashFrame #crashNoFlights.crash-no-flights.hidden{display:none!important}
+#crashFrame #crashNoFlights.crash-no-flights>div{display:flex!important;align-items:center!important;gap:0!important;min-width:0}
+#crashFrame #crashNoFlights.crash-no-flights b{font-size:8px!important;line-height:1!important;white-space:nowrap;color:#fff!important;letter-spacing:.04em}
+#crashFrame #crashNoFlights.crash-no-flights span{display:none!important}
+#crashFrame #crashNoFlights.crash-no-flights button{
+  min-height:26px!important;
+  height:26px!important;
+  padding:0 9px!important;
+  border-radius:999px!important;
+  font-size:7px!important;
+  white-space:nowrap;
+}
+#crashFrame #crashNoFlights.crash-no-flights.attention{animation:flightBadgeFrameNudge .5s ease!important}
+@keyframes flightBadgeFrameIn{from{transform:translate(-50%,-8px) scale(.96);opacity:0}to{transform:translate(-50%,0) scale(1);opacity:1}}
+@keyframes flightBadgeFrameNudge{0%,100%{transform:translateX(-50%)}25%{transform:translateX(calc(-50% - 4px))}50%{transform:translateX(calc(-50% + 4px))}75%{transform:translateX(calc(-50% - 2px))}}
+
+#jobResult.job-result{
+  z-index:2000!important;
+  cursor:pointer;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+#jobResult .job-result-card{position:relative;cursor:default}
+.job-result-close{
+  position:absolute;
+  z-index:2;
+  top:9px;
+  right:9px;
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  color:#10283a;
+  background:rgba(255,255,255,.9);
+  font-size:22px;
+  font-weight:1000;
+  cursor:pointer;
+}
+@media(max-width:430px){
+  #crashFrame #crashNoFlights.crash-no-flights{top:7px!important;max-width:calc(100% - 14px)!important}
+  #crashFrame #crashNoFlights.crash-no-flights b{font-size:7.5px!important}
+  #crashFrame #crashNoFlights.crash-no-flights button{height:25px!important;min-height:25px!important;padding-inline:8px!important;font-size:6.5px!important}
+}
