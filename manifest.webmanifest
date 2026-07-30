@@ -1,7 +1,7 @@
 {
-  "name": "Froggy Leap Deluxe",
+  "name": "Froggy Leap",
   "short_name": "Froggy Leap",
-  "description": "Froggy Leap v44 with seven sophisticated lake environments, animated themed water, premium lily-pad materials, rarer stackable Job boosts, and full-screen Sky Crash.",
+  "description": "Froggy Leap v46 with balanced Job rewards, premium lake environments, full-screen game modes, and continued save compatibility.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

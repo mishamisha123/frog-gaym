@@ -1,8 +1,22 @@
-# Froggy Leap v44
+# Froggy Leap v46
 
-Current release: seven substantially redesigned lake environments with unique scenery, water, lighting, atmosphere, and premium Collection previews; balanced Job XP; uncapped gradual Job pay; and rarer stackable money/XP boost fries.
+> **Current-behavior note:** The v46 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
-> **Current-behavior note:** The v44 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+
+## v46 — Maintenance and interface refinement
+
+- Preserves the v45 Job reward balance, fry rarity, premium lake previews, full-screen game layouts, and save compatibility.
+- Includes internal stability and validation refinements without changing public navigation or gameplay balance.
+- Owner Frog continues to unlock at Level 3,000.
+
+## v45 — Fairer Job rewards and scene-accurate lake previews
+
+- Job work now starts at **15 F and 5 XP per standard fry**, with much slower growth at high Job Levels.
+- At Job Level 2,000, a standard fry pays about **193 F and 10 XP** before temporary boosts.
+- Fry-type rarity is unchanged from v44.
+- Lake cards now use polished miniature captures of the actual seven playable environments rather than abstract CSS thumbnails.
+- Existing saves, Job levels, lake ownership, boost stacking, Bank behavior, and gameplay systems remain compatible.
+- Owner Frog now unlocks at **Level 3,000** instead of Level 20,000; its price and Bank Value are unchanged.
 
 ## v44 — Premium lakes and rarer Job boosts
 
@@ -102,7 +116,7 @@ Uploading this version over an older GitHub Pages build preserves existing progr
 - Rebuilt all frog characters as ten separate premium SVG illustrations shared by the collection, profile and live game canvas.
 - Added Classic, King, Robo, Ghost, Dragon, Dino, Ninja, Alien, Rockstar and Owner Frog.
 - Owner Frog is photo-inspired: short dark hair, thick brows, heavy-lidded brown eyes, subtle stubble, a deadpan expression and a black shirt, while remaining unmistakably a frog.
-- Owner Frog costs **1,000,000,000 Froggy** and requires **level 20,000** unless unlocked through `unlockall`.
+- In the original v7 release, Owner Frog required **level 20,000**. The current v46 requirement is **Level 3,000**.
 - Promo code `5` multiplies the current level by five once per saved game.
 - Improved collection-card framing, rarity glow, portrait lighting, spacing and selected-character presentation.
 - The service worker now caches every character asset for offline play.
