@@ -825,7 +825,7 @@ Loan maximum:
 
 - 5,000 F starter allowance.
 - Plus 50% of total bank-appraised collateral.
-- Hard principal cap: 1,000,000,000 F.
+- Hard principal cap: 2,500,000,000 F.
 - Fixed 8% total interest.
 - One active loan, ten fixed payments, one payment every five completed rounds.
 
@@ -890,7 +890,7 @@ Narrow balance displays use compact values such as 1.24K, 1.24M, 1B and 1.25T. T
 
 The former appraisal percentages and 50% bank advance were removed.
 
-`available loan = min(1,000,000,000 F, 5,000 F + total Bank Value)`
+`available loan = min(2,500,000,000 F, 5,000 F + total Bank Value)`
 
 Every eligible asset contributes its full displayed Bank Value:
 
@@ -912,7 +912,7 @@ The loan builder now contains a collateral picker.
 - Pledged flights are reserved and cannot be used until payoff.
 - New flights purchased during an active loan remain unpledged and usable.
 - Paying the loan off releases all remaining collateral.
-- The principal hard cap remains 1,000,000,000 F.
+- The principal hard cap is 2,500,000,000 F.
 
 Existing active v31 loans migrate by pledging the assets that were already exposed under the
 older all-assets collateral rule.
@@ -1071,3 +1071,11 @@ The promo changes affect future elapsed time. Already credited Piggy interest is
 - Expands the bag opening to match the visible artwork and uses swept collision checks so fast fries cannot skip through it between frames.
 - Adds physical rim and outer-side reactions while slowing bag movement during a falling fry for fairer catches.
 - Changes shift earnings to green with a dark outline for readability on the white result card.
+
+
+## v47 — Piggy-first overdue installments and 2.5B cap
+
+- Increased the hard loan-principal cap to **2,500,000,000 F**.
+- An overdue penalty now collects only the **current payment due**, never the entire remaining loan balance.
+- Piggy savings are used first. If Piggy cannot fully cover the installment, the cheapest eligible pledged permanent asset is liquidated for only the remaining amount. Any unused liquidation value returns to the wallet.
+- Once the overdue installment is covered, the next payment is scheduled five completed rounds later.

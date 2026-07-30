@@ -3,7 +3,7 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v46';
+  const BUILD_VERSION = 'v47';
   console.info(`Froggy Leap ${BUILD_VERSION} loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
@@ -31,7 +31,7 @@
   const CRASH_MIN_POINT = 1.10;
   const CRASH_GROWTH_RATE = 0.12;
   const CRASH_LAUNCH_COUNTDOWN_MS = 1800;
-  const MAX_LOAN_PAYOUT = 1000000000;
+  const MAX_LOAN_PAYOUT = 2500000000;
   const BASE_UNSECURED_CREDIT = 5000;
   const COLLATERAL_PLEDGE_VERSION = 2;
   const CREDIT_TIERS = Object.freeze([
@@ -1799,22 +1799,98 @@
   function availableCollateralVehicles(){return VEHICLES.filter(v=>state.pledgedVehicles.includes(v.id)&&vehicleOwned(v.id)).sort((a,b)=>vehicleCollateralValue(a)-vehicleCollateralValue(b));}
   function availableCollateralLicenses(){return GAME_LICENSES.filter(g=>g.id!=='leap'&&state.pledgedLicenses.includes(g.id)&&gameUnlocked(g.id)).sort((a,b)=>licenseCollateralValue(a)-licenseCollateralValue(b));}
   function applyForcedDebtPayment(amount){
-    const payment=Math.min(state.debt,Math.max(0,Math.floor(Number(amount)||0)));if(payment<=0)return 0;const interestRemaining=Math.max(0,state.loanInterestTotal-state.loanInterestPaid),interestPortion=Math.min(payment,interestRemaining),principalPortion=Math.max(0,payment-interestPortion);state.loanInterestPaid=Math.min(state.loanInterestTotal,state.loanInterestPaid+interestPortion);state.loanPrincipalRemaining=Math.max(0,state.loanPrincipalRemaining-principalPortion);state.debt=state.loanPrincipalRemaining+Math.max(0,state.loanInterestTotal-state.loanInterestPaid);return payment;
+    const payment=Math.min(state.debt,Math.max(0,Math.floor(Number(amount)||0)));
+    if(payment<=0)return 0;
+    const next=Math.min(LOAN_INSTALLMENTS,state.loanInstallmentsPaid+1);
+    const targetInterest=scheduledInterestThrough(next);
+    const interestPart=Math.min(
+      payment,
+      Math.max(0,targetInterest-state.loanInterestPaid),
+      Math.max(0,state.loanInterestTotal-state.loanInterestPaid)
+    );
+    const principalPart=Math.max(0,payment-interestPart);
+    state.loanInterestPaid=Math.min(state.loanInterestTotal,state.loanInterestPaid+interestPart);
+    state.loanPrincipalRemaining=Math.max(0,state.loanPrincipalRemaining-principalPart);
+    state.debt=state.loanPrincipalRemaining+Math.max(0,state.loanInterestTotal-state.loanInterestPaid);
+    return payment;
   }
-  function finalizeCollateralLiquidation(asset,value){const applied=applyForcedDebtPayment(value),excess=Math.max(0,value-applied);if(excess>0)creditBalance(excess);if(state.debt<=0){state.debt=0;clearDebtDue();resetDebtCycle();}else{state.debtDue=true;state.debtDueAmount=debtInstallment();}renderCollection();scene.reset();return {...asset,value,applied,excess,cleared:state.debt<=0};}
-  function liquidateNextCollateralAsset(){
-    const piggyAvailable=Math.min(state.piggyBalance,state.pledgedPiggy);if(piggyAvailable>0){const value=Math.min(piggyAvailable,state.debt);invalidateUntrustedClosedAccrual();state.piggyBalance-=value;state.pledgedPiggy=Math.max(0,state.pledgedPiggy-value);return finalizeCollateralLiquidation({kind:'Piggy savings',id:'piggy',name:'Pledged Piggy savings'},value);}
-    const vehicle=availableCollateralVehicles()[0];if(vehicle){const value=vehicleCollateralValue(vehicle);state.pledgedVehicles=state.pledgedVehicles.filter(id=>id!==vehicle.id);state.ownedVehicles=state.ownedVehicles.filter(id=>id!==vehicle.id);if(state.selectedVehicle===vehicle.id){const replacement=VEHICLES.find(v=>vehicleOwned(v.id)&&availableVehicleFlights(v.id)>0);state.selectedVehicle=replacement?replacement.id:'glider';}return finalizeCollateralLiquidation({kind:'vehicle',id:vehicle.id,name:vehicle.name},value);}
-    const lake=availableCollateralLakes()[0];if(lake){const value=lakeCollateralValue(lake);state.pledgedLakes=state.pledgedLakes.filter(id=>id!==lake.id);state.unlockedLakes=state.unlockedLakes.filter(id=>id!==lake.id);if(state.selectedLake===lake.id)state.selectedLake='forest';return finalizeCollateralLiquidation({kind:'lake',id:lake.id,name:lake.name},value);}
-    const frog=availableCollateralFrogs()[0];if(frog){const value=skinCollateralValue(frog);state.pledgedFrogs=state.pledgedFrogs.filter(id=>id!==frog.id);state.unlockedFrogs=state.unlockedFrogs.filter(id=>id!==frog.id);if(state.selectedFrog===frog.id)state.selectedFrog='classic';return finalizeCollateralLiquidation({kind:'skin',id:frog.id,name:frog.name},value);}
-    const license=availableCollateralLicenses()[0];if(license){const value=licenseCollateralValue(license);state.pledgedLicenses=state.pledgedLicenses.filter(id=>id!==license.id);state.unlockedGames=state.unlockedGames.filter(id=>id!==license.id);if(state.selectedGame===license.id)state.selectedGame='leap';return finalizeCollateralLiquidation({kind:'license',id:license.id,name:`${license.name} license`},value);}
+
+  function finishForcedInstallment(paid,target){
+    const complete=paid>=target||state.debt<=0;
+    if(!complete){
+      state.debtDue=true;
+      state.debtDueAmount=Math.max(1,target-paid);
+      return false;
+    }
+    state.debtPayments++;
+    state.loanInstallmentsPaid=Math.min(LOAN_INSTALLMENTS,state.loanInstallmentsPaid+1);
+    clearDebtDue();
+    recalculateLoanInstallment();
+    if(state.loanInstallmentsPaid>=LOAN_INSTALLMENTS||state.debt<=0){
+      state.debt=0;
+      clearDebtDue();
+      resetDebtCycle();
+    }
+    return true;
+  }
+
+  function liquidateAssetForDue(asset,value,needed){
+    const applied=applyForcedDebtPayment(Math.min(value,needed));
+    const excess=Math.max(0,value-applied);
+    if(excess>0)creditBalance(excess);
+    renderCollection();scene.reset();
+    return {...asset,value,applied,excess};
+  }
+
+  function liquidateNextCollateralAsset(needed){
+    const amountNeeded=Math.max(0,Math.floor(Number(needed)||0));
+    if(amountNeeded<=0)return null;
+    const vehicle=availableCollateralVehicles()[0];if(vehicle){const value=vehicleCollateralValue(vehicle);state.pledgedVehicles=state.pledgedVehicles.filter(id=>id!==vehicle.id);state.ownedVehicles=state.ownedVehicles.filter(id=>id!==vehicle.id);if(state.selectedVehicle===vehicle.id){const replacement=VEHICLES.find(v=>vehicleOwned(v.id)&&availableVehicleFlights(v.id)>0);state.selectedVehicle=replacement?replacement.id:'glider';}return liquidateAssetForDue({kind:'vehicle',id:vehicle.id,name:vehicle.name},value,amountNeeded);}
+    const lake=availableCollateralLakes()[0];if(lake){const value=lakeCollateralValue(lake);state.pledgedLakes=state.pledgedLakes.filter(id=>id!==lake.id);state.unlockedLakes=state.unlockedLakes.filter(id=>id!==lake.id);if(state.selectedLake===lake.id)state.selectedLake='forest';return liquidateAssetForDue({kind:'lake',id:lake.id,name:lake.name},value,amountNeeded);}
+    const frog=availableCollateralFrogs()[0];if(frog){const value=skinCollateralValue(frog);state.pledgedFrogs=state.pledgedFrogs.filter(id=>id!==frog.id);state.unlockedFrogs=state.unlockedFrogs.filter(id=>id!==frog.id);if(state.selectedFrog===frog.id)state.selectedFrog='classic';return liquidateAssetForDue({kind:'skin',id:frog.id,name:frog.name},value,amountNeeded);}
+    const license=availableCollateralLicenses()[0];if(license){const value=licenseCollateralValue(license);state.pledgedLicenses=state.pledgedLicenses.filter(id=>id!==license.id);state.unlockedGames=state.unlockedGames.filter(id=>id!==license.id);if(state.selectedGame===license.id)state.selectedGame='leap';return liquidateAssetForDue({kind:'license',id:license.id,name:`${license.name} license`},value,amountNeeded);}
     return null;
   }
+
   function completeDebtTurn(){
-    if(state.debt<=0)return null;if(state.debtDue){const previousDebt=state.debt;registerMissedDeadline();const collateral=liquidateNextCollateralAsset();if(collateral){const excessNote=collateral.excess>0?` ${money(collateral.excess)} F of unused liquidation proceeds returned to your wallet.`:'',remainingNote=collateral.cleared?' The loan is now cleared.':` Remaining debt: ${money(state.debt)} F.`;const result={due:state.debtDueAmount,paid:collateral.applied,assetLost:true,assetKind:collateral.kind,assetId:collateral.id,assetValue:collateral.value,levelLost:false,reset:false,remaining:state.debt,message:`Overdue collateral: ${collateral.name} was seized for ${money(collateral.value)} F before any level penalty.${remainingNote}${excessNote}`};setDebtMessage(result.message,'error');audio.splash();haptic([25,35,25]);return result;}
-      if(state.level>1){state.level--;state.xp=0;const result={due:state.debtDueAmount,paid:0,assetLost:false,levelLost:true,reset:false,remaining:state.debt,message:'Payment remains overdue and no collateral asset remains. One level was removed.'};setDebtMessage(result.message,'error');audio.splash();haptic([25,35,25]);return result;}
-      resetAfterDebtDefault(previousDebt);return {due:0,paid:0,assetLost:false,levelLost:true,reset:true,remaining:0,message:'No collateral remained and the overdue penalty would reduce the level below 1, so the save was reset.'};}
-    state.debtTurns++;if(state.debtTurns<DEBT_ROUND_INTERVAL)return null;state.debtTurns=DEBT_ROUND_INTERVAL;state.debtDue=true;state.debtCycleMissed=false;state.debtDueAmount=debtInstallment();const result={due:state.debtDueAmount,paid:0,levelLost:false,reset:false,remaining:state.debt,message:`Fixed loan payment is now due: ${money(state.debtDueAmount)} F. Nothing was deducted automatically.`};setDebtMessage(result.message,'error');audio.reward();haptic([18,45,18]);return result;
+    if(state.debt<=0)return null;
+    if(state.debtDue){
+      const previousDebt=state.debt;
+      const target=Math.min(state.debt,Math.max(1,state.debtDueAmount||debtInstallment()));
+      registerMissedDeadline();
+      let paid=0,piggyPaid=0,collateral=null;
+
+      // Piggy savings are always the first automatic source for an overdue installment.
+      piggyPaid=Math.min(state.piggyBalance,target);
+      if(piggyPaid>0){
+        invalidateUntrustedClosedAccrual();
+        state.piggyBalance-=piggyPaid;
+        state.pledgedPiggy=Math.min(state.pledgedPiggy,state.piggyBalance);
+        paid+=applyForcedDebtPayment(piggyPaid);
+      }
+
+      if(paid<target){
+        collateral=liquidateNextCollateralAsset(target-paid);
+        if(collateral)paid+=collateral.applied;
+      }
+
+      const installmentCovered=finishForcedInstallment(paid,target);
+      if(paid>0){
+        const piggyNote=piggyPaid>0?`${money(piggyPaid)} F was taken from Piggy savings first.`:'';
+        const assetNote=collateral?` ${collateral.name} was then liquidated for the remaining ${money(collateral.applied)} F.${collateral.excess>0?` ${money(collateral.excess)} F of unused value was returned to the wallet.`:''}`:'';
+        const nextNote=state.debt<=0?' The loan is now cleared and collateral is released.':installmentCovered?` Only this installment was paid. Remaining loan balance: ${money(state.debt)} F; the next payment is due in five rounds.`:` ${money(state.debtDueAmount)} F of this installment is still overdue.`;
+        const result={due:target,paid,assetLost:Boolean(collateral),assetKind:collateral?.kind||'',assetId:collateral?.id||'',assetValue:collateral?.value||0,levelLost:false,reset:false,remaining:state.debt,message:`Overdue payment collected: ${piggyNote}${assetNote}${nextNote}`};
+        setDebtMessage(result.message,'error');audio.splash();haptic([25,35,25]);return result;
+      }
+
+      if(state.level>1){state.level--;state.xp=0;const result={due:target,paid:0,assetLost:false,levelLost:true,reset:false,remaining:state.debt,message:'Payment remains overdue, and neither Piggy savings nor pledged collateral was available. One level was removed.'};setDebtMessage(result.message,'error');audio.splash();haptic([25,35,25]);return result;}
+      resetAfterDebtDefault(previousDebt);return {due:0,paid:0,assetLost:false,levelLost:true,reset:true,remaining:0,message:'No Piggy savings or pledged collateral remained, and the overdue penalty would reduce the level below 1, so the save was reset.'};
+    }
+    state.debtTurns++;
+    if(state.debtTurns<DEBT_ROUND_INTERVAL)return null;
+    state.debtTurns=DEBT_ROUND_INTERVAL;state.debtDue=true;state.debtCycleMissed=false;state.debtDueAmount=debtInstallment();
+    const result={due:state.debtDueAmount,paid:0,levelLost:false,reset:false,remaining:state.debt,message:`Fixed loan payment is now due: ${money(state.debtDueAmount)} F. Nothing was deducted automatically. If another round is completed while overdue, Piggy savings will be used first and only this payment amount will be collected.`};
+    setDebtMessage(result.message,'error');audio.reward();haptic([18,45,18]);return result;
   }
 
   function appendDebtResult(text,debtResult){
@@ -1844,7 +1920,7 @@
     els.debtPayoffLabel.textContent=`${money(earlyPayoffCashRequired())} F`;
     els.debtInterestSavedLabel.textContent=`${money(earlyPayoffSavings())} F`;
     const pledgedValue=pledgedCollateralValue(),availableCollateral=availableCollateralValue(),availableLoan=maxSingleLoan();
-    els.debtLimitLabel.textContent=`${money(availableLoan)} F`;els.creditTierCeilingLabel.textContent='Characters, lakes, permanent models, licenses and Piggy';els.creditScoreLabel.textContent=`${money(availableCollateral)} F`;els.creditScoreGradeLabel.textContent=state.debt>0?'Unpledged assets remain yours':'Full direct Bank Value';els.creditLimitFactorLabel.textContent='1B F hard cap';
+    els.debtLimitLabel.textContent=`${money(availableLoan)} F`;els.creditTierCeilingLabel.textContent='Characters, lakes, permanent models, licenses and Piggy';els.creditScoreLabel.textContent=`${money(availableCollateral)} F`;els.creditScoreGradeLabel.textContent=state.debt>0?'Unpledged assets remain yours':'Full direct Bank Value';els.creditLimitFactorLabel.textContent='2.5B F hard cap';
     els.creditTierLabel.textContent=`${money(assets.total)} F`;
     els.creditTierProgressFill.style.width=`${Math.min(100,(state.debt>0?state.loanPrincipalOriginal:availableLoan)/MAX_LOAN_PAYOUT*100)}%`;
     els.creditHistoryLabel.textContent=`${money(BASE_UNSECURED_CREDIT)} F starter credit`;
@@ -1872,7 +1948,7 @@
       : `Up to ${money(creditMaxLoan)} F available`;
     els.loanEntrySubtext.textContent=state.debt>0
       ? `${money(state.debt)} F remaining · ${money(debtInstallment())} F due amount`
-      : '8% total interest · permanent assets only · flights never count · 1B F cap';
+      : '8% total interest · permanent assets only · flights never count · 2.5B F cap';
     els.bankTotalWealthLabel.textContent=`${money(Math.min(MAX_SAFE_BALANCE,state.balance+state.piggyBalance))} F`;
     els.piggyBalanceLabel.textContent=`${money(state.piggyBalance)} F`;
     els.piggyWalletLabel.textContent=`${money(own)} F wallet`;
@@ -2815,6 +2891,9 @@
       state.vehicleCharges.glider=5;state.ownedVehicles=['glider'];state.selectedVehicle='glider';state.crashBet=100;state.balance=1000;if(crashPayoutFor(1)!==100||crashPayoutFor(2)!==197)throw new Error('Crash 1x stake return failed');if(!startCrash()||!state.crashActive)throw new Error('crash start failed');state.crashStartedAt=performance.now()-5000;state.crashMultiplier=1.5;if(!crashCashOut()||state.crashActive||state.balance<=900)throw new Error('manual crash cashout failed');closeModal();state=deepClone(DEFAULT_STATE);state.unlockedGames=['leap','crash'];state.ownedVehicles=['glider'];state.vehicleCharges.glider=2;state.balance=1000;state.crashBet=100;state.safeRunCredits=1;if(!startCrash()||!state.roundSafe||state.safeRunCredits!==0)throw new Error('Crash protected-round activation failed');state.crashStartedAt=performance.now()-5000;state.crashMultiplier=1.5;if(!crashCashOut({automatic:true,reason:'protected'})||state.roundSafe)throw new Error('Crash protected payout failed');closeModal();if(crashMultiplierAtElapsed(10,VEHICLES[0])<=Math.exp(10*VEHICLES[0].growth))throw new Error('accelerating Crash curve failed');
       state=deepClone(DEFAULT_STATE);state.unlockedFrogs.push('king');state.unlockedLakes.push('swamp');state.ownedVehicles.push('glider');state.vehicleCharges.glider=10;state.unlockedGames.push('crash');state.piggyBalance=1000000;const assets=collateralBreakdown();if(assets.skins!==5000||assets.lakes!==1500||assets.vehicles!==750000||assets.licenses!==500000||assets.piggy!==1000000||'flights' in assets)throw new Error('flight-free Bank Values failed');if(debtLimit()!==Math.min(MAX_LOAN_PAYOUT,BASE_UNSECURED_CREDIT+assets.total))throw new Error('direct asset-backed limit failed');const pledge=emptyCollateralSelection();if('flights' in pledge)throw new Error('flights remained pledgeable');pledge.piggy=5000;if(!takeLoan(10000,{skipConfirm:true,pledge})||state.pledgedPiggy!==5000)throw new Error('selected collateral loan failed');
       state=deepClone(DEFAULT_STATE);state.balance=1000000;state.level=10;collectionMode='vehicles';collectionAction('glider');const afterModel=state.balance;if(!buyVehicleFlights('glider',{skipConfirm:true})||state.balance!==afterModel-25000||vehicleCharges('glider')!==20)throw new Error('cheap refill failed');state.debt=1000;state.pledgedFlights.glider=20;if(availableVehicleFlights('glider')!==20||pledgedVehicleFlights('glider')!==0)throw new Error('old flight pledges were not ignored');
+      state=deepClone(DEFAULT_STATE);state.unlockedFrogs.push('owner');state.piggyBalance=600000000;if(maxSingleLoan()!==2500000000)throw new Error('2.5B loan cap failed');
+      state=deepClone(DEFAULT_STATE);state.debt=10800;state.loanPrincipalOriginal=10000;state.loanPrincipalRemaining=10000;state.loanInterestTotal=800;state.loanInterestPaid=0;state.loanInstallment=1080;state.loanInstallmentsPaid=0;state.debtDue=true;state.debtDueAmount=1080;state.debtTurns=DEBT_ROUND_INTERVAL;state.piggyBalance=5000;const overduePiggy=completeDebtTurn();if(overduePiggy.paid!==1080||state.piggyBalance!==3920||state.debt!==9720||state.debtDue||state.loanInstallmentsPaid!==1)throw new Error('Piggy-first installment-only overdue payment failed');
+      state=deepClone(DEFAULT_STATE);state.debt=10800;state.loanPrincipalOriginal=10000;state.loanPrincipalRemaining=10000;state.loanInterestTotal=800;state.loanInterestPaid=0;state.loanInstallment=1080;state.loanInstallmentsPaid=0;state.debtDue=true;state.debtDueAmount=1080;state.debtTurns=DEBT_ROUND_INTERVAL;state.piggyBalance=80;state.unlockedFrogs.push('king');state.pledgedFrogs=['king'];const overdueAsset=completeDebtTurn();if(overdueAsset.paid!==1080||state.piggyBalance!==0||state.debt!==9720||state.balance!==4000||state.unlockedFrogs.includes('king')||state.debtDue)throw new Error('partial Piggy then asset installment collection failed');
       state=deepClone(DEFAULT_STATE);state.balance=20000;state.debt=10800;state.loanPrincipalOriginal=10000;state.loanPrincipalRemaining=10000;state.loanInterestTotal=800;state.loanInterestPaid=0;state.loanInstallment=1080;state.loanInstallmentsPaid=0;state.debtCycleStartRound=0;state.completedRounds=0;piggyTransferMode='deposit';if(earlyPayoffAmount()!==10000||piggyTransferMaximum()!==10000)throw new Error('initial loan Piggy reserve failed');state.completedRounds=3;if(earlyPayoffAmount()!==10048||piggyTransferMaximum()!==9952)throw new Error('round-adjusted loan Piggy reserve failed');if(trustedClosedElapsed(3600000,0,0)!==3600000||trustedClosedElapsed(4600000,1000000,600000)!==3000000)throw new Error('trusted closed-time calculation failed');
       state=deepClone(DEFAULT_STATE);piggyTrustedAnchorMs=0;state.piggyTrustedTimestamp=123456;state.piggyUntrustedOpenMs=789;invalidateUntrustedClosedAccrual();if(state.piggyTrustedTimestamp!==0||state.piggyUntrustedOpenMs!==0)throw new Error('untrusted Piggy balance-change invalidation failed');piggyTrustedAnchorMs=Date.now();piggyTrustedAnchorPerformance=performance.now();
       state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;state.piggyLastTimestamp=Date.now();let result=advancePiggyTime(PIGGY_CYCLE_MS,piggyOpenRate(),'open');if(result.interest!==2000||state.piggyBalance!==1002000)throw new Error('open-app Piggy rate failed');state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;result=advancePiggyTime(PIGGY_CYCLE_MS,piggyClosedRate(),'closed');if(result.interest!==1000||state.piggyBalance!==1001000)throw new Error('closed-app Piggy rate failed');state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;advancePiggyTime(PIGGY_CYCLE_MS/2,piggyOpenRate(),'open');result=advancePiggyTime(PIGGY_CYCLE_MS/2,piggyClosedRate(),'closed');if(result.interest!==1500)throw new Error('mixed Piggy cycle failed');state=deepClone(DEFAULT_STATE);state.piggyInterestRateBonus+=PIGGY_OWNER_RATE_STEP;state.piggyInterestRateBonus+=PIGGY_OWNER_RATE_STEP;if(state.piggyInterestRateBonus!==0.02||piggyOpenRate()!==0.022||piggyClosedRate()!==0.021)throw new Error('repeatable Piggy owner boost failed');state.piggyBalance=1000000;result=advancePiggyTime(PIGGY_CYCLE_MS,piggyOpenRate(),'open');if(result.interest!==22000)throw new Error('stacked Piggy rate failed');state.piggyInterestRateBonus=0;if(piggyOpenRate()!==PIGGY_OPEN_RATE||piggyClosedRate()!==PIGGY_CLOSED_RATE)throw new Error('Piggy owner reset failed');if(!ownerAccessModal||!ownerPanelModal)throw new Error('maintenance UI failed');const ownerMinus=applyOwnerOperation(1000,'-250',{minimum:0,maximum:MAX_SAFE_BALANCE}),ownerTimes=applyOwnerOperation(1000,'x2',{minimum:0,maximum:MAX_SAFE_BALANCE}),ownerDivide=applyOwnerOperation(1000,'/4',{minimum:0,maximum:MAX_SAFE_BALANCE});if(ownerMinus?.target!==750||ownerTimes?.target!==2000||ownerDivide?.target!==250)throw new Error('owner arithmetic operations failed');if(!ownerPanelModal.querySelector('[data-owner-action="wallet"] [data-owner-value]')||ownerPanelModal.querySelector('[data-owner-summary]')?.textContent.includes('wallet ·'))throw new Error('streamlined owner values failed');
@@ -2824,7 +2903,7 @@
       if(fryTypeForRoll(0)!=='green'||fryTypeForRoll(.0249)!=='green'||fryTypeForRoll(.025)!=='yellow'||fryTypeForRoll(.0499)!=='yellow'||fryTypeForRoll(.05)!=='red'||fryTypeForRoll(.0999)!=='red'||fryTypeForRoll(.10)!=='normal')throw new Error('special-fry rarity thresholds failed');
       state=deepClone(DEFAULT_STATE);state.ownedVehicles=['rocket'];state.vehicleCharges.rocket=0;state.vehicleFlightCompletions.rocket=9;const perk=completeVehicleFlight('rocket');if(perk.bonus!==1||vehicleCharges('rocket')!==1)throw new Error('free-flight perk failed');if(vehicleCrashXp(VEHICLES[3],100)!==114&&vehicleCrashXp(VEHICLES[3],100)!==115)throw new Error('vehicle XP perk failed');
       showResult({icon:'🪂',kicker:'TEST',title:'Crash profit',amount:'150 F returned',profit:'+50 F',text:'Profit is separate.'});if(els.resultProfit.classList.contains('hidden')||els.resultProfit.querySelector('b').textContent!=='+50 F')throw new Error('separate Crash profit failed');closeModal();
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v46 arithmetic owner controls, button-level resource values, v45 Job balance, premium lake previews, full-screen games, and protected Crash visibility';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v47 installment-only overdue collection, Piggy-first repayment, 2.5B loan cap, owner controls, Job balance, premium lakes, and full-screen games';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 
