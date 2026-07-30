@@ -3766,3 +3766,145 @@ body {
   #crashFrame #crashNoFlights.crash-no-flights b{font-size:7.5px!important}
   #crashFrame #crashNoFlights.crash-no-flights button{height:25px!important;min-height:25px!important;padding-inline:8px!important;font-size:6.5px!important}
 }
+
+
+/* ==========================================================================
+   v53 — soft Shift Over card and reliable return to the Job start screen
+   ========================================================================== */
+#jobResult.job-result{
+  padding:max(20px,env(safe-area-inset-top,0px)) 18px max(22px,env(safe-area-inset-bottom,0px));
+  background:rgba(12,36,43,.52)!important;
+  backdrop-filter:blur(12px) saturate(.86);
+  -webkit-backdrop-filter:blur(12px) saturate(.86);
+}
+#jobResult .job-result-card{
+  isolation:isolate;
+  width:min(410px,100%);
+  padding:32px 26px 24px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.94)!important;
+  border-radius:34px!important;
+  color:#173646;
+  background:
+    radial-gradient(circle at 50% -18%,rgba(220,255,169,.75),transparent 47%),
+    linear-gradient(180deg,rgba(255,255,253,.99),rgba(244,251,246,.985))!important;
+  box-shadow:
+    0 30px 80px rgba(2,24,31,.34),
+    0 7px 20px rgba(14,67,63,.13),
+    inset 0 1px 0 rgba(255,255,255,1)!important;
+  animation:jobResultSoftIn .28s cubic-bezier(.2,.86,.24,1) both;
+}
+#jobResult .job-result-card::before{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  left:20px;
+  right:20px;
+  top:0;
+  height:5px;
+  border-radius:0 0 999px 999px;
+  background:linear-gradient(90deg,#85d96b,#dfff72,#7bdad4);
+  opacity:.9;
+}
+#jobResult .job-result-card::after{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  width:150px;
+  height:150px;
+  right:-72px;
+  bottom:-82px;
+  border-radius:50%;
+  background:rgba(118,218,190,.13);
+}
+#jobResult .job-result-icon{
+  width:74px;
+  height:74px;
+  margin:0 auto 12px;
+  display:grid;
+  place-items:center;
+  border-radius:25px;
+  font-size:40px;
+  background:linear-gradient(145deg,#f2ffd2,#d8f7c4);
+  border:1px solid rgba(108,181,90,.2);
+  box-shadow:0 10px 24px rgba(44,119,77,.13),inset 0 1px 0 rgba(255,255,255,.9);
+}
+#jobResult .job-result-card>small{
+  display:inline-flex;
+  align-items:center;
+  min-height:25px;
+  padding:0 11px;
+  border-radius:999px;
+  color:#39705b;
+  background:#eaf7eb;
+  border:1px solid rgba(91,159,107,.13);
+  font-size:8px;
+  font-weight:1000;
+  letter-spacing:.15em;
+}
+#jobResult .job-result-card h2{
+  margin:10px 0 18px;
+  color:#153545;
+  font-size:clamp(27px,7vw,36px);
+  line-height:1.05;
+  letter-spacing:-.035em;
+}
+#jobResult .job-result-card>span{
+  display:block;
+  color:#72848a;
+  font-size:8px;
+  font-weight:1000;
+  letter-spacing:.13em;
+}
+#jobResult .job-result-card>b{
+  display:block;
+  margin:4px 0 12px;
+  color:#23884e!important;
+  font-size:clamp(38px,10vw,48px);
+  line-height:1;
+  letter-spacing:-.04em;
+  text-shadow:none;
+}
+#jobResult .job-result-card p{
+  max-width:330px;
+  margin:0 auto 20px;
+  color:#61747b;
+  font-size:12px;
+  font-weight:750;
+  line-height:1.5;
+}
+#jobResult #jobAgainButton{
+  width:100%;
+  min-height:60px;
+  border-radius:19px;
+  border:1px solid rgba(123,190,68,.3);
+  background:linear-gradient(180deg,#eaff91,#a8df58);
+  box-shadow:0 10px 22px rgba(83,144,49,.2),inset 0 -4px rgba(51,112,33,.09),inset 0 1px rgba(255,255,255,.72);
+}
+#jobResult #jobAgainButton span{font-size:14px}
+#jobResult #jobAgainButton small{font-size:8px;color:#365d38;opacity:.78}
+#jobResult .job-result-close{
+  top:13px;
+  right:13px;
+  width:36px;
+  height:36px;
+  border:1px solid rgba(50,91,91,.1);
+  border-radius:14px;
+  color:#557078;
+  background:rgba(244,250,247,.92);
+  box-shadow:0 5px 14px rgba(29,67,69,.1),inset 0 1px rgba(255,255,255,.9);
+  font-size:20px;
+  line-height:1;
+}
+#jobResult .job-result-close:active{transform:scale(.94)}
+@keyframes jobResultSoftIn{
+  from{transform:translateY(18px) scale(.965);opacity:0}
+  to{transform:translateY(0) scale(1);opacity:1}
+}
+@media(max-width:430px){
+  #jobResult .job-result-card{padding:28px 20px 20px;border-radius:29px!important}
+  #jobResult .job-result-icon{width:66px;height:66px;border-radius:22px;font-size:35px}
+  #jobResult .job-result-card h2{margin-bottom:15px}
+  #jobResult .job-result-card p{margin-bottom:17px;font-size:11px}
+  #jobResult #jobAgainButton{min-height:56px;border-radius:17px}
+}

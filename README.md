@@ -1,8 +1,16 @@
-# Froggy Leap v52
+# Froggy Leap v53
 
-> **Current-behavior note:** The v52 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+> **Current-behavior note:** The v53 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
 
+
+
+## v53 — Restartable, softer Shift Over screen
+
+- Closing the Shift Over screen by tapping outside it or pressing × now restores the Job start panel immediately, so **START SHIFT** is always available again.
+- **WORK AGAIN** still starts the next shift directly without showing the start panel first.
+- The result dialog has a softer glass backdrop, larger rounded corners, cleaner spacing, a gentler summary card, and a more polished close control.
+- App asset URLs and the service-worker cache were bumped so installed copies receive the fix.
 
 ## v52 — Installed-app alert visibility and reliable Shift Over closing
 

@@ -3,7 +3,7 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v52';
+  const BUILD_VERSION = 'v53';
   console.info(`Froggy Leap ${BUILD_VERSION} loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
@@ -2295,7 +2295,7 @@
     positionJobFry();
   }
   function startJobShift(){
-    closeJobResult();clearTimeout(jobRuntime.spawnTimer);clearTimeout(jobRuntime.rewardTimer);
+    closeJobResult({restoreIdle:false});clearTimeout(jobRuntime.spawnTimer);clearTimeout(jobRuntime.rewardTimer);
     jobRuntime.active=true;jobRuntime.dragging=false;jobRuntime.falling=false;jobRuntime.resolving=false;
     jobRuntime.shiftMoney=0;jobRuntime.fries=0;jobRuntime.moneyBoostUntil=0;jobRuntime.xpBoostUntil=0;jobRuntime.moneyBoostMultiplier=1;jobRuntime.xpBoostMultiplier=1;jobRuntime.queued=null;jobRuntime.shiftRoundCounted=false;jobRuntime.lastDebtResult=null;jobRuntime.shiftEndsAt=performance.now()+15000;
     const m=jobFieldMetrics();
@@ -2525,7 +2525,20 @@
     setTimeout(()=>els.jobResult.classList.remove('hidden'),reason==='bomb'?220:0);
     refresh();renderJob();saveState();
   }
-  function closeJobResult(){els.jobResult.classList.add('hidden');els.jobExplosion.classList.add('hidden');}
+  function restoreJobIdleScreen(){
+    if(jobRuntime.active)return;
+    cancelAnimationFrame(jobRuntime.raf);clearTimeout(jobRuntime.spawnTimer);clearTimeout(jobRuntime.rewardTimer);
+    jobRuntime.dragging=false;jobRuntime.falling=false;jobRuntime.resolving=false;jobRuntime.queued=null;
+    jobRuntime.shiftMoney=0;jobRuntime.fries=0;jobRuntime.shiftEndsAt=0;jobRuntime.shiftRoundCounted=false;jobRuntime.lastDebtResult=null;
+    jobRuntime.moneyBoostUntil=0;jobRuntime.xpBoostUntil=0;jobRuntime.moneyBoostMultiplier=1;jobRuntime.xpBoostMultiplier=1;
+    els.jobFry.classList.add('hidden');els.jobBag.classList.add('hidden');hideQueuedJobFry();
+    els.jobIntro.classList.remove('hidden');renderJob();
+    requestAnimationFrame(()=>els.jobStartButton?.focus({preventScroll:true}));
+  }
+  function closeJobResult({restoreIdle=true}={}){
+    els.jobResult.classList.add('hidden');els.jobExplosion.classList.add('hidden');
+    if(restoreIdle)restoreJobIdleScreen();
+  }
 
 
   function navigate(screen){
@@ -3021,9 +3034,9 @@
       if(fryTypeForRoll(0)!=='green'||fryTypeForRoll(.0249)!=='green'||fryTypeForRoll(.025)!=='yellow'||fryTypeForRoll(.0499)!=='yellow'||fryTypeForRoll(.05)!=='red'||fryTypeForRoll(.0999)!=='red'||fryTypeForRoll(.10)!=='normal')throw new Error('special-fry rarity thresholds failed');
       state=deepClone(DEFAULT_STATE);state.unlockedFrogs.push('king');state.selectedFrog='king';const king=FROGS.find(item=>item.id==='king'),kingSale=collectionResaleValue('frogs',king),sellStart=state.balance;if(!sellCollectionItem('frogs','king',{skipConfirm:true})||state.unlockedFrogs.includes('king')||state.selectedFrog!=='classic'||state.balance!==sellStart+kingSale)throw new Error('frog resale failed');state=deepClone(DEFAULT_STATE);state.ownedVehicles=['glider'];state.selectedVehicle='glider';state.vehicleCharges.glider=9;const gliderSale=collectionResaleValue('vehicles',VEHICLES[0]);if(!sellCollectionItem('vehicles','glider',{skipConfirm:true})||state.ownedVehicles.includes('glider')||state.vehicleCharges.glider!==0||state.balance!==1000+gliderSale)throw new Error('vehicle resale failed');
       state=deepClone(DEFAULT_STATE);state.ownedVehicles=['rocket'];state.vehicleCharges.rocket=0;state.vehicleFlightCompletions.rocket=9;const perk=completeVehicleFlight('rocket');if(perk.bonus!==1||vehicleCharges('rocket')!==1)throw new Error('free-flight perk failed');if(vehicleCrashXp(VEHICLES[3],100)!==114&&vehicleCrashXp(VEHICLES[3],100)!==115)throw new Error('vehicle XP perk failed');
-      els.jobResult.classList.remove('hidden');els.jobResult.dispatchEvent(new MouseEvent('click',{bubbles:true}));if(!els.jobResult.classList.contains('hidden'))throw new Error('Shift Over backdrop dismissal failed');
+      els.jobIntro.classList.add('hidden');els.jobBag.classList.remove('hidden');jobRuntime.active=false;jobRuntime.shiftRoundCounted=true;els.jobResult.classList.remove('hidden');els.jobResult.dispatchEvent(new MouseEvent('click',{bubbles:true}));if(!els.jobResult.classList.contains('hidden')||els.jobIntro.classList.contains('hidden')||!els.jobBag.classList.contains('hidden')||jobRuntime.shiftRoundCounted)throw new Error('Shift Over dismissal did not restore a new-shift start state');startJobShift();if(!jobRuntime.active||!els.jobIntro.classList.contains('hidden'))throw new Error('new shift could not start after dismissing Shift Over');endJobShift('quit');closeJobResult();
       showResult({icon:'🪂',kicker:'TEST',title:'Crash profit',amount:'150 F returned',profit:'+50 F',text:'Profit is separate.'});if(els.resultProfit.classList.contains('hidden')||els.resultProfit.querySelector('b').textContent!=='+50 F')throw new Error('separate Crash profit failed');closeModal();
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v52 app-visible no-flight badge and dismissible Shift Over controls';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v53 restartable soft Shift Over dialog and app-visible no-flight badge';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 

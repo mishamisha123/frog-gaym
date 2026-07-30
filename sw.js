@@ -1,5 +1,5 @@
-const CACHE='froggy-leap-v52-app-alert-fix';
-const CORE=['./','./index.html','./styles.css?v=52-app-alert-fix','./app.js?v=52-app-alert-fix','./manifest.webmanifest','./refresh.html','./icons/icon-192.png','./icons/icon-512.png','./assets/job-fry.png','./assets/job-bag.png','./assets/job-kitchen-bg.webp','./assets/lake-preview-forest.webp','./assets/lake-preview-swamp.webp','./assets/lake-preview-cherry.webp','./assets/lake-preview-night.webp','./assets/lake-preview-volcano.webp','./assets/lake-preview-frozen.webp','./assets/lake-preview-space.webp'];
+const CACHE='froggy-leap-v53-job-result-fix';
+const CORE=['./','./index.html','./styles.css?v=53-job-result-fix','./app.js?v=53-job-result-fix','./manifest.webmanifest','./refresh.html','./icons/icon-192.png','./icons/icon-512.png','./assets/job-fry.png','./assets/job-bag.png','./assets/job-kitchen-bg.webp','./assets/lake-preview-forest.webp','./assets/lake-preview-swamp.webp','./assets/lake-preview-cherry.webp','./assets/lake-preview-night.webp','./assets/lake-preview-volcano.webp','./assets/lake-preview-frozen.webp','./assets/lake-preview-space.webp'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{
