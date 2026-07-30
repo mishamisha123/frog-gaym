@@ -1,7 +1,27 @@
-# Froggy Leap v46
+# Froggy Leap v50
 
-> **Current-behavior note:** The v46 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+> **Current-behavior note:** The v50 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
+## v50 — Timed Job shifts, exact automatic installments, and selling
+
+- A Job shift now begins with **15 seconds** and every successfully bagged non-bomb fry adds **2 seconds**.
+- Running out of time ends the shift as a loss. Missing the bag or catching a bomb still ends the shift immediately.
+- The entire completed shift counts as **one gameplay round**. Individual fries no longer advance Bank payment countdowns.
+- When an installment reaches its due round, the Bank automatically deducts only that exact installment directly from Piggy savings. The remaining Piggy balance stays inside Piggy and the five-round countdown resets immediately.
+- Piggy is used first. A pledged asset is used only to cover a remaining shortage. Piggy is not drained when it cannot complete a payment and no pledged asset is available.
+- Owned frogs, lakes, and vehicle models now include **Sell** controls. Paid items sell for 50% of their original price; pledged and default items cannot be sold. Selling a vehicle also removes its remaining consumable flights.
+- The visible two-round and one-round Bank reminders and the clickable no-flights vehicle shortcut remain included.
+
+## v49 — Clear flight and payment reminders
+
+- When the selected Crash vehicle has no flights, a compact **NO FLIGHTS LEFT** panel appears with one **OPEN VEHICLES** button.
+- The panel uses short copy and opens Collection directly on the Vehicles section for refills or purchases.
+- Active loans now show short reminders when a payment is due in two rounds and again when it is due next round.
+- The due-now notice is also shortened to one clear line.
+- An overdue payment debits only the exact current installment directly from Piggy savings; it never routes that money through the wallet, and the remaining Piggy balance stays untouched.
+- Old oversized due amounts are clamped to the current installment during save migration.
+- Sky Crash once again applies its 3% edge to the full return, including a 97 F return on a 100 F cash-out at 1.00×.
+- The 2.5-billion-Froggy loan cap and existing save compatibility remain unchanged.
 
 ## v46 — Maintenance and interface refinement
 

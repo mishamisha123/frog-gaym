@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=47-owner-ops" />
+  <link rel="stylesheet" href="styles.css?v=50-shift-timer-sales" />
   <title>Froggy Leap</title>
 </head>
 <body>
@@ -102,7 +102,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v47 · FROGGY LEAP</div>
+          <div class="build-version" aria-label="Installed game version">v50 · FROGGY LEAP</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -163,6 +163,10 @@
             </div>
 
             <section class="crash-control-panel glass">
+              <div id="crashNoFlights" class="crash-no-flights hidden" role="status" aria-live="polite">
+                <div><b id="crashNoFlightsTitle">NO FLIGHTS LEFT</b><span id="crashNoFlightsText">Buy more to launch again.</span></div>
+                <button id="crashVehicleShopButton" type="button" class="pressable">OPEN VEHICLES</button>
+              </div>
               <div class="crash-control-grid manual-crash-grid">
                 <label><small>BET AMOUNT</small><input id="crashBetInput" type="number" min="50" step="1" inputmode="numeric" value="100" /></label>
                 <label><small>FLIGHT VEHICLE</small><select id="crashVehicleSelect"></select></label>
@@ -188,7 +192,8 @@
           <div class="job-shift-hud">
             <span><small>SHIFT MONEY</small><b id="jobShiftMoney">0 F</b></span>
             <span><small>FRIES BAGGED</small><b id="jobFriesBagged">0</b></span>
-            <span class="job-level-hud"><small>JOB</small><b><i id="jobLevelLabel">Lv 1</i><em id="jobPayLabel">25 F/fry</em></b><em id="jobXpLabel">0 / 100 XP</em><div class="job-xp-track"><i id="jobXpFill"></i></div></span>
+            <span id="jobTimerHud" class="job-timer-hud"><small>TIME LEFT</small><b id="jobTimerLabel">15s</b><em>+2s per fry</em></span>
+            <span class="job-level-hud"><small>JOB</small><b><i id="jobLevelLabel">Lv 1</i><em id="jobPayLabel">15 F/fry</em></b><em id="jobXpLabel">0 / 100 XP</em><div class="job-xp-track"><i id="jobXpFill"></i></div></span>
             <span class="job-boost-hud"><small>BOOST</small><b id="jobBoostLabel">1×</b></span>
           </div>
           <div id="jobPlayfield" class="job-playfield" aria-label="Position a fry above the line, then release it to drop into the moving bag">
@@ -204,15 +209,15 @@
             <div id="jobBag" class="job-bag hidden" aria-label="Moving fry bag">
               <img src="assets/job-bag.png" alt="" draggable="false" />
             </div>
-            <div id="jobRewardBurst" class="job-reward-burst hidden" aria-live="polite"><b>+25 F</b><span>+10 XP</span></div>
+            <div id="jobRewardBurst" class="job-reward-burst hidden" aria-live="polite"><b>+15 F</b><span>+5 XP · +2s</span></div>
             <div id="jobExplosion" class="job-explosion hidden" aria-hidden="true">
               <i></i><i></i><i></i><i></i><i></i><i></i><b>💥</b>
             </div>
             <div id="jobIntro" class="job-intro">
               <div class="job-mascot">🐸🍟</div>
               <h2>Clock in?</h2>
-              <p>Drag a fry anywhere above the line. Release it and it drops fast. Green and yellow boost fries are rare, but matching boosts stack when you find them. Red fries are bombs—throw those away.</p>
-              <button id="jobStartButton" class="action-button start pressable" type="button"><span>START SHIFT</span><small>Line it up and let it fall</small></button>
+              <p>You have 15 seconds. Every fry in the bag adds 2 seconds. Miss, catch a bomb, or run out of time and the shift ends.</p>
+              <button id="jobStartButton" class="action-button start pressable" type="button"><span>START SHIFT</span><small>15 seconds · +2 per fry</small></button>
             </div>
           </div>
         </section>
@@ -479,6 +484,11 @@
       <div><small>LEVEL UP</small><b id="levelToastTitle">Level 2</b><span id="levelToastBonus">+550 F</span></div>
     </div>
 
+    <div id="loanReminderToast" class="loan-reminder-toast" role="status" aria-live="assertive" aria-atomic="true">
+      <span class="loan-reminder-icon">🏦</span>
+      <div><small>LOAN REMINDER</small><b id="loanReminderTitle">Payment in 2 rounds</b><span id="loanReminderAmount">1,080 F due</span></div>
+    </div>
+
     <div id="modalBackdrop" class="modal-backdrop hidden">
       <div id="resultModal" class="modal-card result-modal hidden">
         <div id="resultIcon" class="result-icon">🏆</div>
@@ -629,6 +639,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=47-owner-ops"></script>
+  <script src="app.js?v=50-shift-timer-sales"></script>
 </body>
 </html>

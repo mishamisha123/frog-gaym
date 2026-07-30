@@ -1,7 +1,7 @@
 {
   "name": "Froggy Leap",
   "short_name": "Froggy Leap",
-  "description": "Froggy Leap v47 with Piggy-first installment-only overdue repayment, a 2.5B loan cap, balanced Job rewards, premium lakes, and save compatibility.",
+  "description": "Froggy Leap v50 with timed one-round Job shifts, exact automatic Piggy installments, collection selling, clear loan reminders, and save compatibility.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

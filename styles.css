@@ -2506,6 +2506,10 @@ body {
 .result-profit b {
   font-size:15px;
 }
+.result-profit.negative {
+  background:#fff0f2;
+  color:#b72d49;
+}
 
 .asset-breakdown.six-part {
   grid-template-columns:repeat(3,minmax(0,1fr));
@@ -3603,4 +3607,85 @@ body {
   .owner-grid button{min-height:44px;padding:7px 8px}
   .owner-grid button>span{font-size:9px}
   .owner-grid button>small[data-owner-value]{font-size:7.5px}
+}
+
+
+/* v48: compact flight refill prompt and readable loan countdown copy */
+.crash-no-flights{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 9px;padding:10px 11px;border:2px solid rgba(206,62,83,.28);border-radius:15px;background:#fff1f3;color:#9f2740}
+.crash-no-flights>div{display:grid;gap:2px;min-width:0}
+.crash-no-flights b{font-size:10px;line-height:1}
+.crash-no-flights span{font-size:7.5px;line-height:1.25;color:#704450}
+.crash-no-flights button{flex:0 0 auto;min-height:36px;padding:0 11px;border-radius:11px;background:#10283a;color:#dfff67;font-size:8px;font-weight:1000;cursor:pointer}
+.crash-no-flights.attention{animation:flightPromptNudge .5s ease}
+@keyframes flightPromptNudge{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+#resultText{white-space:pre-line}
+@media(max-width:430px){.crash-no-flights{padding:8px 9px;margin-bottom:6px}.crash-no-flights b{font-size:9px}.crash-no-flights span{font-size:6.8px}.crash-no-flights button{min-height:32px;padding:0 9px;font-size:7px}}
+
+
+/* v49: unmistakable, compact gameplay alerts */
+.loan-reminder-toast{position:fixed;z-index:165;left:50%;top:calc(var(--safe-top) + 74px);width:min(320px,calc(100vw - 24px));display:grid;grid-template-columns:42px 1fr;align-items:center;gap:10px;padding:10px 13px;border:2px solid rgba(255,255,255,.9);border-radius:18px;background:linear-gradient(135deg,#17364c,#0f2434);color:white;box-shadow:0 18px 45px rgba(5,20,31,.38);transform:translate(-50%,-160%) scale(.9);opacity:0;pointer-events:none}
+.loan-reminder-toast.show{animation:loanReminderPop 4.2s cubic-bezier(.2,.9,.2,1) both}
+.loan-reminder-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:#dfff67;font-size:23px}
+.loan-reminder-toast small{display:block;font-size:7px;letter-spacing:.16em;font-weight:1000;color:#bce8ff}
+.loan-reminder-toast b{display:block;font-size:15px;line-height:1.1}
+.loan-reminder-toast div span{display:block;margin-top:2px;font-size:11px;font-weight:900;color:#dfff67}
+@keyframes loanReminderPop{0%{transform:translate(-50%,-160%) scale(.9);opacity:0}10%,78%{transform:translate(-50%,0) scale(1);opacity:1}88%{transform:translate(-50%,-5px) scale(1.01);opacity:1}100%{transform:translate(-50%,-150%) scale(.94);opacity:0}}
+#crashNoFlights.crash-no-flights{position:fixed;z-index:160;left:50%;top:calc(var(--safe-top) + 78px);width:min(350px,calc(100vw - 22px));margin:0;padding:11px 12px;border:2px solid rgba(255,255,255,.95);border-radius:18px;background:linear-gradient(135deg,#bd2948,#7e1830);color:#fff;box-shadow:0 18px 46px rgba(78,10,30,.42);cursor:pointer;animation:flightBadgeIn .28s ease both}
+#crashNoFlights.crash-no-flights>div{gap:3px}
+#crashNoFlights.crash-no-flights b{font-size:12px;color:#fff}
+#crashNoFlights.crash-no-flights span{font-size:9px;color:#ffe8ee}
+#crashNoFlights.crash-no-flights button{background:#dfff67;color:#173327;min-height:38px;font-size:8px}
+#crashNoFlights.crash-no-flights:focus-visible{outline:4px solid #dfff67;outline-offset:3px}
+@keyframes flightBadgeIn{from{transform:translate(-50%,-16px) scale(.94);opacity:0}to{transform:translate(-50%,0) scale(1);opacity:1}}
+
+/* v50 — one-round Job shifts, visible countdown, and collection resale controls */
+#jobScreen .job-shift-hud{
+  grid-template-columns:repeat(5,minmax(0,1fr))!important;
+}
+#jobScreen .job-timer-hud em{
+  margin-top:1px;
+  color:#52636a;
+  font-size:7px;
+  font-style:normal;
+  font-weight:1000;
+  white-space:nowrap;
+}
+#jobScreen .job-timer-hud b{
+  color:#157b39!important;
+  font-variant-numeric:tabular-nums;
+}
+#jobScreen .job-timer-hud.danger{
+  background:linear-gradient(180deg,#fff0ed,#ffd2cb)!important;
+  animation:jobTimerPulse .65s ease-in-out infinite alternate;
+}
+#jobScreen .job-timer-hud.danger b{color:#c12f42!important}
+@keyframes jobTimerPulse{from{transform:scale(1)}to{transform:scale(1.025)}}
+
+.collection-card-actions{
+  display:grid;
+  gap:6px;
+  margin-top:8px;
+}
+.collection-card-actions .collection-action{margin-top:0}
+.collection-action.collection-sell{
+  color:#9e263c;
+  background:linear-gradient(180deg,#fff0f2,#ffd8df);
+  border:1px solid rgba(178,44,70,.24);
+  box-shadow:none;
+}
+.collection-action.collection-sell:not(:disabled):hover{filter:brightness(.98)}
+.collection-action.collection-sell:disabled{
+  color:#788186;
+  background:#e4e9e4;
+  border-color:transparent;
+}
+.vehicle-shop-actions .collection-sell{margin-top:0}
+
+@media(max-width:759px){
+  #jobScreen .job-shift-hud{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+  #jobScreen .job-level-hud{grid-column:span 2!important}
+  #jobScreen .job-boost-hud{grid-column:auto!important}
+  #jobScreen .job-timer-hud em{font-size:5.7px}
 }
