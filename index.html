@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=96-friends-v1" />
+  <link rel="stylesheet" href="styles.css?v=97-friends-visible" />
   <title>Froggy Leap</title>
 </head>
 <body>
@@ -107,7 +107,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v96 · FROGGY LEAP</div>
+          <div class="build-version" aria-label="Installed game version">v97 · FROGGY LEAP</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -555,7 +555,7 @@
             <div class="froggy-account-meta">
               <div><small>FROGGY ACCOUNT ID</small><b id="froggyAccountUid">—</b></div>
               <div><small>PUBLIC USERNAME</small><b id="froggyAccountUsernameMeta">NOT SET</b></div>
-              <div><small>FRIENDS</small><b id="froggyFriendsMeta">USERNAME NEEDED</b></div>
+              <div><small>FRIENDS</small><b id="froggyFriendsMeta">FRIENDS v1</b></div>
             </div>
             <button id="froggyAccountSignOut" class="froggy-account-signout pressable" type="button">SIGN OUT</button>
           </div>
@@ -563,7 +563,7 @@
           <p class="froggy-account-privacy">Your Google email is only shown to you here. Other players will see your Froggy username, never your private email.</p>
         </section>
 
-        <section id="froggyFriendsPanel" class="froggy-friends-panel glass hidden" aria-labelledby="froggyFriendsTitle">
+        <section id="froggyFriendsPanel" class="froggy-friends-panel glass" aria-labelledby="froggyFriendsTitle">
           <div class="froggy-friends-head">
             <div><small>FROGGY FRIENDS · BETA</small><h2 id="froggyFriendsTitle">Connect with players</h2><p>Search exact Froggy usernames. Google emails stay private.</p></div>
             <span>FRIENDS v1</span>
@@ -594,7 +594,7 @@
               <div id="froggyOutgoingRequests" class="froggy-friends-list"></div>
             </section>
           </div>
-          <p id="froggyFriendsStatus" class="froggy-friends-status" data-state="info" aria-live="polite">Friends load after your public username is ready.</p>
+          <p id="froggyFriendsStatus" class="froggy-friends-status" data-state="info" aria-live="polite">Friends v1 is loaded. Sign in and claim a username to connect with players.</p>
           <p class="froggy-friends-privacy">Friends v1 stores only Froggy usernames and Firebase account IDs needed to connect players. Your Google email is never written into friend requests or friendships.</p>
         </section>
         <div class="stats-grid">
@@ -790,7 +790,7 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script type="module" src="firebase-account.js?v=96-friends-v1"></script>
-  <script src="app.js?v=96-friends-v1"></script>
+  <script type="module" src="firebase-account.js?v=97-friends-visible"></script>
+  <script src="app.js?v=97-friends-visible"></script>
 </body>
 </html>

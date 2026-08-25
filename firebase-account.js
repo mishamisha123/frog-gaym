@@ -134,7 +134,7 @@ function renderProfile(profile) {
   const hasProfile = Boolean(profile?.username);
   usernameSetup?.classList.toggle('hidden', hasProfile);
   publicProfile?.classList.toggle('hidden', !hasProfile);
-  friendsPanel?.classList.toggle('hidden', !hasProfile);
+  friendsPanel?.classList.remove('hidden');
 
   if (hasProfile) {
     const label = `@${profile.username}`;
@@ -144,7 +144,7 @@ function renderProfile(profile) {
   } else {
     if (publicUsername) publicUsername.textContent = '@—';
     if (usernameMeta) usernameMeta.textContent = 'NOT SET';
-    if (friendsMeta) friendsMeta.textContent = 'USERNAME NEEDED';
+    if (friendsMeta) friendsMeta.textContent = 'FRIENDS v1';
     setUsernameHint('This is public. Your Google email stays private.', 'info');
   }
 }

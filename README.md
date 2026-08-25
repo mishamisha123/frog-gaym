@@ -1,9 +1,13 @@
-# Froggy Leap v96
+# Froggy Leap v97
 
 > **Current-behavior note:** The v96 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
 
-## v96 — Friends v1
+## v97 — Friends v1 · cache-proof
+
+- Friends panel is always visible in Profile, even before account/profile readiness, so deployment is obvious.
+- Refresh helper verifies GitHub Pages is serving v97 before redirecting; it reports if an older build is still deployed.
+- Navigation requests use no-store network fetches before offline fallback to reduce stale shell confusion.
 
 - Adds exact Froggy username search for signed-in players with completed public profiles.
 - Adds public player cards that expose Froggy usernames/profile creation date only; Google email remains private and is never written into friendship documents.
