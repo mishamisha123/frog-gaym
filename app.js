@@ -1124,8 +1124,8 @@
     if(!plinkoRuntime.raf){resizePlinkoCanvas();drawPlinkoBoard();}
   }
   function plinkoLayout(risk=state.plinkoRisk){
-    const rows=plinkoRows(risk),canvas=els.plinkoCanvas,w=Math.max(300,canvas?.clientWidth||720),h=Math.max(210,canvas?.clientHeight||420),margin=Math.max(24,w*.075),top=Math.max(28,Math.min(36,h*.09)),spacing=(w-margin*2)/rows,bottomGap=Math.max(10,Math.min(16,spacing*.34)),lastPegY=h-bottomGap,rowGap=rows>1?(lastPegY-top)/(rows-1):0;
-    // v82 pulls the playable triangle inward so pins and payout pockets have a deliberate frame margin.
+    const rows=plinkoRows(risk),canvas=els.plinkoCanvas,w=Math.max(300,canvas?.clientWidth||720),h=Math.max(210,canvas?.clientHeight||420),portraitMobile=window.matchMedia?.('(max-width: 759px) and (orientation: portrait)')?.matches,margin=portraitMobile?Math.max(14,w*.045):Math.max(24,w*.075),top=portraitMobile?Math.max(24,Math.min(31,h*.085)):Math.max(28,Math.min(36,h*.09)),spacing=(w-margin*2)/rows,bottomGap=Math.max(10,Math.min(16,spacing*.34)),lastPegY=h-bottomGap,rowGap=rows>1?(lastPegY-top)/(rows-1):0;
+    // v104 portrait mode uses more of the phone width while keeping every landing center tied to the same physics slot.
     return {risk,rows,w,h,margin,top,pocketTop:h,pocketHeight:0,lastPegY,spacing,rowGap,cx:w/2,eggRadius:Math.max(5.0,Math.min(10.4,spacing*.27)),pegRadius:Math.max(1.9,Math.min(3.8,spacing*.082))};
   }
   function resizePlinkoCanvas(){
@@ -1229,14 +1229,23 @@
     const canvas=els.plinkoCanvas;if(!canvas||canvas.clientWidth<10)return;let L=plinkoRuntime.layout;if(!L||L.risk!==state.plinkoRisk){L=plinkoLayout();plinkoRuntime.layout=L;plinkoRuntime.boardCacheKey='';}const c=canvas.getContext('2d');c.clearRect(0,0,L.w,L.h);const board=getPlinkoBoardCache(L);c.drawImage(board,0,0,board.width,board.height,0,0,L.w,L.h);
     for(const egg of plinkoRuntime.eggs)drawPlinkoEgg(c,egg,L);
   }
-  function flashPlinkoSlot(slot){
-    const el=els.plinkoMultipliers?.querySelector(`.slot-${slot}`);if(!el)return;el.classList.add('hit');clearTimeout(el._plinkoHitTimer);el._plinkoHitTimer=setTimeout(()=>el.classList.remove('hit'),420);
+  function showPlinkoHitBubble(slot,multiplier){
+    const board=els.plinkoBoard,slotEl=els.plinkoMultipliers?.querySelector(`.slot-${slot}`);if(!board||!slotEl)return;
+    let bubble=board.querySelector('.plinko-hit-pop');
+    if(!bubble){bubble=document.createElement('div');bubble.className='plinko-hit-pop';bubble.setAttribute('aria-hidden','true');board.appendChild(bubble);}
+    const boardRect=board.getBoundingClientRect(),slotRect=slotEl.getBoundingClientRect(),center=boardRect.width?((slotRect.left+slotRect.width/2-boardRect.left)/boardRect.width)*100:50;
+    bubble.style.left=`${clamp(center,4,96).toFixed(2)}%`;bubble.textContent=formatPlinkoMultiplier(multiplier);
+    bubble.classList.remove('show');void bubble.offsetWidth;bubble.classList.add('show');clearTimeout(bubble._plinkoHitTimer);bubble._plinkoHitTimer=setTimeout(()=>bubble.classList.remove('show'),460);
+  }
+  function flashPlinkoSlot(slot,multiplier=plinkoTable()[slot]){
+    const el=els.plinkoMultipliers?.querySelector(`.slot-${slot}`);if(!el)return;el.classList.add('hit');clearTimeout(el._plinkoHitTimer);el._plinkoHitTimer=setTimeout(()=>el.classList.remove('hit'),360);showPlinkoHitBubble(slot,multiplier);
   }
   function finishPlinkoEgg(egg,{quiet=false}={}){
     const bet=egg.bet,multiplier=egg.multiplier,payout=creditBalance(egg.payout);state.plinkoLastMultiplier=multiplier;state.bestPlinkoMultiplier=Math.max(state.bestPlinkoMultiplier,multiplier);state.biggestWin=Math.max(state.biggestWin,payout);session.net+=payout;
     const profitable=payout>bet,returned=payout>=bet;if(returned){state.plinkoWins++;session.wins++;session.lossStreak=0;}else{session.losses++;session.lossStreak++;}
     state.roundBetForXp=bet;const plinkoXp=Math.max(1,Math.floor((8+wagerXpBonus())/5));addXp(plinkoXp);recordXpWager();const profit=payout-bet;
-    if(!quiet){setPlinkoStatus(`${multiplier.toFixed(2)}× · ${profit>=0?'+':''}${money(profit)} F · +${plinkoXp} XP`,profitable?'win':returned?'':'lose');flashPlinkoSlot(egg.slot);}
+    showPlinkoHitBubble(egg.slot,multiplier);
+    if(!quiet){setPlinkoStatus(`${multiplier.toFixed(2)}× · ${profit>=0?'+':''}${money(profit)} F · +${plinkoXp} XP`,profitable?'win':returned?'':'lose');const el=els.plinkoMultipliers?.querySelector(`.slot-${egg.slot}`);if(el){el.classList.add('hit');clearTimeout(el._plinkoHitTimer);el._plinkoHitTimer=setTimeout(()=>el.classList.remove('hit'),360);}}
     const activeEggs=plinkoRuntime.eggs.length,now=performance.now(),crowded=activeEggs>18;if(!quiet){if(multiplier>=5){audio.reward();if(!crowded)haptic([12,30,20]);if((!crowded||multiplier>=50)&&now-plinkoRuntime.lastCelebrationAt>220){plinkoRuntime.lastCelebrationAt=now;confettiBurst(Math.min(crowded?42:90,24+Math.floor(multiplier)));}}else if(returned){audio.cash();if(!crowded)haptic(12);}else{audio.croak();if(!crowded)haptic(14);}}
   }
   function animatePlinko(now){

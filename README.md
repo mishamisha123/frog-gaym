@@ -1,4 +1,4 @@
-# Froggy Leap v103 — Mobile Plinko rail alignment + instant payout hit
+# Froggy Leap v104 — Portrait Plinko redesign
 
 Built on v100.
 
@@ -22,3 +22,13 @@ Built on v100.
 - Medium and High multiplier boxes are smaller without shifting their centers.
 - Final egg landing segment is shortened and ends at first visible contact with the payout rail, so winnings register immediately instead of after a hover delay.
 - Desktop Plinko, odds, payouts, Friends, Firebase, and Cloud Saves are unchanged.
+
+
+## v104 changes
+- Portrait-only Plinko layout redesign; desktop and landscape presentation are left alone.
+- Uses more of the phone width for the peg triangle while keeping landing centers tied to the same pre-rolled physics slots.
+- Compact two-row control dock: bet + risk + drop on the first row, quick bets on the second.
+- Replaces chunky portrait multiplier boxes with thin landing slots aligned exactly to the physics rail.
+- Multiplier labels are staggered across two rows under the landing slots so 15/17-pocket boards stay readable.
+- Adds an instant enlarged multiplier popover at the exact pocket that was hit.
+- Payout registration still occurs at first visible contact; odds, payout tables, egg paths, Bank timing, Friends, Firebase, and Cloud Saves are unchanged.
