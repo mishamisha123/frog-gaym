@@ -1,11 +1,22 @@
-# Froggy Leap v58
+# Froggy Leap v59
 
-> **Current-behavior note:** The v58 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
-
-
+> **Current-behavior note:** The v59 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
 
 
+
+
+
+
+## v59 — Proper gameplay sprites + Collection rarity frames
+
+- GigaChad Frog now uses separate art for gameplay and Collection.
+- Lily Leap, Sky Crash, and profile views use a transparent character cutout instead of pasting the rectangular shop card into the game world.
+- Collection keeps the polished framed GigaChad card art.
+- Every frog rarity now has a stronger premium portrait-frame treatment in Collection (Common, Royal, Epic, Legendary, Mythic, Ultra, and One of One).
+- Gameplay sprite drawing preserves image aspect ratio.
+- Existing saves and all v58 gameplay/economy behavior are preserved.
+- PWA asset URLs, refresh helper, and service-worker cache were bumped to v59.
 
 ## v58 — Keep only the reference-based Ultra skin
 

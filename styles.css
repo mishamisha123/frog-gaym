@@ -4323,3 +4323,76 @@ button:focus-visible{outline:2px solid #74e6ff!important;outline-offset:2px!impo
   .icon-button{width:34px;height:34px}.balance-pill{min-width:78px;font-size:10px}
   .collection-card{min-height:242px!important}.collection-art{height:118px!important}.collection-art .frog-avatar-img{width:118px!important;height:118px!important}
 }
+
+/* ========================================================================== 
+   v59 — Separate gameplay sprites from Collection card art + rarity portrait frames
+   ========================================================================== */
+.collection-card:not(.lake) .collection-art{
+  position:relative;
+  overflow:hidden!important;
+  border-width:2px!important;
+}
+.collection-card:not(.lake) .collection-art::before{
+  content:"";
+  position:absolute;
+  z-index:3;
+  inset:5px;
+  border-radius:9px;
+  pointer-events:none;
+  border:1px solid rgba(255,255,255,.24);
+  box-shadow:inset 0 0 18px rgba(255,255,255,.045);
+}
+.collection-card:not(.lake) .collection-art::after{
+  content:"";
+  position:absolute;
+  z-index:4;
+  left:12%;right:12%;top:5px;height:28%;
+  border-radius:999px;
+  pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.18),transparent);
+  opacity:.72;
+}
+.collection-card:not(.lake) .collection-art .frog-avatar-img{
+  z-index:2;
+}
+.collection-card:not(.lake) .collection-art .frog-card-art{
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  border-radius:9px!important;
+  transform:none!important;
+  filter:saturate(1.06) contrast(1.03) drop-shadow(0 8px 7px rgba(0,0,0,.34))!important;
+}
+.collection-card:not(.lake).tier-common .collection-art{
+  border-color:#68e8ff!important;
+  box-shadow:inset 0 -24px 40px rgba(0,12,44,.52),0 0 15px rgba(57,210,255,.28)!important;
+}
+.collection-card:not(.lake).tier-royal .collection-art{
+  border-color:#ffe46b!important;
+  background:radial-gradient(circle at 50% 24%,rgba(255,224,86,.34),rgba(51,79,151,.62) 50%,rgba(8,22,60,.96) 82%)!important;
+  box-shadow:inset 0 -24px 40px rgba(0,8,35,.54),0 0 16px rgba(255,213,55,.33)!important;
+}
+.collection-card:not(.lake).tier-epic .collection-art{
+  border-color:#ba7cff!important;
+  background:radial-gradient(circle at 50% 24%,rgba(163,102,255,.43),rgba(45,68,156,.62) 49%,rgba(18,17,68,.96) 82%)!important;
+  box-shadow:inset 0 -24px 40px rgba(8,4,42,.56),0 0 17px rgba(161,88,255,.34)!important;
+}
+.collection-card:not(.lake).tier-legendary .collection-art{
+  border-color:#ffb547!important;
+  background:radial-gradient(circle at 50% 24%,rgba(255,172,60,.43),rgba(113,51,97,.65) 49%,rgba(44,20,45,.96) 82%)!important;
+  box-shadow:inset 0 -24px 40px rgba(34,8,14,.55),0 0 18px rgba(255,145,44,.35)!important;
+}
+.collection-card:not(.lake).tier-mythic .collection-art{
+  border-color:#ff73df!important;
+  background:radial-gradient(circle at 50% 24%,rgba(255,82,211,.42),rgba(75,48,162,.67) 49%,rgba(24,18,73,.96) 82%)!important;
+  box-shadow:inset 0 -24px 40px rgba(20,5,43,.55),0 0 18px rgba(255,70,205,.37)!important;
+}
+.collection-card:not(.lake).tier-ultra .collection-art{
+  border:2px solid #ffd95a!important;
+  box-shadow:inset 0 -20px 34px rgba(5,7,28,.46),0 0 0 2px rgba(247,69,220,.48),0 0 24px rgba(244,78,223,.35)!important;
+}
+.collection-card:not(.lake).tier-one-of-one .collection-art{
+  border-color:#ffe56a!important;
+  background:radial-gradient(circle at 50% 24%,rgba(255,226,99,.28),rgba(33,49,76,.75) 48%,rgba(8,13,24,.98) 82%)!important;
+  box-shadow:inset 0 -24px 40px rgba(0,0,0,.6),0 0 19px rgba(255,220,72,.32)!important;
+}
