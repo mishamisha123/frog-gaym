@@ -1,23 +1,15 @@
-# Froggy Leap v78
+# Froggy Leap v79
 
-> **Current-behavior note:** The v78 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+> **Current-behavior note:** The v79 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
+## v79 — Compact responsive Plinko layout
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- Shrinks the Plinko machine on desktop instead of allowing High risk to dominate most of the viewport.
+- Adds a dedicated compact phone layout: controls move above the board, headings collapse, controls tighten, and the board is roughly 225–305 px tall depending on screen/risk.
+- Low / Medium / High still use 12 / 14 / 16 rows and 13 / 15 / 17 payout pockets.
+- High still retains the 1000x edge payout, 96 active-egg limit, v78 performance caching, v77 15-second Bank-round window, and reduced Plinko XP.
+- Only presentation/layout and the internal canvas minimum height changed; odds and payout tables are untouched.
+- PWA/cache/build references are bumped to **v79**.
 
 ## v78 — Smoother high-volume Plinko + 1000x High max
 
