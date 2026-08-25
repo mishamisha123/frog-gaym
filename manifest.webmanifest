@@ -1,11 +1,11 @@
 {
   "name": "Froggy Leap",
   "short_name": "Froggy Leap",
-  "description": "Froggy Leap v101 with Google accounts, unique usernames, Friends v1, private cross-device Cloud Saves, and offline PWA support.",
+  "description": "Froggy Leap v105 with Google accounts, Friends, Cloud Saves, and Plinko Focus fullscreen mode.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "background_color": "#071a36",
   "theme_color": "#071a36",
   "icons": [

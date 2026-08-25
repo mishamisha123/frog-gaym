@@ -6070,265 +6070,75 @@ input[type="range"]{opacity:1!important;filter:none!important}
 
 
 /* ================================================================
-   v104 — portrait Plinko rebuild
-   Full-width peg field, compact portrait controls, thin physics-aligned
-   landing slots, staggered two-row labels, and instant hit popover.
-   Landscape/desktop intentionally retain the v103 presentation.
+   v105 — Plinko Focus / Fullscreen Mode
+   Revert to the proven v103 normal layout, but allow phones to open
+   a dedicated wide Plinko presentation with compact redesigned controls.
    ================================================================ */
-@media (max-width: 759px) and (orientation: portrait) {
-  #playScreen.plinko-mode #plinkoGamePane {
-    gap: 4px !important;
-    width: 100% !important;
-    padding-inline: 0 !important;
-  }
+.plinko-focus-toolbar{display:flex;justify-content:flex-end;margin:0 0 6px}
+.plinko-focus-button{display:none;align-items:center;justify-content:center;gap:6px;min-height:38px;padding:6px 11px;border-radius:11px;border:1px solid rgba(99,220,255,.5);background:linear-gradient(180deg,#1764af,#0a397b);color:#fff;box-shadow:inset 0 1px rgba(255,255,255,.14),0 4px 0 #06295f;font-weight:1000}
+.plinko-focus-button span{font-size:17px}.plinko-focus-button b{font-size:8px;letter-spacing:.06em}.plinko-focus-button small{font-size:5px;color:#9fe8ff}
+.plinko-focus-exit{display:none}.plinko-rotate-hint{display:none}
+@media(max-width:900px){.plinko-focus-button{display:inline-flex}}
 
-  #playScreen.plinko-mode .plinko-controls {
-    display: grid !important;
-    grid-template-columns: 76px minmax(0, 1fr) 104px !important;
-    grid-template-rows: 38px 27px !important;
-    gap: 4px !important;
-    padding: 4px !important;
-    border-radius: 13px !important;
-    box-shadow: none !important;
-  }
-  #playScreen.plinko-mode .plinko-control-grid {
-    display: contents !important;
-  }
-  #playScreen.plinko-mode .plinko-bet-field {
-    grid-column: 1 !important;
-    grid-row: 1 !important;
-    gap: 1px !important;
-    min-width: 0 !important;
-  }
-  #playScreen.plinko-mode .plinko-risk-field {
-    grid-column: 2 !important;
-    grid-row: 1 !important;
-    gap: 1px !important;
-    min-width: 0 !important;
-  }
-  #playScreen.plinko-mode .plinko-bet-field > small,
-  #playScreen.plinko-mode .plinko-risk-field > small {
-    position: absolute !important;
-    width: 1px !important;
-    height: 1px !important;
-    overflow: hidden !important;
-    clip: rect(0 0 0 0) !important;
-  }
-  #playScreen.plinko-mode .plinko-bet-field input {
-    width: 100% !important;
-    height: 38px !important;
-    min-height: 38px !important;
-    padding: 0 6px !important;
-    border-radius: 9px !important;
-    font-size: 10px !important;
-  }
-  #playScreen.plinko-mode .plinko-risk-buttons {
-    height: 38px !important;
-    gap: 2px !important;
-  }
-  #playScreen.plinko-mode .plinko-risk-buttons button {
-    height: 38px !important;
-    min-height: 38px !important;
-    padding: 1px !important;
-    border-radius: 8px !important;
-  }
-  #playScreen.plinko-mode .plinko-risk-buttons button > span {
-    font-size: 6.6px !important;
-  }
-  #playScreen.plinko-mode .plinko-risk-buttons button > small {
-    font-size: 3.6px !important;
-  }
-  #playScreen.plinko-mode .plinko-drop-button {
-    grid-column: 3 !important;
-    grid-row: 1 !important;
-    width: 100% !important;
-    height: 38px !important;
-    min-height: 38px !important;
-    margin: 0 !important;
-    border-radius: 9px !important;
-    padding: 2px 5px !important;
-  }
-  #playScreen.plinko-mode .plinko-drop-button span {
-    font-size: 7.2px !important;
-    line-height: 1.05 !important;
-  }
-  #playScreen.plinko-mode .plinko-drop-button small {
-    display: none !important;
-  }
-  #playScreen.plinko-mode .plinko-quick-bets {
-    grid-column: 1 / -1 !important;
-    grid-row: 2 !important;
-    display: grid !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: 3px !important;
-    margin: 0 !important;
-  }
-  #playScreen.plinko-mode .plinko-quick-bets button {
-    height: 27px !important;
-    min-height: 27px !important;
-    padding: 0 2px !important;
-    border-radius: 7px !important;
-  }
-  #playScreen.plinko-mode .plinko-quick-bets button b {
-    font-size: 6.5px !important;
-  }
-  #playScreen.plinko-mode .plinko-quick-bets button small,
-  #playScreen.plinko-mode .plinko-fair-note {
-    display: none !important;
-  }
+html.plinko-focus-mode,body.plinko-focus-mode{margin:0!important;width:100%!important;height:100%!important;overflow:hidden!important;background:#04142f!important}
+body.plinko-focus-mode .app{height:100svh!important;min-height:100svh!important;padding:0!important;overflow:hidden!important;background:radial-gradient(circle at 48% 35%,#0c3470 0,#061d46 48%,#031126 100%)!important}
+body.plinko-focus-mode .topbar,body.plinko-focus-mode .bottom-nav,body.plinko-focus-mode #playScreen>.arcade-switcher{display:none!important}
+body.plinko-focus-mode .screen-stack{width:100%!important;max-width:none!important;height:100svh!important;margin:0!important}
+body.plinko-focus-mode .screen:not(#playScreen){display:none!important}
+body.plinko-focus-mode #playScreen.active{display:block!important;width:100%!important;height:100svh!important;min-height:0!important;padding:7px!important;overflow:hidden!important}
+body.plinko-focus-mode #plinkoGamePane{position:relative!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(180px,224px)!important;gap:7px!important;width:100%!important;max-width:none!important;height:calc(100svh - 14px)!important;min-height:0!important;margin:0!important}
+body.plinko-focus-mode .plinko-shell{display:flex!important;flex-direction:column!important;min-width:0!important;min-height:0!important;height:100%!important;padding:7px!important;border-radius:15px!important}
+body.plinko-focus-mode .plinko-heading{flex:0 0 auto!important;margin:0 42px 5px 0!important;align-items:center!important}
+body.plinko-focus-mode .plinko-heading>div:first-child{display:none!important}
+body.plinko-focus-mode .plinko-mini-stats{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;width:100%!important;min-width:0!important;gap:4px!important}
+body.plinko-focus-mode .plinko-mini-stats span{padding:4px 5px!important;border-radius:8px!important}
+body.plinko-focus-mode .plinko-mini-stats small{font-size:4.5px!important}body.plinko-focus-mode .plinko-mini-stats b{font-size:8px!important}
+body.plinko-focus-mode .plinko-focus-toolbar{display:none!important}
+body.plinko-focus-mode .plinko-board,body.plinko-focus-mode .plinko-board[data-risk="low"],body.plinko-focus-mode .plinko-board[data-risk="medium"],body.plinko-focus-mode .plinko-board[data-risk="high"]{flex:1 1 auto!important;width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;border-radius:13px!important}
+body.plinko-focus-mode .plinko-status{flex:0 0 auto!important;margin:4px 0 0!important;min-height:25px!important;padding:5px 7px!important;font-size:6.5px!important;border-radius:8px!important}
+body.plinko-focus-mode .plinko-controls{position:static!important;display:flex!important;flex-direction:column!important;min-width:0!important;height:100%!important;min-height:0!important;padding:8px!important;gap:6px!important;border-radius:15px!important;overflow:auto!important}
+body.plinko-focus-mode .plinko-control-grid{display:grid!important;grid-template-columns:1fr!important;gap:6px!important}
+body.plinko-focus-mode .plinko-bet-field,body.plinko-focus-mode .plinko-risk-field{gap:3px!important}
+body.plinko-focus-mode .plinko-controls small{font-size:5px!important}
+body.plinko-focus-mode .plinko-bet-field input{height:38px!important;font-size:12px!important;border-radius:9px!important;padding:0 8px!important}
+body.plinko-focus-mode .plinko-risk-buttons{gap:3px!important}
+body.plinko-focus-mode .plinko-risk-buttons button{height:38px!important;min-width:0!important;border-radius:8px!important;padding:3px!important}
+body.plinko-focus-mode .plinko-risk-buttons button>span{font-size:7px!important}body.plinko-focus-mode .plinko-risk-buttons button>small{font-size:4px!important}
+body.plinko-focus-mode .plinko-quick-bets{display:grid!important;grid-template-columns:repeat(2,1fr)!important;gap:4px!important;margin:0!important}
+body.plinko-focus-mode .plinko-quick-bets button{min-height:36px!important;border-radius:8px!important;padding:4px!important}
+body.plinko-focus-mode .plinko-quick-bets button b{font-size:7px!important}body.plinko-focus-mode .plinko-quick-bets button small{font-size:4.2px!important}
+body.plinko-focus-mode .plinko-drop-button{min-height:52px!important;margin-top:auto!important;border-radius:11px!important;padding:6px!important}
+body.plinko-focus-mode .plinko-drop-button span{font-size:10px!important}body.plinko-focus-mode .plinko-drop-button small{font-size:5px!important}
+body.plinko-focus-mode .plinko-fair-note{display:none!important}
+body.plinko-focus-mode .plinko-focus-exit{display:flex!important;position:absolute!important;z-index:50!important;top:8px!important;right:calc(224px + 15px)!important;align-items:center!important;gap:4px!important;min-height:32px!important;padding:5px 9px!important;border-radius:9px!important;background:rgba(3,20,53,.92)!important;border:1px solid rgba(102,213,255,.45)!important;color:#fff!important;font-size:8px!important;font-weight:1000!important;box-shadow:0 5px 14px rgba(0,0,0,.35)!important}
+body.plinko-focus-mode .plinko-multipliers,body.plinko-focus-mode .plinko-multipliers[data-slots="15"],body.plinko-focus-mode .plinko-multipliers[data-slots="17"]{width:var(--plinko-rail-width,90%)!important;gap:0!important}
+body.plinko-focus-mode .plinko-slot,body.plinko-focus-mode .plinko-multipliers[data-slots="15"] .plinko-slot,body.plinko-focus-mode .plinko-multipliers[data-slots="17"] .plinko-slot{width:86%!important;height:25px!important;min-height:25px!important}
+body.plinko-focus-mode .plinko-slot b,body.plinko-focus-mode .plinko-multipliers[data-slots="15"] .plinko-slot b,body.plinko-focus-mode .plinko-multipliers[data-slots="17"] .plinko-slot b{font-size:7.4px!important;transform:none!important;letter-spacing:-.04em!important}
 
-  #playScreen.plinko-mode .plinko-shell {
-    padding: 3px !important;
-    border-radius: 15px !important;
-  }
-  #playScreen.plinko-mode .plinko-heading {
-    display: none !important;
-  }
-  #playScreen.plinko-mode .plinko-board {
-    --plinko-rail-zone: 55px !important;
-    width: 100% !important;
-    border-radius: 12px !important;
-  }
-  #playScreen.plinko-mode .plinko-board[data-risk="low"] {
-    height: 252px !important;
-    min-height: 252px !important;
-  }
-  #playScreen.plinko-mode .plinko-board[data-risk="medium"] {
-    height: 270px !important;
-    min-height: 270px !important;
-  }
-  #playScreen.plinko-mode .plinko-board[data-risk="high"] {
-    height: 288px !important;
-    min-height: 288px !important;
-  }
-
-  /* The grid width still comes directly from the physics geometry. The
-     visible pocket is only a thin target, so shrinking it cannot misalign it. */
-  #playScreen.plinko-mode .plinko-multipliers,
-  #playScreen.plinko-mode .plinko-multipliers[data-slots="15"],
-  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"] {
-    left: 50% !important;
-    right: auto !important;
-    bottom: calc(var(--plinko-rail-zone) - 10px) !important;
-    width: var(--plinko-rail-width, 96%) !important;
-    height: 10px !important;
-    gap: 0 !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    transform: translateX(-50%) !important;
-    align-items: end !important;
-    overflow: visible !important;
-  }
-  #playScreen.plinko-mode .plinko-slot,
-  #playScreen.plinko-mode .plinko-multipliers[data-slots="15"] .plinko-slot,
-  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"] .plinko-slot {
-    position: relative !important;
-    justify-self: center !important;
-    align-self: end !important;
-    width: 76% !important;
-    height: 9px !important;
-    min-height: 9px !important;
-    padding: 0 !important;
-    border-radius: 3px !important;
-    overflow: visible !important;
-    box-shadow: inset 0 -2px rgba(0,0,0,.22), 0 0 7px rgba(75,205,255,.18) !important;
-  }
-  #playScreen.plinko-mode .plinko-multipliers[data-slots="15"] .plinko-slot {
-    width: 72% !important;
-  }
-  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"] .plinko-slot {
-    width: 68% !important;
-  }
-  #playScreen.plinko-mode .plinko-slot::before {
-    inset: 1px !important;
-    height: 3px !important;
-    border-radius: 2px !important;
-  }
-
-  /* Labels live BELOW the thin landing slots. Alternating them over two rows
-     gives every value roughly twice the horizontal breathing room. */
-  #playScreen.plinko-mode .plinko-slot b,
-  #playScreen.plinko-mode .plinko-multipliers[data-slots="15"] .plinko-slot b,
-  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"] .plinko-slot b {
-    position: absolute !important;
-    left: 50% !important;
-    bottom: auto !important;
-    top: 13px !important;
-    z-index: 20 !important;
-    width: max-content !important;
-    min-width: 0 !important;
-    padding: 0 1px !important;
-    color: #f7fcff !important;
-    background: transparent !important;
-    font-family: "Arial Narrow", "Roboto Condensed", "Helvetica Neue", Arial, sans-serif !important;
-    font-size: 7.7px !important;
-    font-weight: 1000 !important;
-    line-height: 1 !important;
-    letter-spacing: -0.06em !important;
-    white-space: nowrap !important;
-    text-shadow: 0 1px 2px rgba(0,0,0,.95), 0 0 5px rgba(91,214,255,.22) !important;
-    transform: translateX(-50%) !important;
-    transform-origin: center !important;
-    pointer-events: none !important;
-  }
-  #playScreen.plinko-mode .plinko-slot:nth-child(even) b {
-    top: 31px !important;
-  }
-  #playScreen.plinko-mode .plinko-multipliers[data-slots="15"] .plinko-slot b {
-    font-size: 7.4px !important;
-  }
-  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"] .plinko-slot b {
-    font-size: 7.15px !important;
-    letter-spacing: -0.075em !important;
-  }
-  #playScreen.plinko-mode .plinko-slot:first-child b {
-    left: 0 !important;
-    transform: none !important;
-  }
-  #playScreen.plinko-mode .plinko-slot:last-child b {
-    left: auto !important;
-    right: 0 !important;
-    transform: none !important;
-  }
-
-  #playScreen.plinko-mode .plinko-slot.hit {
-    transform: translateY(-1px) scale(1.15) !important;
-    filter: brightness(1.45) saturate(1.12) !important;
-  }
-  #playScreen.plinko-mode .plinko-hit-pop {
-    position: absolute;
-    z-index: 30;
-    bottom: calc(var(--plinko-rail-zone) + 3px);
-    transform: translate(-50%, 7px) scale(.72);
-    opacity: 0;
-    pointer-events: none;
-    padding: 4px 7px 5px;
-    border: 1px solid rgba(143,231,255,.6);
-    border-radius: 999px;
-    color: #fff;
-    background: linear-gradient(180deg, rgba(25,91,184,.96), rgba(7,43,105,.97));
-    box-shadow: 0 7px 17px rgba(0,7,35,.42), inset 0 1px rgba(255,255,255,.16);
-    font: 1000 14px/1 "Arial Narrow", "Roboto Condensed", Arial, sans-serif;
-    letter-spacing: -.04em;
-    text-shadow: 0 1px 2px rgba(0,0,0,.7);
-  }
-  #playScreen.plinko-mode .plinko-hit-pop.show {
-    animation: plinkoPortraitHit .46s cubic-bezier(.18,.86,.25,1) both;
-  }
-  @keyframes plinkoPortraitHit {
-    0% { opacity: 0; transform: translate(-50%, 7px) scale(.7); }
-    22% { opacity: 1; transform: translate(-50%, -2px) scale(1.08); }
-    72% { opacity: 1; transform: translate(-50%, -5px) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, -10px) scale(.96); }
-  }
+@media(orientation:portrait) and (max-width:900px){
+  body.plinko-focus-mode #plinkoGamePane{grid-template-columns:1fr!important}
+  body.plinko-focus-mode .plinko-shell,body.plinko-focus-mode .plinko-controls{visibility:hidden!important}
+  body.plinko-focus-mode .plinko-focus-exit{right:9px!important;visibility:visible!important}
+  body.plinko-focus-mode .plinko-rotate-hint{display:grid!important;position:absolute!important;z-index:40!important;inset:0!important;place-items:center!important;padding:24px!important;background:radial-gradient(circle at center,rgba(16,64,127,.96),rgba(3,15,37,.98))!important;color:#fff!important;text-align:center!important;border-radius:18px!important}
+  body.plinko-focus-mode .plinko-rotate-hint div{display:grid;justify-items:center;gap:6px;max-width:310px}
+  body.plinko-focus-mode .plinko-rotate-hint span{font-size:55px;line-height:1;color:#67e5ff;animation:plinkoRotateCue 1.4s ease-in-out infinite}
+  body.plinko-focus-mode .plinko-rotate-hint b{font-size:18px;font-style:italic;letter-spacing:.05em}
+  body.plinko-focus-mode .plinko-rotate-hint small{font-size:10px;line-height:1.4;color:#b7d9f3}
 }
-
-@media (max-width: 360px) and (orientation: portrait) {
-  #playScreen.plinko-mode .plinko-controls {
-    grid-template-columns: 70px minmax(0, 1fr) 96px !important;
-  }
-  #playScreen.plinko-mode .plinko-board[data-risk="low"] { height: 244px !important; min-height: 244px !important; }
-  #playScreen.plinko-mode .plinko-board[data-risk="medium"] { height: 260px !important; min-height: 260px !important; }
-  #playScreen.plinko-mode .plinko-board[data-risk="high"] { height: 276px !important; min-height: 276px !important; }
-  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"] .plinko-slot b { font-size: 6.75px !important; }
+@keyframes plinkoRotateCue{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(28deg)}}
+@media(prefers-reduced-motion:reduce){body.plinko-focus-mode .plinko-rotate-hint span{animation:none}}
+@media(orientation:landscape) and (max-height:460px){
+  body.plinko-focus-mode #playScreen.active{padding:4px!important}
+  body.plinko-focus-mode #plinkoGamePane{height:calc(100svh - 8px)!important;grid-template-columns:minmax(0,1fr) minmax(165px,205px)!important;gap:4px!important}
+  body.plinko-focus-mode .plinko-shell,body.plinko-focus-mode .plinko-controls{padding:5px!important;border-radius:12px!important}
+  body.plinko-focus-mode .plinko-heading{margin-right:36px!important;margin-bottom:3px!important}
+  body.plinko-focus-mode .plinko-mini-stats span{padding:2px 3px!important}
+  body.plinko-focus-mode .plinko-status{margin-top:2px!important;padding:3px 6px!important}
+  body.plinko-focus-mode .plinko-controls{gap:4px!important}
+  body.plinko-focus-mode .plinko-control-grid{gap:4px!important}
+  body.plinko-focus-mode .plinko-bet-field input{height:32px!important}
+  body.plinko-focus-mode .plinko-risk-buttons button{height:31px!important}
+  body.plinko-focus-mode .plinko-quick-bets button{min-height:30px!important}
+  body.plinko-focus-mode .plinko-drop-button{min-height:44px!important}
+  body.plinko-focus-mode .plinko-focus-exit{top:5px!important;right:calc(205px + 10px)!important;min-height:28px!important;padding:3px 7px!important}
 }

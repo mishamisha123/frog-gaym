@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=104-portrait-plinko" />
+  <link rel="stylesheet" href="styles.css?v=105-plinko-focus" />
   <title>Froggy Leap</title>
 </head>
 <body>
@@ -107,7 +107,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v104 · FROGGY LEAP</div>
+          <div class="build-version" aria-label="Installed game version">v105 · FROGGY LEAP</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -191,6 +191,8 @@
         </section>
 
         <section id="plinkoGamePane" class="arcade-game-pane hidden" aria-label="Frog Egg Plinko game">
+          <button id="plinkoFocusExit" type="button" class="plinko-focus-exit pressable" aria-label="Exit Plinko fullscreen">✕ <span>EXIT</span></button>
+          <div id="plinkoRotateHint" class="plinko-rotate-hint" aria-live="polite"><div><span>↻</span><b>ROTATE YOUR PHONE</b><small>Plinko Focus Mode is designed for landscape.</small></div></div>
           <section class="plinko-shell glass">
             <div class="plinko-heading">
               <div><small>FROG EGG PLINKO</small><h2>Drop. Bounce. Hatch a multiplier.</h2><p id="plinkoBoardInfo">14 peg rows · 15 payout pockets · each peg is still a fair 50/50 left/right bounce.</p></div>
@@ -202,6 +204,9 @@
               </div>
             </div>
 
+            <div class="plinko-focus-toolbar">
+              <button id="plinkoFocusButton" type="button" class="plinko-focus-button pressable" aria-label="Open Plinko fullscreen focus mode"><span>⛶</span><b>FULLSCREEN</b><small>Best on phone</small></button>
+            </div>
             <div id="plinkoBoard" class="plinko-board">
               <canvas id="plinkoCanvas" aria-label="Frog egg bouncing through a Plinko peg board"></canvas>
               <div id="plinkoMultipliers" class="plinko-multipliers" aria-label="Plinko payout multipliers"></div>
@@ -815,7 +820,7 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script type="module" src="firebase-account.js?v=104-portrait-plinko"></script>
-  <script src="app.js?v=104-portrait-plinko"></script>
+  <script type="module" src="firebase-account.js?v=105-plinko-focus"></script>
+  <script src="app.js?v=105-plinko-focus"></script>
 </body>
 </html>
