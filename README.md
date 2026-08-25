@@ -1,8 +1,6 @@
-# Froggy Leap v66
+# Froggy Leap v67
 
-> **Current-behavior note:** The v66 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
-
-
+> **Current-behavior note:** The v67 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
 
 
@@ -12,6 +10,20 @@
 
 
 
+
+
+
+## v67 — Cases + six-slot mobile navigation
+
+- Added a dedicated **Cases** screen and bottom-navigation tab.
+- Bottom navigation is now six filled slots in this order: **Games · Job · Collection · BANK · Cases · Profile**.
+- BANK is elevated and visually emphasized as the important center action.
+- Added three Froggy-only frog cases with visible exact odds: Pond Case, Neon Case, and Ultra Case.
+- Ultra Case costs **250,000,000 F** and has a **0.5% The Hill Frog** drop chance.
+- New case frogs unlock permanently; duplicate frogs convert automatically to **50% of that frog's Bank Value** in F.
+- Case openings do not count as gameplay rounds and do not advance loan-payment countdowns.
+- Existing saves remain compatible; case history stores only the latest eight pulls.
+- PWA asset URLs, refresh helper, service-worker cache, self-test label, and build label bumped to **v67**.
 
 ## v66 — Approved The Hill Frog gameplay model
 

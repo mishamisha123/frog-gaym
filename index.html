@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=66-hill-approved" />
+  <link rel="stylesheet" href="styles.css?v=67-cases-nav" />
   <title>Froggy Leap</title>
 </head>
 <body>
@@ -102,7 +102,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v66 · FROGGY LEAP</div>
+          <div class="build-version" aria-label="Installed game version">v67 · FROGGY LEAP</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -405,6 +405,33 @@
         </div>
       </section>
 
+      <section id="casesScreen" class="screen cases-screen" aria-label="Frog Cases">
+        <div class="section-heading cases-heading">
+          <div><small>FROGGY CASES</small><h1>Cases</h1></div>
+          <span class="mini-balance"><span class="coin-icon">F</span><b id="caseBalance">1,000</b></span>
+        </div>
+
+        <section class="case-intro glass">
+          <div class="case-intro-icon" aria-hidden="true">📦</div>
+          <div>
+            <small>RANDOM FROG DROPS</small>
+            <h2>Open a case. Pull a frog.</h2>
+            <p>Cases use fictional Froggy only. Every drop rate is shown before you open. Duplicate frogs automatically return 50% of that frog's Bank Value in F.</p>
+          </div>
+          <div class="case-total"><small>CASES OPENED</small><b id="casesOpenedLabel">0</b></div>
+        </section>
+
+        <div id="caseReveal" class="case-reveal glass hidden" aria-live="polite"></div>
+        <div id="caseGrid" class="case-grid"></div>
+
+        <section class="case-history-panel glass">
+          <div class="case-history-head"><div><small>RECENT PULLS</small><h2>Case history</h2></div><span>Latest 8</span></div>
+          <div id="caseHistoryList" class="case-history-list"><p class="case-history-empty">Open your first case to start the history.</p></div>
+        </section>
+
+        <p class="virtual-note">Cases contain only existing Froggy Leap frogs. No real-money purchase, cash-out, or prize is involved.</p>
+      </section>
+
       <section id="statsScreen" class="screen" aria-label="Stats and settings">
         <div class="section-heading"><div><small>PLAYER PROFILE</small><h1>Stats & Settings</h1></div></div>
         <div class="profile-hero glass">
@@ -449,6 +476,7 @@
       <button class="nav-button pressable" data-screen="job"><span>🍟</span><small>Job</small></button>
       <button class="nav-button pressable" data-screen="collection"><span>🎒</span><small>Collection</small></button>
       <button class="nav-button bank-nav-button pressable" data-screen="bank"><span>🏦</span><small>BANK</small><i id="debtDueDot" class="debt-alert hidden" aria-label="Debt payment due">!</i></button>
+      <button class="nav-button cases-nav-button pressable" data-screen="cases"><span>📦</span><small>Cases</small></button>
       <button class="nav-button pressable" data-screen="stats"><span>🏆</span><small>Profile</small></button>
     </nav>
 
@@ -604,6 +632,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=66-hill-approved"></script>
+  <script src="app.js?v=67-cases-nav"></script>
 </body>
 </html>

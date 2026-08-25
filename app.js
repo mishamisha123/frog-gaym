@@ -3,7 +3,7 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v66';
+  const BUILD_VERSION = 'v67';
   console.info(`Froggy Leap ${BUILD_VERSION} loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
@@ -126,6 +126,34 @@
     return [...FROGS].sort((a,b)=>(a.cost-b.cost)||((FROG_RARITY_RANK[a.rarity]??99)-(FROG_RARITY_RANK[b.rarity]??99))||a.name.localeCompare(b.name));
   }
 
+  const CASES = Object.freeze([
+    {id:'pond',name:'Pond Case',emoji:'📦',cost:5000,level:1,accent:'pond',tagline:'Basic pond frogs with a shot at a Rare.',drops:[
+      ['meadow',2200],['river',2000],['moss',1800],['sand',1500],['king',1000],['blue-dart',700],['sunset',500],['robot',300]
+    ]},
+    {id:'neon',name:'Neon Case',emoji:'🎁',cost:100000,level:7,accent:'neon',tagline:'Rare and Epic pulls with a tiny Mythic chance.',drops:[
+      ['blue-dart',1900],['sunset',1800],['robot',1800],['ghost',2000],['dragon',1500],['dino',700],['ninja',250],['alien',50]
+    ]},
+    {id:'ultra',name:'Ultra Case',emoji:'👑',cost:250000000,level:50,accent:'ultra',tagline:'The premium chase case. The Hill Frog is a 0.5% pull.',drops:[
+      ['ghost',2500],['dragon',2500],['dino',2000],['ninja',1500],['alien',900],['rockstar',550],['gigachad',50]
+    ]}
+  ]);
+  const CASE_ODDS_SCALE = 10000;
+  function caseById(id){return CASES.find(item=>item.id===id)||null;}
+  function caseDropRows(item){return item.drops.map(([frogId,weight])=>({frog:FROGS.find(f=>f.id===frogId),weight})).filter(row=>row.frog);}
+  function caseRaritySummary(item){
+    const totals={};caseDropRows(item).forEach(({frog,weight})=>{totals[frog.rarity]=(totals[frog.rarity]||0)+weight;});
+    return Object.entries(totals).sort((a,b)=>(FROG_RARITY_RANK[a[0]]??99)-(FROG_RARITY_RANK[b[0]]??99)).map(([rarity,weight])=>`${rarity} ${(weight/100).toFixed(weight%100?1:0)}%`).join(' · ');
+  }
+  function randomCaseUnit(){
+    try{if(globalThis.crypto?.getRandomValues){const value=new Uint32Array(1);globalThis.crypto.getRandomValues(value);return value[0]/4294967296;}}catch{}
+    return Math.random();
+  }
+  function rollCase(item){
+    const roll=Math.floor(randomCaseUnit()*CASE_ODDS_SCALE);let cursor=0;
+    for(const [frogId,weight] of item.drops){cursor+=weight;if(roll<cursor)return FROGS.find(f=>f.id===frogId)||FROGS[0];}
+    const last=item.drops[item.drops.length-1];return FROGS.find(f=>f.id===last[0])||FROGS[0];
+  }
+
   const FROG_IMAGES = Object.fromEntries(FROGS.map(frog=>{
     const image=new Image(); image.decoding='async'; image.src=frog.art; return [frog.id,image];
   }));
@@ -236,6 +264,8 @@
     pledgedFlights: {glider:0,prop:0,rocket:0,starship:0},
     collateralPledgeVersion: COLLATERAL_PLEDGE_VERSION,
     loanCollateralAtOrigination: 0,
+    casesOpened: 0,
+    caseHistory: [],
     loanRate: 0.08
   };
 
@@ -246,8 +276,8 @@
     jump: $('jumpLabel'), multiplier: $('multiplierLabel'), risk: $('riskLabel'), payout: $('payoutLabel'), danger: $('dangerLabel'), riskFill: $('riskFill'), riskMarker: $('riskMarker'),
     leapGamePane: $('leapGamePane'), crashGamePane: $('crashGamePane'), leapGameTab: $('leapGameTab'), crashGameTab: $('crashGameTab'), crashTabStatus: $('crashTabStatus'), crashLicenseCard: $('crashLicenseCard'), crashGameContent: $('crashGameContent'), unlockCrashButton: $('unlockCrashButton'), crashMultiplierLabel: $('crashMultiplierLabel'), crashPayoutLabel: $('crashPayoutLabel'), crashVehicleLabel: $('crashVehicleLabel'), crashChargesLabel: $('crashChargesLabel'), crashVehicleMaxLabel: $('crashVehicleMaxLabel'), crashBetInput: $('crashBetInput'), crashVehicleSelect: $('crashVehicleSelect'), crashQuickBets: $('crashQuickBets'), crashStartButton: $('crashStartButton'), crashNoFlights: $('crashNoFlights'), crashNoFlightsTitle: $('crashNoFlightsTitle'), crashNoFlightsText: $('crashNoFlightsText'), crashVehicleShopButton: $('crashVehicleShopButton'), crashFlightDock: $('crashFlightDock'), crashCashButton: $('crashCashButton'), crashCashValue: $('crashCashValue'), betDisplay: $('betDisplay'), start: $('startButton'), jumpButton: $('jumpButton'), cash: $('cashButton'), cashValue: $('cashButtonValue'), quickBets: $('quickBets'), betAdjusters: $('betAdjusters'), customBetToggle: $('customBetToggle'), customBetRow: $('customBetRow'), customBetInput: $('customBetInput'), customBetClose: $('customBetClose'), customBetError: $('customBetError'),
     sound: $('soundButton'), bankShortcut: $('bankShortcutButton'), settingsSound: $('settingsSound'), settingsMotion: $('settingsMotion'), luckyBadge: $('luckyBadge'), luckyCount: $('luckyCount'), debtBadge: $('debtBadge'), debtBadgeAmount: $('debtBadgeAmount'), debtBadgeTurns: $('debtBadgeTurns'), debtBadgeStatus: $('debtBadgeStatus'), debtDueDot: $('debtDueDot'), debtDueFlag: $('debtDueFlag'),
-    screens: { play:$('playScreen'), job:$('jobScreen'), collection:$('collectionScreen'), bank:$('bankScreen'), stats:$('statsScreen') },
-    collectionGrid: $('collectionGrid'), installButton: $('installButton'),
+    screens: { play:$('playScreen'), job:$('jobScreen'), collection:$('collectionScreen'), bank:$('bankScreen'), cases:$('casesScreen'), stats:$('statsScreen') },
+    collectionGrid: $('collectionGrid'), caseGrid:$('caseGrid'), caseBalance:$('caseBalance'), casesOpenedLabel:$('casesOpenedLabel'), caseReveal:$('caseReveal'), caseHistoryList:$('caseHistoryList'), installButton: $('installButton'),
     modalBackdrop: $('modalBackdrop'), resultModal: $('resultModal'), howToModal: $('howToModal'), installModal: $('installModal'), loanBuilderModal: $('loanBuilderModal'), loanWarningModal: $('loanWarningModal'),
     resultIcon: $('resultIcon'), resultKicker: $('resultKicker'), resultTitle: $('resultTitle'), resultAmount: $('resultAmount'), resultProfit: $('resultProfit'), resultText: $('resultText'), resultButton: $('resultButton'),
     profileFrog: $('profileFrog'), bigProfileFrog: $('bigProfileFrog'), currentFrogName: $('currentFrogName'),
@@ -478,6 +508,10 @@
       merged.jobXp=Math.max(0,Math.floor(Number(raw.jobXp)||0));
       merged.jobLifetimeFries=Math.max(0,Math.floor(Number(raw.jobLifetimeFries)||0));
       merged.jobLifetimeEarnings=Math.max(0,Math.floor(Number(raw.jobLifetimeEarnings)||0));
+      merged.casesOpened=Math.max(0,Math.floor(Number(raw.casesOpened)||0));
+      merged.caseHistory=(Array.isArray(raw.caseHistory)?raw.caseHistory:[]).map(entry=>({
+        caseId:String(entry?.caseId||''),frogId:String(entry?.frogId||''),duplicate:Boolean(entry?.duplicate),duplicateCredit:Math.max(0,Math.floor(Number(entry?.duplicateCredit)||0))
+      })).filter(entry=>CASES.some(item=>item.id===entry.caseId)&&FROGS.some(frog=>frog.id===entry.frogId)).slice(0,8);
       merged.crashRounds=Math.max(0,Math.floor(Number(raw.crashRounds)||0));merged.crashWins=Math.max(0,Math.floor(Number(raw.crashWins)||0));merged.bestCrashMultiplier=Math.max(0,Number(raw.bestCrashMultiplier)||0);
       merged.vehicleFlightCompletions=Object.fromEntries(VEHICLES.map(vehicle=>[vehicle.id,Math.max(0,Math.floor(Number(raw.vehicleFlightCompletions?.[vehicle.id])||0))]));
       merged.balance = Number.isFinite(merged.balance) ? Math.max(0, Math.floor(merged.balance)) : 1000;
@@ -1960,6 +1994,7 @@
     const exactWallet=`${money(state.balance)} F`,exactOwned=`${money(own)} F`;
     els.balance.textContent=compactMoney(state.balance);els.balance.title=exactWallet;els.balance.setAttribute('aria-label',exactWallet);
     els.collectionBalance.textContent=compactMoney(own);els.collectionBalance.title=exactOwned;els.collectionBalance.setAttribute('aria-label',exactOwned);
+    if(els.caseBalance){els.caseBalance.textContent=compactMoney(own);els.caseBalance.title=exactOwned;els.caseBalance.setAttribute('aria-label',exactOwned);}if(els.casesOpenedLabel)els.casesOpenedLabel.textContent=money(state.casesOpened||0);
     els.level.textContent=`Lv. ${state.level}`; els.xp.textContent=state.xp; els.xpNext.textContent=xpNeeded; els.xpRing.style.setProperty('--xp',`${clamp(state.xp/xpNeeded*100,0,100)}%`);
     els.jump.textContent=`${state.jump} / ${RISKS.length}`; els.multiplier.textContent=`${MULTIPLIERS[state.jump].toFixed(2)}×`; els.risk.textContent=state.jump>=RISKS.length?'—':`${risk}%`; els.payout.textContent=`${money(payout)} F`; els.cashValue.textContent=`${money(payout)} F`;
     els.betDisplay.textContent=money(state.bet); els.start.querySelector('small').textContent=`Median ${money(xpMedianBet())} F · +${money(wagerXpBonus())} XP/landing`; els.danger.textContent=state.jump>=RISKS.length?'Legendary leap':dangerName(risk); els.riskFill.style.width=`${risk}%`;els.riskMarker.style.left=`${risk}%`;els.riskMarker.style.background=risk<30?'#52c95a':risk<60?'#f3c442':'#eb506b';
@@ -2544,9 +2579,60 @@
   }
 
 
+  function renderCases(){
+    if(!els.caseGrid)return;
+    const own=ownedWalletBalance();
+    els.caseBalance.textContent=compactMoney(own);els.caseBalance.title=`${money(own)} F`;
+    els.casesOpenedLabel.textContent=money(state.casesOpened);
+    els.caseGrid.innerHTML=CASES.map(item=>{
+      const locked=state.level<item.level,canAfford=own>=item.cost;
+      const drops=caseDropRows(item).map(({frog,weight})=>`<span><b>${frog.name}</b><i>${(weight/100).toFixed(weight%100?1:0)}%</i></span>`).join('');
+      const buttonLabel=locked?`LEVEL ${item.level} REQUIRED`:`OPEN CASE · ${money(item.cost)} F`;
+      return `<article class="case-card case-${item.accent}"><div class="case-rarity-beam"></div><div class="case-card-head"><span class="case-tier">${item.id==='ultra'?'ULTRA DROP':'FROG CASE'}</span><small>LEVEL ${item.level}+</small></div><div class="case-chest" aria-hidden="true">${item.emoji}</div><h2>${item.name}</h2><p>${item.tagline}</p><div class="case-rarity-summary">${caseRaritySummary(item)}</div><details class="case-odds"><summary>VIEW EXACT ODDS</summary><div>${drops}</div></details><button class="case-open-button pressable" data-case-open="${item.id}" ${locked||!canAfford?'disabled':''}>${buttonLabel}<small>${locked?'Level locked':canAfford?'Froggy only':'Not enough F'}</small></button></article>`;
+    }).join('');
+    renderCaseHistory();
+  }
+
+  function renderCaseHistory(){
+    const history=state.caseHistory||[];
+    if(!history.length){els.caseHistoryList.innerHTML='<p class="case-history-empty">Open your first case to start the history.</p>';els.caseReveal.classList.add('hidden');els.caseReveal.innerHTML='';return;}
+    const latest=history[0],latestFrog=FROGS.find(f=>f.id===latest.frogId),latestCase=caseById(latest.caseId);
+    if(latestFrog&&latestCase){
+      const duplicateCopy=latest.duplicate?`<span class="case-duplicate">DUPLICATE · +${money(latest.duplicateCredit)} F</span>`:'<span class="case-new">NEW FROG</span>';
+      els.caseReveal.className=`case-reveal glass reveal-${String(latestFrog.rarity).toLowerCase().replace(/[^a-z0-9]+/g,'-')}`;
+      els.caseReveal.innerHTML=`<div class="case-reveal-copy"><small>LATEST PULL · ${latestCase.name}</small><h2>${latestFrog.name}</h2>${duplicateCopy}<p>${latest.duplicate?'You already owned this frog, so the duplicate converted to 50% of its Bank Value.':'Added permanently to your Collection.'}</p><div class="case-reveal-actions"><button class="pressable" data-case-open="${latestCase.id}">OPEN AGAIN · ${money(latestCase.cost)} F</button><button class="pressable secondary" data-case-view="${latestFrog.id}">VIEW IN COLLECTION</button></div></div><div class="case-reveal-art">${frogSvg(latestFrog,{collection:true})}<span>${latestFrog.rarity}</span></div>`;
+    }
+    els.caseHistoryList.innerHTML=history.map(entry=>{const frog=FROGS.find(f=>f.id===entry.frogId),item=caseById(entry.caseId);if(!frog||!item)return'';return `<div class="case-history-row"><span>${item.emoji}</span><div><b>${frog.name}</b><small>${item.name} · ${frog.rarity}</small></div><strong>${entry.duplicate?`+${money(entry.duplicateCredit)} F`:'NEW'}</strong></div>`;}).join('');
+  }
+
+  function openCase(id){
+    if(anyRoundActive()||state.animating){setStatus('Finish the current game first.','lose');return false;}
+    const item=caseById(id);if(!item)return false;
+    if(state.level<item.level){setStatus(`Reach level ${item.level} to open the ${item.name}.`,'lose');return false;}
+    if(!spendOwnedFunds(item.cost)){setStatus(`You need ${money(item.cost-ownedWalletBalance())} more Froggy.`,'lose');renderCases();return false;}
+    const frog=rollCase(item),duplicate=state.unlockedFrogs.includes(frog.id);let duplicateCredit=0;
+    if(duplicate)duplicateCredit=creditBalance(Math.floor(Math.max(0,frog.cost)*.5));
+    else state.unlockedFrogs.push(frog.id);
+    state.casesOpened+=1;
+    state.caseHistory=[{caseId:item.id,frogId:frog.id,duplicate,duplicateCredit},...(state.caseHistory||[])].slice(0,8);
+    audio.reward();haptic(22);if(state.effects)confettiBurst(frog.rarity==='ULTRA'?70:frog.rarity==='MYTHIC'?48:28);
+    setStatus(duplicate?`${frog.name} duplicate · +${money(duplicateCredit)} F returned.`:`${frog.name} unlocked from ${item.name}!`,'win');
+    refresh();renderCases();
+    els.caseReveal?.classList.remove('case-reveal-pop');void els.caseReveal?.offsetWidth;els.caseReveal?.classList.add('case-reveal-pop');
+    requestAnimationFrame(()=>els.caseReveal?.scrollIntoView({behavior:'smooth',block:'start'}));
+    return true;
+  }
+
+  function viewCaseFrog(id){
+    const frog=FROGS.find(item=>item.id===id);if(!frog)return;
+    collectionMode='frogs';document.querySelectorAll('.segment').forEach(button=>button.classList.toggle('active',button.dataset.collection==='frogs'));
+    navigate('collection');renderCollection();
+    requestAnimationFrame(()=>els.collectionGrid.querySelector(`[data-item="${CSS.escape(id)}"]`)?.scrollIntoView({behavior:'smooth',block:'center'}));
+  }
+
   function navigate(screen){
     if(screen!=='play')els.customBetRow.classList.add('hidden');
-    Object.entries(els.screens).forEach(([key,node])=>node.classList.toggle('active',key===screen));document.querySelectorAll('.nav-button').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));audio.tap();if(screen!=='job'&&jobRuntime.active)endJobShift('quit');if(screen==='job'){renderJob();requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'auto'}));}if(screen==='collection')renderCollection();if(screen==='play')refresh();if(screen==='bank'){if(state.debtDue)setBankPane('loans');refresh();}if(screen==='stats')refresh();
+    Object.entries(els.screens).forEach(([key,node])=>node.classList.toggle('active',key===screen));document.querySelectorAll('.nav-button').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));audio.tap();if(screen!=='job'&&jobRuntime.active)endJobShift('quit');if(screen==='job'){renderJob();requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'auto'}));}if(screen==='collection')renderCollection();if(screen==='cases')renderCases();if(screen==='play')refresh();if(screen==='bank'){if(state.debtDue)setBankPane('loans');refresh();}if(screen==='stats')refresh();
   }
 
   function collectionResaleValue(kind,item){
@@ -2948,6 +3034,8 @@
       const sell=e.target.closest('[data-collection-sell]');if(sell){const [kind,id]=sell.dataset.collectionSell.split('|');sellCollectionItem(kind,id);return;}
       const b=e.target.closest('[data-collection-action]');if(b)collectionAction(b.dataset.collectionAction);
     });
+    els.caseGrid.addEventListener('click',e=>{const button=e.target.closest('[data-case-open]');if(button)openCase(button.dataset.caseOpen);});
+    els.caseReveal.addEventListener('click',e=>{const open=e.target.closest('[data-case-open]');if(open){openCase(open.dataset.caseOpen);return;}const view=e.target.closest('[data-case-view]');if(view)viewCaseFrog(view.dataset.caseView);});
     els.installButton.addEventListener('click',installGame);
     document.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('click',closeModal));els.modalBackdrop.addEventListener('click',e=>{if(e.target===els.modalBackdrop)closeModal();});
     window.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();if(state.selectedGame==='crash'){state.crashActive?crashCashOut():startCrash();}else{state.roundActive?jump():startRound();}}if(e.code==='Escape'){if(!els.jobResult.classList.contains('hidden'))closeJobResult();else if(state.crashActive)crashCashOut();else state.roundActive?cashOut():closeModal();}});
@@ -2968,6 +3056,7 @@
       state.balance=CRASH_LICENSE_COST+1000000;const paidUnlockStart=state.balance;if(!unlockGame('crash')||!gameUnlocked('crash')||vehicleCharges('glider')!==5||state.balance!==paidUnlockStart-CRASH_LICENSE_COST)throw new Error('paid crash unlock failed');state=deepClone(DEFAULT_STATE);state.level=CRASH_UNLOCK_LEVEL;const freeUnlockStart=state.balance;refresh();if(!gameUnlocked('crash')||vehicleCharges('glider')!==5||state.balance!==freeUnlockStart)throw new Error('level crash unlock failed');
       if(compactMoney(1240000)!=='1.24M'||compactMoney(1000000000)!=='1B'||compactMoney(999)!=='999')throw new Error('compact money formatting failed');
       if(FROGS.find(frog=>frog.id==='owner')?.level!==3000)throw new Error('Owner Frog level requirement failed');
+      if(CASES.length!==3||CASES.some(item=>item.drops.reduce((sum,row)=>sum+row[1],0)!==CASE_ODDS_SCALE))throw new Error('case odds failed');const ultraCase=caseById('ultra');if(!ultraCase||ultraCase.cost!==250000000||ultraCase.drops.find(row=>row[0]==='gigachad')?.[1]!==50)throw new Error('Ultra Case failed');if(document.querySelectorAll('.bottom-nav .nav-button').length!==6)throw new Error('six-slot nav failed');
       if(VEHICLES[0].refillCost!==25000||VEHICLES[1].refillCost!==150000||VEHICLES[2].refillCost!==750000||VEHICLES[3].refillCost!==4000000)throw new Error('refill prices failed');
       if(VEHICLES[0].max!==5||VEHICLES[1].max!==12||VEHICLES[2].max!==30||VEHICLES[3].max!==100)throw new Error('realistic redlines failed');
       state.vehicleCharges.glider=5;state.ownedVehicles=['glider'];state.selectedVehicle='glider';state.crashBet=100;state.balance=1000;if(crashPayoutFor(1)!==97||crashPayoutFor(2)!==194)throw new Error('Crash 3% starting edge failed');if(!startCrash()||!state.crashActive)throw new Error('crash start failed');state.crashStartedAt=performance.now()-5000;state.crashMultiplier=1.5;if(!crashCashOut()||state.crashActive||state.balance<=900)throw new Error('manual crash cashout failed');closeModal();state=deepClone(DEFAULT_STATE);state.unlockedGames=['leap','crash'];state.ownedVehicles=['glider'];state.vehicleCharges.glider=2;state.balance=1000;state.crashBet=100;state.safeRunCredits=1;if(!startCrash()||!state.roundSafe||state.safeRunCredits!==0)throw new Error('Crash protected-round activation failed');state.crashStartedAt=performance.now()-5000;state.crashMultiplier=1.5;if(!crashCashOut({automatic:true,reason:'protected'})||state.roundSafe)throw new Error('Crash protected payout failed');closeModal();if(crashMultiplierAtElapsed(10,VEHICLES[0])<=Math.exp(10*VEHICLES[0].growth))throw new Error('accelerating Crash curve failed');
@@ -2993,7 +3082,7 @@
       if(document.querySelector('[data-screen="rewards"]')||document.getElementById('rewardsScreen')||document.getElementById('rewardModal')||document.getElementById('spinButton'))throw new Error('Rewards UI still present');
       if(ownerPanelModal.querySelector('[data-owner-action="spins"]')||ownerPanelModal.querySelector('[data-owner-action="unlimited"]'))throw new Error('Reward-wheel owner controls still present');
       const shopFrogs=frogShopItems();for(let i=1;i<shopFrogs.length;i++){if(shopFrogs[i].cost<shopFrogs[i-1].cost)throw new Error('frog shop price order failed');if((FROG_RARITY_RANK[shopFrogs[i].rarity]??99)<(FROG_RARITY_RANK[shopFrogs[i-1].rarity]??99))throw new Error('frog rarity progression failed');}const hill=FROGS.find(f=>f.id==='gigachad');if(!hill||hill.name!=='The Hill Frog'||hill.art!=='assets/the-hill-frog-game-v66.png'||hill.cardArt!=='assets/the-hill-frog-card-v64.webp')throw new Error('The Hill Frog art/name failed');const basicIds=['meadow','river','moss','sand','blue-dart','sunset'];if(!basicIds.every(id=>FROGS.some(f=>f.id===id)))throw new Error('v63 basic frog lineup missing');
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v66 approved smiling The Hill Frog gameplay model + v64 polished The Hill Frog Collection portrait + v63 basic frog lineup + The Hill Frog rename, v62 rarity header rows + price/rarity order, v60 Rewards removal, v59 gameplay skin art, v55 early Crash risk, Piggy rates, trusted-time warning, restartable Shift Over dialog, and app-visible no-flight badge';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v67 Cases + six-slot mobile nav + v66 approved smiling The Hill Frog gameplay model + v64 polished The Hill Frog Collection portrait + v63 basic frog lineup + The Hill Frog rename, v62 rarity header rows + price/rarity order, v60 Rewards removal, v59 gameplay skin art, v55 early Crash risk, Piggy rates, trusted-time warning, restartable Shift Over dialog, and app-visible no-flight badge';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 
