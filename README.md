@@ -1,8 +1,6 @@
-# Froggy Leap v75
+# Froggy Leap v77
 
-> **Current-behavior note:** The v75 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
-
-
+> **Current-behavior note:** The v77 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
 
 
@@ -15,6 +13,31 @@
 
 
 
+
+
+
+
+
+## v77 — 15-second Plinko Bank rounds + XP/case/loan polish
+
+- Plinko eggs no longer count as Bank rounds individually. The first egg starts a **15-second Plinko round window**; any number of eggs may be spammed during that window, and completion advances the Bank countdown by exactly **one round**.
+- The Plinko Bank-round timer pauses while the page/app is hidden and is not persisted across a real page close, preventing an unseen offline installment advance.
+- Added an on-board **BANK ROUND** timer so the 15-second window is visible while playing.
+- Plinko XP per egg is reduced to **one fifth** of the prior v76 award; bets, payout multipliers, risk tables, physics, RTP, and protected-egg logic are unchanged.
+- Ultra Case base odds are rebalanced to **The Hill Frog 3.0%** and **Owner Frog 0.1%**. Owner remains the rarest pull. The remaining 96.9% is redistributed to Dino 35%, Ninja 28%, Alien 19.5%, and Rockstar 14.4%. Case Luck still scales from these new base odds and adjusted odds remain visible before opening.
+- Rebuilt the loan-builder/collateral sheet with dark high-contrast Bank styling, clearer quote cards, cleaner collateral rows, and more readable mobile scrolling.
+- Restyled the active-loan payment dock and moved it slightly higher above the bottom navigation on mobile.
+- Existing saves, case inventory, Owner Console controls, Piggy rates, Plinko board sizes, and all other games remain compatible. PWA/cache/build references are bumped to **v77**.
+
+## v76 — Expanded Plinko boards + continuous physics
+
+- Rebuilt Frog Egg Plinko motion around continuous gravity/velocity simulation, real peg-surface collisions, natural upward rebounds, rotation, pocket wall impacts, and small settling bounces instead of row-to-row scripted flight segments.
+- One tap still drops exactly one egg and the button remains spammable with up to 48 simultaneous in-flight eggs.
+- Board size now grows with risk: **Low = 12 rows / 13 pockets**, **Medium = 14 rows / 15 pockets**, **High = 16 rows / 17 pockets**. Harder boards are also visibly taller on desktop and mobile.
+- The underlying outcome system remains independent 50/50 left/right decisions at every row. Low keeps its original table; Medium and High use expanded symmetric tables calibrated to preserve their previous overall RTPs (~96.69% and ~97.05%).
+- Protected Plinko eggs continue to use the same path distribution conditioned on a >1.00x pocket and work across all three board sizes.
+- Added visible pocket boxes inside the board and adaptive egg/peg sizing so 17-pocket High risk remains readable on phones.
+- Existing saves, cases, owner controls, frog perks, Piggy rates, Bank settings, and other games remain compatible. PWA/cache/build references are bumped to **v76**.
 
 ## v75 — Case inventory, owner controls, protected Plinko
 

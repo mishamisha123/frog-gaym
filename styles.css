@@ -4774,3 +4774,86 @@ input[type="range"]{opacity:1!important;filter:none!important}
 @media(max-width:430px){.topbar .profile-copy b{font-size:10px!important}.topbar .profile-copy small{font-size:5.5px!important;white-space:nowrap}.topbar .profile-chip{gap:5px!important;padding-right:5px!important}.topbar .profile-frog{width:36px!important;height:36px!important}.topbar .balance-pill{min-width:72px!important;max-width:86px!important}.topbar .balance-pill strong{font-size:10px!important}}
 @media(max-width:360px){.topbar .profile-copy small{display:none!important}.topbar .balance-pill{min-width:65px!important;max-width:76px!important}.topbar .icon-button{width:32px!important;height:32px!important}.topbar .top-actions{gap:3px!important}}
 @media(max-width:390px){.case-buy-grid{gap:4px}.case-buy-button{font-size:7px;min-height:40px}.case-buy-button small{font-size:5px}}
+
+/* ==========================================================
+   v76 — expanded Plinko boards + continuous peg/pocket physics
+   ========================================================== */
+.plinko-board[data-risk="low"]{height:min(58vh,560px);min-height:420px}
+.plinko-board[data-risk="medium"]{height:min(66vh,640px);min-height:480px}
+.plinko-board[data-risk="high"]{height:min(74vh,720px);min-height:540px}
+.plinko-risk-buttons button{display:grid;place-items:center;align-content:center;gap:2px;line-height:1}
+.plinko-risk-buttons button>span{font-size:8px;font-weight:1000}
+.plinko-risk-buttons button>small{font-size:5px!important;letter-spacing:.06em;color:#74addc!important}
+.plinko-risk-buttons button.active>small{color:#285619!important}
+.plinko-multipliers[data-slots="15"] .plinko-slot b{font-size:6.2px}
+.plinko-multipliers[data-slots="17"] .plinko-slot b{font-size:5.5px}
+.plinko-board[data-risk="medium"],.plinko-board[data-risk="high"]{box-shadow:inset 0 0 64px rgba(0,0,0,.34),0 0 0 1px rgba(84,203,255,.08)}
+.plinko-board[data-risk="high"]{border-color:rgba(184,103,255,.42);background:#08183d}
+
+@media(max-width:900px){
+  .plinko-board[data-risk="low"]{height:520px;min-height:420px}
+  .plinko-board[data-risk="medium"]{height:590px;min-height:500px}
+  .plinko-board[data-risk="high"]{height:660px;min-height:560px}
+}
+@media(max-width:760px){
+  .plinko-board[data-risk="low"]{height:430px;min-height:390px}
+  .plinko-board[data-risk="medium"]{height:500px;min-height:460px}
+  .plinko-board[data-risk="high"]{height:570px;min-height:520px}
+  .plinko-multipliers[data-slots="15"] .plinko-slot b{font-size:4.8px}
+  .plinko-multipliers[data-slots="17"] .plinko-slot b{font-size:4.1px}
+}
+@media(max-width:430px){
+  .plinko-board[data-risk="low"]{height:390px;min-height:370px}
+  .plinko-board[data-risk="medium"]{height:455px;min-height:430px}
+  .plinko-board[data-risk="high"]{height:520px;min-height:490px}
+  .plinko-multipliers{gap:2px!important;padding:0!important}
+  .plinko-slot{border-radius:5px!important;padding:0 1px}
+  .plinko-multipliers[data-slots="15"] .plinko-slot b{font-size:4.1px}
+  .plinko-multipliers[data-slots="17"] .plinko-slot b{font-size:3.6px}
+}
+
+/* ==========================================================
+   v77 — loan UI polish + 15s Plinko Bank-round window
+   ========================================================== */
+.plinko-mini-stats{grid-template-columns:repeat(4,minmax(54px,1fr))!important;min-width:330px!important}
+.plinko-round-stat{border-color:rgba(220,255,91,.34)!important;background:linear-gradient(180deg,rgba(35,72,76,.92),rgba(9,42,65,.92))!important}
+.plinko-round-stat small{color:#dfff67!important}.plinko-round-stat b{color:#f4ffb3!important;font-variant-numeric:tabular-nums}
+
+/* Rebuild the loan quote as a dark, high-contrast premium Bank sheet. */
+.loan-builder-modal{width:min(620px,calc(100vw - 18px))!important;max-height:min(88svh,820px)!important;overflow:hidden!important;border-radius:27px!important;background:linear-gradient(160deg,#10498d 0%,#082a63 48%,#061a42 100%)!important;border:1px solid rgba(93,203,255,.46)!important;box-shadow:0 30px 90px rgba(0,4,26,.7),inset 0 1px rgba(255,255,255,.13)!important}
+.loan-builder-modal .loan-modal-scroll{padding:22px 22px 16px!important;scrollbar-width:thin;scrollbar-color:#328bd0 #071d48}
+.loan-builder-modal .loan-modal-scroll::-webkit-scrollbar{width:7px}.loan-builder-modal .loan-modal-scroll::-webkit-scrollbar-track{background:#071d48;border-radius:99px}.loan-builder-modal .loan-modal-scroll::-webkit-scrollbar-thumb{background:#328bd0;border-radius:99px}
+.loan-builder-modal .loan-modal-scroll>small{display:block;color:#70e5ff!important;font-size:8px!important;font-weight:1000!important;letter-spacing:.14em!important;text-align:center}
+.loan-builder-modal .loan-modal-scroll>h2{margin:3px 0 4px!important;color:#fff!important;font-size:27px!important;font-style:italic!important;text-shadow:0 3px 0 #041b45!important}
+.loan-builder-modal .loan-builder-intro{max-width:470px;margin:0 auto 13px!important;color:#a9cce8!important;font-size:9px!important;line-height:1.45!important}
+.loan-builder-modal .loan-builder-amount{margin:0 0 10px!important;padding:12px 16px!important;border-radius:18px!important;background:radial-gradient(circle at 18% 0%,rgba(115,235,255,.18),transparent 52%),linear-gradient(145deg,#0d3f82,#09265c)!important;border:1px solid rgba(92,199,255,.32)!important;box-shadow:inset 0 1px rgba(255,255,255,.08)!important}
+.loan-builder-modal .loan-builder-amount small{color:#83dfff!important}.loan-builder-modal .loan-builder-amount b{color:#dfff67!important;text-shadow:0 0 18px rgba(191,255,76,.2)!important}
+.loan-builder-modal .loan-slider-limits{color:#9bc5e5!important;margin-top:4px!important}
+.loan-builder-modal .loan-exact-row{grid-template-columns:105px minmax(0,1fr)!important;margin:11px 0!important;padding:9px 10px!important;border-radius:14px!important;background:rgba(4,23,58,.58)!important;border:1px solid rgba(81,181,245,.2)!important}
+.loan-builder-modal .loan-exact-row label{color:#75dfff!important;font-size:7px!important}
+.loan-builder-modal .loan-exact-controls{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:7px!important}.loan-builder-modal .loan-maximum-button{min-width:55px!important;color:#10273b!important;background:linear-gradient(180deg,#dfff67,#8ed84c)!important;border:1px solid #ecff9b!important}
+.loan-builder-modal .simple-quote-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px!important;margin-bottom:11px!important}
+.loan-builder-modal .simple-quote-grid>div{padding:10px 9px!important;border-radius:13px!important;background:linear-gradient(180deg,#0d3978,#08275c)!important;border:1px solid rgba(82,183,247,.22)!important;min-height:59px!important}
+.loan-builder-modal .simple-quote-grid small{color:#74bde9!important;font-size:5.8px!important}.loan-builder-modal .simple-quote-grid b{color:#fff!important;font-size:8.8px!important;line-height:1.25!important}
+.loan-builder-modal .loan-collateral-picker{margin-top:0!important;padding:12px!important;border-radius:17px!important;background:linear-gradient(180deg,#082d68,#061f50)!important;border:1px solid rgba(87,190,252,.26)!important}
+.loan-builder-modal .loan-collateral-head small{color:#76e5ff!important}.loan-builder-modal .loan-collateral-head b{color:#d9edff!important;font-size:9px!important}.loan-builder-modal .loan-collateral-tools button{color:#10273b!important;background:linear-gradient(180deg,#dfff67,#8fdc4e)!important;border:1px solid #eeffa1!important}.loan-builder-modal #loanCollateralClearButton{color:#d9edff!important;background:#0d3b78!important;border:1px solid rgba(91,191,251,.27)!important}
+.loan-builder-modal .loan-collateral-summary{grid-template-columns:repeat(3,minmax(0,1fr))!important}.loan-builder-modal .loan-collateral-summary span{color:#8fc2e5!important;background:#071d49!important;border:1px solid rgba(76,169,234,.18)!important}.loan-builder-modal .loan-collateral-summary b{color:#fff!important}.loan-builder-modal #loanCollateralShortfallLabel{color:#baff72!important;background:#0b402f!important}.loan-builder-modal #loanCollateralShortfallLabel.short{color:#ffb1c0!important;background:#5d1735!important}
+.loan-builder-modal .loan-collateral-list{max-height:205px!important;padding-right:3px!important;scrollbar-width:thin;scrollbar-color:#358fd0 #071d48}.loan-builder-modal .collateral-choice,.loan-builder-modal .collateral-quantity-row{color:#fff!important;background:linear-gradient(180deg,#0c3774,#08275d)!important;border-color:rgba(82,180,244,.19)!important}.loan-builder-modal .collateral-choice.selected{background:linear-gradient(180deg,#155d69,#0c414f)!important;border-color:#8fe66a!important;box-shadow:inset 0 0 0 1px rgba(185,255,110,.16)!important}.loan-builder-modal .collateral-choice small,.loan-builder-modal .collateral-quantity-row small{color:#8fc2e8!important}.loan-builder-modal .collateral-choice i{color:#b9d8ee!important;background:#123f77!important}.loan-builder-modal .collateral-choice.selected i{color:#10273b!important;background:#baff72!important}.loan-builder-modal .no-collateral-assets{color:#a9cce8!important;background:#071d49!important}
+.loan-builder-modal .loan-quote-note{margin:10px 0 0!important;color:#cdebd5!important;background:linear-gradient(180deg,#0d493e,#0a352f)!important;border:1px solid rgba(118,232,155,.23)!important}.loan-builder-modal .loan-quote-note b{color:#a8ffb1!important}
+.loan-builder-modal .loan-modal-footer{padding:10px 18px max(14px,env(safe-area-inset-bottom))!important;background:linear-gradient(180deg,rgba(6,27,67,.97),#051a42)!important;border-top:1px solid rgba(92,193,255,.2)!important;box-shadow:0 -13px 30px rgba(0,5,29,.36)!important}.loan-builder-modal .loan-modal-footer #loanReviewButton{min-height:57px!important;border-radius:16px!important}
+.loan-builder-modal .modal-close{top:11px!important;right:11px!important;background:#0d3774!important;border-color:rgba(94,193,255,.3)!important}
+
+/* Active-loan payment bar: smaller, darker, and visibly above the bottom dock. */
+.loan-payment-dock{bottom:calc(96px + var(--safe-bottom))!important;width:min(780px,calc(100vw - 22px))!important;padding:9px 10px 10px!important;border-radius:20px!important;background:linear-gradient(150deg,rgba(13,58,119,.98),rgba(5,29,70,.99))!important;border:1px solid rgba(89,195,255,.4)!important;box-shadow:0 18px 44px rgba(0,3,25,.52),inset 0 1px rgba(255,255,255,.1)!important}
+.loan-payment-dock-label{padding:0 4px 7px!important}.loan-payment-dock-label span{color:#74e6ff!important;font-size:7px!important}.loan-payment-dock-label b{color:#d1eaff!important;font-size:8px!important}
+.loan-payment-dock-actions{gap:7px!important}.loan-payment-dock-actions .debt-action{min-height:50px!important;border-radius:14px!important}.loan-payment-dock-actions .debt-action:first-child{color:#06263c!important;background:linear-gradient(180deg,#7feaff,#2bb7e8)!important;border:1px solid #9af1ff!important;box-shadow:0 4px 0 #136e9a!important}.loan-payment-dock-actions .debt-action.secondary{color:#fff!important;background:linear-gradient(180deg,#8c68ef,#5133b4)!important;border:1px solid #b29bff!important;box-shadow:0 4px 0 #352183!important}.loan-payment-dock-actions .debt-action span{font-size:9px!important}.loan-payment-dock-actions .debt-action small{font-size:6px!important;opacity:.85}
+#bankScreen.active.loan-dock-active{padding-bottom:calc(194px + var(--safe-bottom))!important}
+
+@media(max-width:620px){
+  .plinko-mini-stats{grid-template-columns:repeat(4,minmax(0,1fr))!important;min-width:0!important;width:100%!important;gap:4px!important}.plinko-mini-stats span{padding:6px 3px!important}.plinko-mini-stats small{font-size:4.8px!important}.plinko-mini-stats b{font-size:8.5px!important}
+  .loan-builder-modal{width:calc(100vw - 10px)!important;max-height:90svh!important;border-radius:22px!important}.loan-builder-modal .loan-modal-scroll{padding:19px 12px 12px!important}.loan-builder-modal .loan-modal-scroll>h2{font-size:23px!important}.loan-builder-modal .loan-builder-intro{font-size:8px!important}.loan-builder-modal .simple-quote-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.loan-builder-modal .loan-exact-row{grid-template-columns:1fr!important;gap:5px!important}.loan-builder-modal .loan-collateral-head{gap:8px!important}.loan-builder-modal .loan-collateral-summary{grid-template-columns:repeat(3,minmax(0,1fr))!important}.loan-builder-modal .loan-collateral-list{max-height:180px!important}.loan-builder-modal .loan-modal-footer{padding-inline:10px!important}
+  .loan-payment-dock{bottom:calc(100px + var(--safe-bottom))!important;width:calc(100vw - 14px)!important;padding:8px!important}.loan-payment-dock-actions .debt-action{min-height:48px!important;padding:6px 4px!important}#bankScreen.active.loan-dock-active{padding-bottom:calc(190px + var(--safe-bottom))!important}
+}
+@media(max-width:380px){
+  .loan-payment-dock-actions{grid-template-columns:1fr 1fr!important}.loan-payment-dock-actions .debt-action span{font-size:7.8px!important}.loan-payment-dock-actions .debt-action small{font-size:5.2px!important}.loan-payment-dock-label b{font-size:6.8px!important}
+}

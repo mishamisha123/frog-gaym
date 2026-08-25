@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=75-case-inventory-mods" />
+  <link rel="stylesheet" href="styles.css?v=77-plinko-round-loan-ui" />
   <title>Froggy Leap</title>
 </head>
 <body>
@@ -103,7 +103,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v75 · FROGGY LEAP</div>
+          <div class="build-version" aria-label="Installed game version">v77 · FROGGY LEAP</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -189,11 +189,12 @@
         <section id="plinkoGamePane" class="arcade-game-pane hidden" aria-label="Frog Egg Plinko game">
           <section class="plinko-shell glass">
             <div class="plinko-heading">
-              <div><small>FROG EGG PLINKO</small><h2>Drop. Bounce. Hatch a multiplier.</h2><p>One egg, 12 peg rows, 13 payout pockets. Every bounce is a fair left/right split.</p></div>
+              <div><small>FROG EGG PLINKO</small><h2>Drop. Bounce. Hatch a multiplier.</h2><p id="plinkoBoardInfo">14 peg rows · 15 payout pockets · each peg is still a fair 50/50 left/right bounce.</p></div>
               <div class="plinko-mini-stats">
                 <span><small>LAST</small><b id="plinkoLastLabel">—</b></span>
                 <span><small>DROPS</small><b id="plinkoDropsLabel">0</b></span>
                 <span><small>RTP</small><b id="plinkoRtpLabel">97.0%</b></span>
+                <span class="plinko-round-stat"><small>BANK ROUND</small><b id="plinkoRoundLabel">READY</b></span>
               </div>
             </div>
 
@@ -208,7 +209,7 @@
           <section class="plinko-controls glass">
             <div class="plinko-control-grid">
               <label class="plinko-bet-field"><small>BET AMOUNT</small><input id="plinkoBetInput" type="number" min="50" step="1" inputmode="numeric" value="100" /></label>
-              <div class="plinko-risk-field"><small>RISK</small><div id="plinkoRiskButtons" class="plinko-risk-buttons" role="group" aria-label="Plinko risk"><button type="button" class="pressable" data-plinko-risk="low">LOW</button><button type="button" class="active pressable" data-plinko-risk="medium">MEDIUM</button><button type="button" class="pressable" data-plinko-risk="high">HIGH</button></div></div>
+              <div class="plinko-risk-field"><small>RISK</small><div id="plinkoRiskButtons" class="plinko-risk-buttons" role="group" aria-label="Plinko risk"><button type="button" class="pressable" data-plinko-risk="low"><span>LOW</span><small>12 rows</small></button><button type="button" class="active pressable" data-plinko-risk="medium"><span>MEDIUM</span><small>14 rows</small></button><button type="button" class="pressable" data-plinko-risk="high"><span>HIGH</span><small>16 rows</small></button></div></div>
             </div>
             <div id="plinkoQuickBets" class="plinko-quick-bets" aria-label="Plinko bet controls">
               <button type="button" class="pressable" data-plinko-bet="min"><b>MIN</b><small>50 F</small></button>
@@ -217,7 +218,7 @@
               <button type="button" class="pressable" data-plinko-bet="max"><b>MAX</b><small>Wallet</small></button>
             </div>
             <button id="plinkoDropButton" type="button" class="action-button start plinko-drop-button pressable"><span>DROP FROG EGG</span><small>Bet 100 F · MEDIUM risk</small></button>
-            <p class="plinko-fair-note">Fictional Froggy only · 12 independent 50/50 bounces · the multiplier table is visible before every drop.</p>
+            <p class="plinko-fair-note">Fictional Froggy only · one 15-second Plinko window counts as one Bank round no matter how many eggs you spam · every peg remains an independent 50/50 bounce.</p>
           </section>
         </section>
 
@@ -694,6 +695,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=75-case-inventory-mods"></script>
+  <script src="app.js?v=77-plinko-round-loan-ui"></script>
 </body>
 </html>

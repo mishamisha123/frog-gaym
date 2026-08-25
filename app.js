@@ -3,7 +3,7 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v75';
+  const BUILD_VERSION = 'v77';
   console.info(`Froggy Leap ${BUILD_VERSION} loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
@@ -31,12 +31,14 @@
   const CRASH_MIN_POINT = 1.01;
   const CRASH_GROWTH_RATE = 0.12;
   const CRASH_LAUNCH_COUNTDOWN_MS = 1800;
-  const PLINKO_ROWS = 12;
   const PLINKO_TARGET_RTP = 0.97;
-  const PLINKO_PAYOUTS = Object.freeze({
-    low:Object.freeze([6.76,2.54,1.69,1.33,1.21,0.85,0.60,0.85,1.21,1.33,1.69,2.54,6.76]),
-    medium:Object.freeze([24.99,7.81,3.12,2.19,1.09,0.62,0.31,0.62,1.09,2.19,3.12,7.81,24.99]),
-    high:Object.freeze([129.08,25.82,6.45,2.58,0.65,0.26,0.06,0.26,0.65,2.58,6.45,25.82,129.08])
+  // v76 keeps the same fair 50/50 left/right system while letting harder boards grow.
+  // Low retains the original 12-row table. Medium/High add rows and pockets while preserving
+  // their previous overall RTPs (about 96.69% and 97.05% respectively).
+  const PLINKO_CONFIGS = Object.freeze({
+    low:Object.freeze({rows:12,payouts:Object.freeze([6.76,2.54,1.69,1.33,1.21,0.85,0.60,0.85,1.21,1.33,1.69,2.54,6.76])}),
+    medium:Object.freeze({rows:14,payouts:Object.freeze([26.708692,10.970214,4.766737,2.766601,1.836766,1.021444,0.615309,0.331320,0.615309,1.021444,1.836766,2.766601,4.766737,10.970214,26.708692])}),
+    high:Object.freeze({rows:16,payouts:Object.freeze([186.283586,74.517764,23.285448,7.912146,3.723363,1.634383,0.656640,0.303064,0.086590,0.303064,0.656640,1.634383,3.723363,7.912146,23.285448,74.517764,186.283586])})
   });
   const MAX_LOAN_PAYOUT = 5000000000;
   const MAX_CASE_LUCK_MULTIPLIER = 100;
@@ -141,8 +143,8 @@
     {id:'neon',name:'Neon Case',emoji:'🎁',cost:100000,level:7,accent:'neon',tagline:'Rare and Epic pulls with a tiny Mythic chance.',drops:[
       ['blue-dart',1900],['sunset',1800],['robot',1800],['ghost',2000],['dragon',1500],['dino',700],['ninja',250],['alien',50]
     ]},
-    {id:'ultra',name:'Ultra Case',emoji:'👑',cost:250000000,level:50,accent:'ultra',tagline:'Top-end frogs only. The Hill Frog is 9.5%; Owner Frog is the rarest 0.5% jackpot.',drops:[
-      ['dino',3200],['ninja',2600],['alien',1800],['rockstar',1400],['gigachad',950],['owner',50]
+    {id:'ultra',name:'Ultra Case',emoji:'👑',cost:250000000,level:50,accent:'ultra',tagline:'Top-end frogs only. The Hill Frog is 3%; Owner Frog is the rarest 0.1% jackpot.',drops:[
+      ['dino',3500],['ninja',2800],['alien',1950],['rockstar',1440],['gigachad',300],['owner',10]
     ]}
   ]);
   const CASE_ODDS_SCALE = 10000;
@@ -309,7 +311,7 @@
     app: $('app'), canvas: $('gameCanvas'), gameFrame: $('gameFrame'), status: $('statusToast'), crashCanvas: $('crashCanvas'), crashFrame: $('crashFrame'), crashStatus: $('crashStatus'),
     balance: $('balanceLabel'), collectionBalance: $('collectionBalance'), level: $('levelLabel'), xp: $('xpLabel'), xpNext: $('xpNextLabel'), xpRing: $('xpRing'),
     jump: $('jumpLabel'), multiplier: $('multiplierLabel'), risk: $('riskLabel'), payout: $('payoutLabel'), danger: $('dangerLabel'), riskFill: $('riskFill'), riskMarker: $('riskMarker'),
-    leapGamePane: $('leapGamePane'), crashGamePane: $('crashGamePane'), plinkoGamePane: $('plinkoGamePane'), leapGameTab: $('leapGameTab'), crashGameTab: $('crashGameTab'), plinkoGameTab: $('plinkoGameTab'), crashTabStatus: $('crashTabStatus'), plinkoCanvas: $('plinkoCanvas'), plinkoBoard: $('plinkoBoard'), plinkoMultipliers: $('plinkoMultipliers'), plinkoBetInput: $('plinkoBetInput'), plinkoQuickBets: $('plinkoQuickBets'), plinkoRiskButtons: $('plinkoRiskButtons'), plinkoDropButton: $('plinkoDropButton'), plinkoStatus: $('plinkoStatus'), plinkoLastLabel: $('plinkoLastLabel'), plinkoDropsLabel: $('plinkoDropsLabel'), plinkoRtpLabel: $('plinkoRtpLabel'), crashLicenseCard: $('crashLicenseCard'), crashGameContent: $('crashGameContent'), unlockCrashButton: $('unlockCrashButton'), crashMultiplierLabel: $('crashMultiplierLabel'), crashPayoutLabel: $('crashPayoutLabel'), crashVehicleLabel: $('crashVehicleLabel'), crashChargesLabel: $('crashChargesLabel'), crashVehicleMaxLabel: $('crashVehicleMaxLabel'), crashBetInput: $('crashBetInput'), crashVehicleSelect: $('crashVehicleSelect'), crashQuickBets: $('crashQuickBets'), crashStartButton: $('crashStartButton'), crashNoFlights: $('crashNoFlights'), crashNoFlightsTitle: $('crashNoFlightsTitle'), crashNoFlightsText: $('crashNoFlightsText'), crashVehicleShopButton: $('crashVehicleShopButton'), crashFlightDock: $('crashFlightDock'), crashCashButton: $('crashCashButton'), crashCashValue: $('crashCashValue'), betDisplay: $('betDisplay'), start: $('startButton'), jumpButton: $('jumpButton'), cash: $('cashButton'), cashValue: $('cashButtonValue'), quickBets: $('quickBets'), betAdjusters: $('betAdjusters'), customBetToggle: $('customBetToggle'), customBetRow: $('customBetRow'), customBetInput: $('customBetInput'), customBetClose: $('customBetClose'), customBetError: $('customBetError'),
+    leapGamePane: $('leapGamePane'), crashGamePane: $('crashGamePane'), plinkoGamePane: $('plinkoGamePane'), leapGameTab: $('leapGameTab'), crashGameTab: $('crashGameTab'), plinkoGameTab: $('plinkoGameTab'), crashTabStatus: $('crashTabStatus'), plinkoCanvas: $('plinkoCanvas'), plinkoBoard: $('plinkoBoard'), plinkoMultipliers: $('plinkoMultipliers'), plinkoBetInput: $('plinkoBetInput'), plinkoQuickBets: $('plinkoQuickBets'), plinkoRiskButtons: $('plinkoRiskButtons'), plinkoDropButton: $('plinkoDropButton'), plinkoStatus: $('plinkoStatus'), plinkoLastLabel: $('plinkoLastLabel'), plinkoDropsLabel: $('plinkoDropsLabel'), plinkoRtpLabel: $('plinkoRtpLabel'), plinkoRoundLabel: $('plinkoRoundLabel'), crashLicenseCard: $('crashLicenseCard'), crashGameContent: $('crashGameContent'), unlockCrashButton: $('unlockCrashButton'), crashMultiplierLabel: $('crashMultiplierLabel'), crashPayoutLabel: $('crashPayoutLabel'), crashVehicleLabel: $('crashVehicleLabel'), crashChargesLabel: $('crashChargesLabel'), crashVehicleMaxLabel: $('crashVehicleMaxLabel'), crashBetInput: $('crashBetInput'), crashVehicleSelect: $('crashVehicleSelect'), crashQuickBets: $('crashQuickBets'), crashStartButton: $('crashStartButton'), crashNoFlights: $('crashNoFlights'), crashNoFlightsTitle: $('crashNoFlightsTitle'), crashNoFlightsText: $('crashNoFlightsText'), crashVehicleShopButton: $('crashVehicleShopButton'), crashFlightDock: $('crashFlightDock'), crashCashButton: $('crashCashButton'), crashCashValue: $('crashCashValue'), betDisplay: $('betDisplay'), start: $('startButton'), jumpButton: $('jumpButton'), cash: $('cashButton'), cashValue: $('cashButtonValue'), quickBets: $('quickBets'), betAdjusters: $('betAdjusters'), customBetToggle: $('customBetToggle'), customBetRow: $('customBetRow'), customBetInput: $('customBetInput'), customBetClose: $('customBetClose'), customBetError: $('customBetError'),
     sound: $('soundButton'), bankShortcut: $('bankShortcutButton'), settingsSound: $('settingsSound'), settingsMotion: $('settingsMotion'), luckyBadge: $('luckyBadge'), luckyCount: $('luckyCount'), debtBadge: $('debtBadge'), debtBadgeAmount: $('debtBadgeAmount'), debtBadgeTurns: $('debtBadgeTurns'), debtBadgeStatus: $('debtBadgeStatus'), debtDueDot: $('debtDueDot'), debtDueFlag: $('debtDueFlag'),
     screens: { play:$('playScreen'), job:$('jobScreen'), collection:$('collectionScreen'), bank:$('bankScreen'), cases:$('casesScreen'), stats:$('statsScreen') },
     collectionGrid: $('collectionGrid'), caseGrid:$('caseGrid'), caseBalance:$('caseBalance'), casesOpenedLabel:$('casesOpenedLabel'), caseReveal:$('caseReveal'), caseHistoryList:$('caseHistoryList'), caseOpeningOverlay:$('caseOpeningOverlay'), caseOpeningShell:$('caseOpeningShell'), caseOpeningClose:$('caseOpeningClose'), caseOpeningSkip:$('caseOpeningSkip'), caseOpeningKicker:$('caseOpeningKicker'), caseOpeningTitle:$('caseOpeningTitle'), caseOpeningSubtitle:$('caseOpeningSubtitle'), caseOpeningChest:$('caseOpeningChest'), caseOpeningChestEmoji:$('caseOpeningChestEmoji'), caseOpeningReelWrap:$('caseOpeningReelWrap'), caseOpeningReel:$('caseOpeningReel'), caseOpeningResult:$('caseOpeningResult'), installButton: $('installButton'),
@@ -366,7 +368,9 @@
   function skinFlightRefundChance(){ return clamp(Number(activeSkinPerks().flightRefundChance)||0,0,1); }
   function selectedLake(){ return LAKES.find(x=>x.id===state.selectedLake) || LAKES[0]; }
   function selectedVehicle(){ return VEHICLES.find(x=>x.id===state.selectedVehicle) || VEHICLES[0]; }
-  function anyRoundActive(){ return Boolean(state.roundActive||state.crashActive||state.plinkoActive); }
+  const PLINKO_BANK_ROUND_MS=15000;
+  const plinkoBankRoundRuntime={active:false,remainingMs:0,lastTick:0,timer:0};
+  function anyRoundActive(){ return Boolean(state.roundActive||state.crashActive||state.plinkoActive||plinkoBankRoundRuntime.active); }
   function ownedWalletBalance(){ return Math.max(0,Math.floor(state.balance)); }
   function gameUnlocked(id){ return state.unlockedGames.includes(id); }
   function vehicleCharges(id=state.selectedVehicle){ return Math.max(0,Math.floor(state.vehicleCharges[id]||0)); }
@@ -1018,15 +1022,55 @@
   }
   const PLINKO_MAX_ACTIVE_EGGS = 48;
   const plinkoRuntime={raf:0,eggs:[],nextId:1,lastFrame:0,lastPegSoundAt:0};
-  function plinkoTable(risk=state.plinkoRisk){return PLINKO_PAYOUTS[['low','medium','high'].includes(risk)?risk:'medium'];}
+  function plinkoConfig(risk=state.plinkoRisk){return PLINKO_CONFIGS[['low','medium','high'].includes(risk)?risk:'medium'];}
+  function plinkoRows(risk=state.plinkoRisk){return plinkoConfig(risk).rows;}
+  function plinkoTable(risk=state.plinkoRisk){return plinkoConfig(risk).payouts;}
   function plinkoRiskLabel(risk=state.plinkoRisk){return risk==='low'?'LOW':risk==='high'?'HIGH':'MEDIUM';}
   function plinkoRtp(risk=state.plinkoRisk){
-    const table=plinkoTable(risk);let expected=0;
-    for(let slot=0;slot<=PLINKO_ROWS;slot++)expected+=(binomialCoefficient(PLINKO_ROWS,slot)/(2**PLINKO_ROWS))*table[slot];
+    const rows=plinkoRows(risk),table=plinkoTable(risk);let expected=0;
+    for(let slot=0;slot<=rows;slot++)expected+=(binomialCoefficient(rows,slot)/(2**rows))*table[slot];
     return expected;
   }
   function binomialCoefficient(n,k){let value=1;for(let i=1;i<=k;i++)value=value*(n-k+i)/i;return value;}
   function setPlinkoStatus(text,kind=''){if(!els.plinkoStatus)return;els.plinkoStatus.textContent=text;els.plinkoStatus.className=`plinko-status ${kind}`.trim();}
+  function plinkoRoundTimeText(){
+    if(!plinkoBankRoundRuntime.active)return 'READY';
+    return `${Math.max(0,plinkoBankRoundRuntime.remainingMs/1000).toFixed(1)}s`;
+  }
+  function refreshPlinkoRoundTimerUi(){
+    if(els.plinkoRoundLabel)els.plinkoRoundLabel.textContent=plinkoRoundTimeText();
+    if(els.plinkoDropButton&&plinkoBankRoundRuntime.active){
+      const small=els.plinkoDropButton.querySelector('small');
+      if(small)small.textContent=`Round ${plinkoRoundTimeText()} · ${plinkoRuntime.eggs.length} egg${plinkoRuntime.eggs.length===1?'':'s'} falling · tap to spam`;
+    }
+  }
+  function finishPlinkoBankRound(){
+    if(!plinkoBankRoundRuntime.active)return null;
+    clearInterval(plinkoBankRoundRuntime.timer);plinkoBankRoundRuntime.timer=0;plinkoBankRoundRuntime.active=false;plinkoBankRoundRuntime.remainingMs=0;plinkoBankRoundRuntime.lastTick=0;
+    state.rounds++;state.completedRounds++;session.rounds++;
+    const hadDebt=state.debt>0,debtResult=completeDebtTurn();
+    const text=debtResult?`15s Plinko round complete · ${debtResult.message}`:hadDebt?'15s Plinko round complete · Bank countdown advanced by 1 round.':'15s Plinko round complete.';
+    setPlinkoStatus(text,debtResult?.due||debtResult?.assetLost||debtResult?.levelLost?'lose':'win');
+    refresh();return debtResult;
+  }
+  function tickPlinkoBankRound(){
+    if(!plinkoBankRoundRuntime.active)return;
+    const now=performance.now();
+    if(document.visibilityState!=='visible'){plinkoBankRoundRuntime.lastTick=now;refreshPlinkoRoundTimerUi();return;}
+    if(!plinkoBankRoundRuntime.lastTick)plinkoBankRoundRuntime.lastTick=now;
+    const elapsed=Math.max(0,Math.min(500,now-plinkoBankRoundRuntime.lastTick));
+    plinkoBankRoundRuntime.lastTick=now;plinkoBankRoundRuntime.remainingMs=Math.max(0,plinkoBankRoundRuntime.remainingMs-elapsed);
+    if(plinkoBankRoundRuntime.remainingMs<=0){finishPlinkoBankRound();return;}
+    refreshPlinkoRoundTimerUi();
+  }
+  function startPlinkoBankRound(){
+    if(plinkoBankRoundRuntime.active)return false;
+    plinkoBankRoundRuntime.active=true;plinkoBankRoundRuntime.remainingMs=PLINKO_BANK_ROUND_MS;plinkoBankRoundRuntime.lastTick=performance.now();
+    clearInterval(plinkoBankRoundRuntime.timer);plinkoBankRoundRuntime.timer=setInterval(tickPlinkoBankRound,100);refreshPlinkoRoundTimerUi();return true;
+  }
+  function cancelPlinkoBankRound(){
+    clearInterval(plinkoBankRoundRuntime.timer);plinkoBankRoundRuntime.timer=0;plinkoBankRoundRuntime.active=false;plinkoBankRoundRuntime.remainingMs=0;plinkoBankRoundRuntime.lastTick=0;refreshPlinkoRoundTimerUi();
+  }
   function setPlinkoBet(raw){
     if(state.plinkoActive)return false;
     let value;if(raw==='min')value=MIN_BET;else if(raw==='half')value=Math.max(MIN_BET,Math.floor(state.plinkoBet/2));else if(raw==='double')value=Math.min(ownedWalletBalance(),Math.max(MIN_BET,Math.floor(state.plinkoBet*2)));else if(raw==='max')value=ownedWalletBalance();else value=Math.floor(Number(raw)||0);
@@ -1036,74 +1080,99 @@
   function setPlinkoRisk(risk){if(state.plinkoActive||!['low','medium','high'].includes(risk))return false;state.plinkoRisk=risk;refreshPlinkoHud();saveState();return true;}
   function refreshPlinkoHud(){
     if(!els.plinkoGamePane)return;
-    const table=plinkoTable(),activeCount=plinkoRuntime.eggs.length,atCap=activeCount>=PLINKO_MAX_ACTIVE_EGGS;
+    const risk=state.plinkoRisk,rows=plinkoRows(risk),table=plinkoTable(risk),activeCount=plinkoRuntime.eggs.length,atCap=activeCount>=PLINKO_MAX_ACTIVE_EGGS;
     els.plinkoBetInput.value=String(state.plinkoBet);
     els.plinkoDropButton.disabled=atCap||ownedWalletBalance()<Math.max(MIN_BET,state.plinkoBet);
     els.plinkoDropButton.querySelector('span').textContent=activeCount?'DROP ANOTHER EGG':'DROP FROG EGG';
-    els.plinkoDropButton.querySelector('small').textContent=atCap?`${activeCount} eggs falling · wait for one to land`:activeCount?`${activeCount} egg${activeCount===1?'':'s'} falling · tap to spam`: `Bet ${money(state.plinkoBet)} F · ${plinkoRiskLabel()} risk`;
-    els.plinkoRiskButtons.querySelectorAll('[data-plinko-risk]').forEach(button=>{button.disabled=state.plinkoActive;button.classList.toggle('active',button.dataset.plinkoRisk===state.plinkoRisk);});
+    els.plinkoDropButton.querySelector('small').textContent=atCap?`${activeCount} eggs falling · wait for one to land`:plinkoBankRoundRuntime.active?`Round ${plinkoRoundTimeText()} · ${activeCount} egg${activeCount===1?'':'s'} falling · tap to spam`:activeCount?`${activeCount} egg${activeCount===1?'':'s'} falling · tap to spam`: `Bet ${money(state.plinkoBet)} F · ${plinkoRiskLabel()} · ${rows} rows`;
+    if(els.plinkoRoundLabel)els.plinkoRoundLabel.textContent=plinkoRoundTimeText();
+    els.plinkoRiskButtons.querySelectorAll('[data-plinko-risk]').forEach(button=>{button.disabled=state.plinkoActive;button.classList.toggle('active',button.dataset.plinkoRisk===risk);});
     els.plinkoQuickBets.querySelectorAll('button').forEach(button=>button.disabled=state.plinkoActive);
     els.plinkoBetInput.disabled=state.plinkoActive;
-    els.plinkoMultipliers.innerHTML=table.map((m,i)=>`<span class="plinko-slot slot-${i}" style="--slot-intensity:${Math.abs(i-PLINKO_ROWS/2)/(PLINKO_ROWS/2)}"><b>${m.toFixed(2)}×</b></span>`).join('');
+    els.plinkoBoard.dataset.risk=risk;els.plinkoBoard.dataset.rows=String(rows);
+    els.plinkoMultipliers.dataset.slots=String(table.length);els.plinkoMultipliers.style.gridTemplateColumns=`repeat(${table.length},minmax(0,1fr))`;
+    els.plinkoMultipliers.innerHTML=table.map((m,i)=>`<span class="plinko-slot slot-${i}" style="--slot-intensity:${Math.abs(i-rows/2)/(rows/2)}"><b>${m.toFixed(2)}×</b></span>`).join('');
+    const info=$('plinkoBoardInfo');if(info)info.textContent=`${rows} peg rows · ${table.length} payout pockets · each peg is still a fair 50/50 left/right bounce.`;
     els.plinkoLastLabel.textContent=state.plinkoLastMultiplier>0?`${state.plinkoLastMultiplier.toFixed(2)}×`:'—';
     els.plinkoDropsLabel.textContent=money(state.plinkoDrops);
     els.plinkoRtpLabel.textContent=`${(plinkoRtp()*100).toFixed(1)}%`;
     resizePlinkoCanvas();drawPlinkoBoard();
   }
-  function plinkoLayout(){
-    const canvas=els.plinkoCanvas,w=Math.max(300,canvas?.clientWidth||720),h=Math.max(330,canvas?.clientHeight||520),margin=Math.max(22,w*.055),top=42,bottom=h-26,spacing=(w-margin*2)/PLINKO_ROWS,rowGap=(bottom-top)/PLINKO_ROWS;
-    return {w,h,margin,top,bottom,spacing,rowGap,cx:w/2,eggRadius:Math.max(8,Math.min(11.5,spacing*.22)),pegRadius:Math.max(3.2,Math.min(5.2,spacing*.09))};
+  function plinkoLayout(risk=state.plinkoRisk){
+    const rows=plinkoRows(risk),canvas=els.plinkoCanvas,w=Math.max(300,canvas?.clientWidth||720),h=Math.max(360,canvas?.clientHeight||560),margin=Math.max(17,w*.045),top=52,pocketHeight=Math.max(34,Math.min(48,w/(rows+1)*.92)),pocketTop=h-pocketHeight-5,lastPegY=pocketTop-Math.max(27,pocketHeight*.72),spacing=(w-margin*2)/rows,rowGap=rows>1?(lastPegY-top)/(rows-1):0;
+    return {risk,rows,w,h,margin,top,pocketTop,pocketHeight,lastPegY,spacing,rowGap,cx:w/2,eggRadius:Math.max(5.2,Math.min(11.2,spacing*.285)),pegRadius:Math.max(2.4,Math.min(5.1,spacing*.105))};
   }
   function resizePlinkoCanvas(){
     const canvas=els.plinkoCanvas;if(!canvas)return;const rect=canvas.getBoundingClientRect();if(rect.width<10||rect.height<10)return;const dpr=Math.min(2,window.devicePixelRatio||1),w=Math.round(rect.width*dpr),h=Math.round(rect.height*dpr);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}const c=canvas.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);
   }
   function plinkoPegCenter(row,rightsBefore,L){return {x:L.cx+(rightsBefore-row/2)*L.spacing,y:L.top+row*L.rowGap};}
-  function plinkoContactForRow(egg,row,L){
-    const peg=plinkoPegCenter(row,egg.rights,L),dir=egg.path[row]?1:-1,side=Math.min(L.spacing*.16,L.eggRadius*.78);
-    return {x:peg.x-dir*side,y:peg.y-(L.pegRadius+L.eggRadius*.68),dir};
+  function plinkoImpactTarget(egg,row,L){
+    const peg=plinkoPegCenter(row,egg.rights,L),dir=egg.path[row]?1:-1,combined=L.eggRadius*.72+L.pegRadius,side=Math.min(combined*.56,L.spacing*.18),vertical=Math.sqrt(Math.max(1,combined*combined-side*side));
+    return {peg,dir,x:peg.x+dir*side,y:peg.y-vertical,combined};
   }
-  function launchPlinkoFlight(egg,targetX,targetY,duration,L){
-    const t=Math.max(.16,duration),g=Math.max(980,L.rowGap*38);
-    egg.segmentElapsed=0;egg.segmentDuration=t;egg.targetX=targetX;egg.targetY=targetY;egg.gravity=g;
-    egg.vx=(targetX-egg.x)/t;
-    egg.vy=(targetY-egg.y-.5*g*t*t)/t;
+  function plinkoFlightTime(deltaY,vy,g){
+    const disc=Math.max(0,vy*vy+2*g*Math.max(1,deltaY));return Math.max(.12,(-vy+Math.sqrt(disc))/Math.max(1,g));
   }
   function primePlinkoEggPhysics(egg,L){
-    egg.row=-1;egg.rights=0;egg.finalFlight=false;egg.bounce=0;egg.finished=false;egg.x=L.cx+(Math.random()-.5)*2.5;egg.y=L.top-42-L.eggRadius;egg.rotation=(Math.random()-.5)*.18;egg.angularVelocity=(Math.random()-.5)*2.4;const first=plinkoContactForRow(egg,0,L);launchPlinkoFlight(egg,first.x,first.y,.235+Math.random()*.035,L);
+    egg.rows=L.rows;egg.row=-1;egg.rights=0;egg.nextRow=0;egg.landing=false;egg.finished=false;egg.bounce=0;egg.pocketBounces=0;egg.settleTime=0;egg.gravity=Math.max(900,L.rowGap*41);egg.x=L.cx+(Math.random()-.5)*L.eggRadius*.35;egg.y=L.top-Math.max(46,L.rowGap*.92);egg.vx=(Math.random()-.5)*10;egg.vy=20+Math.random()*22;egg.rotation=(Math.random()-.5)*.22;egg.angularVelocity=(Math.random()-.5)*2.2;
   }
   function bouncePlinkoEgg(egg,L){
-    const row=egg.row+1;
-    if(row>=PLINKO_ROWS)return;
-    const hit=plinkoContactForRow(egg,row,L);egg.x=hit.x;egg.y=hit.y;egg.row=row;egg.rights+=egg.path[row]||0;egg.bounce=1;egg.angularVelocity=hit.dir*(5.2+Math.random()*2.4);
-    const now=performance.now();if(now-plinkoRuntime.lastPegSoundAt>24){plinkoRuntime.lastPegSoundAt=now;audio.fryRim();haptic(4);}
-    if(row===PLINKO_ROWS-1){
-      const slotX=L.cx+(egg.slot-PLINKO_ROWS/2)*L.spacing;
-      launchPlinkoFlight(egg,slotX,L.bottom+L.eggRadius*1.35,.27+Math.random()*.045,L);
-      egg.finalFlight=true;
-      return;
+    const row=egg.nextRow;if(row>=egg.rows)return;
+    const hit=plinkoImpactTarget(egg,row,L),dir=hit.dir;
+    // Reflect the incoming velocity off the circular peg normal first. A gentle lane bias is applied
+    // only after that collision so the pre-rolled 50/50 result stays authoritative without looking scripted.
+    const nx=(hit.x-hit.peg.x)/hit.combined,ny=(hit.y-hit.peg.y)/hit.combined,restitution=.54+Math.random()*.08,vn=egg.vx*nx+egg.vy*ny;
+    let reflectedX=egg.vx,reflectedY=egg.vy;if(vn<0){reflectedX-= (1+restitution)*vn*nx;reflectedY-= (1+restitution)*vn*ny;}
+    egg.x=hit.x;egg.y=hit.y;egg.row=row;egg.rights+=egg.path[row]||0;egg.nextRow=row+1;egg.bounce=1;egg.angularVelocity=dir*(4.2+Math.random()*3.2);
+    egg.vy=clamp(reflectedY,-145,-38);
+    const now=performance.now();if(now-plinkoRuntime.lastPegSoundAt>22){plinkoRuntime.lastPegSoundAt=now;audio.fryRim();haptic(4);}
+    if(egg.nextRow>=egg.rows){
+      egg.landing=true;const slotX=L.cx+(egg.slot-egg.rows/2)*L.spacing,dy=L.pocketTop-egg.y,t=plinkoFlightTime(dy,egg.vy,egg.gravity),ideal=(slotX-egg.x)/t;egg.vx=reflectedX*.42+ideal*.58+(Math.random()-.5)*L.spacing*.10;return;
     }
-    const next=plinkoContactForRow(egg,row+1,L),flight=.225+Math.random()*.045;
-    launchPlinkoFlight(egg,next.x,next.y,flight,L);
+    const next=plinkoImpactTarget(egg,egg.nextRow,L),dy=next.y-egg.y,t=plinkoFlightTime(dy,egg.vy,egg.gravity),ideal=(next.x-egg.x)/t;
+    egg.vx=reflectedX*.46+ideal*.54+(Math.random()-.5)*9;
+    if(Math.sign(egg.vx)!==dir&&Math.abs(egg.vx)<Math.abs(ideal)*.55)egg.vx=ideal*.72;
   }
   function updatePlinkoEggPhysics(egg,dt,L){
     if(egg.finished)return true;
-    const safeDt=Math.min(.034,Math.max(0,dt));egg.segmentElapsed+=safeDt;egg.vy+=egg.gravity*safeDt;egg.x+=egg.vx*safeDt;egg.y+=egg.vy*safeDt;egg.rotation+=egg.angularVelocity*safeDt;egg.angularVelocity*=Math.pow(.985,safeDt*60);egg.bounce=Math.max(0,egg.bounce-safeDt*7.5);
-    if(egg.segmentElapsed+1e-6<egg.segmentDuration)return false;
-    egg.x=egg.targetX;egg.y=egg.targetY;
-    if(egg.finalFlight){egg.finished=true;return true;}
-    bouncePlinkoEgg(egg,L);return false;
+    const safeDt=Math.min(.034,Math.max(0,dt)),steps=Math.max(1,Math.ceil(safeDt/.008)),step=safeDt/steps;
+    for(let n=0;n<steps;n++){
+      egg.bounce=Math.max(0,egg.bounce-step*7.2);egg.rotation+=egg.angularVelocity*step;egg.angularVelocity*=Math.pow(.989,step*60);
+      if(egg.landing){
+        const targetX=L.cx+(egg.slot-egg.rows/2)*L.spacing,left=targetX-L.spacing*.43,right=targetX+L.spacing*.43,floor=L.h-L.eggRadius-5;
+        egg.vx+=(targetX-egg.x)*3.0*step;egg.vx*=Math.pow(.994,step*60);egg.vy+=egg.gravity*step;egg.x+=egg.vx*step;egg.y+=egg.vy*step;
+        if(egg.x<left+L.eggRadius*.45){egg.x=left+L.eggRadius*.45;egg.vx=Math.abs(egg.vx)*.38;}else if(egg.x>right-L.eggRadius*.45){egg.x=right-L.eggRadius*.45;egg.vx=-Math.abs(egg.vx)*.38;}
+        if(egg.y>=floor){egg.y=floor;if(Math.abs(egg.vy)>58&&egg.pocketBounces<2){egg.vy=-Math.abs(egg.vy)*(.23+Math.random()*.06);egg.vx*=.58;egg.pocketBounces++;egg.bounce=1;audio.fryRim();haptic(3);}else{egg.vy=0;egg.vx*=.72;egg.settleTime+=step;if(egg.settleTime>.14){egg.finished=true;return true;}}}
+        continue;
+      }
+      const target=plinkoImpactTarget(egg,egg.nextRow,L),distanceY=target.y-egg.y;
+      // A light steering force corrects tiny numerical drift only; the visible movement is gravity + velocity.
+      if(distanceY>0&&distanceY<L.rowGap*1.55){const steer=clamp((target.x-egg.x)*7.5-egg.vx*.7,-L.spacing*11,L.spacing*11);egg.vx+=steer*step;}
+      const prevY=egg.y;egg.vy+=egg.gravity*step;egg.x+=egg.vx*step;egg.y+=egg.vy*step;
+      const dx=egg.x-target.peg.x,dy=egg.y-target.peg.y,combined=target.combined;
+      if((dx*dx+dy*dy)<=combined*combined&&egg.vy>0){bouncePlinkoEgg(egg,L);continue;}
+      // Anti-tunnelling: if a fast frame crosses the intended peg surface, resolve that same physical hit.
+      if(prevY<target.y&&egg.y>=target.y&&Math.abs(egg.x-target.peg.x)<combined*1.28){bouncePlinkoEgg(egg,L);continue;}
+      if(egg.y>target.peg.y+combined*.72){bouncePlinkoEgg(egg,L);}
+    }
+    return false;
   }
   function drawPlinkoEgg(c,egg,L){
-    const speed=Math.hypot(egg.vx||0,egg.vy||0),r=L.eggRadius,squash=egg.bounce?1-Math.sin(Math.min(1,egg.bounce)*Math.PI)*.13:1,stretch=clamp(1+speed/2500,1,1.10);
-    c.save();c.translate(egg.x,egg.y);c.rotate(egg.rotation||0);c.scale(stretch,squash/stretch);c.shadowColor='rgba(120,255,188,.72)';c.shadowBlur=13;const g=c.createRadialGradient(-r*.34,-r*.48,r*.15,0,0,r*1.35);g.addColorStop(0,'#fbfff5');g.addColorStop(.46,'#dff5c0');g.addColorStop(1,'#70bd60');c.fillStyle=g;c.beginPath();c.ellipse(0,0,r*.78,r,0,0,Math.PI*2);c.fill();c.shadowBlur=0;c.fillStyle='#4f9b45';[[-r*.34,-r*.28,r*.20],[r*.36,-r*.08,r*.16],[0,r*.42,r*.14]].forEach(([sx,sy,sr])=>{c.beginPath();c.arc(sx,sy,sr,0,Math.PI*2);c.fill();});c.fillStyle='rgba(255,255,255,.72)';c.beginPath();c.ellipse(-r*.28,-r*.48,r*.18,r*.10,-.45,0,Math.PI*2);c.fill();if(egg.protected){c.strokeStyle='#ffe66b';c.lineWidth=2.2;c.shadowColor='rgba(255,226,83,.9)';c.shadowBlur=9;c.beginPath();c.ellipse(0,0,r*.88,r*1.1,0,0,Math.PI*2);c.stroke();c.shadowBlur=0;}c.restore();
+    const speed=Math.hypot(egg.vx||0,egg.vy||0),r=L.eggRadius,squash=egg.bounce?1-Math.sin(Math.min(1,egg.bounce)*Math.PI)*.11:1,stretch=clamp(1+speed/3200,1,1.08);
+    c.save();c.translate(egg.x,egg.y);c.rotate(egg.rotation||0);c.scale(stretch,squash/stretch);c.shadowColor='rgba(120,255,188,.72)';c.shadowBlur=12;const g=c.createRadialGradient(-r*.34,-r*.48,r*.15,0,0,r*1.35);g.addColorStop(0,'#fbfff5');g.addColorStop(.46,'#dff5c0');g.addColorStop(1,'#70bd60');c.fillStyle=g;c.beginPath();c.ellipse(0,0,r*.78,r,0,0,Math.PI*2);c.fill();c.shadowBlur=0;c.fillStyle='#4f9b45';[[-r*.34,-r*.28,r*.20],[r*.36,-r*.08,r*.16],[0,r*.42,r*.14]].forEach(([sx,sy,sr])=>{c.beginPath();c.arc(sx,sy,sr,0,Math.PI*2);c.fill();});c.fillStyle='rgba(255,255,255,.72)';c.beginPath();c.ellipse(-r*.28,-r*.48,r*.18,r*.10,-.45,0,Math.PI*2);c.fill();if(egg.protected){c.strokeStyle='#ffe66b';c.lineWidth=2;c.shadowColor='rgba(255,226,83,.9)';c.shadowBlur=8;c.beginPath();c.ellipse(0,0,r*.88,r*1.1,0,0,Math.PI*2);c.stroke();c.shadowBlur=0;}c.restore();
   }
   function drawPlinkoBoard(){
     const canvas=els.plinkoCanvas;if(!canvas||canvas.clientWidth<10)return;const c=canvas.getContext('2d'),L=plinkoLayout();c.clearRect(0,0,L.w,L.h);
     const bg=c.createLinearGradient(0,0,0,L.h);bg.addColorStop(0,'#061a44');bg.addColorStop(.55,'#0b2f68');bg.addColorStop(1,'#07152f');c.fillStyle=bg;c.fillRect(0,0,L.w,L.h);
     const halo=c.createRadialGradient(L.cx,L.top,10,L.cx,L.top,L.w*.55);halo.addColorStop(0,'rgba(44,211,255,.18)');halo.addColorStop(1,'rgba(44,211,255,0)');c.fillStyle=halo;c.fillRect(0,0,L.w,L.h);
-    for(let r=0;r<PLINKO_ROWS;r++)for(let col=0;col<=r;col++){const x=L.cx+(col-r/2)*L.spacing,y=L.top+r*L.rowGap,rad=L.pegRadius;c.shadowColor='rgba(118,224,255,.65)';c.shadowBlur=8;c.fillStyle='#d7f7ff';c.beginPath();c.arc(x,y,rad,0,Math.PI*2);c.fill();c.shadowBlur=0;c.fillStyle='#54a9dd';c.beginPath();c.arc(x+rad*.18,y+rad*.18,rad*.38,0,Math.PI*2);c.fill();}
-    c.strokeStyle='rgba(104,210,255,.18)';c.lineWidth=1;for(let i=0;i<=PLINKO_ROWS;i++){const x=L.cx+(i-PLINKO_ROWS/2)*L.spacing;c.beginPath();c.moveTo(x,L.bottom-4);c.lineTo(x,L.h);c.stroke();}
-    if(plinkoRuntime.eggs.length){for(const egg of plinkoRuntime.eggs)drawPlinkoEgg(c,egg,L);}else drawPlinkoEgg(c,{x:L.cx,y:L.top-27,rotation:0,vx:0,vy:0,bounce:0},L);
+    // Side rails make the growing boards feel like a real boxed Plinko machine.
+    c.strokeStyle='rgba(76,194,255,.24)';c.lineWidth=2;c.beginPath();c.moveTo(L.margin*.7,L.top-18);c.lineTo(L.margin*.7,L.h-4);c.moveTo(L.w-L.margin*.7,L.top-18);c.lineTo(L.w-L.margin*.7,L.h-4);c.stroke();
+    for(let r=0;r<L.rows;r++)for(let col=0;col<=r;col++){const x=L.cx+(col-r/2)*L.spacing,y=L.top+r*L.rowGap,rad=L.pegRadius;c.shadowColor='rgba(118,224,255,.65)';c.shadowBlur=7;c.fillStyle='#d7f7ff';c.beginPath();c.arc(x,y,rad,0,Math.PI*2);c.fill();c.shadowBlur=0;c.fillStyle='#54a9dd';c.beginPath();c.arc(x+rad*.18,y+rad*.18,rad*.38,0,Math.PI*2);c.fill();}
+    // Draw the actual pocket boxes in the canvas; multiplier labels remain directly below them.
+    c.fillStyle='rgba(3,18,49,.72)';c.fillRect(L.margin*.75,L.pocketTop,L.w-L.margin*1.5,L.pocketHeight);
+    c.strokeStyle='rgba(104,210,255,.25)';c.lineWidth=1;for(let i=0;i<=L.rows+1;i++){const x=L.cx+(i-.5-L.rows/2)*L.spacing;c.beginPath();c.moveTo(x,L.pocketTop);c.lineTo(x,L.h);c.stroke();}
+    c.strokeStyle='rgba(105,218,255,.3)';c.beginPath();c.moveTo(L.margin*.75,L.pocketTop);c.lineTo(L.w-L.margin*.75,L.pocketTop);c.stroke();
+    if(plinkoRuntime.eggs.length){for(const egg of plinkoRuntime.eggs)drawPlinkoEgg(c,egg,L);}else drawPlinkoEgg(c,{x:L.cx,y:L.top-Math.max(25,L.rowGap*.7),rotation:0,vx:0,vy:0,bounce:0},L);
   }
   function flashPlinkoSlot(slot){
     const el=els.plinkoMultipliers?.querySelector(`.slot-${slot}`);if(!el)return;el.classList.remove('hit');void el.offsetWidth;el.classList.add('hit');setTimeout(()=>el.classList.remove('hit'),420);
@@ -1111,7 +1180,7 @@
   function finishPlinkoEgg(egg){
     const bet=egg.bet,multiplier=egg.multiplier,payout=creditBalance(egg.payout);state.plinkoLastMultiplier=multiplier;state.bestPlinkoMultiplier=Math.max(state.bestPlinkoMultiplier,multiplier);state.biggestWin=Math.max(state.biggestWin,payout);session.net+=payout;
     const profitable=payout>bet,returned=payout>=bet;if(returned){state.plinkoWins++;session.wins++;session.lossStreak=0;}else{session.losses++;session.lossStreak++;}
-    state.roundBetForXp=bet;addXp(8+wagerXpBonus());const debtResult=finishCompletedRound(payout),profit=payout-bet;setPlinkoStatus(`${multiplier.toFixed(2)}× · ${profit>=0?'+':''}${money(profit)} F${debtResult?` · ${debtResult.message}`:''}`,profitable?'win':returned?'':'lose');flashPlinkoSlot(egg.slot);
+    state.roundBetForXp=bet;const plinkoXp=Math.max(1,Math.floor((8+wagerXpBonus())/5));addXp(plinkoXp);recordXpWager();const profit=payout-bet;setPlinkoStatus(`${multiplier.toFixed(2)}× · ${profit>=0?'+':''}${money(profit)} F · +${plinkoXp} XP`,profitable?'win':returned?'':'lose');flashPlinkoSlot(egg.slot);
     if(multiplier>=5){audio.reward();haptic([12,30,20]);confettiBurst(Math.min(90,24+Math.floor(multiplier)));}else if(returned){audio.cash();haptic(12);}else{audio.croak();haptic(14);}
   }
   function animatePlinko(now){
@@ -1122,21 +1191,21 @@
     drawPlinkoBoard();plinkoRuntime.raf=requestAnimationFrame(animatePlinko);
   }
   function rollPlinkoPath(risk,{protectedRound=false}={}){
-    const table=plinkoTable(risk);
-    // Rejection sampling keeps the original 12 independent 50/50 system. A protected egg simply
-    // conditions that same distribution on landing in a genuinely profitable (>1×) pocket.
-    for(let attempt=0;attempt<2048;attempt++){
-      const path=Array.from({length:PLINKO_ROWS},()=>Math.random()<.5?0:1),slot=path.reduce((sum,v)=>sum+v,0);
+    const rows=plinkoRows(risk),table=plinkoTable(risk);
+    // Every row remains an independent 50/50 decision. Protected eggs condition that same distribution
+    // on a profitable (>1x) pocket; no payout multiplier or slot is manually injected afterwards.
+    for(let attempt=0;attempt<4096;attempt++){
+      const path=Array.from({length:rows},()=>Math.random()<.5?0:1),slot=path.reduce((sum,v)=>sum+v,0);
       if(!protectedRound||table[slot]>1)return {path,slot};
     }
     const winningSlots=table.map((m,i)=>m>1?i:-1).filter(i=>i>=0),slot=winningSlots[Math.floor(Math.random()*winningSlots.length)];
-    const path=Array(PLINKO_ROWS).fill(0);for(let i=0;i<slot;i++)path[i]=1;return {path,slot};
+    const path=Array(rows).fill(0);for(let i=0;i<slot;i++)path[i]=1;return {path,slot};
   }
   function startPlinko(){
     audio.unlock();if(state.roundActive||state.crashActive)return false;if(plinkoRuntime.eggs.length>=PLINKO_MAX_ACTIVE_EGGS){setPlinkoStatus(`Let one of the ${PLINKO_MAX_ACTIVE_EGGS} eggs land before dropping another.`,'lose');return false;}
     const bet=Math.floor(Number(state.plinkoBet)||0),risk=state.plinkoRisk;if(bet<MIN_BET||bet>ownedWalletBalance()){setPlinkoStatus(`You need ${money(Math.max(MIN_BET,bet))} F in your wallet.`,'lose');refreshPlinkoHud();return false;}if(!spendOwnedFunds(bet))return false;
     const protectedRound=state.safeRunCredits>0;if(protectedRound)state.safeRunCredits=Math.max(0,state.safeRunCredits-1);
-    const {path,slot}=rollPlinkoPath(risk,{protectedRound}),multiplier=plinkoTable(risk)[slot],payout=Math.floor(bet*multiplier),egg={id:plinkoRuntime.nextId++,bet,risk,path,slot,multiplier,payout,protected:protectedRound};primePlinkoEggPhysics(egg,plinkoLayout());plinkoRuntime.eggs.push(egg);state.plinkoActive=true;state.plinkoDrops++;state.rounds++;session.rounds++;session.net-=bet;setPlinkoStatus(`${protectedRound?'🛡️ Protected · ':''}${plinkoRuntime.eggs.length} egg${plinkoRuntime.eggs.length===1?'':'s'} in flight — tap DROP again to spam.`,protectedRound?'win':'');audio.start();haptic(protectedRound?[9,20,9]:9);refresh();resizePlinkoCanvas();if(!plinkoRuntime.raf){plinkoRuntime.lastFrame=0;plinkoRuntime.raf=requestAnimationFrame(animatePlinko);}return true;
+    const rows=plinkoRows(risk),{path,slot}=rollPlinkoPath(risk,{protectedRound}),multiplier=plinkoTable(risk)[slot],payout=Math.floor(bet*multiplier),egg={id:plinkoRuntime.nextId++,bet,risk,rows,path,slot,multiplier,payout,protected:protectedRound};primePlinkoEggPhysics(egg,plinkoLayout(risk));plinkoRuntime.eggs.push(egg);state.plinkoActive=true;state.plinkoDrops++;session.net-=bet;if(!plinkoBankRoundRuntime.active)startPlinkoBankRound();setPlinkoStatus(`${protectedRound?'🛡️ Protected · ':''}${plinkoRuntime.eggs.length} egg${plinkoRuntime.eggs.length===1?'':'s'} in flight · Plinko round ends in ${plinkoRoundTimeText()}.`,protectedRound?'win':'');audio.start();haptic(protectedRound?[9,20,9]:9);refresh();resizePlinkoCanvas();if(!plinkoRuntime.raf){plinkoRuntime.lastFrame=0;plinkoRuntime.raf=requestAnimationFrame(animatePlinko);}return true;
   }
 
   function setGameMode(mode){
@@ -3320,6 +3389,8 @@
     els.installButton.addEventListener('click',installGame);
     document.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('click',closeModal));els.modalBackdrop.addEventListener('click',e=>{if(e.target===els.modalBackdrop)closeModal();});
     window.addEventListener('keydown',e=>{if(e.code==='Space'){if(caseOpeningRuntime.active)return;e.preventDefault();if(state.selectedGame==='crash'){state.crashActive?crashCashOut():startCrash();}else if(state.selectedGame==='plinko'){startPlinko();}else{state.roundActive?jump():startRound();}}if(e.code==='Escape'){if(caseOpeningRuntime.active){if(caseOpeningRuntime.phase==='reveal')hideCaseOpening();else skipCaseOpening();return;}if(!els.jobResult.classList.contains('hidden'))closeJobResult();else if(state.crashActive)crashCashOut();else state.roundActive?cashOut():closeModal();}});
+    document.addEventListener('visibilitychange',()=>{if(plinkoBankRoundRuntime.active)plinkoBankRoundRuntime.lastTick=performance.now();});
+    window.addEventListener('pagehide',()=>{if(plinkoBankRoundRuntime.active)cancelPlinkoBankRound();});
     window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;els.installButton.classList.remove('hidden');});
     window.addEventListener('appinstalled',()=>els.installButton.classList.add('hidden'));
   }
@@ -3337,7 +3408,7 @@
       state.balance=CRASH_LICENSE_COST+1000000;const paidUnlockStart=state.balance;if(!unlockGame('crash')||!gameUnlocked('crash')||vehicleCharges('glider')!==5||state.balance!==paidUnlockStart-CRASH_LICENSE_COST)throw new Error('paid crash unlock failed');state=deepClone(DEFAULT_STATE);state.level=CRASH_UNLOCK_LEVEL;const freeUnlockStart=state.balance;refresh();if(!gameUnlocked('crash')||vehicleCharges('glider')!==5||state.balance!==freeUnlockStart)throw new Error('level crash unlock failed');
       if(compactMoney(1240000)!=='1.24M'||compactMoney(1000000000)!=='1B'||compactMoney(999)!=='999')throw new Error('compact money formatting failed');
       if(FROGS.find(frog=>frog.id==='owner')?.level!==3000)throw new Error('Owner Frog level requirement failed');
-      if(CASES.length!==3||CASES.some(item=>item.drops.reduce((sum,row)=>sum+row[1],0)!==CASE_ODDS_SCALE))throw new Error('case odds failed');const ultraCase=caseById('ultra'),hillUltraWeight=ultraCase?.drops.find(row=>row[0]==='gigachad')?.[1],ownerUltraWeight=ultraCase?.drops.find(row=>row[0]==='owner')?.[1];if(!ultraCase||ultraCase.cost!==250000000||hillUltraWeight!==950||ownerUltraWeight!==50||ownerUltraWeight>=Math.min(...ultraCase.drops.filter(row=>row[0]!=='owner').map(row=>row[1])))throw new Error('Ultra Case jackpot ladder failed');if(Math.floor(FROGS.find(f=>f.id==='gigachad').cost*.5)<=ultraCase.cost||Math.floor(FROGS.find(f=>f.id==='owner').cost*.5)<=ultraCase.cost)throw new Error('Ultra Case profit jackpots failed');if(document.querySelectorAll('.bottom-nav .nav-button').length!==6)throw new Error('six-slot nav failed');
+      if(CASES.length!==3||CASES.some(item=>item.drops.reduce((sum,row)=>sum+row[1],0)!==CASE_ODDS_SCALE))throw new Error('case odds failed');const ultraCase=caseById('ultra'),hillUltraWeight=ultraCase?.drops.find(row=>row[0]==='gigachad')?.[1],ownerUltraWeight=ultraCase?.drops.find(row=>row[0]==='owner')?.[1];if(!ultraCase||ultraCase.cost!==250000000||hillUltraWeight!==300||ownerUltraWeight!==10||ownerUltraWeight>=Math.min(...ultraCase.drops.filter(row=>row[0]!=='owner').map(row=>row[1])))throw new Error('Ultra Case jackpot ladder failed');if(Math.floor(FROGS.find(f=>f.id==='gigachad').cost*.5)<=ultraCase.cost||Math.floor(FROGS.find(f=>f.id==='owner').cost*.5)<=ultraCase.cost)throw new Error('Ultra Case profit jackpots failed');if(document.querySelectorAll('.bottom-nav .nav-button').length!==6)throw new Error('six-slot nav failed');
       if(VEHICLES[0].refillCost!==25000||VEHICLES[1].refillCost!==150000||VEHICLES[2].refillCost!==750000||VEHICLES[3].refillCost!==4000000)throw new Error('refill prices failed');
       if(VEHICLES[0].max!==5||VEHICLES[1].max!==12||VEHICLES[2].max!==30||VEHICLES[3].max!==100)throw new Error('realistic redlines failed');
       state.vehicleCharges.glider=5;state.ownedVehicles=['glider'];state.selectedVehicle='glider';state.crashBet=100;state.balance=1000;if(crashPayoutFor(1)!==97||crashPayoutFor(2)!==194)throw new Error('Crash 3% starting edge failed');if(!startCrash()||!state.crashActive)throw new Error('crash start failed');state.crashStartedAt=performance.now()-5000;state.crashMultiplier=1.5;if(!crashCashOut()||state.crashActive||state.balance<=900)throw new Error('manual crash cashout failed');closeModal();state=deepClone(DEFAULT_STATE);state.unlockedGames=['leap','crash'];state.ownedVehicles=['glider'];state.vehicleCharges.glider=2;state.balance=1000;state.crashBet=100;state.safeRunCredits=1;if(!startCrash()||!state.roundSafe||state.safeRunCredits!==0)throw new Error('Crash protected-round activation failed');state.crashStartedAt=performance.now()-5000;state.crashMultiplier=1.5;if(!crashCashOut({automatic:true,reason:'protected'})||state.roundSafe)throw new Error('Crash protected payout failed');closeModal();if(crashMultiplierAtElapsed(10,VEHICLES[0])<=Math.exp(10*VEHICLES[0].growth))throw new Error('accelerating Crash curve failed');
@@ -3362,9 +3433,9 @@
       if(CRASH_MIN_POINT!==1.01)throw new Error('Crash minimum point failed');
       if(document.querySelector('[data-screen="rewards"]')||document.getElementById('rewardsScreen')||document.getElementById('rewardModal')||document.getElementById('spinButton'))throw new Error('Rewards UI still present');
       if(ownerPanelModal.querySelector('[data-owner-action="spins"]')||ownerPanelModal.querySelector('[data-owner-action="unlimited"]'))throw new Error('Reward-wheel owner controls still present');
-      if(MAX_LOAN_PAYOUT!==5000000000)throw new Error('5B Bank cap constant failed');state.bankLimitDisabled=true;if(effectiveBankLimit()!==MAX_SAFE_BALANCE)throw new Error('Bank limit disable failed');state.bankLimitDisabled=false;const paidFrogs=FROGS.filter(f=>f.cost>0);if(paidFrogs.find(f=>f.id==='meadow')?.cost!==1500||paidFrogs.find(f=>f.id==='gigachad')?.cost!==2250000000||paidFrogs.find(f=>f.id==='owner')?.cost!==6000000000)throw new Error('3x frog pricing failed');if(PLINKO_ROWS!==12||plinkoTable('medium').length!==13||Math.abs(plinkoRtp('medium')-PLINKO_TARGET_RTP)>.01)throw new Error('Plinko payout table failed');if(PLINKO_MAX_ACTIVE_EGGS!==48||typeof updatePlinkoEggPhysics!=='function'||typeof primePlinkoEggPhysics!=='function')throw new Error('v74 Plinko physics/spam engine failed');state=deepClone(DEFAULT_STATE);state.balance=100000;state.safeRunCredits=3;state.plinkoBet=100;for(let i=0;i<3;i++){const rolled=rollPlinkoPath('medium',{protectedRound:true});if(plinkoTable('medium')[rolled.slot]<=1)throw new Error('Plinko protected path failed');}state.caseInventory.ultra=5;if(caseInventoryCount('ultra')!==5)throw new Error('case inventory failed');const ownerBase=caseAdjustedDropRows(caseById('ultra')).find(r=>r.frog.id==='owner').probability;state.caseLuckMultiplier=10;const ownerLucky=caseAdjustedDropRows(caseById('ultra')).find(r=>r.frog.id==='owner').probability;if(!(ownerLucky>ownerBase))throw new Error('case luck weighting failed');
+      if(PLINKO_BANK_ROUND_MS!==15000)throw new Error('15-second Plinko Bank round failed');const oldRounds=state.rounds,oldCompleted=state.completedRounds;plinkoBankRoundRuntime.active=true;plinkoBankRoundRuntime.remainingMs=1;plinkoBankRoundRuntime.lastTick=performance.now()-20;tickPlinkoBankRound();if(state.rounds!==oldRounds+1||state.completedRounds!==oldCompleted+1||plinkoBankRoundRuntime.active)throw new Error('Plinko Bank round completion failed');if(MAX_LOAN_PAYOUT!==5000000000)throw new Error('5B Bank cap constant failed');state.bankLimitDisabled=true;if(effectiveBankLimit()!==MAX_SAFE_BALANCE)throw new Error('Bank limit disable failed');state.bankLimitDisabled=false;const paidFrogs=FROGS.filter(f=>f.cost>0);if(paidFrogs.find(f=>f.id==='meadow')?.cost!==1500||paidFrogs.find(f=>f.id==='gigachad')?.cost!==2250000000||paidFrogs.find(f=>f.id==='owner')?.cost!==6000000000)throw new Error('3x frog pricing failed');if(plinkoRows('low')!==12||plinkoRows('medium')!==14||plinkoRows('high')!==16||plinkoTable('low').length!==13||plinkoTable('medium').length!==15||plinkoTable('high').length!==17)throw new Error('v76 Plinko board scaling failed');if(Math.abs(plinkoRtp('low')-.9720361328125)>.00001||Math.abs(plinkoRtp('medium')-.9669140625)>.00001||Math.abs(plinkoRtp('high')-.9705126953125)>.00001)throw new Error('v76 Plinko RTP preservation failed');if(PLINKO_MAX_ACTIVE_EGGS!==48||typeof updatePlinkoEggPhysics!=='function'||typeof primePlinkoEggPhysics!=='function'||typeof plinkoImpactTarget!=='function')throw new Error('v76 Plinko continuous physics/spam engine failed');state=deepClone(DEFAULT_STATE);state.balance=100000;state.safeRunCredits=3;state.plinkoBet=100;for(let i=0;i<3;i++){const rolled=rollPlinkoPath('medium',{protectedRound:true});if(plinkoTable('medium')[rolled.slot]<=1)throw new Error('Plinko protected path failed');}state.caseInventory.ultra=5;if(caseInventoryCount('ultra')!==5)throw new Error('case inventory failed');const ownerBase=caseAdjustedDropRows(caseById('ultra')).find(r=>r.frog.id==='owner').probability;state.caseLuckMultiplier=10;const ownerLucky=caseAdjustedDropRows(caseById('ultra')).find(r=>r.frog.id==='owner').probability;if(!(ownerLucky>ownerBase))throw new Error('case luck weighting failed');
       const shopFrogs=frogShopItems();for(let i=1;i<shopFrogs.length;i++){if(shopFrogs[i].cost<shopFrogs[i-1].cost)throw new Error('frog shop price order failed');if((FROG_RARITY_RANK[shopFrogs[i].rarity]??99)<(FROG_RARITY_RANK[shopFrogs[i-1].rarity]??99))throw new Error('frog rarity progression failed');}const hill=FROGS.find(f=>f.id==='gigachad');if(!hill||hill.name!=='The Hill Frog'||hill.art!=='assets/the-hill-frog-game-v66.png'||hill.cardArt!=='assets/the-hill-frog-card-v64.webp')throw new Error('The Hill Frog art/name failed');const basicIds=['meadow','river','moss','sand','blue-dart','sunset'];if(!basicIds.every(id=>FROGS.some(f=>f.id===id)))throw new Error('v63 basic frog lineup missing');
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v75 case inventory + owner case grants/luck + Bank limit toggle + protected Plinko eggs + mobile input contrast + v74 physics-style multi-egg Plinko + one-tap spam drops + unchanged base 12x50/50 odds + v73 every-frog price-tier perks + Ultra Case Hill/Owner jackpots + Owner rarest + v72 Piggy 0.3% open / 0.2% closed + loan-time deposits + v71 Frog Egg Plinko + 3x frog prices + 5B Bank cap + v70 natural case landings + variable reel travel + v68 CS-style case reel + delayed skip + rarity reveal + v67 Cases + six-slot mobile nav + v66 approved smiling The Hill Frog gameplay model + v64 polished The Hill Frog Collection portrait + v63 basic frog lineup + The Hill Frog rename, v62 rarity header rows + price/rarity order, v60 Rewards removal, v59 gameplay skin art, v55 early Crash risk, Piggy rates, trusted-time warning, restartable Shift Over dialog, and app-visible no-flight badge';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v77 15-second Plinko Bank rounds + 5x lower Plinko XP + Ultra Case 3% Hill / 0.1% Owner + loan UI polish + v76 continuous Plinko gravity/peg/pocket physics + 12/14/16-row difficulty boards + 13/15/17 multiplier pockets + preserved per-risk RTP + v75 case inventory + owner case grants/luck + Bank limit toggle + protected Plinko eggs + mobile input contrast + v74 multi-egg one-tap spam drops + v73 every-frog price-tier perks + Ultra Case Hill/Owner jackpots + Owner rarest + v72 Piggy 0.3% open / 0.2% closed + loan-time deposits + v71 Frog Egg Plinko + 3x frog prices + 5B Bank cap + v70 natural case landings + variable reel travel + v68 CS-style case reel + delayed skip + rarity reveal + v67 Cases + six-slot mobile nav + v66 approved smiling The Hill Frog gameplay model + v64 polished The Hill Frog Collection portrait + v63 basic frog lineup + The Hill Frog rename, v62 rarity header rows + price/rarity order, v60 Rewards removal, v59 gameplay skin art, v55 early Crash risk, Piggy rates, trusted-time warning, restartable Shift Over dialog, and app-visible no-flight badge';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 
@@ -3388,5 +3459,5 @@
   if(!state.tutorialSeen&&!TEST_MODE){state.tutorialSeen=true;saveState();setTimeout(()=>openModal(els.howToModal),600);}
   if(TEST_MODE)runSelfTest();
 
-  window.FroggyGame={version:BUILD_VERSION,selectedFrog,activeSkinPerks,skinJobMoneyMultiplier,skinJobXpMultiplier,skinJobStartBonusMs,skinLeapXp,skinCrashXp,skinPiggyRateBonus,jobPay,jobXpPerFry,jobXpNeeded,activateJobMoneyBoost,activateJobXpBoost,startJobShift,endJobShift,finishJobShiftRound,extendJobShiftTime,collectionResaleValue,sellCollectionItem,compactMoney,selectVehicle,buyVehicleFlights,getState:()=>deepClone(state),setGameMode,unlockGame,startCrash,crashCashOut,crashLose,setCrashBet,crashPayoutFor,startPlinko,setPlinkoBet,setPlinkoRisk,plinkoTable,plinkoRtp,rollPlinkoPath,buyCases,caseInventoryCount,caseAdjustedDropRows,selectBet,setBetAmount,adjustBet,applyCustomBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,creditBalance,takeLoan,repayDebt,completeDebtTurn,debtInstallment,debtLimit,availableCredit,maxSingleLoan,effectiveBankLimit,collateralBreakdown,collateralLoanLimit,allocateRoundStake,ownedWalletBalance,finishCompletedRound,earlyPayoffAmount,earlyPayoffCashRequired,earlyPayoffSavings,loanQuote,piggyLoanReserve,piggyTransferMaximum,transferPiggy,advancePiggyBankRound,selectedVehicle,vehicleCharges,pledgedVehicleFlights,availableVehicleFlights,vehicleOwned,collateralSelectionValue,completeVehicleFlight,vehicleCrashXp,advancePiggyTime,tickPiggyClock,trustedClosedElapsed,piggyOpenRate,piggyClosedRate,ensureCrashLevelUnlock,autoSelectCollateral,noUsableVehicleFlights,openVehicleShop,setBankPane,reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();refresh();}};
+  window.FroggyGame={version:BUILD_VERSION,selectedFrog,activeSkinPerks,skinJobMoneyMultiplier,skinJobXpMultiplier,skinJobStartBonusMs,skinLeapXp,skinCrashXp,skinPiggyRateBonus,jobPay,jobXpPerFry,jobXpNeeded,activateJobMoneyBoost,activateJobXpBoost,startJobShift,endJobShift,finishJobShiftRound,extendJobShiftTime,collectionResaleValue,sellCollectionItem,compactMoney,selectVehicle,buyVehicleFlights,getState:()=>deepClone(state),setGameMode,unlockGame,startCrash,crashCashOut,crashLose,setCrashBet,crashPayoutFor,startPlinko,setPlinkoBet,setPlinkoRisk,plinkoRows,plinkoTable,plinkoRtp,rollPlinkoPath,buyCases,caseInventoryCount,caseAdjustedDropRows,selectBet,setBetAmount,adjustBet,applyCustomBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,creditBalance,takeLoan,repayDebt,completeDebtTurn,debtInstallment,debtLimit,availableCredit,maxSingleLoan,effectiveBankLimit,collateralBreakdown,collateralLoanLimit,allocateRoundStake,ownedWalletBalance,finishCompletedRound,earlyPayoffAmount,earlyPayoffCashRequired,earlyPayoffSavings,loanQuote,piggyLoanReserve,piggyTransferMaximum,transferPiggy,advancePiggyBankRound,selectedVehicle,vehicleCharges,pledgedVehicleFlights,availableVehicleFlights,vehicleOwned,collateralSelectionValue,completeVehicleFlight,vehicleCrashXp,advancePiggyTime,tickPiggyClock,trustedClosedElapsed,piggyOpenRate,piggyClosedRate,ensureCrashLevelUnlock,autoSelectCollateral,noUsableVehicleFlights,openVehicleShop,setBankPane,reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();refresh();}};
 })();
