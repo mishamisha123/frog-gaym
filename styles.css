@@ -5238,3 +5238,74 @@ input[type="range"]{opacity:1!important;filter:none!important}
   .loan-payment-dock-actions .debt-action>small{font-size:5.2px!important}
 }
 
+
+/* ================================================================
+   v84 — iPhone Plinko viewport clearance
+   Keep the full multiplier rail visible above the fixed six-slot dock.
+   ================================================================ */
+@media(max-width:620px){
+  #plinkoGamePane{
+    gap:4px!important;
+    padding-bottom:calc(88px + var(--safe-bottom))!important;
+  }
+  .plinko-controls{
+    gap:3px!important;
+    padding:5px!important;
+    border-radius:14px!important;
+  }
+  .plinko-control-grid{
+    grid-template-columns:minmax(82px,.7fr) minmax(0,1.3fr)!important;
+    gap:3px!important;
+  }
+  .plinko-bet-field input{
+    height:31px!important;
+    min-height:31px!important;
+    padding:0 7px!important;
+    font-size:10.5px!important;
+  }
+  .plinko-risk-buttons{gap:2px!important}
+  .plinko-risk-buttons button{
+    height:31px!important;
+    min-height:31px!important;
+  }
+  .plinko-risk-buttons button>span{font-size:6.2px!important}
+  .plinko-risk-buttons button>small{font-size:3.5px!important}
+  .plinko-quick-bets{gap:2px!important}
+  .plinko-quick-bets button{
+    height:26px!important;
+    min-height:26px!important;
+  }
+  .plinko-quick-bets button b{font-size:6.3px!important}
+  .plinko-drop-button{
+    height:38px!important;
+    min-height:38px!important;
+    border-radius:11px!important;
+  }
+  .plinko-drop-button span{font-size:8.6px!important}
+  .plinko-heading{margin-bottom:3px!important}
+  .plinko-mini-stats{gap:2px!important}
+  .plinko-mini-stats span{
+    min-height:28px!important;
+    padding:3px 1px!important;
+    border-radius:7px!important;
+  }
+  .plinko-mini-stats small{font-size:3.8px!important}
+  .plinko-mini-stats b{font-size:6.9px!important}
+  .plinko-shell{padding:5px!important}
+  .plinko-board[data-risk="low"]{height:190px!important;min-height:190px!important}
+  .plinko-board[data-risk="medium"]{height:205px!important;min-height:205px!important}
+  .plinko-board[data-risk="high"]{height:225px!important;min-height:225px!important}
+  .plinko-multipliers{margin-top:2px!important}
+  .plinko-slot{height:16px!important;min-height:16px!important}
+  .plinko-slot b{font-size:3.45px!important}
+  .plinko-multipliers[data-slots="15"] .plinko-slot b{font-size:3.2px!important}
+  .plinko-multipliers[data-slots="17"] .plinko-slot b{font-size:2.9px!important}
+  .plinko-status{display:none!important}
+}
+@media(max-width:390px){
+  .plinko-control-grid{grid-template-columns:76px minmax(0,1fr)!important}
+  .plinko-board[data-risk="low"]{height:175px!important;min-height:175px!important}
+  .plinko-board[data-risk="medium"]{height:190px!important;min-height:190px!important}
+  .plinko-board[data-risk="high"]{height:205px!important;min-height:205px!important}
+  .plinko-slot{height:15px!important;min-height:15px!important}
+}

@@ -1,6 +1,16 @@
-# Froggy Leap v83
+# Froggy Leap v84
 
-> **Current-behavior note:** The v83 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+> **Current-behavior note:** The v84 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+
+
+## v84 — Mobile Plinko viewport clearance
+
+- Tightens the iPhone Plinko controls and board one more step so the full multiplier rail remains visible above the fixed bottom navigation.
+- Mobile board heights are 190/205/225 px for Low/Medium/High, with 175/190/205 px on very narrow phones.
+- Shrinks the mobile multiplier pockets and hides the redundant status line on phones to save vertical space.
+- Adds extra bottom scroll clearance so the multiplier rail can never be trapped underneath the six-slot dock.
+- Gameplay math, Stake-style High odds, physics, case odds, Bank behavior, and saves are unchanged.
+- PWA/cache/build references are bumped to **v84**.
 
 ## v83 — Mobile Plinko + Bank UI cleanup
 
