@@ -1,8 +1,6 @@
-# Froggy Leap v63
+# Froggy Leap v64
 
-> **Current-behavior note:** The v63 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
-
-
+> **Current-behavior note:** The v64 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
 
 
@@ -10,6 +8,17 @@
 
 
 
+
+
+
+
+## v64 — The Hill Frog portrait polish
+
+- Replaced the rough cutout-looking Collection portrait with a smooth, fully rendered pond/lily-pad scene.
+- The Hill Frog now uses separate Collection art and gameplay art, so the shop can look premium without putting a rectangular scene into Lily Leap or Sky Crash.
+- Removed harsh white/jagged cutout edges from the Collection presentation by no longer using the transparent gameplay sprite as the shop portrait.
+- Preserved The Hill Frog's legacy `gigachad` save ID, price, perks, ownership, and equipped state.
+- PWA asset URLs, refresh helper, service-worker cache, and build label bumped to **v64**.
 
 ## v63 — More basic frogs + The Hill Frog rename
 
