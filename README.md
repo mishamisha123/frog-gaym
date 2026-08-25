@@ -1,7 +1,16 @@
-# Froggy Leap v85
+# Froggy Leap v86
 
-> **Current-behavior note:** The v85 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+> **Current-behavior note:** The v86 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
+
+
+## v86 — Mobile Plinko bottom-frame extension
+
+- Keeps the v85 peg field/canvas height unchanged on phones.
+- Extends only the bottom of the Plinko machine to create a dedicated multiplier-rail area.
+- Makes multiplier pockets taller and their values substantially larger/high-contrast on mobile.
+- Preserves all Plinko odds, physics, 96-egg cap, Bank-round timing, cases, saves, and v85 behavior.
+- PWA/cache/build references are bumped to **v86**.
 
 ## v85 — Mobile Plinko rail-in-board fix
 
