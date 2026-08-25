@@ -5451,3 +5451,78 @@ input[type="range"]{opacity:1!important;filter:none!important}
   .plinko-multipliers[data-slots="15"] .plinko-slot b{font-size:5.65px!important;transform:scaleX(.75)}
   .plinko-multipliers[data-slots="17"] .plinko-slot b{font-size:5.4px!important;transform:scaleX(.71)}
 }
+
+/* ================================================================
+   v87 — readable Plinko payouts + real mobile rail clearance
+   Make payout values the visual priority and give Medium/High a
+   genuinely deeper bottom frame instead of shrinking 15/17 boxes.
+   ================================================================ */
+.plinko-slot{
+  height:34px!important;
+  min-height:34px!important;
+}
+.plinko-slot b{
+  font-family:"Arial Narrow","Roboto Condensed","Helvetica Neue",Arial,sans-serif!important;
+  font-size:9.5px!important;
+  font-weight:1000!important;
+  line-height:1!important;
+  letter-spacing:-.07em!important;
+  color:#fff!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.92),0 0 5px rgba(255,255,255,.18)!important;
+  transform:scaleX(.90)!important;
+  transform-origin:center!important;
+  text-rendering:geometricPrecision;
+}
+.plinko-multipliers[data-slots="15"] .plinko-slot b{font-size:8.8px!important;transform:scaleX(.84)!important}
+.plinko-multipliers[data-slots="17"] .plinko-slot b{font-size:8.1px!important;transform:scaleX(.76)!important}
+
+@media(max-width:900px){
+  .plinko-slot{height:33px!important;min-height:33px!important}
+  .plinko-slot b{font-size:9px!important}
+  .plinko-multipliers[data-slots="15"] .plinko-slot b{font-size:8.3px!important}
+  .plinko-multipliers[data-slots="17"] .plinko-slot b{font-size:7.6px!important}
+}
+
+@media(max-width:620px){
+  /* Keep the v85 peg/canvas heights, but reserve 64px below them for payouts. */
+  .plinko-board{--plinko-rail-zone:64px!important}
+  .plinko-board[data-risk="low"]{height:257px!important;min-height:257px!important}
+  .plinko-board[data-risk="medium"]{height:277px!important;min-height:277px!important}
+  .plinko-board[data-risk="high"]{height:297px!important;min-height:297px!important}
+  .plinko-multipliers{
+    bottom:11px!important;
+    width:97%!important;
+    gap:1px!important;
+  }
+  .plinko-slot{
+    height:38px!important;
+    min-height:38px!important;
+    border-radius:5px!important;
+  }
+  .plinko-slot b{
+    font-size:9px!important;
+    letter-spacing:-.09em!important;
+    transform:scaleX(.84)!important;
+  }
+  .plinko-multipliers[data-slots="15"] .plinko-slot b{font-size:8.2px!important;transform:scaleX(.76)!important}
+  .plinko-multipliers[data-slots="17"] .plinko-slot b{font-size:7.4px!important;transform:scaleX(.67)!important}
+
+  /* The fixed six-button dock must never cover Medium/High payout pockets. */
+  #playScreen.plinko-mode.active{
+    padding-bottom:calc(150px + var(--safe-bottom))!important;
+    scroll-padding-bottom:calc(150px + var(--safe-bottom))!important;
+  }
+  #plinkoGamePane{padding-bottom:calc(92px + var(--safe-bottom))!important}
+}
+
+@media(max-width:390px){
+  .plinko-board{--plinko-rail-zone:64px!important}
+  .plinko-board[data-risk="low"]{height:244px!important;min-height:244px!important}
+  .plinko-board[data-risk="medium"]{height:264px!important;min-height:264px!important}
+  .plinko-board[data-risk="high"]{height:284px!important;min-height:284px!important}
+  .plinko-multipliers{bottom:10px!important;width:98%!important;gap:.5px!important}
+  .plinko-slot{height:38px!important;min-height:38px!important}
+  .plinko-slot b{font-size:8.7px!important;transform:scaleX(.80)!important}
+  .plinko-multipliers[data-slots="15"] .plinko-slot b{font-size:7.9px!important;transform:scaleX(.72)!important}
+  .plinko-multipliers[data-slots="17"] .plinko-slot b{font-size:7.1px!important;transform:scaleX(.63)!important}
+}

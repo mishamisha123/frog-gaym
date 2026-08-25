@@ -1,8 +1,18 @@
-# Froggy Leap v86
+# Froggy Leap v87
 
-> **Current-behavior note:** The v86 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+> **Current-behavior note:** The v87 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
 
+
+## v87 — Readable Plinko payouts + mobile Medium/High clearance
+
+- Makes multiplier values substantially larger and bolder on desktop and mobile.
+- Uses condensed high-contrast payout labels so 1000×/130×/26× stay readable even across 17 High-risk pockets.
+- Extends the mobile payout zone to 64 px while preserving the existing peg/canvas heights.
+- Gives Medium and High a deeper total machine frame so their 15/17 multiplier pockets remain inside the board.
+- Adds enough mobile bottom scroll clearance that the fixed six-button navigation cannot cover the payout rail.
+- Plinko odds, physics, 96-egg cap, Bank-round timing, case odds, saves, and all v86 gameplay behavior are unchanged.
+- PWA/cache/build references are bumped to **v87**.
 
 ## v86 — Mobile Plinko bottom-frame extension
 
