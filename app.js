@@ -3,7 +3,7 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v68';
+  const BUILD_VERSION = 'v71';
   console.info(`Froggy Leap ${BUILD_VERSION} loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
@@ -31,7 +31,14 @@
   const CRASH_MIN_POINT = 1.01;
   const CRASH_GROWTH_RATE = 0.12;
   const CRASH_LAUNCH_COUNTDOWN_MS = 1800;
-  const MAX_LOAN_PAYOUT = 2500000000;
+  const PLINKO_ROWS = 12;
+  const PLINKO_TARGET_RTP = 0.97;
+  const PLINKO_PAYOUTS = Object.freeze({
+    low:Object.freeze([6.76,2.54,1.69,1.33,1.21,0.85,0.60,0.85,1.21,1.33,1.69,2.54,6.76]),
+    medium:Object.freeze([24.99,7.81,3.12,2.19,1.09,0.62,0.31,0.62,1.09,2.19,3.12,7.81,24.99]),
+    high:Object.freeze([129.08,25.82,6.45,2.58,0.65,0.26,0.06,0.26,0.65,2.58,6.45,25.82,129.08])
+  });
+  const MAX_LOAN_PAYOUT = 5000000000;
   const BASE_UNSECURED_CREDIT = 5000;
   const COLLATERAL_PLEDGE_VERSION = 2;
   const CREDIT_TIERS = Object.freeze([
@@ -101,24 +108,24 @@
 
   const FROGS = [
     { id:'classic', name:'Classic Frog', rarity:'COMMON', cost:0, level:1, description:'The bright-eyed mascot with a perfect storybook hop.', colors:['#baff72','#4fb84d'], art:CHARACTER_ART.classic },
-    { id:'meadow', name:'Meadow Frog', rarity:'COMMON', cost:500, level:1, description:'A fresh little pond hopper with a tiny meadow flower.', colors:['#c9ff7a','#6dbf46'], art:'assets/meadow-frog-v63.png', perks:{leapXp:.01}, perkLabels:['+1% Lily Leap XP'] },
-    { id:'river', name:'River Frog', rarity:'COMMON', cost:1000, level:1, description:'Cool river colors and a calm, clean splash.', colors:['#8ffff1','#31aeb0'], art:'assets/river-frog-v63.png', perks:{jobXp:.01}, perkLabels:['+1% Job XP'] },
-    { id:'moss', name:'Moss Frog', rarity:'COMMON', cost:2000, level:2, description:'Dark mossy markings from the quiet side of the pond.', colors:['#b7ce6d','#657740'], art:'assets/moss-frog-v63.png', perks:{jobMoney:.01}, perkLabels:['+1% Job F'] },
-    { id:'sand', name:'Sand Frog', rarity:'COMMON', cost:3500, level:2, description:'Warm sandy colors with tiny freckled markings.', colors:['#e7cf9c','#96794d'], art:'assets/sand-frog-v63.png', perks:{crashXp:.01}, perkLabels:['+1% Sky Crash XP'] },
-    { id:'king', name:'King Frog', rarity:'RARE', cost:5000, level:3, description:'A smug pond monarch in a jeweled crown and velvet cape.', colors:['#d6ef65','#70b944'], art:CHARACTER_ART.king },
-    { id:'blue-dart', name:'Blue Dart Frog', rarity:'RARE', cost:8000, level:4, description:'Bright blue, spotted, and impossible to miss.', colors:['#64c8ff','#2571cc'], art:'assets/blue-dart-frog-v63.png', perks:{leapXp:.02}, perkLabels:['+2% Lily Leap XP'] },
-    { id:'sunset', name:'Sunset Frog', rarity:'RARE', cost:12000, level:4, description:'A warm orange pond skin with sunset cheeks.', colors:['#ffb16a','#d8663b'], art:'assets/sunset-frog-v63.png', perks:{jobMoney:.02}, perkLabels:['+2% Job F'] },
-    { id:'robot', name:'Robo Frog', rarity:'RARE', cost:15000, level:5, description:'Polished alloy, cyan display eyes, and calibrated landing legs.', colors:['#dff6ff','#6d97b3'], art:CHARACTER_ART.robot },
-    { id:'ghost', name:'Ghost Frog', rarity:'EPIC', cost:35000, level:7, description:'A translucent, grumpy little spirit that floats over the pond.', colors:['#b9f5ff','#6bc8e8'], art:CHARACTER_ART.ghost },
-    { id:'dragon', name:'Dragon Frog', rarity:'EPIC', cost:80000, level:10, description:'Tiny wings, bright scales, horns, and enormous confidence.', colors:['#ff9c42','#e75235'], art:CHARACTER_ART.dragon },
-    { id:'dino', name:'Dino Frog', rarity:'LEGENDARY', cost:150000, level:13, description:'A chunky prehistoric hopper with spikes and a toothy grin.', colors:['#c8ff70','#4eb650'], art:CHARACTER_ART.dino },
-    { id:'ninja', name:'Ninja Frog', rarity:'LEGENDARY', cost:300000, level:20, description:'Masked, focused, and nearly silent until the landing splash.', colors:['#344348','#161f24'], art:CHARACTER_ART.ninja },
-    { id:'alien', name:'Alien Frog', rarity:'MYTHIC', cost:750000, level:30, description:'Stalk eyes, cosmic curiosity, and suspiciously accurate jumps.', colors:['#b7ff67','#5dc84a'], art:CHARACTER_ART.alien },
-    { id:'rockstar', name:'Rockstar Frog', rarity:'MYTHIC', cost:2500000, level:50, description:'Spiky hair, reflective shades, and a stadium-sized landing pose.', colors:['#92e95c','#4ba848'], art:CHARACTER_ART.rockstar },
+    { id:'meadow', name:'Meadow Frog', rarity:'COMMON', cost:1500, level:1, description:'A fresh little pond hopper with a tiny meadow flower.', colors:['#c9ff7a','#6dbf46'], art:'assets/meadow-frog-v63.png', perks:{leapXp:.01}, perkLabels:['+1% Lily Leap XP'] },
+    { id:'river', name:'River Frog', rarity:'COMMON', cost:3000, level:1, description:'Cool river colors and a calm, clean splash.', colors:['#8ffff1','#31aeb0'], art:'assets/river-frog-v63.png', perks:{jobXp:.01}, perkLabels:['+1% Job XP'] },
+    { id:'moss', name:'Moss Frog', rarity:'COMMON', cost:6000, level:2, description:'Dark mossy markings from the quiet side of the pond.', colors:['#b7ce6d','#657740'], art:'assets/moss-frog-v63.png', perks:{jobMoney:.01}, perkLabels:['+1% Job F'] },
+    { id:'sand', name:'Sand Frog', rarity:'COMMON', cost:10500, level:2, description:'Warm sandy colors with tiny freckled markings.', colors:['#e7cf9c','#96794d'], art:'assets/sand-frog-v63.png', perks:{crashXp:.01}, perkLabels:['+1% Sky Crash XP'] },
+    { id:'king', name:'King Frog', rarity:'RARE', cost:15000, level:3, description:'A smug pond monarch in a jeweled crown and velvet cape.', colors:['#d6ef65','#70b944'], art:CHARACTER_ART.king },
+    { id:'blue-dart', name:'Blue Dart Frog', rarity:'RARE', cost:24000, level:4, description:'Bright blue, spotted, and impossible to miss.', colors:['#64c8ff','#2571cc'], art:'assets/blue-dart-frog-v63.png', perks:{leapXp:.02}, perkLabels:['+2% Lily Leap XP'] },
+    { id:'sunset', name:'Sunset Frog', rarity:'RARE', cost:36000, level:4, description:'A warm orange pond skin with sunset cheeks.', colors:['#ffb16a','#d8663b'], art:'assets/sunset-frog-v63.png', perks:{jobMoney:.02}, perkLabels:['+2% Job F'] },
+    { id:'robot', name:'Robo Frog', rarity:'RARE', cost:45000, level:5, description:'Polished alloy, cyan display eyes, and calibrated landing legs.', colors:['#dff6ff','#6d97b3'], art:CHARACTER_ART.robot },
+    { id:'ghost', name:'Ghost Frog', rarity:'EPIC', cost:105000, level:7, description:'A translucent, grumpy little spirit that floats over the pond.', colors:['#b9f5ff','#6bc8e8'], art:CHARACTER_ART.ghost },
+    { id:'dragon', name:'Dragon Frog', rarity:'EPIC', cost:240000, level:10, description:'Tiny wings, bright scales, horns, and enormous confidence.', colors:['#ff9c42','#e75235'], art:CHARACTER_ART.dragon },
+    { id:'dino', name:'Dino Frog', rarity:'LEGENDARY', cost:450000, level:13, description:'A chunky prehistoric hopper with spikes and a toothy grin.', colors:['#c8ff70','#4eb650'], art:CHARACTER_ART.dino },
+    { id:'ninja', name:'Ninja Frog', rarity:'LEGENDARY', cost:900000, level:20, description:'Masked, focused, and nearly silent until the landing splash.', colors:['#344348','#161f24'], art:CHARACTER_ART.ninja },
+    { id:'alien', name:'Alien Frog', rarity:'MYTHIC', cost:2250000, level:30, description:'Stalk eyes, cosmic curiosity, and suspiciously accurate jumps.', colors:['#b7ff67','#5dc84a'], art:CHARACTER_ART.alien },
+    { id:'rockstar', name:'Rockstar Frog', rarity:'MYTHIC', cost:7500000, level:50, description:'Spiky hair, reflective shades, and a stadium-sized landing pose.', colors:['#92e95c','#4ba848'], art:CHARACTER_ART.rockstar },
 
-    { id:'gigachad', name:'The Hill Frog', rarity:'ULTRA', cost:750000000, level:150, description:'The heavyweight flex skin from the Ultra lineup.', colors:['#ffd968','#6b4cff'], art:HILL_FROG_ART, cardArt:HILL_FROG_CARD_ART, perks:{jobMoney:.10,jobXp:.10,jobStartMs:1500}, perkLabels:['+10% Job F','+10% Job XP','+1.5s Job start'] },
+    { id:'gigachad', name:'The Hill Frog', rarity:'ULTRA', cost:2250000000, level:150, description:'The heavyweight flex skin from the Ultra lineup.', colors:['#ffd968','#6b4cff'], art:HILL_FROG_ART, cardArt:HILL_FROG_CARD_ART, perks:{jobMoney:.10,jobXp:.10,jobStartMs:1500}, perkLabels:['+10% Job F','+10% Job XP','+1.5s Job start'] },
 
-    { id:'owner', name:'Owner Frog', rarity:'ONE OF ONE', cost:2000000000, level:3000, description:'A photo-inspired pond boss with cropped dark hair, heavy-lidded brown eyes, stubble, and an unbreakable deadpan stare.', colors:['#8ad467','#4f9d50'], art:CHARACTER_ART.owner }
+    { id:'owner', name:'Owner Frog', rarity:'ONE OF ONE', cost:6000000000, level:3000, description:'A photo-inspired pond boss with cropped dark hair, heavy-lidded brown eyes, stubble, and an unbreakable deadpan stare.', colors:['#8ad467','#4f9d50'], art:CHARACTER_ART.owner }
   ];
 
   const FROG_RARITY_RANK = Object.freeze({COMMON:0,RARE:1,EPIC:2,LEGENDARY:3,MYTHIC:4,ULTRA:5,'ONE OF ONE':6});
@@ -170,6 +177,7 @@
 
   const GAME_LICENSES = Object.freeze([
     {id:'leap',name:'Lily Leap',cost:0},
+    {id:'plinko',name:'Frog Egg Plinko',cost:0},
     {id:'crash',name:'Sky Crash',cost:CRASH_LICENSE_COST,unlockLevel:CRASH_UNLOCK_LEVEL}
   ]);
 
@@ -240,7 +248,14 @@
     recentXpBets: [],
     roundBetForXp: 0,
     selectedGame: 'leap',
-    unlockedGames: ['leap'],
+    unlockedGames: ['leap','plinko'],
+    plinkoBet: 100,
+    plinkoRisk: 'medium',
+    plinkoActive: false,
+    plinkoDrops: 0,
+    plinkoWins: 0,
+    plinkoLastMultiplier: 0,
+    bestPlinkoMultiplier: 0,
     selectedVehicle: 'glider',
     ownedVehicles: [],
     vehicleCharges: {glider:0,prop:0,rocket:0,starship:0},
@@ -274,7 +289,7 @@
     app: $('app'), canvas: $('gameCanvas'), gameFrame: $('gameFrame'), status: $('statusToast'), crashCanvas: $('crashCanvas'), crashFrame: $('crashFrame'), crashStatus: $('crashStatus'),
     balance: $('balanceLabel'), collectionBalance: $('collectionBalance'), level: $('levelLabel'), xp: $('xpLabel'), xpNext: $('xpNextLabel'), xpRing: $('xpRing'),
     jump: $('jumpLabel'), multiplier: $('multiplierLabel'), risk: $('riskLabel'), payout: $('payoutLabel'), danger: $('dangerLabel'), riskFill: $('riskFill'), riskMarker: $('riskMarker'),
-    leapGamePane: $('leapGamePane'), crashGamePane: $('crashGamePane'), leapGameTab: $('leapGameTab'), crashGameTab: $('crashGameTab'), crashTabStatus: $('crashTabStatus'), crashLicenseCard: $('crashLicenseCard'), crashGameContent: $('crashGameContent'), unlockCrashButton: $('unlockCrashButton'), crashMultiplierLabel: $('crashMultiplierLabel'), crashPayoutLabel: $('crashPayoutLabel'), crashVehicleLabel: $('crashVehicleLabel'), crashChargesLabel: $('crashChargesLabel'), crashVehicleMaxLabel: $('crashVehicleMaxLabel'), crashBetInput: $('crashBetInput'), crashVehicleSelect: $('crashVehicleSelect'), crashQuickBets: $('crashQuickBets'), crashStartButton: $('crashStartButton'), crashNoFlights: $('crashNoFlights'), crashNoFlightsTitle: $('crashNoFlightsTitle'), crashNoFlightsText: $('crashNoFlightsText'), crashVehicleShopButton: $('crashVehicleShopButton'), crashFlightDock: $('crashFlightDock'), crashCashButton: $('crashCashButton'), crashCashValue: $('crashCashValue'), betDisplay: $('betDisplay'), start: $('startButton'), jumpButton: $('jumpButton'), cash: $('cashButton'), cashValue: $('cashButtonValue'), quickBets: $('quickBets'), betAdjusters: $('betAdjusters'), customBetToggle: $('customBetToggle'), customBetRow: $('customBetRow'), customBetInput: $('customBetInput'), customBetClose: $('customBetClose'), customBetError: $('customBetError'),
+    leapGamePane: $('leapGamePane'), crashGamePane: $('crashGamePane'), plinkoGamePane: $('plinkoGamePane'), leapGameTab: $('leapGameTab'), crashGameTab: $('crashGameTab'), plinkoGameTab: $('plinkoGameTab'), crashTabStatus: $('crashTabStatus'), plinkoCanvas: $('plinkoCanvas'), plinkoBoard: $('plinkoBoard'), plinkoMultipliers: $('plinkoMultipliers'), plinkoBetInput: $('plinkoBetInput'), plinkoQuickBets: $('plinkoQuickBets'), plinkoRiskButtons: $('plinkoRiskButtons'), plinkoDropButton: $('plinkoDropButton'), plinkoStatus: $('plinkoStatus'), plinkoLastLabel: $('plinkoLastLabel'), plinkoDropsLabel: $('plinkoDropsLabel'), plinkoRtpLabel: $('plinkoRtpLabel'), crashLicenseCard: $('crashLicenseCard'), crashGameContent: $('crashGameContent'), unlockCrashButton: $('unlockCrashButton'), crashMultiplierLabel: $('crashMultiplierLabel'), crashPayoutLabel: $('crashPayoutLabel'), crashVehicleLabel: $('crashVehicleLabel'), crashChargesLabel: $('crashChargesLabel'), crashVehicleMaxLabel: $('crashVehicleMaxLabel'), crashBetInput: $('crashBetInput'), crashVehicleSelect: $('crashVehicleSelect'), crashQuickBets: $('crashQuickBets'), crashStartButton: $('crashStartButton'), crashNoFlights: $('crashNoFlights'), crashNoFlightsTitle: $('crashNoFlightsTitle'), crashNoFlightsText: $('crashNoFlightsText'), crashVehicleShopButton: $('crashVehicleShopButton'), crashFlightDock: $('crashFlightDock'), crashCashButton: $('crashCashButton'), crashCashValue: $('crashCashValue'), betDisplay: $('betDisplay'), start: $('startButton'), jumpButton: $('jumpButton'), cash: $('cashButton'), cashValue: $('cashButtonValue'), quickBets: $('quickBets'), betAdjusters: $('betAdjusters'), customBetToggle: $('customBetToggle'), customBetRow: $('customBetRow'), customBetInput: $('customBetInput'), customBetClose: $('customBetClose'), customBetError: $('customBetError'),
     sound: $('soundButton'), bankShortcut: $('bankShortcutButton'), settingsSound: $('settingsSound'), settingsMotion: $('settingsMotion'), luckyBadge: $('luckyBadge'), luckyCount: $('luckyCount'), debtBadge: $('debtBadge'), debtBadgeAmount: $('debtBadgeAmount'), debtBadgeTurns: $('debtBadgeTurns'), debtBadgeStatus: $('debtBadgeStatus'), debtDueDot: $('debtDueDot'), debtDueFlag: $('debtDueFlag'),
     screens: { play:$('playScreen'), job:$('jobScreen'), collection:$('collectionScreen'), bank:$('bankScreen'), cases:$('casesScreen'), stats:$('statsScreen') },
     collectionGrid: $('collectionGrid'), caseGrid:$('caseGrid'), caseBalance:$('caseBalance'), casesOpenedLabel:$('casesOpenedLabel'), caseReveal:$('caseReveal'), caseHistoryList:$('caseHistoryList'), caseOpeningOverlay:$('caseOpeningOverlay'), caseOpeningShell:$('caseOpeningShell'), caseOpeningClose:$('caseOpeningClose'), caseOpeningSkip:$('caseOpeningSkip'), caseOpeningKicker:$('caseOpeningKicker'), caseOpeningTitle:$('caseOpeningTitle'), caseOpeningSubtitle:$('caseOpeningSubtitle'), caseOpeningChest:$('caseOpeningChest'), caseOpeningChestEmoji:$('caseOpeningChestEmoji'), caseOpeningReelWrap:$('caseOpeningReelWrap'), caseOpeningReel:$('caseOpeningReel'), caseOpeningResult:$('caseOpeningResult'), installButton: $('installButton'),
@@ -331,7 +346,7 @@
   function skinFlightRefundChance(){ return clamp(Number(activeSkinPerks().flightRefundChance)||0,0,1); }
   function selectedLake(){ return LAKES.find(x=>x.id===state.selectedLake) || LAKES[0]; }
   function selectedVehicle(){ return VEHICLES.find(x=>x.id===state.selectedVehicle) || VEHICLES[0]; }
-  function anyRoundActive(){ return Boolean(state.roundActive||state.crashActive); }
+  function anyRoundActive(){ return Boolean(state.roundActive||state.crashActive||state.plinkoActive); }
   function ownedWalletBalance(){ return Math.max(0,Math.floor(state.balance)); }
   function gameUnlocked(id){ return state.unlockedGames.includes(id); }
   function vehicleCharges(id=state.selectedVehicle){ return Math.max(0,Math.floor(state.vehicleCharges[id]||0)); }
@@ -496,8 +511,15 @@
         ? Math.max(0,Math.floor(raw.roundBetForXp))
         : 0;
       if(!merged.roundActive)merged.roundBetForXp=0;
-      merged.selectedGame=raw.selectedGame==='crash'?'crash':'leap';
-      merged.unlockedGames=Array.isArray(raw.unlockedGames)?Array.from(new Set(['leap',...raw.unlockedGames.filter(id=>GAME_LICENSES.some(game=>game.id===id))])):['leap'];
+      merged.selectedGame=['leap','crash','plinko'].includes(raw.selectedGame)?raw.selectedGame:'leap';
+      merged.unlockedGames=Array.from(new Set(['leap','plinko',...(Array.isArray(raw.unlockedGames)?raw.unlockedGames.filter(id=>GAME_LICENSES.some(game=>game.id===id)):[])]));
+      merged.plinkoActive=false;
+      merged.plinkoBet=Number.isFinite(raw.plinkoBet)?Math.max(MIN_BET,Math.floor(raw.plinkoBet)):100;
+      merged.plinkoRisk=['low','medium','high'].includes(raw.plinkoRisk)?raw.plinkoRisk:'medium';
+      merged.plinkoDrops=Math.max(0,Math.floor(Number(raw.plinkoDrops)||0));
+      merged.plinkoWins=Math.max(0,Math.floor(Number(raw.plinkoWins)||0));
+      merged.plinkoLastMultiplier=Math.max(0,Number(raw.plinkoLastMultiplier)||0);
+      merged.bestPlinkoMultiplier=Math.max(0,Number(raw.bestPlinkoMultiplier)||0);
       merged.selectedVehicle=VEHICLES.some(vehicle=>vehicle.id===raw.selectedVehicle)?raw.selectedVehicle:'glider';
       merged.vehicleCharges=Object.fromEntries(VEHICLES.map(vehicle=>[vehicle.id,Math.max(0,Math.floor(Number(raw.vehicleCharges?.[vehicle.id])||0))]));
       const inferredVehicles=VEHICLES.filter(vehicle=>merged.vehicleCharges[vehicle.id]>0||(vehicle.id==='glider'&&merged.unlockedGames.includes('crash'))).map(vehicle=>vehicle.id);
@@ -531,8 +553,8 @@
           ? raw.pledgedVehicles.filter(id=>merged.ownedVehicles.includes(id)&&VEHICLES.some(v=>v.id===id))
           : merged.ownedVehicles.slice();
         merged.pledgedLicenses=hasDirectPledges&&Array.isArray(raw.pledgedLicenses)
-          ? raw.pledgedLicenses.filter(id=>id!=='leap'&&merged.unlockedGames.includes(id)&&GAME_LICENSES.some(g=>g.id===id))
-          : merged.unlockedGames.filter(id=>id!=='leap');
+          ? raw.pledgedLicenses.filter(id=>merged.unlockedGames.includes(id)&&GAME_LICENSES.some(g=>g.id===id&&g.cost>0))
+          : merged.unlockedGames.filter(id=>GAME_LICENSES.some(g=>g.id===id&&g.cost>0));
         merged.pledgedFlights=Object.fromEntries(VEHICLES.map(vehicle=>[vehicle.id,0]));
         if(!hasDirectPledges&&merged.pledgedPiggy<=0)merged.pledgedPiggy=merged.piggyBalance;
       }else{
@@ -971,8 +993,81 @@
     });
     return true;
   }
+  const plinkoRuntime={active:false,raf:0,path:[],slot:0,multiplier:0,payout:0,startedAt:0,duration:0,lastPeg:-1};
+  function plinkoTable(risk=state.plinkoRisk){return PLINKO_PAYOUTS[['low','medium','high'].includes(risk)?risk:'medium'];}
+  function plinkoRiskLabel(){return state.plinkoRisk==='low'?'LOW':state.plinkoRisk==='high'?'HIGH':'MEDIUM';}
+  function plinkoRtp(risk=state.plinkoRisk){
+    const table=plinkoTable(risk);let expected=0;
+    for(let slot=0;slot<=PLINKO_ROWS;slot++)expected+=(binomialCoefficient(PLINKO_ROWS,slot)/(2**PLINKO_ROWS))*table[slot];
+    return expected;
+  }
+  function binomialCoefficient(n,k){let value=1;for(let i=1;i<=k;i++)value=value*(n-k+i)/i;return value;}
+  function setPlinkoStatus(text,kind=''){if(!els.plinkoStatus)return;els.plinkoStatus.textContent=text;els.plinkoStatus.className=`plinko-status ${kind}`.trim();}
+  function setPlinkoBet(raw){
+    if(state.plinkoActive)return false;
+    let value;if(raw==='min')value=MIN_BET;else if(raw==='half')value=Math.max(MIN_BET,Math.floor(state.plinkoBet/2));else if(raw==='double')value=Math.min(ownedWalletBalance(),Math.max(MIN_BET,Math.floor(state.plinkoBet*2)));else if(raw==='max')value=ownedWalletBalance();else value=Math.floor(Number(raw)||0);
+    if(value<MIN_BET||value>ownedWalletBalance()){setPlinkoStatus(`Choose ${money(MIN_BET)}–${money(ownedWalletBalance())} F.`,'lose');return false;}
+    state.plinkoBet=value;refreshPlinkoHud();saveState();return true;
+  }
+  function setPlinkoRisk(risk){if(state.plinkoActive||!['low','medium','high'].includes(risk))return false;state.plinkoRisk=risk;refreshPlinkoHud();saveState();return true;}
+  function refreshPlinkoHud(){
+    if(!els.plinkoGamePane)return;
+    const table=plinkoTable();
+    els.plinkoBetInput.value=String(state.plinkoBet);
+    els.plinkoDropButton.disabled=state.plinkoActive||ownedWalletBalance()<Math.max(MIN_BET,state.plinkoBet);
+    els.plinkoDropButton.querySelector('span').textContent=state.plinkoActive?'EGG DROPPING…':'DROP FROG EGG';
+    els.plinkoDropButton.querySelector('small').textContent=state.plinkoActive?'Bouncing through the pegs':`Bet ${money(state.plinkoBet)} F · ${plinkoRiskLabel()} risk`;
+    els.plinkoRiskButtons.querySelectorAll('[data-plinko-risk]').forEach(button=>{button.disabled=state.plinkoActive;button.classList.toggle('active',button.dataset.plinkoRisk===state.plinkoRisk);});
+    els.plinkoQuickBets.querySelectorAll('button').forEach(button=>button.disabled=state.plinkoActive);
+    els.plinkoBetInput.disabled=state.plinkoActive;
+    els.plinkoMultipliers.innerHTML=table.map((m,i)=>`<span class="plinko-slot slot-${i}" style="--slot-intensity:${Math.abs(i-PLINKO_ROWS/2)/(PLINKO_ROWS/2)}"><b>${m.toFixed(m<1?2:2)}×</b></span>`).join('');
+    els.plinkoLastLabel.textContent=state.plinkoLastMultiplier>0?`${state.plinkoLastMultiplier.toFixed(2)}×`:'—';
+    els.plinkoDropsLabel.textContent=money(state.plinkoDrops);
+    els.plinkoRtpLabel.textContent=`${(plinkoRtp()*100).toFixed(1)}%`;
+    resizePlinkoCanvas();drawPlinkoBoard();
+  }
+  function plinkoLayout(){
+    const canvas=els.plinkoCanvas,w=Math.max(300,canvas?.clientWidth||720),h=Math.max(330,canvas?.clientHeight||520),margin=Math.max(22,w*.055),top=42,bottom=h-26,spacing=(w-margin*2)/PLINKO_ROWS,rowGap=(bottom-top)/PLINKO_ROWS;
+    return {w,h,margin,top,bottom,spacing,rowGap,cx:w/2};
+  }
+  function resizePlinkoCanvas(){
+    const canvas=els.plinkoCanvas;if(!canvas)return;const rect=canvas.getBoundingClientRect();if(rect.width<10||rect.height<10)return;const dpr=Math.min(2,window.devicePixelRatio||1),w=Math.round(rect.width*dpr),h=Math.round(rect.height*dpr);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}const c=canvas.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);
+  }
+  function plinkoEggPosition(progress){
+    const L=plinkoLayout(),nodes=[{x:L.cx,y:L.top-34}],path=plinkoRuntime.path;let rights=0;
+    for(let r=0;r<PLINKO_ROWS;r++){nodes.push({x:L.cx+(rights-r/2)*L.spacing,y:L.top+r*L.rowGap});rights+=path[r]||0;}
+    nodes.push({x:L.cx+(rights-PLINKO_ROWS/2)*L.spacing,y:L.bottom});
+    const scaled=clamp(progress,0,1)*(nodes.length-1),seg=Math.min(nodes.length-2,Math.floor(scaled)),t=scaled-seg,a=nodes[seg],b=nodes[seg+1],smooth=t*t*(3-2*t),arc=seg===0?0:Math.sin(Math.PI*t)*Math.min(10,L.rowGap*.24);
+    return {x:lerp(a.x,b.x,smooth),y:lerp(a.y,b.y,t)-arc,segment:seg,rotation:(seg+t)*(path[Math.min(seg,PLINKO_ROWS-1)]?0.34:-0.34)};
+  }
+  function drawPlinkoEgg(c,x,y,rotation=0){
+    c.save();c.translate(x,y);c.rotate(rotation);const r=11;c.shadowColor='rgba(120,255,188,.7)';c.shadowBlur=14;const g=c.createRadialGradient(-4,-6,2,0,0,r*1.4);g.addColorStop(0,'#f4fff0');g.addColorStop(.55,'#d9f5bc');g.addColorStop(1,'#78c768');c.fillStyle=g;c.beginPath();c.ellipse(0,0,r*.78,r,0,0,Math.PI*2);c.fill();c.shadowBlur=0;c.fillStyle='#58a84d';[[-4,-3,2.2],[4,-1,1.8],[0,5,1.6]].forEach(([sx,sy,sr])=>{c.beginPath();c.arc(sx,sy,sr,0,Math.PI*2);c.fill();});c.restore();
+  }
+  function drawPlinkoBoard(progress=null){
+    const canvas=els.plinkoCanvas;if(!canvas||canvas.clientWidth<10)return;const c=canvas.getContext('2d'),L=plinkoLayout();c.clearRect(0,0,L.w,L.h);
+    const bg=c.createLinearGradient(0,0,0,L.h);bg.addColorStop(0,'#061a44');bg.addColorStop(.55,'#0b2f68');bg.addColorStop(1,'#07152f');c.fillStyle=bg;c.fillRect(0,0,L.w,L.h);
+    const halo=c.createRadialGradient(L.cx,L.top,10,L.cx,L.top,L.w*.55);halo.addColorStop(0,'rgba(44,211,255,.18)');halo.addColorStop(1,'rgba(44,211,255,0)');c.fillStyle=halo;c.fillRect(0,0,L.w,L.h);
+    for(let r=0;r<PLINKO_ROWS;r++)for(let col=0;col<=r;col++){const x=L.cx+(col-r/2)*L.spacing,y=L.top+r*L.rowGap,rad=Math.max(3.2,Math.min(5.2,L.spacing*.09));c.shadowColor='rgba(118,224,255,.65)';c.shadowBlur=8;c.fillStyle='#d7f7ff';c.beginPath();c.arc(x,y,rad,0,Math.PI*2);c.fill();c.shadowBlur=0;c.fillStyle='#54a9dd';c.beginPath();c.arc(x+rad*.18,y+rad*.18,rad*.38,0,Math.PI*2);c.fill();}
+    c.strokeStyle='rgba(104,210,255,.18)';c.lineWidth=1;for(let i=0;i<=PLINKO_ROWS;i++){const x=L.cx+(i-PLINKO_ROWS/2)*L.spacing;c.beginPath();c.moveTo(x,L.bottom-4);c.lineTo(x,L.h);c.stroke();}
+    if(progress!==null&&plinkoRuntime.active){const egg=plinkoEggPosition(progress);drawPlinkoEgg(c,egg.x,egg.y,egg.rotation);}
+    else drawPlinkoEgg(c,L.cx,L.top-26,0);
+  }
+  function finishPlinkoDrop(){
+    cancelAnimationFrame(plinkoRuntime.raf);plinkoRuntime.raf=0;const bet=state.plinkoBet,multiplier=plinkoRuntime.multiplier,payout=creditBalance(plinkoRuntime.payout);state.plinkoActive=false;plinkoRuntime.active=false;state.plinkoLastMultiplier=multiplier;state.bestPlinkoMultiplier=Math.max(state.bestPlinkoMultiplier,multiplier);state.biggestWin=Math.max(state.biggestWin,payout);session.net+=payout;
+    const profitable=payout>bet,returned=payout>=bet;if(returned){state.plinkoWins++;session.wins++;session.lossStreak=0;}else{session.losses++;session.lossStreak++;}
+    addXp(8+wagerXpBonus());const debtResult=finishCompletedRound(payout);const profit=payout-bet;setPlinkoStatus(`${multiplier.toFixed(2)}× · ${profit>=0?'+':''}${money(profit)} F${debtResult?` · ${debtResult.message}`:''}`,profitable?'win':returned?'':'lose');
+    if(multiplier>=5){audio.reward();haptic([12,30,20]);confettiBurst(Math.min(90,24+Math.floor(multiplier)));}else if(returned){audio.cash();haptic(14);}else{audio.croak();haptic(18);}refresh();drawPlinkoBoard();
+  }
+  function animatePlinko(now){
+    if(!plinkoRuntime.active)return;const elapsed=now-plinkoRuntime.startedAt,progress=clamp(elapsed/plinkoRuntime.duration,0,1);drawPlinkoBoard(progress);const egg=plinkoEggPosition(progress);if(egg.segment!==plinkoRuntime.lastPeg&&egg.segment>0&&egg.segment<=PLINKO_ROWS){plinkoRuntime.lastPeg=egg.segment;audio.fryRim();haptic(5);}if(progress>=1){finishPlinkoDrop();return;}plinkoRuntime.raf=requestAnimationFrame(animatePlinko);
+  }
+  function startPlinko(){
+    audio.unlock();if(anyRoundActive())return false;let bet=Math.floor(Number(state.plinkoBet)||0);if(bet<MIN_BET||bet>ownedWalletBalance()){setPlinkoStatus(`You need ${money(Math.max(MIN_BET,bet))} F in your wallet.`,'lose');refreshPlinkoHud();return false;}if(!spendOwnedFunds(bet))return false;
+    const path=Array.from({length:PLINKO_ROWS},()=>Math.random()<.5?0:1),slot=path.reduce((sum,v)=>sum+v,0),multiplier=plinkoTable()[slot],payout=Math.floor(bet*multiplier);state.plinkoActive=true;state.plinkoDrops++;state.rounds++;session.rounds++;session.net-=bet;state.roundBetForXp=bet;Object.assign(plinkoRuntime,{active:true,path,slot,multiplier,payout,startedAt:performance.now(),duration:2650+Math.random()*550,lastPeg:-1});setPlinkoStatus('Egg released — watch the bounce.');audio.start();haptic(14);refresh();resizePlinkoCanvas();plinkoRuntime.raf=requestAnimationFrame(animatePlinko);return true;
+  }
+
   function setGameMode(mode){
-    const target=mode==='crash'?'crash':'leap';if(anyRoundActive()&&target!==state.selectedGame){setStatus('Finish the current round before switching games.','lose');return false;}state.selectedGame=target;const leap=target==='leap';els.screens.play.classList.toggle('crash-mode',!leap);els.leapGamePane.classList.toggle('hidden',!leap);els.crashGamePane.classList.toggle('hidden',leap);els.leapGameTab.classList.toggle('active',leap);els.crashGameTab.classList.toggle('active',!leap);els.leapGameTab.setAttribute('aria-selected',String(leap));els.crashGameTab.setAttribute('aria-selected',String(!leap));refresh();return true;
+    const target=['crash','plinko'].includes(mode)?mode:'leap';if(anyRoundActive()&&target!==state.selectedGame){setStatus('Finish the current round before switching games.','lose');return false;}state.selectedGame=target;const leap=target==='leap',crash=target==='crash',plinko=target==='plinko';els.screens.play.classList.toggle('crash-mode',crash);els.screens.play.classList.toggle('plinko-mode',plinko);els.leapGamePane.classList.toggle('hidden',!leap);els.crashGamePane.classList.toggle('hidden',!crash);els.plinkoGamePane.classList.toggle('hidden',!plinko);els.leapGameTab.classList.toggle('active',leap);els.crashGameTab.classList.toggle('active',crash);els.plinkoGameTab.classList.toggle('active',plinko);els.leapGameTab.setAttribute('aria-selected',String(leap));els.crashGameTab.setAttribute('aria-selected',String(crash));els.plinkoGameTab.setAttribute('aria-selected',String(plinko));refresh();if(plinko)requestAnimationFrame(()=>{resizePlinkoCanvas();drawPlinkoBoard();});return true;
   }
   function grantGameLicense(id){
     if(gameUnlocked(id))return false;
@@ -1224,7 +1319,7 @@
     normalized.frogs=Array.from(new Set(Array.isArray(raw.frogs)?raw.frogs:[])).filter(id=>id!=='classic'&&state.unlockedFrogs.includes(id)&&FROGS.some(f=>f.id===id&&f.cost>0));
     normalized.lakes=Array.from(new Set(Array.isArray(raw.lakes)?raw.lakes:[])).filter(id=>state.unlockedLakes.includes(id)&&LAKES.some(l=>l.id===id&&l.cost>0));
     normalized.vehicles=Array.from(new Set(Array.isArray(raw.vehicles)?raw.vehicles:[])).filter(id=>vehicleOwned(id)&&VEHICLES.some(v=>v.id===id));
-    normalized.licenses=Array.from(new Set(Array.isArray(raw.licenses)?raw.licenses:[])).filter(id=>id!=='leap'&&gameUnlocked(id)&&GAME_LICENSES.some(g=>g.id===id));
+    normalized.licenses=Array.from(new Set(Array.isArray(raw.licenses)?raw.licenses:[])).filter(id=>gameUnlocked(id)&&GAME_LICENSES.some(g=>g.id===id&&g.cost>0));
     normalized.piggy=clamp(Math.floor(Number(raw.piggy)||0),0,state.piggyBalance);
     return normalized;
   }
@@ -1286,7 +1381,7 @@
       ...VEHICLES.filter(v=>vehicleOwned(v.id)).map(v=>({type:'vehicles',id:v.id,value:vehicleCollateralValue(v)})),
       ...LAKES.filter(l=>l.cost>0&&state.unlockedLakes.includes(l.id)).map(l=>({type:'lakes',id:l.id,value:lakeCollateralValue(l)})),
       ...FROGS.filter(f=>f.id!=='classic'&&f.cost>0&&state.unlockedFrogs.includes(f.id)).map(f=>({type:'frogs',id:f.id,value:skinCollateralValue(f)})),
-      ...GAME_LICENSES.filter(g=>g.id!=='leap'&&gameUnlocked(g.id)).map(g=>({type:'licenses',id:g.id,value:licenseCollateralValue(g)}))
+      ...GAME_LICENSES.filter(g=>g.cost>0&&gameUnlocked(g.id)).map(g=>({type:'licenses',id:g.id,value:licenseCollateralValue(g)}))
     ].sort((a,b)=>a.value-b.value);
     for(const asset of unique){if(remaining<=0)break;selection[asset.type].push(asset.id);remaining-=asset.value;}
     pendingCollateral=normalizeCollateralSelection(selection);
@@ -1314,7 +1409,7 @@
       ...VEHICLES.filter(v=>vehicleOwned(v.id)).map(v=>({type:'vehicles',id:v.id,name:`${v.emoji} ${v.name} model`,value:vehicleCollateralValue(v)})),
       ...LAKES.filter(l=>l.cost>0&&state.unlockedLakes.includes(l.id)).map(l=>({type:'lakes',id:l.id,name:`${l.emoji} ${l.name}`,value:lakeCollateralValue(l)})),
       ...FROGS.filter(f=>f.id!=='classic'&&f.cost>0&&state.unlockedFrogs.includes(f.id)).map(f=>({type:'frogs',id:f.id,name:`🐸 ${f.name}`,value:skinCollateralValue(f)})),
-      ...GAME_LICENSES.filter(g=>g.id!=='leap'&&gameUnlocked(g.id)).map(g=>({type:'licenses',id:g.id,name:`🎟️ ${g.name} license`,value:licenseCollateralValue(g)}))
+      ...GAME_LICENSES.filter(g=>g.cost>0&&gameUnlocked(g.id)).map(g=>({type:'licenses',id:g.id,name:`🎟️ ${g.name} license`,value:licenseCollateralValue(g)}))
     ];
     staticAssets.forEach(asset=>{const selectedAsset=pendingCollateral[asset.type].includes(asset.id);rows.push(`<button type="button" class="collateral-choice pressable ${selectedAsset?'selected':''}" data-pledge-asset="${asset.type}|${asset.id}"><span><b>${asset.name}</b><small>Full Bank Value</small></span><strong>${money(asset.value)} F</strong><i>${selectedAsset?'✓':'+'}</i></button>`);});
     els.loanCollateralList.innerHTML=rows.length?rows.join(''):'<p class="no-collateral-assets">No paid collateral assets yet. The unsecured starter limit is 5,000 F.</p>';
@@ -1852,7 +1947,7 @@
   function availableCollateralFrogs(){return FROGS.filter(f=>f.id!=='classic'&&state.pledgedFrogs.includes(f.id)&&state.unlockedFrogs.includes(f.id)).sort((a,b)=>skinCollateralValue(a)-skinCollateralValue(b));}
   function availableCollateralLakes(){return LAKES.filter(l=>l.cost>0&&state.pledgedLakes.includes(l.id)&&state.unlockedLakes.includes(l.id)).sort((a,b)=>lakeCollateralValue(a)-lakeCollateralValue(b));}
   function availableCollateralVehicles(){return VEHICLES.filter(v=>state.pledgedVehicles.includes(v.id)&&vehicleOwned(v.id)).sort((a,b)=>vehicleCollateralValue(a)-vehicleCollateralValue(b));}
-  function availableCollateralLicenses(){return GAME_LICENSES.filter(g=>g.id!=='leap'&&state.pledgedLicenses.includes(g.id)&&gameUnlocked(g.id)).sort((a,b)=>licenseCollateralValue(a)-licenseCollateralValue(b));}
+  function availableCollateralLicenses(){return GAME_LICENSES.filter(g=>g.cost>0&&state.pledgedLicenses.includes(g.id)&&gameUnlocked(g.id)).sort((a,b)=>licenseCollateralValue(a)-licenseCollateralValue(b));}
   function applyForcedDebtPayment(amount){
     const payment=Math.min(state.debt,Math.max(0,Math.floor(Number(amount)||0)));
     if(payment<=0)return 0;
@@ -2019,7 +2114,7 @@
     els.debtPayoffLabel.textContent=`${money(earlyPayoffCashRequired())} F`;
     els.debtInterestSavedLabel.textContent=`${money(earlyPayoffSavings())} F`;
     const pledgedValue=pledgedCollateralValue(),availableCollateral=availableCollateralValue(),availableLoan=maxSingleLoan();
-    els.debtLimitLabel.textContent=`${money(availableLoan)} F`;els.creditTierCeilingLabel.textContent='Characters, lakes, permanent models, licenses and Piggy';els.creditScoreLabel.textContent=`${money(availableCollateral)} F`;els.creditScoreGradeLabel.textContent=state.debt>0?'Unpledged assets remain yours':'Full direct Bank Value';els.creditLimitFactorLabel.textContent='2.5B F hard cap';
+    els.debtLimitLabel.textContent=`${money(availableLoan)} F`;els.creditTierCeilingLabel.textContent='Characters, lakes, permanent models, licenses and Piggy';els.creditScoreLabel.textContent=`${money(availableCollateral)} F`;els.creditScoreGradeLabel.textContent=state.debt>0?'Unpledged assets remain yours':'Full direct Bank Value';els.creditLimitFactorLabel.textContent='5B F hard cap';
     els.creditTierLabel.textContent=`${money(assets.total)} F`;
     els.creditTierProgressFill.style.width=`${Math.min(100,(state.debt>0?state.loanPrincipalOriginal:availableLoan)/MAX_LOAN_PAYOUT*100)}%`;
     els.creditHistoryLabel.textContent=`${money(BASE_UNSECURED_CREDIT)} F starter credit`;
@@ -2047,7 +2142,7 @@
       : `Up to ${money(creditMaxLoan)} F available`;
     els.loanEntrySubtext.textContent=state.debt>0
       ? `${money(state.debt)} F remaining · ${money(debtInstallment())} F due amount`
-      : '8% total interest · permanent assets only · flights never count · 2.5B F cap';
+      : '8% total interest · permanent assets only · flights never count · 5B F cap';
     els.bankTotalWealthLabel.textContent=`${money(Math.min(MAX_SAFE_BALANCE,state.balance+state.piggyBalance))} F`;
     els.piggyBalanceLabel.textContent=`${money(state.piggyBalance)} F`;
     els.piggyWalletLabel.textContent=`${money(own)} F wallet`;
@@ -2061,8 +2156,8 @@
     els.piggyProgressFill.style.width=`${state.piggyBalance>0?(state.piggyCycleElapsedMs/PIGGY_CYCLE_MS)*100:0}%`;
     updatePiggyTransferControls();
     const crashUnlocked=gameUnlocked('crash'),crashFree=crashUnlockIsFree();els.crashLicenseCard.classList.toggle('hidden',crashUnlocked);els.crashGameContent.classList.toggle('hidden',!crashUnlocked);els.crashTabStatus.textContent=crashUnlocked?'UNLOCKED':`${compactMoney(CRASH_LICENSE_COST)} / LV${CRASH_UNLOCK_LEVEL}`;els.unlockCrashButton.textContent=crashFree?`UNLOCK FREE AT LEVEL ${CRASH_UNLOCK_LEVEL}`:`PAY ${money(CRASH_LICENSE_COST)} F TO UNLOCK`;els.unlockCrashButton.disabled=anyRoundActive()||(!crashFree&&own<CRASH_LICENSE_COST);
-    const leapMode=state.selectedGame!=='crash';els.leapGamePane.classList.toggle('hidden',!leapMode);els.crashGamePane.classList.toggle('hidden',leapMode);els.leapGameTab.classList.toggle('active',leapMode);els.crashGameTab.classList.toggle('active',!leapMode);
-    refreshCrashHud();
+    const leapMode=state.selectedGame==='leap',crashMode=state.selectedGame==='crash',plinkoMode=state.selectedGame==='plinko';els.leapGamePane.classList.toggle('hidden',!leapMode);els.crashGamePane.classList.toggle('hidden',!crashMode);els.plinkoGamePane.classList.toggle('hidden',!plinkoMode);els.leapGameTab.classList.toggle('active',leapMode);els.crashGameTab.classList.toggle('active',crashMode);els.plinkoGameTab.classList.toggle('active',plinkoMode);els.screens.play.classList.toggle('crash-mode',crashMode);els.screens.play.classList.toggle('plinko-mode',plinkoMode);
+    refreshCrashHud();refreshPlinkoHud();
     refreshEngagement(); saveState();
   }
 
@@ -3109,7 +3204,7 @@
     document.addEventListener('pointerdown',()=>audio.unlock(),{capture:true});document.addEventListener('keydown',()=>audio.unlock(),{capture:true});document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.sound)audio.unlock();});
     document.addEventListener('pointerdown',event=>{if(!event.target.closest('#bankShortcutButton')){ownerTapCount=0;ownerTapDeadline=0;}},true);
     els.quickBets.addEventListener('click',e=>{const b=e.target.closest('[data-bet]');if(b)selectBet(b.dataset.bet);});els.betAdjusters.addEventListener('click',e=>{const betButton=e.target.closest('[data-bet]');if(betButton)selectBet(betButton.dataset.bet);const actionButton=e.target.closest('[data-bet-action]');if(actionButton)adjustBet(actionButton.dataset.betAction);});els.customBetToggle.addEventListener('click',()=>{if(state.roundActive)return;els.customBetRow.classList.toggle('hidden');if(!els.customBetRow.classList.contains('hidden'))setTimeout(()=>els.customBetInput.focus(),30);});els.customBetRow.addEventListener('submit',e=>{e.preventDefault();applyCustomBet();});els.customBetClose.addEventListener('click',()=>{els.customBetRow.classList.add('hidden');els.customBetError.textContent='';});
-    els.leapGameTab.addEventListener('click',()=>setGameMode('leap'));els.crashGameTab.addEventListener('click',()=>setGameMode('crash'));els.unlockCrashButton.addEventListener('click',()=>unlockGame('crash'));els.crashBetInput.addEventListener('input',()=>setCrashBet(els.crashBetInput.value));els.crashBetInput.addEventListener('change',()=>setCrashBet(els.crashBetInput.value));els.crashVehicleSelect.addEventListener('change',()=>{if(!state.crashActive&&availableVehicleFlights(els.crashVehicleSelect.value)>0){state.selectedVehicle=els.crashVehicleSelect.value;refresh();}});els.crashQuickBets.addEventListener('click',e=>{const button=e.target.closest('[data-crash-bet]');if(button)setCrashBet(button.dataset.crashBet);});els.crashVehicleShopButton.addEventListener('click',e=>{e.stopPropagation();openVehicleShop();});els.crashNoFlights.addEventListener('click',openVehicleShop);els.crashNoFlights.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openVehicleShop();}});els.crashStartButton.addEventListener('click',startCrash);els.crashCashButton.addEventListener('click',crashCashOut);els.start.addEventListener('click',startRound);els.jumpButton.addEventListener('click',jump);els.cash.addEventListener('click',cashOut);els.resultButton.addEventListener('click',()=>{closeModal();state.jump=0;state.crashMultiplier=1;scene.reset();refresh();});
+    els.leapGameTab.addEventListener('click',()=>setGameMode('leap'));els.crashGameTab.addEventListener('click',()=>setGameMode('crash'));els.plinkoGameTab.addEventListener('click',()=>setGameMode('plinko'));els.plinkoBetInput.addEventListener('input',()=>setPlinkoBet(els.plinkoBetInput.value));els.plinkoBetInput.addEventListener('change',()=>setPlinkoBet(els.plinkoBetInput.value));els.plinkoQuickBets.addEventListener('click',e=>{const button=e.target.closest('[data-plinko-bet]');if(button)setPlinkoBet(button.dataset.plinkoBet);});els.plinkoRiskButtons.addEventListener('click',e=>{const button=e.target.closest('[data-plinko-risk]');if(button)setPlinkoRisk(button.dataset.plinkoRisk);});els.plinkoDropButton.addEventListener('click',startPlinko);els.unlockCrashButton.addEventListener('click',()=>unlockGame('crash'));els.crashBetInput.addEventListener('input',()=>setCrashBet(els.crashBetInput.value));els.crashBetInput.addEventListener('change',()=>setCrashBet(els.crashBetInput.value));els.crashVehicleSelect.addEventListener('change',()=>{if(!state.crashActive&&availableVehicleFlights(els.crashVehicleSelect.value)>0){state.selectedVehicle=els.crashVehicleSelect.value;refresh();}});els.crashQuickBets.addEventListener('click',e=>{const button=e.target.closest('[data-crash-bet]');if(button)setCrashBet(button.dataset.crashBet);});els.crashVehicleShopButton.addEventListener('click',e=>{e.stopPropagation();openVehicleShop();});els.crashNoFlights.addEventListener('click',openVehicleShop);els.crashNoFlights.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openVehicleShop();}});els.crashStartButton.addEventListener('click',startCrash);els.crashCashButton.addEventListener('click',crashCashOut);els.start.addEventListener('click',startRound);els.jumpButton.addEventListener('click',jump);els.cash.addEventListener('click',cashOut);els.resultButton.addEventListener('click',()=>{closeModal();state.jump=0;state.crashMultiplier=1;scene.reset();refresh();});
     els.sound.addEventListener('click',toggleSound);els.settingsSound.addEventListener('click',toggleSound);els.settingsMotion.addEventListener('click',()=>{state.effects=!state.effects;refresh();});els.settingsReminders.addEventListener('click',()=>{state.playReminders=!state.playReminders;session.reminded=false;refresh();});els.goalGrid.addEventListener('click',e=>{const button=e.target.closest('[data-goal-claim]');if(button)claimGoal(button.dataset.goalClaim);});
     els.bankShortcut.addEventListener('click',()=>{recordOwnerBankTap();setBankPane('loans');navigate('bank');});els.bankLoansTab.addEventListener('click',()=>setBankPane('loans'));els.bankPiggyTab.addEventListener('click',()=>setBankPane('piggy'));    els.openLoanBuilderButton.addEventListener('click',openLoanBuilder);els.loanAmountSlider.addEventListener('input',()=>refreshLoanBuilder(els.loanAmountSlider.value));els.loanAmountInput.addEventListener('input',()=>refreshLoanBuilder(els.loanAmountInput.value,{exact:true}));els.loanMaximumButton.addEventListener('click',()=>refreshLoanBuilder(maxSingleLoan(),{exact:true}));els.loanCollateralAutoButton.addEventListener('click',()=>{pendingCollateralMode='auto';autoSelectCollateral(pendingLoanAmount);renderLoanCollateralPicker();});els.loanCollateralClearButton.addEventListener('click',clearPendingCollateral);els.loanCollateralList.addEventListener('click',e=>{const button=e.target.closest('[data-pledge-asset]');if(!button)return;const [type,id]=button.dataset.pledgeAsset.split('|');togglePendingCollateralAsset(type,id);});els.loanCollateralList.addEventListener('input',e=>{if(e.target.matches('[data-pledge-piggy]')){pendingCollateralMode='manual';pendingCollateral.piggy=clamp(Math.floor(Number(e.target.value)||0),0,state.piggyBalance);renderLoanCollateralPicker();}});els.loanReviewButton.addEventListener('click',reviewLoanWarning);els.loanWarningCancelButton.addEventListener('click',closeModal);els.loanRedeemButton.addEventListener('click',redeemPendingLoan);els.repayInstallmentButton.addEventListener('click',()=>repayDebt('installment'));els.repayAllButton.addEventListener('click',()=>repayDebt('all'));
     document.querySelectorAll('[data-piggy-mode]').forEach(button=>button.addEventListener('click',()=>setPiggyTransferMode(button.dataset.piggyMode)));document.querySelectorAll('[data-piggy-share]').forEach(button=>button.addEventListener('click',()=>setPiggyTransferAmount(Math.floor(piggyTransferMaximum()*Number(button.dataset.piggyShare)/100))));els.piggyTransferSlider.addEventListener('input',()=>setPiggyTransferAmount(els.piggyTransferSlider.value));els.piggyTransferSlider.addEventListener('change',()=>setPiggyTransferAmount(els.piggyTransferSlider.value));els.piggyTransferInput.addEventListener('input',()=>setPiggyTransferAmount(els.piggyTransferInput.value,{fromInput:true}));els.piggyTransferInput.addEventListener('change',()=>setPiggyTransferAmount(els.piggyTransferInput.value));els.piggyTransferButton.addEventListener('click',transferPiggy);els.debtBadge.addEventListener('click',()=>{setBankPane('loans');navigate('bank');});
@@ -3130,7 +3225,7 @@
     els.caseOpeningResult.addEventListener('click',e=>{const equip=e.target.closest('[data-case-equip]');if(equip){equipCaseFrog(equip.dataset.caseEquip);return;}const view=e.target.closest('[data-case-view]');if(view){hideCaseOpening();viewCaseFrog(view.dataset.caseView);return;}const again=e.target.closest('[data-case-open-again]');if(again){const id=again.dataset.caseOpenAgain;hideCaseOpening();setTimeout(()=>openCase(id),80);}});
     els.installButton.addEventListener('click',installGame);
     document.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('click',closeModal));els.modalBackdrop.addEventListener('click',e=>{if(e.target===els.modalBackdrop)closeModal();});
-    window.addEventListener('keydown',e=>{if(e.code==='Space'){if(caseOpeningRuntime.active)return;e.preventDefault();if(state.selectedGame==='crash'){state.crashActive?crashCashOut():startCrash();}else{state.roundActive?jump():startRound();}}if(e.code==='Escape'){if(caseOpeningRuntime.active){if(caseOpeningRuntime.phase==='reveal')hideCaseOpening();else skipCaseOpening();return;}if(!els.jobResult.classList.contains('hidden'))closeJobResult();else if(state.crashActive)crashCashOut();else state.roundActive?cashOut():closeModal();}});
+    window.addEventListener('keydown',e=>{if(e.code==='Space'){if(caseOpeningRuntime.active)return;e.preventDefault();if(state.selectedGame==='crash'){state.crashActive?crashCashOut():startCrash();}else if(state.selectedGame==='plinko'){startPlinko();}else{state.roundActive?jump():startRound();}}if(e.code==='Escape'){if(caseOpeningRuntime.active){if(caseOpeningRuntime.phase==='reveal')hideCaseOpening();else skipCaseOpening();return;}if(!els.jobResult.classList.contains('hidden'))closeJobResult();else if(state.crashActive)crashCashOut();else state.roundActive?cashOut():closeModal();}});
     window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;els.installButton.classList.remove('hidden');});
     window.addEventListener('appinstalled',()=>els.installButton.classList.add('hidden'));
   }
@@ -3143,7 +3238,7 @@
   async function runSelfTest(){
     try{
       state=deepClone(DEFAULT_STATE);refresh();
-      if(!gameUnlocked('leap')||gameUnlocked('crash'))throw new Error('game license defaults failed');
+      if(!gameUnlocked('leap')||!gameUnlocked('plinko')||gameUnlocked('crash'))throw new Error('game license defaults failed');
       state.unlockedGames.push('crash');state.selectedGame='crash';setGameMode('crash');refresh();if(els.crashNoFlights.classList.contains('hidden')||els.crashNoFlightsTitle.textContent!=='NO FLIGHTS'||els.crashVehicleShopButton.textContent.trim()!=='VEHICLES →'||!els.crashStartButton.disabled)throw new Error('compact no-flight panel failed');if(!openVehicleShop()||collectionMode!=='vehicles'||!els.screens.collection.classList.contains('active')||!document.querySelector('.segment[data-collection="vehicles"]').classList.contains('active'))throw new Error('vehicle shop shortcut failed');state=deepClone(DEFAULT_STATE);refresh();
       state.balance=CRASH_LICENSE_COST+1000000;const paidUnlockStart=state.balance;if(!unlockGame('crash')||!gameUnlocked('crash')||vehicleCharges('glider')!==5||state.balance!==paidUnlockStart-CRASH_LICENSE_COST)throw new Error('paid crash unlock failed');state=deepClone(DEFAULT_STATE);state.level=CRASH_UNLOCK_LEVEL;const freeUnlockStart=state.balance;refresh();if(!gameUnlocked('crash')||vehicleCharges('glider')!==5||state.balance!==freeUnlockStart)throw new Error('level crash unlock failed');
       if(compactMoney(1240000)!=='1.24M'||compactMoney(1000000000)!=='1B'||compactMoney(999)!=='999')throw new Error('compact money formatting failed');
@@ -3152,12 +3247,12 @@
       if(VEHICLES[0].refillCost!==25000||VEHICLES[1].refillCost!==150000||VEHICLES[2].refillCost!==750000||VEHICLES[3].refillCost!==4000000)throw new Error('refill prices failed');
       if(VEHICLES[0].max!==5||VEHICLES[1].max!==12||VEHICLES[2].max!==30||VEHICLES[3].max!==100)throw new Error('realistic redlines failed');
       state.vehicleCharges.glider=5;state.ownedVehicles=['glider'];state.selectedVehicle='glider';state.crashBet=100;state.balance=1000;if(crashPayoutFor(1)!==97||crashPayoutFor(2)!==194)throw new Error('Crash 3% starting edge failed');if(!startCrash()||!state.crashActive)throw new Error('crash start failed');state.crashStartedAt=performance.now()-5000;state.crashMultiplier=1.5;if(!crashCashOut()||state.crashActive||state.balance<=900)throw new Error('manual crash cashout failed');closeModal();state=deepClone(DEFAULT_STATE);state.unlockedGames=['leap','crash'];state.ownedVehicles=['glider'];state.vehicleCharges.glider=2;state.balance=1000;state.crashBet=100;state.safeRunCredits=1;if(!startCrash()||!state.roundSafe||state.safeRunCredits!==0)throw new Error('Crash protected-round activation failed');state.crashStartedAt=performance.now()-5000;state.crashMultiplier=1.5;if(!crashCashOut({automatic:true,reason:'protected'})||state.roundSafe)throw new Error('Crash protected payout failed');closeModal();if(crashMultiplierAtElapsed(10,VEHICLES[0])<=Math.exp(10*VEHICLES[0].growth))throw new Error('accelerating Crash curve failed');
-      state=deepClone(DEFAULT_STATE);state.unlockedFrogs.push('king');state.unlockedLakes.push('swamp');state.ownedVehicles.push('glider');state.vehicleCharges.glider=10;state.unlockedGames.push('crash');state.piggyBalance=1000000;const assets=collateralBreakdown();if(assets.skins!==5000||assets.lakes!==1500||assets.vehicles!==750000||assets.licenses!==500000||assets.piggy!==1000000||'flights' in assets)throw new Error('flight-free Bank Values failed');if(debtLimit()!==Math.min(MAX_LOAN_PAYOUT,BASE_UNSECURED_CREDIT+assets.total))throw new Error('direct asset-backed limit failed');const pledge=emptyCollateralSelection();if('flights' in pledge)throw new Error('flights remained pledgeable');pledge.piggy=5000;if(!takeLoan(10000,{skipConfirm:true,pledge})||state.pledgedPiggy!==5000)throw new Error('selected collateral loan failed');
+      state=deepClone(DEFAULT_STATE);state.unlockedFrogs.push('king');state.unlockedLakes.push('swamp');state.ownedVehicles.push('glider');state.vehicleCharges.glider=10;state.unlockedGames.push('crash');state.piggyBalance=1000000;const assets=collateralBreakdown();if(assets.skins!==15000||assets.lakes!==1500||assets.vehicles!==750000||assets.licenses!==500000||assets.piggy!==1000000||'flights' in assets)throw new Error('flight-free Bank Values failed');if(debtLimit()!==Math.min(MAX_LOAN_PAYOUT,BASE_UNSECURED_CREDIT+assets.total))throw new Error('direct asset-backed limit failed');const pledge=emptyCollateralSelection();if('flights' in pledge)throw new Error('flights remained pledgeable');pledge.piggy=5000;if(!takeLoan(10000,{skipConfirm:true,pledge})||state.pledgedPiggy!==5000)throw new Error('selected collateral loan failed');
       state=deepClone(DEFAULT_STATE);state.balance=1000000;state.level=10;collectionMode='vehicles';collectionAction('glider');const afterModel=state.balance;if(!buyVehicleFlights('glider',{skipConfirm:true})||state.balance!==afterModel-25000||vehicleCharges('glider')!==20)throw new Error('cheap refill failed');state.debt=1000;state.pledgedFlights.glider=20;if(availableVehicleFlights('glider')!==20||pledgedVehicleFlights('glider')!==0)throw new Error('old flight pledges were not ignored');
-      state=deepClone(DEFAULT_STATE);state.unlockedFrogs.push('owner');state.piggyBalance=600000000;if(maxSingleLoan()!==2500000000)throw new Error('2.5B loan cap failed');state=deepClone(DEFAULT_STATE);state.debt=10800;state.loanPrincipalOriginal=10000;state.loanPrincipalRemaining=10000;state.loanInterestTotal=800;state.loanInstallment=1080;state.debtCycleStartRound=0;state.completedRounds=2;state.debtTurns=2;let countdown=completeDebtTurn();if(!countdown?.warning||countdown.dueIn!==2||countdown.message!=='Loan payment in 2 rounds: 1,080 F.')throw new Error('two-round loan notice failed');countdown=completeDebtTurn();if(!countdown?.warning||countdown.dueIn!==1||countdown.message!=='Loan payment next round: 1,080 F.')throw new Error('one-round loan notice failed');
+      state=deepClone(DEFAULT_STATE);state.unlockedFrogs.push('owner');state.piggyBalance=600000000;if(maxSingleLoan()!==5000000000)throw new Error('5B loan cap failed');state=deepClone(DEFAULT_STATE);state.debt=10800;state.loanPrincipalOriginal=10000;state.loanPrincipalRemaining=10000;state.loanInterestTotal=800;state.loanInstallment=1080;state.debtCycleStartRound=0;state.completedRounds=2;state.debtTurns=2;let countdown=completeDebtTurn();if(!countdown?.warning||countdown.dueIn!==2||countdown.message!=='Loan payment in 2 rounds: 1,080 F.')throw new Error('two-round loan notice failed');countdown=completeDebtTurn();if(!countdown?.warning||countdown.dueIn!==1||countdown.message!=='Loan payment next round: 1,080 F.')throw new Error('one-round loan notice failed');
       state=deepClone(DEFAULT_STATE);state.balance=321;state.debt=10800;state.loanPrincipalOriginal=10000;state.loanPrincipalRemaining=10000;state.loanInterestTotal=800;state.loanInstallment=1080;state.debtTurns=4;state.piggyBalance=5000;const automaticDue=completeDebtTurn();if(automaticDue?.paid!==1080||state.piggyBalance!==3920||state.balance!==321||state.debt!==9720||state.debtTurns!==0||state.debtDue||state.loanInstallmentsPaid!==1)throw new Error('automatic due-round Piggy payment or countdown reset failed');
       state=deepClone(DEFAULT_STATE);state.balance=777;state.debt=10800;state.loanPrincipalOriginal=10000;state.loanPrincipalRemaining=10000;state.loanInterestTotal=800;state.loanInterestPaid=0;state.loanInstallment=1080;state.loanInstallmentsPaid=0;state.debtDue=true;state.debtDueAmount=10800;state.debtTurns=DEBT_ROUND_INTERVAL;state.piggyBalance=5000;const overduePiggy=completeDebtTurn();if(overduePiggy.due!==1080||overduePiggy.paid!==1080||state.piggyBalance!==3920||state.balance!==777||state.debt!==9720||state.debtDue||state.loanInstallmentsPaid!==1)throw new Error('exact direct Piggy installment payment failed');
-      state=deepClone(DEFAULT_STATE);state.debt=10800;state.loanPrincipalOriginal=10000;state.loanPrincipalRemaining=10000;state.loanInterestTotal=800;state.loanInterestPaid=0;state.loanInstallment=1080;state.loanInstallmentsPaid=0;state.debtDue=true;state.debtDueAmount=1080;state.debtTurns=DEBT_ROUND_INTERVAL;state.piggyBalance=80;state.unlockedFrogs.push('king');state.pledgedFrogs=['king'];const overdueAsset=completeDebtTurn();if(overdueAsset.paid!==1080||state.piggyBalance!==0||state.debt!==9720||state.balance!==5000||state.unlockedFrogs.includes('king')||state.debtDue)throw new Error('partial Piggy then asset installment collection failed');
+      state=deepClone(DEFAULT_STATE);state.debt=10800;state.loanPrincipalOriginal=10000;state.loanPrincipalRemaining=10000;state.loanInterestTotal=800;state.loanInterestPaid=0;state.loanInstallment=1080;state.loanInstallmentsPaid=0;state.debtDue=true;state.debtDueAmount=1080;state.debtTurns=DEBT_ROUND_INTERVAL;state.piggyBalance=80;state.unlockedFrogs.push('king');state.pledgedFrogs=['king'];const overdueAsset=completeDebtTurn();if(overdueAsset.paid!==1080||state.piggyBalance!==0||state.debt!==9720||state.balance!==14000||state.unlockedFrogs.includes('king')||state.debtDue)throw new Error('partial Piggy then asset installment collection failed');
       state=deepClone(DEFAULT_STATE);state.balance=20000;state.debt=10800;state.loanPrincipalOriginal=10000;state.loanPrincipalRemaining=10000;state.loanInterestTotal=800;state.loanInterestPaid=0;state.loanInstallment=1080;state.loanInstallmentsPaid=0;state.debtCycleStartRound=0;state.completedRounds=0;piggyTransferMode='deposit';if(earlyPayoffAmount()!==10000||piggyTransferMaximum()!==10000)throw new Error('initial loan Piggy reserve failed');state.completedRounds=3;if(earlyPayoffAmount()!==10048||piggyTransferMaximum()!==9952)throw new Error('round-adjusted loan Piggy reserve failed');if(trustedClosedElapsed(3600000,0,0)!==3600000||trustedClosedElapsed(4600000,1000000,600000)!==3000000)throw new Error('trusted closed-time calculation failed');
       state=deepClone(DEFAULT_STATE);piggyTrustedAnchorMs=0;state.piggyTrustedTimestamp=123456;state.piggyUntrustedOpenMs=789;invalidateUntrustedClosedAccrual();if(state.piggyTrustedTimestamp!==0||state.piggyUntrustedOpenMs!==0)throw new Error('untrusted Piggy balance-change invalidation failed');piggyTrustedAnchorMs=Date.now();piggyTrustedAnchorPerformance=performance.now();
       state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;state.piggyLastTimestamp=Date.now();let result=advancePiggyTime(PIGGY_CYCLE_MS,piggyOpenRate(),'open');if(result.interest!==10000||state.piggyBalance!==1010000)throw new Error('open-app Piggy rate failed');state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;result=advancePiggyTime(PIGGY_CYCLE_MS,piggyClosedRate(),'closed');if(result.interest!==3000||state.piggyBalance!==1003000)throw new Error('closed-app Piggy rate failed');state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;advancePiggyTime(PIGGY_CYCLE_MS/2,piggyOpenRate(),'open');result=advancePiggyTime(PIGGY_CYCLE_MS/2,piggyClosedRate(),'closed');if(result.interest!==6500)throw new Error('mixed Piggy cycle failed');state=deepClone(DEFAULT_STATE);state.piggyInterestRateBonus+=PIGGY_OWNER_RATE_STEP;state.piggyInterestRateBonus+=PIGGY_OWNER_RATE_STEP;if(state.piggyInterestRateBonus!==0.02||piggyOpenRate()!==0.03||piggyClosedRate()!==0.023)throw new Error('repeatable Piggy owner boost failed');state.piggyBalance=1000000;result=advancePiggyTime(PIGGY_CYCLE_MS,piggyOpenRate(),'open');if(result.interest!==30000)throw new Error('stacked Piggy rate failed');state.piggyInterestRateBonus=0;if(piggyOpenRate()!==PIGGY_OPEN_RATE||piggyClosedRate()!==PIGGY_CLOSED_RATE)throw new Error('Piggy owner reset failed');if(!ownerAccessModal||!ownerPanelModal)throw new Error('maintenance UI failed');const ownerMinus=applyOwnerOperation(1000,'-250',{minimum:0,maximum:MAX_SAFE_BALANCE}),ownerTimes=applyOwnerOperation(1000,'x2',{minimum:0,maximum:MAX_SAFE_BALANCE}),ownerDivide=applyOwnerOperation(1000,'/4',{minimum:0,maximum:MAX_SAFE_BALANCE});if(ownerMinus?.target!==750||ownerTimes?.target!==2000||ownerDivide?.target!==250)throw new Error('owner arithmetic operations failed');if(!ownerPanelModal.querySelector('[data-owner-action="wallet"] [data-owner-value]')||ownerPanelModal.querySelector('[data-owner-summary]')?.textContent.includes('wallet ·'))throw new Error('streamlined owner values failed');
@@ -3173,12 +3268,14 @@
       if(CRASH_MIN_POINT!==1.01)throw new Error('Crash minimum point failed');
       if(document.querySelector('[data-screen="rewards"]')||document.getElementById('rewardsScreen')||document.getElementById('rewardModal')||document.getElementById('spinButton'))throw new Error('Rewards UI still present');
       if(ownerPanelModal.querySelector('[data-owner-action="spins"]')||ownerPanelModal.querySelector('[data-owner-action="unlimited"]'))throw new Error('Reward-wheel owner controls still present');
+      if(MAX_LOAN_PAYOUT!==5000000000)throw new Error('5B Bank cap constant failed');const paidFrogs=FROGS.filter(f=>f.cost>0);if(paidFrogs.find(f=>f.id==='meadow')?.cost!==1500||paidFrogs.find(f=>f.id==='gigachad')?.cost!==2250000000||paidFrogs.find(f=>f.id==='owner')?.cost!==6000000000)throw new Error('3x frog pricing failed');if(PLINKO_ROWS!==12||plinkoTable('medium').length!==13||Math.abs(plinkoRtp('medium')-PLINKO_TARGET_RTP)>.01)throw new Error('Plinko payout table failed');
       const shopFrogs=frogShopItems();for(let i=1;i<shopFrogs.length;i++){if(shopFrogs[i].cost<shopFrogs[i-1].cost)throw new Error('frog shop price order failed');if((FROG_RARITY_RANK[shopFrogs[i].rarity]??99)<(FROG_RARITY_RANK[shopFrogs[i-1].rarity]??99))throw new Error('frog rarity progression failed');}const hill=FROGS.find(f=>f.id==='gigachad');if(!hill||hill.name!=='The Hill Frog'||hill.art!=='assets/the-hill-frog-game-v66.png'||hill.cardArt!=='assets/the-hill-frog-card-v64.webp')throw new Error('The Hill Frog art/name failed');const basicIds=['meadow','river','moss','sand','blue-dart','sunset'];if(!basicIds.every(id=>FROGS.some(f=>f.id===id)))throw new Error('v63 basic frog lineup missing');
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v69 natural case landings + variable reel travel + v68 CS-style case reel + delayed skip + rarity reveal + v67 Cases + six-slot mobile nav + v66 approved smiling The Hill Frog gameplay model + v64 polished The Hill Frog Collection portrait + v63 basic frog lineup + The Hill Frog rename, v62 rarity header rows + price/rarity order, v60 Rewards removal, v59 gameplay skin art, v55 early Crash risk, Piggy rates, trusted-time warning, restartable Shift Over dialog, and app-visible no-flight badge';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v71 Frog Egg Plinko + 3x frog prices + 5B Bank cap + v70 natural case landings + variable reel travel + v68 CS-style case reel + delayed skip + rarity reveal + v67 Cases + six-slot mobile nav + v66 approved smiling The Hill Frog gameplay model + v64 polished The Hill Frog Collection portrait + v63 basic frog lineup + The Hill Frog rename, v62 rarity header rows + price/rarity order, v60 Rewards removal, v59 gameplay skin art, v55 early Crash risk, Piggy rates, trusted-time warning, restartable Shift Over dialog, and app-visible no-flight badge';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 
   setInterval(()=>{if(!state.playReminders||session.reminded||anyRoundActive())return;if(Date.now()-session.startedAt>=15*60*1000){session.reminded=true;setStatus('Pond check: you have been playing for 15 minutes. Take a break whenever you need one.');refreshEngagement();}},30000);
+  if(window.ResizeObserver&&els.plinkoBoard)new ResizeObserver(()=>{resizePlinkoCanvas();drawPlinkoBoard();}).observe(els.plinkoBoard);
   initializePiggyClock();
   setInterval(()=>{
     const result=tickPiggyClock();
@@ -3197,5 +3294,5 @@
   if(!state.tutorialSeen&&!TEST_MODE){state.tutorialSeen=true;saveState();setTimeout(()=>openModal(els.howToModal),600);}
   if(TEST_MODE)runSelfTest();
 
-  window.FroggyGame={version:BUILD_VERSION,selectedFrog,activeSkinPerks,skinJobMoneyMultiplier,skinJobXpMultiplier,skinJobStartBonusMs,skinLeapXp,skinCrashXp,skinPiggyRateBonus,jobPay,jobXpPerFry,jobXpNeeded,activateJobMoneyBoost,activateJobXpBoost,startJobShift,endJobShift,finishJobShiftRound,extendJobShiftTime,collectionResaleValue,sellCollectionItem,compactMoney,selectVehicle,buyVehicleFlights,getState:()=>deepClone(state),setGameMode,unlockGame,startCrash,crashCashOut,crashLose,setCrashBet,crashPayoutFor,selectBet,setBetAmount,adjustBet,applyCustomBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,creditBalance,takeLoan,repayDebt,completeDebtTurn,debtInstallment,debtLimit,availableCredit,maxSingleLoan,collateralBreakdown,collateralLoanLimit,allocateRoundStake,ownedWalletBalance,finishCompletedRound,earlyPayoffAmount,earlyPayoffCashRequired,earlyPayoffSavings,loanQuote,piggyLoanReserve,piggyTransferMaximum,transferPiggy,advancePiggyBankRound,selectedVehicle,vehicleCharges,pledgedVehicleFlights,availableVehicleFlights,vehicleOwned,collateralSelectionValue,completeVehicleFlight,vehicleCrashXp,advancePiggyTime,tickPiggyClock,trustedClosedElapsed,piggyOpenRate,piggyClosedRate,ensureCrashLevelUnlock,autoSelectCollateral,noUsableVehicleFlights,openVehicleShop,setBankPane,reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();refresh();}};
+  window.FroggyGame={version:BUILD_VERSION,selectedFrog,activeSkinPerks,skinJobMoneyMultiplier,skinJobXpMultiplier,skinJobStartBonusMs,skinLeapXp,skinCrashXp,skinPiggyRateBonus,jobPay,jobXpPerFry,jobXpNeeded,activateJobMoneyBoost,activateJobXpBoost,startJobShift,endJobShift,finishJobShiftRound,extendJobShiftTime,collectionResaleValue,sellCollectionItem,compactMoney,selectVehicle,buyVehicleFlights,getState:()=>deepClone(state),setGameMode,unlockGame,startCrash,crashCashOut,crashLose,setCrashBet,crashPayoutFor,startPlinko,setPlinkoBet,setPlinkoRisk,plinkoTable,plinkoRtp,selectBet,setBetAmount,adjustBet,applyCustomBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,creditBalance,takeLoan,repayDebt,completeDebtTurn,debtInstallment,debtLimit,availableCredit,maxSingleLoan,collateralBreakdown,collateralLoanLimit,allocateRoundStake,ownedWalletBalance,finishCompletedRound,earlyPayoffAmount,earlyPayoffCashRequired,earlyPayoffSavings,loanQuote,piggyLoanReserve,piggyTransferMaximum,transferPiggy,advancePiggyBankRound,selectedVehicle,vehicleCharges,pledgedVehicleFlights,availableVehicleFlights,vehicleOwned,collateralSelectionValue,completeVehicleFlight,vehicleCrashXp,advancePiggyTime,tickPiggyClock,trustedClosedElapsed,piggyOpenRate,piggyClosedRate,ensureCrashLevelUnlock,autoSelectCollateral,noUsableVehicleFlights,openVehicleShop,setBankPane,reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();refresh();}};
 })();

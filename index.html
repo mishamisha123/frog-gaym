@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=69-natural-spin" />
+  <link rel="stylesheet" href="styles.css?v=71-plinko" />
   <title>Froggy Leap</title>
 </head>
 <body>
@@ -45,6 +45,7 @@
           <div class="arcade-tabs" role="tablist" aria-label="Froggy Leap games">
             <button id="leapGameTab" type="button" class="active pressable" data-game-mode="leap" role="tab" aria-selected="true"><span>🐸</span><b>Lily Leap</b><small>FREE</small></button>
             <button id="crashGameTab" type="button" class="pressable" data-game-mode="crash" role="tab" aria-selected="false"><span>🚀</span><b>Sky Crash</b><small id="crashTabStatus">500K / LV35</small></button>
+            <button id="plinkoGameTab" type="button" class="pressable" data-game-mode="plinko" role="tab" aria-selected="false"><span>🥚</span><b>Egg Plinko</b><small>FREE</small></button>
           </div>
         </section>
 
@@ -102,7 +103,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v69 · FROGGY LEAP</div>
+          <div class="build-version" aria-label="Installed game version">v71 · FROGGY LEAP</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -183,6 +184,41 @@
               <p class="crash-fair-note">Manual flights only. The multiplier rises slowly and smoothly. Pull out before the hidden failure point or your vehicle redline. A 3% flight fee applies only to profit, so pulling out at 1.00× returns the full stake.</p>
             </section>
           </div>
+        </section>
+
+        <section id="plinkoGamePane" class="arcade-game-pane hidden" aria-label="Frog Egg Plinko game">
+          <section class="plinko-shell glass">
+            <div class="plinko-heading">
+              <div><small>FROG EGG PLINKO</small><h2>Drop. Bounce. Hatch a multiplier.</h2><p>One egg, 12 peg rows, 13 payout pockets. Every bounce is a fair left/right split.</p></div>
+              <div class="plinko-mini-stats">
+                <span><small>LAST</small><b id="plinkoLastLabel">—</b></span>
+                <span><small>DROPS</small><b id="plinkoDropsLabel">0</b></span>
+                <span><small>RTP</small><b id="plinkoRtpLabel">97.0%</b></span>
+              </div>
+            </div>
+
+            <div id="plinkoBoard" class="plinko-board">
+              <canvas id="plinkoCanvas" aria-label="Frog egg bouncing through a Plinko peg board"></canvas>
+              <div class="plinko-drop-guide" aria-hidden="true"><span>🥚</span><i></i></div>
+            </div>
+            <div id="plinkoMultipliers" class="plinko-multipliers" aria-label="Plinko payout multipliers"></div>
+            <p id="plinkoStatus" class="plinko-status" role="status" aria-live="polite">Choose a bet and risk, then drop a frog egg.</p>
+          </section>
+
+          <section class="plinko-controls glass">
+            <div class="plinko-control-grid">
+              <label class="plinko-bet-field"><small>BET AMOUNT</small><input id="plinkoBetInput" type="number" min="50" step="1" inputmode="numeric" value="100" /></label>
+              <div class="plinko-risk-field"><small>RISK</small><div id="plinkoRiskButtons" class="plinko-risk-buttons" role="group" aria-label="Plinko risk"><button type="button" class="pressable" data-plinko-risk="low">LOW</button><button type="button" class="active pressable" data-plinko-risk="medium">MEDIUM</button><button type="button" class="pressable" data-plinko-risk="high">HIGH</button></div></div>
+            </div>
+            <div id="plinkoQuickBets" class="plinko-quick-bets" aria-label="Plinko bet controls">
+              <button type="button" class="pressable" data-plinko-bet="min"><b>MIN</b><small>50 F</small></button>
+              <button type="button" class="pressable" data-plinko-bet="half"><b>÷2</b><small>Half</small></button>
+              <button type="button" class="pressable" data-plinko-bet="double"><b>×2</b><small>Double</small></button>
+              <button type="button" class="pressable" data-plinko-bet="max"><b>MAX</b><small>Wallet</small></button>
+            </div>
+            <button id="plinkoDropButton" type="button" class="action-button start plinko-drop-button pressable"><span>DROP FROG EGG</span><small>Bet 100 F · MEDIUM risk</small></button>
+            <p class="plinko-fair-note">Fictional Froggy only · 12 independent 50/50 bounces · the multiplier table is visible before every drop.</p>
+          </section>
         </section>
 
       </section>
@@ -275,7 +311,7 @@
               <div class="credit-health-grid asset-credit-summary">
                 <div><small>TOTAL ASSET VALUE</small><b id="creditTierLabel">0 F</b><span id="creditTierCeilingLabel">Every paid asset uses its full Bank Value</span></div>
                 <div><small>AVAILABLE COLLATERAL</small><b id="creditScoreLabel">0 F</b><span id="creditScoreGradeLabel">Consumable flights never count as collateral</span></div>
-                <div><small>AVAILABLE TO BORROW</small><b id="debtLimitLabel">5,000 F</b><span id="creditLimitFactorLabel">2.5B F hard cap</span></div>
+                <div><small>AVAILABLE TO BORROW</small><b id="debtLimitLabel">5,000 F</b><span id="creditLimitFactorLabel">5B F hard cap</span></div>
               </div>
               <div class="simple-tier-progress"><i id="creditTierProgressFill"></i></div>
               <p><strong id="creditHistoryLabel">5,000 F starter credit</strong> · <span id="creditNextTierLabel">Each 1 F of Bank Value adds 1 F of borrowing capacity</span></p>
@@ -294,7 +330,7 @@
                 <div>
                   <small>ASSET-BACKED LOAN</small>
                   <b id="loanEntryHeadline">Up to 5,000 F available</b>
-                  <p id="loanEntrySubtext">8% total interest · assets stand behind the loan · 2.5B F maximum</p>
+                  <p id="loanEntrySubtext">8% total interest · assets stand behind the loan · 5B F maximum</p>
                 </div>
               </div>
               <button id="openLoanBuilderButton" type="button" class="loan-open-button pressable">
@@ -329,7 +365,7 @@
               <span>8% total interest</span>
               <span>10 fixed payments</span>
               <span>Due every 5 rounds</span>
-              <span>Only pledged assets can be seized</span><span>2.5B F principal cap</span>
+              <span>Only pledged assets can be seized</span><span>5B F principal cap</span>
             </div>
           </section>
 
@@ -658,6 +694,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=69-natural-spin"></script>
+  <script src="app.js?v=71-plinko"></script>
 </body>
 </html>

@@ -1,8 +1,6 @@
-# Froggy Leap v69
+# Froggy Leap v71
 
-> **Current-behavior note:** The v69 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
-
-
+> **Current-behavior note:** The v71 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
 
 
@@ -14,6 +12,20 @@
 
 
 
+
+
+
+
+## v71 — Frog Egg Plinko + economy scale-up
+
+- Added **Frog Egg Plinko** as a free third game under Games.
+- Classic triangular 12-row board with frog eggs bouncing through 50/50 peg decisions into 13 visible multiplier pockets.
+- Low, Medium, and High risk tables are shown before every drop; each egg drop counts as one completed gameplay round for Bank payment timing.
+- Added bet controls, inline result feedback, peg sounds/haptics, and higher-multiplier celebration effects.
+- Increased every paid frog shop price to **3×** its v70 value. Existing ownership is preserved; resale and Bank Value continue to derive from the live shop price.
+- Raised the Bank loan principal hard cap from **2.5B F to 5B F**.
+- Preserved the v70 natural case-spin behavior and existing save key.
+- PWA asset URLs, service-worker cache, refresh helper, build label, and manifest description bumped to **v71**.
 
 ## v69 — natural case reel landings
 
