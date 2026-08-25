@@ -1,7 +1,7 @@
 {
   "name": "Froggy Leap",
   "short_name": "Froggy Leap",
-  "description": "Froggy Leap v73 with price-scaled perks on every frog, a rebuilt Ultra Case with The Hill Frog and rarest Owner Frog jackpot, Frog Egg Plinko, and offline PWA support.",
+  "description": "Froggy Leap v74 with physics-style spammable Frog Egg Plinko, price-scaled frog perks, jackpot cases, and offline PWA support.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

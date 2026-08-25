@@ -1,8 +1,6 @@
-# Froggy Leap v73
+# Froggy Leap v74
 
-> **Current-behavior note:** The v73 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
-
-
+> **Current-behavior note:** The v74 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
 
 
@@ -15,6 +13,18 @@
 
 
 
+
+
+
+## v74 — Physics-style Frog Egg Plinko
+
+- Rebuilt only the Plinko presentation/interaction; the 12 independent 50/50 path decisions, risk tables, multipliers, and payout math are unchanged.
+- Each tap drops exactly **one frog egg**, but the Drop button remains usable while eggs are falling so players can rapidly spam many simultaneous drops.
+- Each in-flight egg stores its own bet, risk, predetermined path, slot, multiplier, and payout.
+- Egg motion now uses gravity/velocity-based ballistic segments, individual peg impacts, direction-specific bounce impulses, rotation, squash, and variable flight timing instead of the old smooth node interpolation.
+- Multiplier pockets flash when an egg lands. Bet/risk controls remain locked while eggs are in flight so the visible table always matches every active egg.
+- A 48-egg in-flight cap protects mobile performance while still allowing rapid spam play.
+- Existing saves remain compatible. PWA asset URLs, service-worker cache, refresh helper, build label, and self-tests are bumped to **v74**.
 
 ## v73 — Frog perks + Ultra Case jackpot rebalance
 
