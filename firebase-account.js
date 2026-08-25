@@ -80,7 +80,7 @@ const cloudStatus = byId('froggyCloudStatus');
 const GAME_STORAGE_KEY = 'froggy-leap-deluxe-v3';
 const CLOUD_DEVICE_KEY = 'froggy-cloud-device-v1';
 const CLOUD_META_PREFIX = 'froggy-cloud-meta-v1:';
-const CLOUD_BUILD_VERSION = 'v98';
+const CLOUD_BUILD_VERSION = 'v99';
 const CLOUD_AUTOSAVE_DELAY_MS = 12000;
 
 let auth;
@@ -348,7 +348,7 @@ function renderSocialLists() {
 }
 
 function socialPermissionMessage() {
-  setFriendsStatus('Firestore is blocking Friends v1. Publish the included v98 Firestore rules, then reload.', 'error');
+  setFriendsStatus('Firestore is blocking Friends v1. Publish the included v99 Firestore rules, then reload.', 'error');
 }
 
 async function loadPublicProfile(user) {
@@ -374,7 +374,7 @@ async function loadPublicProfile(user) {
     const code = String(error?.code || '');
     renderProfile(null);
     if (code.includes('permission-denied')) {
-      setStatus('Firestore is blocking player profiles. Publish the included v98 Firestore rules, then reload.', 'error');
+      setStatus('Firestore is blocking player profiles. Publish the included v99 Firestore rules, then reload.', 'error');
     } else if (code.includes('unavailable')) {
       setStatus('Could not reach Firestore. Check your connection and try again.', 'error');
     } else {
@@ -442,7 +442,7 @@ async function claimUsername(user, rawUsername) {
       setStatus('That Froggy username belongs to another player.', 'warning');
     } else if (code.includes('permission-denied')) {
       setUsernameHint('Firestore rules have not been published yet.', 'error');
-      setStatus('Publish the included v98 Firestore rules in Firebase, then try claiming the username again.', 'error');
+      setStatus('Publish the included v99 Firestore rules in Firebase, then try claiming the username again.', 'error');
     } else if (code.includes('unavailable')) {
       setUsernameHint('You must be online to claim a username.', 'error');
       setStatus('Username claiming requires an internet connection.', 'error');
@@ -1013,7 +1013,7 @@ async function uploadLocalToCloud({ force = false, automatic = false } = {}) {
       renderCloudConflict('Another device updated the cloud before this upload finished. Nothing was overwritten. Choose which save should win.');
     } else if (String(error?.code || '').includes('permission-denied')) {
       setCloudBadge('BLOCKED', 'error');
-      setCloudStatus('Firestore is blocking Cloud Save. Confirm the v98 gameSaves rules are published.', 'error');
+      setCloudStatus('Firestore is blocking Cloud Save. Confirm the v99 gameSaves rules are published.', 'error');
       toggleCloudButton(cloudSyncButton, true);
     } else {
       setCloudBadge('OFFLINE', 'error');
@@ -1087,7 +1087,7 @@ async function startCloudSave(user) {
       console.error('Cloud save listener failed', error);
       if (String(error?.code || '').includes('permission-denied')) {
         setCloudBadge('BLOCKED', 'error');
-        setCloudStatus('Firestore is blocking Cloud Save. Confirm the v98 gameSaves rules are published.', 'error');
+        setCloudStatus('Firestore is blocking Cloud Save. Confirm the v99 gameSaves rules are published.', 'error');
       }
     });
   } catch (error) {
@@ -1095,7 +1095,7 @@ async function startCloudSave(user) {
     cloudInitialized = false;
     setCloudBadge('ERROR', 'error');
     if (String(error?.code || '').includes('permission-denied')) {
-      setCloudStatus('Firestore is blocking Cloud Save. Confirm the v98 gameSaves rules are published.', 'error');
+      setCloudStatus('Firestore is blocking Cloud Save. Confirm the v99 gameSaves rules are published.', 'error');
     } else {
       setCloudStatus('Could not reach Froggy Cloud. Your local game still works normally.', 'error');
     }

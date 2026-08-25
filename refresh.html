@@ -25,7 +25,7 @@
     <h1>Updating Froggy Leap</h1>
     <p>Removing the old offline cache and loading the consolidated game.</p>
     <div class="bar"><i></i></div>
-    <small id="status">Preparing v98…</small>
+    <small id="status">Preparing v99…</small>
   </main>
   <script>
     (async () => {
@@ -41,19 +41,19 @@
           const names = await caches.keys();
           await Promise.all(names.map(name => caches.delete(name)));
         }
-        status.textContent = 'Checking that v98 is uploaded…';
-        const verifyUrl = './index.html?verify=v98-' + Date.now();
+        status.textContent = 'Checking that v99 is uploaded…';
+        const verifyUrl = './index.html?verify=v99-' + Date.now();
         const response = await fetch(verifyUrl, { cache: 'no-store' });
         const html = await response.text();
-        if (!response.ok || !html.includes('v98 · FROGGY LEAP') || !html.includes('FROGGY FRIENDS · BETA') || !html.includes('FROGGY CLOUD SAVE · BETA')) {
-          status.textContent = 'v98 is NOT on GitHub Pages yet — upload the full v98 ZIP contents first.';
+        if (!response.ok || !html.includes('v99 · FROGGY LEAP') || !html.includes('FROGGY FRIENDS · BETA') || !html.includes('FROGGY CLOUD SAVE · BETA')) {
+          status.textContent = 'v99 is NOT on GitHub Pages yet — upload the full v99 ZIP contents first.';
           return;
         }
-        status.textContent = 'v98 verified — loading Cloud Saves v1…';
-        setTimeout(() => location.replace('./?build=v98-' + Date.now()), 650);
+        status.textContent = 'v99 verified — loading mobile Plinko polish + Cloud Saves…';
+        setTimeout(() => location.replace('./?build=v99-' + Date.now()), 650);
       } catch (error) {
         console.warn('Refresh helper:', error);
-        status.textContent = 'Could not verify v98. Check the upload, then try again.';
+        status.textContent = 'Could not verify v99. Check the upload, then try again.';
       }
     })();
   </script>

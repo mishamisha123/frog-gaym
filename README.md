@@ -1,6 +1,16 @@
-# Froggy Leap v98
+# Froggy Leap v99
 
-> **Current-behavior note:** The v98 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+> **Current-behavior note:** The v99 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+
+
+## v99 — Mobile Plinko compact payout rail
+
+- Mobile-only visual pass; desktop Plinko is unchanged.
+- Shrinks the multiplier/payout boxes and payout rail footprint, with extra compression for 15/17-pocket Medium/High boards.
+- Keeps multiplier text readable with condensed bold labels.
+- Slightly reduces the mobile board's payout-zone footprint without changing peg rows, odds, physics, payouts, 96-egg cap, or Bank-round timing.
+- Preserves v98 Accounts, Friends v1, and Cloud Saves v1.
+- PWA asset URLs and service-worker cache are bumped to v99.
 
 ## v98 — Cloud Saves v1
 
