@@ -2612,7 +2612,7 @@
     els.caseHistoryList.innerHTML=history.map(entry=>{const frog=FROGS.find(f=>f.id===entry.frogId),item=caseById(entry.caseId);if(!frog||!item)return'';return `<div class="case-history-row"><span>${item.emoji}</span><div><b>${frog.name}</b><small>${item.name} · ${frog.rarity}</small></div><strong>${entry.duplicate?`+${money(entry.duplicateCredit)} F`:'NEW'}</strong></div>`;}).join('');
   }
 
-  const caseOpeningRuntime={active:false,phase:'idle',raf:0,timers:[],item:null,frog:null,duplicate:false,duplicateCredit:0,winnerIndex:0,lastTickIndex:-1,lastTickAt:0,lastHapticAt:0};
+  const caseOpeningRuntime={active:false,phase:'idle',raf:0,timers:[],item:null,frog:null,duplicate:false,duplicateCredit:0,winnerIndex:0,landingFraction:.5,startFraction:.5,spinDuration:0,easingPower:4.25,lastTickIndex:-1,lastTickAt:0,lastHapticAt:0};
   function caseRarityClass(rarity){return String(rarity||'COMMON').toLowerCase().replace(/[^a-z0-9]+/g,'-');}
   function clearCaseOpeningWork(){
     if(caseOpeningRuntime.raf)cancelAnimationFrame(caseOpeningRuntime.raf);caseOpeningRuntime.raf=0;
@@ -2624,7 +2624,8 @@
     return `<div class="case-reel-card rarity-${rarity}" data-case-reel-index="${index}"${winner}><div class="case-reel-rarity">${frog.rarity}</div><div class="case-reel-art">${frogSvg(frog,{collection:true})}</div><b>${frog.name}</b></div>`;
   }
   function buildCaseOpeningReel(item,winner){
-    const total=46,winnerIndex=40,visual=[];
+    // Vary how far the reel travels so repeated openings do not share the same cadence.
+    const winnerIndex=38+Math.floor(Math.random()*6),total=winnerIndex+6+Math.floor(Math.random()*4),visual=[];
     for(let i=0;i<total;i++)visual.push(i===winnerIndex?winner:rollCase(item));
     caseOpeningRuntime.winnerIndex=winnerIndex;
     els.caseOpeningReel.innerHTML=visual.map((frog,index)=>caseOpeningCard(frog,index,winnerIndex)).join('');
@@ -2667,11 +2668,18 @@
       if(!caseOpeningRuntime.active||caseOpeningRuntime.phase!=='spin')return;
       const cards=[...els.caseOpeningReel.children],winner=cards[caseOpeningRuntime.winnerIndex],viewport=els.caseOpeningReelWrap;if(!winner)return finishCaseOpeningReveal();
       const first=cards[0],second=cards[1],firstCenter=first.offsetLeft+first.offsetWidth/2,step=second?(second.offsetLeft+second.offsetWidth/2)-firstCenter:first.offsetWidth+9;
-      const startX=viewport.clientWidth/2-firstCenter,targetX=viewport.clientWidth/2-(winner.offsetLeft+winner.offsetWidth/2),duration=state.effects?5600:1700,start=performance.now();
+      // The marker may finish anywhere safely INSIDE the winning card instead of snapping to its exact center.
+      // This is a neutral uniform offset: edge-ish landings happen naturally, not because a rare near-miss was engineered.
+      const safeMargin=Math.max(9,Math.min(18,winner.offsetWidth*.12)),maxLandingOffset=Math.max(0,winner.offsetWidth/2-safeMargin);
+      const landingOffset=(Math.random()*2-1)*maxLandingOffset,landingPoint=winner.offsetLeft+winner.offsetWidth/2+landingOffset;
+      const startFraction=.18+Math.random()*.64,startPoint=first.offsetLeft+first.offsetWidth*startFraction;
+      const startX=viewport.clientWidth/2-startPoint,targetX=viewport.clientWidth/2-landingPoint;
+      const duration=state.effects?5100+Math.random()*1450:1450+Math.random()*650,easingPower=3.7+Math.random()*1.2,start=performance.now();
+      caseOpeningRuntime.landingFraction=clamp(.5+landingOffset/winner.offsetWidth,0,1);caseOpeningRuntime.startFraction=startFraction;caseOpeningRuntime.spinDuration=duration;caseOpeningRuntime.easingPower=easingPower;
       caseOpeningRuntime.lastTickIndex=-1;caseOpeningRuntime.lastTickAt=0;caseOpeningRuntime.lastHapticAt=0;
       const frame=now=>{
         if(!caseOpeningRuntime.active||caseOpeningRuntime.phase!=='spin')return;
-        const p=clamp((now-start)/duration,0,1),ease=1-Math.pow(1-p,4.25),x=startX+(targetX-startX)*ease;
+        const p=clamp((now-start)/duration,0,1),ease=1-Math.pow(1-p,easingPower),x=startX+(targetX-startX)*ease;
         els.caseOpeningReel.style.transform=`translate3d(${x}px,0,0)`;
         const centerInReel=viewport.clientWidth/2-x,index=clamp(Math.round((centerInReel-firstCenter)/step),0,cards.length-1);
         if(index!==caseOpeningRuntime.lastTickIndex&&now-caseOpeningRuntime.lastTickAt>42){
@@ -2688,7 +2696,7 @@
     state.animating=true;buildCaseOpeningReel(item,frog);
     els.caseOpeningOverlay.className=`case-opening-overlay phase-intro case-opening-case-${item.accent}`;els.caseOpeningClose.classList.add('hidden');els.caseOpeningSkip.classList.add('hidden');
     els.caseOpeningChest.classList.remove('hidden','case-opening-chest-open');els.caseOpeningReelWrap.classList.add('hidden');els.caseOpeningResult.classList.add('hidden');els.caseOpeningResult.innerHTML='';els.caseOpeningReel.style.transform='translate3d(0,0,0)';
-    els.caseOpeningKicker.textContent='FROGGY CASE OPENING';els.caseOpeningTitle.textContent=item.name;els.caseOpeningSubtitle.textContent='Watch the reel. The center marker decides the reveal.';els.caseOpeningChestEmoji.textContent=item.emoji;
+    els.caseOpeningKicker.textContent='FROGGY CASE OPENING';els.caseOpeningTitle.textContent=item.name;els.caseOpeningSubtitle.textContent='Watch the reel slow naturally. The marker can stop anywhere inside the winning card.';els.caseOpeningChestEmoji.textContent=item.emoji;
     audio.start();haptic(12);
     queueCaseOpening(()=>els.caseOpeningSkip.classList.remove('hidden'),1500);
     queueCaseOpening(animateCaseOpeningReel,850);
@@ -3166,7 +3174,7 @@
       if(document.querySelector('[data-screen="rewards"]')||document.getElementById('rewardsScreen')||document.getElementById('rewardModal')||document.getElementById('spinButton'))throw new Error('Rewards UI still present');
       if(ownerPanelModal.querySelector('[data-owner-action="spins"]')||ownerPanelModal.querySelector('[data-owner-action="unlimited"]'))throw new Error('Reward-wheel owner controls still present');
       const shopFrogs=frogShopItems();for(let i=1;i<shopFrogs.length;i++){if(shopFrogs[i].cost<shopFrogs[i-1].cost)throw new Error('frog shop price order failed');if((FROG_RARITY_RANK[shopFrogs[i].rarity]??99)<(FROG_RARITY_RANK[shopFrogs[i-1].rarity]??99))throw new Error('frog rarity progression failed');}const hill=FROGS.find(f=>f.id==='gigachad');if(!hill||hill.name!=='The Hill Frog'||hill.art!=='assets/the-hill-frog-game-v66.png'||hill.cardArt!=='assets/the-hill-frog-card-v64.webp')throw new Error('The Hill Frog art/name failed');const basicIds=['meadow','river','moss','sand','blue-dart','sunset'];if(!basicIds.every(id=>FROGS.some(f=>f.id===id)))throw new Error('v63 basic frog lineup missing');
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v68 CS-style case reel + delayed skip + rarity reveal + v67 Cases + six-slot mobile nav + v66 approved smiling The Hill Frog gameplay model + v64 polished The Hill Frog Collection portrait + v63 basic frog lineup + The Hill Frog rename, v62 rarity header rows + price/rarity order, v60 Rewards removal, v59 gameplay skin art, v55 early Crash risk, Piggy rates, trusted-time warning, restartable Shift Over dialog, and app-visible no-flight badge';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v69 natural case landings + variable reel travel + v68 CS-style case reel + delayed skip + rarity reveal + v67 Cases + six-slot mobile nav + v66 approved smiling The Hill Frog gameplay model + v64 polished The Hill Frog Collection portrait + v63 basic frog lineup + The Hill Frog rename, v62 rarity header rows + price/rarity order, v60 Rewards removal, v59 gameplay skin art, v55 early Crash risk, Piggy rates, trusted-time warning, restartable Shift Over dialog, and app-visible no-flight badge';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 

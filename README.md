@@ -1,8 +1,6 @@
-# Froggy Leap v68
+# Froggy Leap v69
 
-> **Current-behavior note:** The v68 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
-
-
+> **Current-behavior note:** The v69 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
 
 
@@ -13,6 +11,18 @@
 
 
 
+
+
+
+
+## v69 — natural case reel landings
+
+- Case reels no longer force the winning frog to stop perfectly centered under the marker.
+- The marker now lands at a neutral random position safely inside the winning card, so legitimate left-edge, middle, and right-edge stops all occur.
+- Reel travel distance, starting position, spin duration, and deceleration strength vary slightly on every opening so repeated spins do not share an identical motion pattern.
+- The already-locked winning frog, published case odds, duplicate handling, case prices, SKIP behavior, and reveal rewards are unchanged.
+- Landing variation is uniform inside the winning card; it does not deliberately manufacture rare-frog near-misses.
+- PWA asset URLs, refresh helper, service-worker cache, self-test label, and build label bumped to **v69**.
 
 ## v68 — CS-style case opening reel
 
