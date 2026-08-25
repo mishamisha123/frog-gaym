@@ -5017,3 +5017,224 @@ input[type="range"]{opacity:1!important;filter:none!important}
   .plinko-slot{height:18px!important}
   .plinko-multipliers[data-slots="17"] .plinko-slot b{font-size:3px!important}
 }
+
+/* ==========================================================
+   v83 — mobile Plinko layout + Bank contrast/modal cleanup
+   ========================================================== */
+/* Explicit grid areas prevent Safari from letting the compact controls
+   overlap or visually sit on top of the Plinko board. */
+#plinkoGamePane{
+  grid-template-areas:"board controls"!important;
+}
+#plinkoGamePane>.plinko-shell{grid-area:board!important;min-width:0!important}
+#plinkoGamePane>.plinko-controls{grid-area:controls!important;min-width:0!important}
+
+/* Active-loan dock: make both button labels and their supporting lines
+   survive the glossy overlay with explicit stacking and contrast. */
+.loan-payment-dock-actions .debt-action>span,
+.loan-payment-dock-actions .debt-action>small{
+  position:relative!important;
+  z-index:3!important;
+  opacity:1!important;
+  filter:none!important;
+  text-shadow:none!important;
+  -webkit-text-stroke:0 transparent!important;
+}
+.loan-payment-dock-actions .debt-action:first-child>span{color:#031a2d!important}
+.loan-payment-dock-actions .debt-action:first-child>small{color:#083552!important}
+.loan-payment-dock-actions .debt-action.secondary>span{color:#fff!important}
+.loan-payment-dock-actions .debt-action.secondary>small{color:#eee9ff!important}
+.loan-payment-dock-actions .debt-action::before{z-index:1!important;opacity:.56!important}
+
+/* Loan builder / warning sheets: no cream or white surfaces remain. */
+#loanBuilderModal,
+#loanWarningModal{
+  color:#f5fbff!important;
+  background:linear-gradient(160deg,#0e4a91 0%,#082b66 46%,#051a43 100%)!important;
+  border:1px solid rgba(105,211,255,.48)!important;
+}
+#loanBuilderModal .loan-modal-scroll,
+#loanWarningModal .loan-modal-scroll{
+  background:linear-gradient(180deg,rgba(8,46,101,.52),rgba(4,25,63,.28))!important;
+}
+#loanBuilderModal .loan-collateral-picker{
+  color:#eef9ff!important;
+  background:linear-gradient(180deg,#0a3977,#06265d)!important;
+  border:1px solid rgba(94,198,255,.32)!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.06)!important;
+}
+#loanBuilderModal .loan-collateral-list{
+  background:transparent!important;
+}
+#loanBuilderModal .collateral-choice,
+#loanBuilderModal .collateral-quantity-row{
+  color:#f5fbff!important;
+  background:linear-gradient(180deg,#0d4385,#092f6b)!important;
+  border:1px solid rgba(103,202,255,.24)!important;
+  box-shadow:none!important;
+}
+#loanBuilderModal .collateral-choice.selected{
+  background:linear-gradient(180deg,#17665e,#0c484a)!important;
+  border-color:#a9f57d!important;
+}
+#loanBuilderModal .collateral-choice small,
+#loanBuilderModal .collateral-quantity-row small,
+#loanBuilderModal .collateral-value,
+#loanBuilderModal .loan-slider-limits{
+  color:#9bd3f4!important;
+  -webkit-text-fill-color:#9bd3f4!important;
+}
+#loanBuilderModal .loan-collateral-summary span{
+  color:#a7d4f0!important;
+  background:#061f4d!important;
+  border-color:rgba(93,188,247,.22)!important;
+}
+#loanBuilderModal .loan-collateral-summary b{color:#fff!important}
+#loanBuilderModal .loan-quote-note{
+  color:#d7f8df!important;
+  background:linear-gradient(180deg,#0c493d,#08362f)!important;
+  border-color:rgba(123,235,158,.26)!important;
+}
+#loanBuilderModal .loan-modal-footer,
+#loanWarningModal .loan-modal-footer{
+  color:#fff!important;
+  background:linear-gradient(180deg,#072a64,#041a43)!important;
+  border-top:1px solid rgba(99,201,255,.25)!important;
+}
+#loanBuilderModal input,
+#loanWarningModal input{
+  color:#fff!important;
+  -webkit-text-fill-color:#fff!important;
+  background:#061f4e!important;
+  border-color:rgba(105,206,255,.38)!important;
+}
+#loanBuilderModal .simple-quote-grid>div{
+  background:linear-gradient(180deg,#0d4385,#082c65)!important;
+  border-color:rgba(101,202,255,.24)!important;
+}
+#loanBuilderModal .simple-quote-grid small{color:#8fcdf2!important}
+#loanBuilderModal .simple-quote-grid b{color:#fff!important}
+#loanWarningModal .loan-warning-summary,
+#loanWarningModal .loan-warning-pledges,
+#loanWarningModal .loan-warning-list,
+#loanWarningModal .loan-warning-list p{
+  color:#eaf7ff!important;
+  background:#072657!important;
+  border-color:rgba(94,194,252,.22)!important;
+}
+
+@media(max-width:900px){
+  #plinkoGamePane{
+    grid-template-columns:1fr!important;
+    grid-template-areas:"controls" "board"!important;
+    align-items:stretch!important;
+  }
+  #plinkoGamePane>.plinko-controls{
+    position:relative!important;
+    top:auto!important;
+    order:initial!important;
+    z-index:2!important;
+    margin:0!important;
+  }
+  #plinkoGamePane>.plinko-shell{
+    position:relative!important;
+    z-index:1!important;
+    margin:0!important;
+  }
+}
+
+@media(max-width:620px){
+  #plinkoGamePane{gap:6px!important}
+  .plinko-controls{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:4px!important;
+    padding:6px!important;
+    border-radius:15px!important;
+    box-shadow:none!important;
+  }
+  .plinko-control-grid{
+    display:grid!important;
+    grid-template-columns:minmax(88px,.72fr) minmax(0,1.28fr)!important;
+    gap:4px!important;
+    align-items:end!important;
+  }
+  .plinko-bet-field,.plinko-risk-field{gap:2px!important}
+  .plinko-bet-field input{
+    height:34px!important;
+    min-height:34px!important;
+    padding:0 8px!important;
+    border-radius:9px!important;
+    font-size:11px!important;
+  }
+  .plinko-risk-buttons{gap:2px!important}
+  .plinko-risk-buttons button{
+    height:34px!important;
+    min-height:34px!important;
+    padding:2px!important;
+    border-radius:8px!important;
+  }
+  .plinko-risk-buttons button>span{font-size:6.6px!important}
+  .plinko-risk-buttons button>small{font-size:3.8px!important}
+  .plinko-quick-bets{
+    display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:3px!important;
+    margin:0!important;
+  }
+  .plinko-quick-bets button{
+    min-height:29px!important;
+    height:29px!important;
+    padding:2px 3px!important;
+    border-radius:7px!important;
+  }
+  .plinko-quick-bets button b{font-size:6.7px!important}
+  .plinko-quick-bets button small{display:none!important}
+  .plinko-drop-button{
+    min-height:42px!important;
+    height:42px!important;
+    margin:0!important;
+    border-radius:12px!important;
+  }
+  .plinko-drop-button span{font-size:9px!important}
+  .plinko-drop-button small{display:none!important}
+  .plinko-shell{padding:6px!important}
+  .plinko-heading{margin-bottom:4px!important}
+  .plinko-mini-stats span{min-height:34px!important;padding:4px 2px!important}
+  .plinko-board[data-risk="low"]{height:230px!important;min-height:230px!important}
+  .plinko-board[data-risk="medium"]{height:250px!important;min-height:250px!important}
+  .plinko-board[data-risk="high"]{height:275px!important;min-height:275px!important}
+  .plinko-multipliers{margin-top:3px!important}
+  .plinko-status{margin-top:3px!important;padding:4px 6px!important}
+
+  .loan-payment-dock{
+    bottom:calc(110px + var(--safe-bottom))!important;
+  }
+  .loan-payment-dock-actions .debt-action>span{font-size:8px!important;line-height:1.05!important}
+  .loan-payment-dock-actions .debt-action>small{font-size:5.8px!important;line-height:1.15!important;margin-top:4px!important}
+
+  #loanBuilderModal,
+  #loanWarningModal{
+    width:calc(100vw - 12px)!important;
+    max-height:88svh!important;
+    border-radius:20px!important;
+  }
+  #loanBuilderModal .loan-modal-scroll,
+  #loanWarningModal .loan-modal-scroll{padding:17px 10px 10px!important}
+  #loanBuilderModal .loan-collateral-picker{padding:9px!important;border-radius:14px!important}
+  #loanBuilderModal .loan-collateral-list{max-height:160px!important}
+  #loanBuilderModal .collateral-choice,
+  #loanBuilderModal .collateral-quantity-row{border-radius:11px!important}
+  #loanBuilderModal .loan-modal-footer,
+  #loanWarningModal .loan-modal-footer{padding:8px 9px max(12px,env(safe-area-inset-bottom))!important}
+}
+
+@media(max-width:390px){
+  .plinko-board[data-risk="low"]{height:215px!important;min-height:215px!important}
+  .plinko-board[data-risk="medium"]{height:235px!important;min-height:235px!important}
+  .plinko-board[data-risk="high"]{height:260px!important;min-height:260px!important}
+  .plinko-control-grid{grid-template-columns:82px minmax(0,1fr)!important}
+  .loan-payment-dock-actions .debt-action>span{font-size:7.2px!important}
+  .loan-payment-dock-actions .debt-action>small{font-size:5.2px!important}
+}
+

@@ -1,6 +1,15 @@
-# Froggy Leap v82
+# Froggy Leap v83
 
-> **Current-behavior note:** The v82 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+> **Current-behavior note:** The v83 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+
+## v83 — Mobile Plinko + Bank UI cleanup
+
+- Gives Plinko explicit responsive layout areas so iPhone/Safari cannot place the controls over the board. On phones the compact bet/risk/drop controls render first and the complete Plinko board follows directly beneath them.
+- Shrinks the mobile Plinko control footprint and board heights so the controls and playable board remain visible without the oversized overlap shown in v82. Payout tables, physics, 96-egg cap, 15-second Bank round, and exact 16-row High strip are unchanged.
+- Forces high-contrast foreground colors and stacking for both active-loan action buttons, including their smaller explanatory lines, removing washed-out text under the glossy button overlay.
+- Raises the active-loan payment dock slightly farther above the six-button mobile navigation.
+- Re-themes the loan builder/collateral picker and final loan warning with fully dark Bank surfaces, including collateral rows, quote cards, inputs, scroll area, and footer; no cream/white loan panel remains.
+- PWA/cache/build references are bumped to **v83**.
 
 ## v82 — Premium Plinko board + exact classic 16-row High table
 
