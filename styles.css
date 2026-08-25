@@ -6209,7 +6209,7 @@ body.plinko-focus-mode .plinko-slot b,body.plinko-focus-mode .plinko-multipliers
 
 
 /* ==========================================================
-   v107 — simultaneous animated 2/3-case opening (3 max)
+   v109 — simultaneous animated 2/3-case opening (3 max)
    ========================================================== */
 .case-opening-multi-wrap{height:378px;padding:9px;background:linear-gradient(180deg,#071a45,#041334)}
 .case-opening-multi-wrap.case-opening-multi-count-2{height:268px}
