@@ -1,7 +1,16 @@
-# Froggy Leap v87
+# Froggy Leap v88
 
-> **Current-behavior note:** The v87 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+> **Current-behavior note:** The v88 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
+
+
+## v88 — Pure mobile Plinko frame-height fix
+
+- Changes only the mobile Plinko machine height/layout envelope; no gameplay math, odds, physics, controls, case logic, Bank behavior, or saves are changed.
+- Stops compressing the Plinko machine on phones and gives the full peg field plus multiplier rail enough room inside one frame.
+- Mobile board heights are now approximately **360 / 420 / 480 px** for Low / Medium / High, with **340 / 400 / 460 px** on very narrow phones.
+- Keeps the existing 64 px payout-rail zone and v87 readable multiplier labels.
+- PWA/cache/build references are bumped to **v88**.
 
 
 ## v87 — Readable Plinko payouts + mobile Medium/High clearance

@@ -5526,3 +5526,20 @@ input[type="range"]{opacity:1!important;filter:none!important}
   .plinko-multipliers[data-slots="15"] .plinko-slot b{font-size:7.9px!important;transform:scaleX(.72)!important}
   .plinko-multipliers[data-slots="17"] .plinko-slot b{font-size:7.1px!important;transform:scaleX(.63)!important}
 }
+
+/* ================================================================
+   v88 — pure mobile Plinko frame-height fix
+   Do not shrink/reflow the game. Give the complete peg field and
+   multiplier rail enough vertical room inside one machine frame.
+   ================================================================ */
+@media(max-width:620px){
+  .plinko-board{--plinko-rail-zone:64px!important}
+  .plinko-board[data-risk="low"]{height:360px!important;min-height:360px!important}
+  .plinko-board[data-risk="medium"]{height:420px!important;min-height:420px!important}
+  .plinko-board[data-risk="high"]{height:480px!important;min-height:480px!important}
+}
+@media(max-width:390px){
+  .plinko-board[data-risk="low"]{height:340px!important;min-height:340px!important}
+  .plinko-board[data-risk="medium"]{height:400px!important;min-height:400px!important}
+  .plinko-board[data-risk="high"]{height:460px!important;min-height:460px!important}
+}
