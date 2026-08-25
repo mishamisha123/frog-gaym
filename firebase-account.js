@@ -73,7 +73,7 @@ function renderUser(user) {
       avatar.alt = '';
     }
   }
-  setStatus('Google account connected. This v92 test only syncs your identity; wallet, frogs, cases, Bank, and saves are still local until the next cloud-save step.', 'success');
+  setStatus('Google account connected. This v93 test only syncs your identity; wallet, frogs, cases, Bank, and saves are still local until the next cloud-save step.', 'success');
 }
 
 let auth;

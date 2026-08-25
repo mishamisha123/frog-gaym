@@ -1,6 +1,14 @@
-# Froggy Leap v91
+# Froggy Leap v93
 
-> **Current-behavior note:** The v91 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+> **Current-behavior note:** The v93 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+## v93 — Account/navigation placement
+
+- Profile now has an explicit top-bar shortcut beside the existing Bank shortcut.
+- Removed Profile from the bottom dock.
+- Bottom navigation is now five slots: Games · Job · BANK · Collection · Cases, putting BANK exactly in the center.
+- Firebase identity/auth behavior from v92 is unchanged.
+- PWA asset URLs and service-worker cache are bumped to v93.
+
 
 ## v91 — Bank final-warning contrast
 
