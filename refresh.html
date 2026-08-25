@@ -25,7 +25,7 @@
     <h1>Updating Froggy Leap</h1>
     <p>Removing the old offline cache and loading the consolidated game.</p>
     <div class="bar"><i></i></div>
-    <small id="status">Preparing v105…</small>
+    <small id="status">Preparing v107…</small>
   </main>
   <script>
     (async () => {
@@ -41,19 +41,19 @@
           const names = await caches.keys();
           await Promise.all(names.map(name => caches.delete(name)));
         }
-        status.textContent = 'Checking that v105 is uploaded…';
-        const verifyUrl = './index.html?verify=v105-' + Date.now();
+        status.textContent = 'Checking that v107 is uploaded…';
+        const verifyUrl = './index.html?verify=v107-' + Date.now();
         const response = await fetch(verifyUrl, { cache: 'no-store' });
         const html = await response.text();
-        if (!response.ok || !html.includes('v105 · FROGGY LEAP') || !html.includes('FROGGY FRIENDS · BETA') || !html.includes('FROGGY CLOUD SAVE · BETA')) {
-          status.textContent = 'v105 is NOT on GitHub Pages yet — upload the full v105 ZIP contents first.';
+        if (!response.ok || !html.includes('v107 · FROGGY LEAP') || !html.includes('FROGGY FRIENDS · BETA') || !html.includes('FROGGY CLOUD SAVE · BETA')) {
+          status.textContent = 'v107 is NOT on GitHub Pages yet — upload the full v107 ZIP contents first.';
           return;
         }
-        status.textContent = 'v105 verified — loading Plinko fullscreen Focus Mode + v103 gameplay + Friends + Cloud Saves…';
-        setTimeout(() => location.replace('./?build=v105-' + Date.now()), 650);
+        status.textContent = 'v107 verified — loading simultaneous animated 2/3-case reels + shop preview fixes + lake rarity headers + exact loans + Plinko Focus + Friends + Cloud Saves…';
+        setTimeout(() => location.replace('./?build=v107-' + Date.now()), 650);
       } catch (error) {
         console.warn('Refresh helper:', error);
-        status.textContent = 'Could not verify v105. Check the upload, then try again.';
+        status.textContent = 'Could not verify v107. Check the upload, then try again.';
       }
     })();
   </script>

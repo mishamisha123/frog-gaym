@@ -3,7 +3,7 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v105';
+  const BUILD_VERSION = 'v107';
   console.info(`Froggy Leap ${BUILD_VERSION} loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
@@ -117,7 +117,7 @@
     { id:'king', name:'King Frog', rarity:'RARE', cost:15000, level:3, description:'A smug pond monarch in a jeweled crown and velvet cape.', colors:['#d6ef65','#70b944'], art:CHARACTER_ART.king, perks:{levelBonus:.02}, perkLabels:['+2% level-up F'] },
     { id:'blue-dart', name:'Blue Dart Frog', rarity:'RARE', cost:24000, level:4, description:'Bright blue, spotted, and impossible to miss.', colors:['#64c8ff','#2571cc'], art:'assets/blue-dart-frog-v63.png', perks:{leapXp:.02}, perkLabels:['+2% Lily Leap XP'] },
     { id:'sunset', name:'Sunset Frog', rarity:'RARE', cost:36000, level:4, description:'A warm orange pond skin with sunset cheeks.', colors:['#ffb16a','#d8663b'], art:'assets/sunset-frog-v63.png', perks:{jobMoney:.02}, perkLabels:['+2% Job F'] },
-    { id:'robot', name:'Robo Frog', rarity:'RARE', cost:45000, level:5, description:'Polished alloy, cyan display eyes, and calibrated landing legs.', colors:['#dff6ff','#6d97b3'], art:CHARACTER_ART.robot, perks:{jobXp:.03,flightRefundChance:.01}, perkLabels:['+3% Job XP','1% chance to refund a vehicle flight'] },
+    { id:'robot', name:'Robo Frog', rarity:'RARE', cost:45000, level:5, description:'Polished alloy, cyan display eyes, and calibrated landing legs.', colors:['#dff6ff','#6d97b3'], art:'assets/robo-frog-v106.svg', perks:{jobXp:.03,flightRefundChance:.01}, perkLabels:['+3% Job XP','1% chance to refund a vehicle flight'] },
     { id:'ghost', name:'Ghost Frog', rarity:'EPIC', cost:105000, level:7, description:'A translucent, grumpy little spirit that floats over the pond.', colors:['#b9f5ff','#6bc8e8'], art:CHARACTER_ART.ghost, perks:{crashXp:.04,leapXp:.02}, perkLabels:['+4% Sky Crash XP','+2% Lily Leap XP'] },
     { id:'dragon', name:'Dragon Frog', rarity:'EPIC', cost:240000, level:10, description:'Tiny wings, bright scales, horns, and enormous confidence.', colors:['#ff9c42','#e75235'], art:CHARACTER_ART.dragon, perks:{leapXp:.05,crashXp:.03}, perkLabels:['+5% Lily Leap XP','+3% Sky Crash XP'] },
     { id:'dino', name:'Dino Frog', rarity:'LEGENDARY', cost:450000, level:13, description:'A chunky prehistoric hopper with spikes and a toothy grin.', colors:['#c8ff70','#4eb650'], art:CHARACTER_ART.dino, perks:{jobMoney:.06,jobXp:.06}, perkLabels:['+6% Job F','+6% Job XP'] },
@@ -127,7 +127,7 @@
 
     { id:'gigachad', name:'The Hill Frog', rarity:'ULTRA', cost:2250000000, level:150, description:'The heavyweight flex skin from the Ultra lineup.', colors:['#ffd968','#6b4cff'], art:HILL_FROG_ART, cardArt:HILL_FROG_CARD_ART, perks:{jobMoney:.20,jobXp:.20,jobStartMs:3000,leapXp:.15}, perkLabels:['+20% Job F','+20% Job XP','+3s Job start','+15% Lily Leap XP'] },
 
-    { id:'owner', name:'Owner Frog', rarity:'ONE OF ONE', cost:6000000000, level:3000, description:'A photo-inspired pond boss with cropped dark hair, heavy-lidded brown eyes, stubble, and an unbreakable deadpan stare.', colors:['#8ad467','#4f9d50'], art:CHARACTER_ART.owner, perks:{jobMoney:.25,jobXp:.25,jobStartMs:5000,leapXp:.25,crashXp:.25,piggyRate:.0005,levelBonus:.20,flightRefundChance:.15}, perkLabels:['+25% Job F','+25% Job XP','+5s Job start','+25% Lily Leap XP','+25% Sky Crash XP','+0.05% Piggy interest/cycle','+20% level-up F','15% chance to refund a vehicle flight'] }
+    { id:'owner', name:'Owner Frog', rarity:'ONE OF ONE', cost:6000000000, level:3000, description:'A photo-inspired pond boss with cropped dark hair, heavy-lidded brown eyes, stubble, and an unbreakable deadpan stare.', colors:['#8ad467','#4f9d50'], art:'assets/owner-frog-v106.svg', perks:{jobMoney:.25,jobXp:.25,jobStartMs:5000,leapXp:.25,crashXp:.25,piggyRate:.0005,levelBonus:.20,flightRefundChance:.15}, perkLabels:['+25% Job F','+25% Job XP','+5s Job start','+25% Lily Leap XP','+25% Sky Crash XP','+0.05% Piggy interest/cycle','+20% level-up F','15% chance to refund a vehicle flight'] }
   ];
 
   const FROG_RARITY_RANK = Object.freeze({COMMON:0,RARE:1,EPIC:2,LEGENDARY:3,MYTHIC:4,ULTRA:5,'ONE OF ONE':6});
@@ -556,7 +556,7 @@
       merged.casesOpened=Math.max(0,Math.floor(Number(raw.casesOpened)||0));
       merged.caseHistory=(Array.isArray(raw.caseHistory)?raw.caseHistory:[]).map(entry=>({
         caseId:String(entry?.caseId||''),frogId:String(entry?.frogId||''),duplicate:Boolean(entry?.duplicate),duplicateCredit:Math.max(0,Math.floor(Number(entry?.duplicateCredit)||0))
-      })).filter(entry=>CASES.some(item=>item.id===entry.caseId)&&FROGS.some(frog=>frog.id===entry.frogId)).slice(0,8);
+      })).filter(entry=>CASES.some(item=>item.id===entry.caseId)&&FROGS.some(frog=>frog.id===entry.frogId)).slice(0,30);
       merged.crashRounds=Math.max(0,Math.floor(Number(raw.crashRounds)||0));merged.crashWins=Math.max(0,Math.floor(Number(raw.crashWins)||0));merged.bestCrashMultiplier=Math.max(0,Number(raw.bestCrashMultiplier)||0);
       merged.vehicleFlightCompletions=Object.fromEntries(VEHICLES.map(vehicle=>[vehicle.id,Math.max(0,Math.floor(Number(raw.vehicleFlightCompletions?.[vehicle.id])||0))]));
       merged.balance = Number.isFinite(merged.balance) ? Math.max(0, Math.floor(merged.balance)) : 1000;
@@ -2120,8 +2120,12 @@
     const quote=loanQuote(amount),selected=normalizeCollateralSelection(pledge),pledgedValue=collateralSelectionValue(selected),shortfall=Math.max(0,quote.collateralRequired-pledgedValue);
     if(shortfall>0){setDebtMessage(`Select ${money(shortfall)} F more collateral for this loan.`,'error');return false;}
     const pledgeNames=collateralPledgeNames(selected);if(!skipConfirm&&!window.confirm(`Borrow ${money(amount)} Froggy at 8% total interest?\n\nPledged collateral:\n${pledgeNames.length?pledgeNames.join('\n'):'No collateral required.'}`))return false;
-    const credited=creditBalance(amount);if(credited<=0)return false;
-    state.debt=quote.total;state.loanPrincipalOriginal=credited;state.loanPrincipalRemaining=credited;state.loanInterestTotal=quote.interest;state.loanInterestPaid=0;state.loanInstallment=quote.payment;state.loanInstallmentsPaid=0;state.loanRate=quote.rate;
+    // Froggy is whole-unit currency. Normalize the wallet before disbursement and require the
+    // principal to land exactly so a loan can never arrive one F short because of stale/fractional state.
+    const walletBefore=ownedWalletBalance();state.balance=walletBefore;
+    const credited=creditBalance(amount);
+    if(credited!==amount){state.balance=walletBefore;setDebtMessage('Your wallet cannot safely receive the full loan amount.','error');return false;}
+    state.debt=quote.total;state.loanPrincipalOriginal=amount;state.loanPrincipalRemaining=amount;state.loanInterestTotal=quote.interest;state.loanInterestPaid=0;state.loanInstallment=quote.payment;state.loanInstallmentsPaid=0;state.loanRate=quote.rate;
     state.pledgedPiggy=selected.piggy;state.pledgedFrogs=selected.frogs.slice();state.pledgedLakes=selected.lakes.slice();state.pledgedVehicles=selected.vehicles.slice();state.pledgedLicenses=selected.licenses.slice();state.pledgedFlights={...selected.flights};state.collateralPledgeVersion=COLLATERAL_PLEDGE_VERSION;state.loanCollateralAtOrigination=pledgedValue;state.debtTurns=0;state.debtDue=false;state.debtDueAmount=0;state.debtCycleMissed=false;state.debtCycleStartRound=state.completedRounds;
     setDebtMessage(`Borrowed ${money(credited)} F with ${money(pledgedValue)} F of selected collateral. Only those pledged assets are at risk.`,'success');setStatus(`Loan received: +${money(credited)} F. It is normal wallet money.`,'win');audio.coin();haptic([12,30,12]);refresh();return true;
   }
@@ -2898,6 +2902,8 @@
   }
 
 
+  let lastCaseBatch=null;
+
   function renderCases(){
     if(!els.caseGrid)return;
     const own=ownedWalletBalance(),luck=caseLuckMultiplier();
@@ -2910,8 +2916,8 @@
       const jackpots=item.id==='ultra'?`<div class="case-jackpots"><small>JACKPOTS${luck>1?` · ${luck.toFixed(2)}× LUCK`:''}</small><span><b>The Hill Frog</b><i>${formatCaseOdds(chanceFor('gigachad'))}</i></span><span class="owner-jackpot"><b>Owner Frog · RAREST</b><i>${formatCaseOdds(chanceFor('owner'))}</i></span></div>`:'';
       const luckNote=luck>1?`<div class="case-luck-active">🍀 MOD LUCK ${luck.toFixed(2)}× ACTIVE · ODDS BELOW ARE ADJUSTED</div>`:'';
       const buys=[1,5,10].map(qty=>`<button class="case-buy-button pressable" data-case-buy="${item.id}" data-case-qty="${qty}" ${locked||own<item.cost*qty?'disabled':''}>BUY ${qty}<small>${money(item.cost*qty)} F</small></button>`).join('');
-      const openLabel=locked?`LEVEL ${item.level} REQUIRED`:stock?`OPEN OWNED CASE`:'NO CASES OWNED';
-      return `<article class="case-card case-${item.accent}"><div class="case-rarity-beam"></div><div class="case-card-head"><span class="case-tier">${item.id==='ultra'?'ULTRA DROP':'FROG CASE'}</span><small>LEVEL ${item.level}+</small></div><div class="case-stock-pill">OWNED <b>${money(stock)}</b></div><div class="case-chest" aria-hidden="true">${item.emoji}</div><h2>${item.name}</h2><p>${item.tagline}</p>${luckNote}${jackpots}<div class="case-rarity-summary">${caseRaritySummary(item)}</div><details class="case-odds"><summary>VIEW EXACT ODDS</summary><div>${drops}</div></details><div class="case-buy-grid">${buys}</div><button class="case-open-button pressable" data-case-open="${item.id}" ${locked||stock<=0?'disabled':''}>${openLabel}<small>${locked?'Level locked':stock?`${money(stock)} ready to open`:'Buy cases first — opening does not charge F'}</small></button></article>`;
+      const opens=[1,2,3].map(qty=>`<button class="case-open-button pressable" data-case-open="${item.id}" data-case-open-qty="${qty}" ${locked||stock<qty?'disabled':''}>OPEN ${qty}<small>${locked?'LEVEL LOCKED':stock>=qty?(qty===1?'ANIMATED REEL':`${money(qty)} REELS · TOGETHER`):`${money(stock)} OWNED`}</small></button>`).join('');
+      return `<article class="case-card case-${item.accent}"><div class="case-rarity-beam"></div><div class="case-card-head"><span class="case-tier">${item.id==='ultra'?'ULTRA DROP':'FROG CASE'}</span><small>LEVEL ${item.level}+</small></div><div class="case-stock-pill">OWNED <b>${money(stock)}</b></div><div class="case-chest" aria-hidden="true">${item.emoji}</div><h2>${item.name}</h2><p>${item.tagline}</p>${luckNote}${jackpots}<div class="case-rarity-summary">${caseRaritySummary(item)}</div><details class="case-odds"><summary>VIEW EXACT ODDS</summary><div>${drops}</div></details><div class="case-buy-grid">${buys}</div><div class="case-open-grid">${opens}</div></article>`;
     }).join('');
     renderCaseHistory();
   }
@@ -2928,16 +2934,26 @@
   function renderCaseHistory(){
     const history=state.caseHistory||[];
     if(!history.length){els.caseHistoryList.innerHTML='<p class="case-history-empty">Open your first case to start the history.</p>';els.caseReveal.classList.add('hidden');els.caseReveal.innerHTML='';return;}
-    const latest=history[0],latestFrog=FROGS.find(f=>f.id===latest.frogId),latestCase=caseById(latest.caseId);
-    if(latestFrog&&latestCase){
+    if(lastCaseBatch?.results?.length){
+      const batchCase=caseById(lastCaseBatch.caseId),results=lastCaseBatch.results,duplicateTotal=results.reduce((sum,result)=>sum+result.duplicateCredit,0),newCount=results.filter(result=>!result.duplicate).length,topRank=Math.max(...results.map(result=>FROG_RARITY_RANK[FROGS.find(f=>f.id===result.frogId)?.rarity]??0));
+      if(batchCase){
+        const cards=results.map(result=>{const frog=FROGS.find(f=>f.id===result.frogId);if(!frog)return'';return `<button class="case-batch-card pressable rarity-${caseRarityClass(frog.rarity)}" data-case-view="${frog.id}"><span>${frogSvg(frog,{collection:true})}</span><b>${frog.name}</b><small>${result.duplicate?`DUPLICATE · +${money(result.duplicateCredit)} F`:'NEW FROG'}</small></button>`;}).join('');
+        const againQty=results.length;
+        els.caseReveal.className=`case-reveal glass case-batch-reveal batch-rank-${topRank}`;
+        els.caseReveal.innerHTML=`<div class="case-batch-head"><div><small>BATCH OPEN · ${batchCase.name}</small><h2>${money(results.length)} CASES OPENED</h2><p>${money(newCount)} new · ${money(results.length-newCount)} duplicate${results.length-newCount===1?'':'s'}${duplicateTotal?` · +${money(duplicateTotal)} F returned`:''}</p></div><button class="pressable" data-case-open="${batchCase.id}" data-case-open-qty="${againQty}" ${caseInventoryCount(batchCase.id)<againQty?'disabled':''}>OPEN ${money(againQty)} AGAIN<small>${money(caseInventoryCount(batchCase.id))} OWNED</small></button></div><div class="case-batch-grid">${cards}</div>`;
+      }
+    }else{
+      const latest=history[0],latestFrog=FROGS.find(f=>f.id===latest.frogId),latestCase=caseById(latest.caseId);
+      if(latestFrog&&latestCase){
       const duplicateCopy=latest.duplicate?`<span class="case-duplicate">DUPLICATE · +${money(latest.duplicateCredit)} F</span>`:'<span class="case-new">NEW FROG</span>';
       els.caseReveal.className=`case-reveal glass reveal-${String(latestFrog.rarity).toLowerCase().replace(/[^a-z0-9]+/g,'-')}`;
-      els.caseReveal.innerHTML=`<div class="case-reveal-copy"><small>LATEST PULL · ${latestCase.name}</small><h2>${latestFrog.name}</h2>${duplicateCopy}<p>${latest.duplicate?'You already owned this frog, so the duplicate converted to 50% of its Bank Value.':'Added permanently to your Collection.'}</p><div class="case-reveal-actions"><button class="pressable" data-case-open="${latestCase.id}" ${caseInventoryCount(latestCase.id)<=0?'disabled':''}>OPEN NEXT · ${money(caseInventoryCount(latestCase.id))} OWNED</button><button class="pressable secondary" data-case-view="${latestFrog.id}">VIEW IN COLLECTION</button></div></div><div class="case-reveal-art">${frogSvg(latestFrog,{collection:true})}<span>${latestFrog.rarity}</span></div>`;
+      els.caseReveal.innerHTML=`<div class="case-reveal-copy"><small>LATEST PULL · ${latestCase.name}</small><h2>${latestFrog.name}</h2>${duplicateCopy}<p>${latest.duplicate?'You already owned this frog, so the duplicate converted to 50% of its Bank Value.':'Added permanently to your Collection.'}</p><div class="case-reveal-actions"><button class="pressable" data-case-open="${latestCase.id}" data-case-open-qty="1" ${caseInventoryCount(latestCase.id)<=0?'disabled':''}>OPEN NEXT · ${money(caseInventoryCount(latestCase.id))} OWNED</button><button class="pressable secondary" data-case-view="${latestFrog.id}">VIEW IN COLLECTION</button></div></div><div class="case-reveal-art">${frogSvg(latestFrog,{collection:true})}<span>${latestFrog.rarity}</span></div>`;
+      }
     }
     els.caseHistoryList.innerHTML=history.map(entry=>{const frog=FROGS.find(f=>f.id===entry.frogId),item=caseById(entry.caseId);if(!frog||!item)return'';return `<div class="case-history-row"><span>${item.emoji}</span><div><b>${frog.name}</b><small>${item.name} · ${frog.rarity}</small></div><strong>${entry.duplicate?`+${money(entry.duplicateCredit)} F`:'NEW'}</strong></div>`;}).join('');
   }
 
-  const caseOpeningRuntime={active:false,phase:'idle',raf:0,timers:[],item:null,frog:null,duplicate:false,duplicateCredit:0,winnerIndex:0,landingFraction:.5,startFraction:.5,spinDuration:0,easingPower:4.25,lastTickIndex:-1,lastTickAt:0,lastHapticAt:0};
+  const caseOpeningRuntime={active:false,phase:'idle',raf:0,timers:[],item:null,frog:null,results:null,quantity:1,duplicate:false,duplicateCredit:0,winnerIndex:0,landingFraction:.5,startFraction:.5,spinDuration:0,easingPower:4.25,lastTickIndex:-1,lastTickAt:0,lastHapticAt:0};
   function caseRarityClass(rarity){return String(rarity||'COMMON').toLowerCase().replace(/[^a-z0-9]+/g,'-');}
   function clearCaseOpeningWork(){
     if(caseOpeningRuntime.raf)cancelAnimationFrame(caseOpeningRuntime.raf);caseOpeningRuntime.raf=0;
@@ -2953,19 +2969,34 @@
     const winnerIndex=38+Math.floor(Math.random()*6),total=winnerIndex+6+Math.floor(Math.random()*4),visual=[];
     for(let i=0;i<total;i++)visual.push(i===winnerIndex?winner:rollCase(item));
     caseOpeningRuntime.winnerIndex=winnerIndex;
+    els.caseOpeningReelWrap.className='case-opening-reel-wrap hidden';
+    els.caseOpeningReel.className='case-opening-reel';els.caseOpeningReel.style.removeProperty('--case-lanes');
     els.caseOpeningReel.innerHTML=visual.map((frog,index)=>caseOpeningCard(frog,index,winnerIndex)).join('');
   }
+  function buildMultiCaseOpeningReels(item,results){
+    const laneMarkup=results.map((result,laneIndex)=>{
+      const winnerIndex=30+Math.floor(Math.random()*6),total=winnerIndex+6+Math.floor(Math.random()*4),visual=[];
+      for(let i=0;i<total;i++)visual.push(i===winnerIndex?result.frog:rollCase(item));
+      return `<div class="case-opening-mini-lane" data-case-lane="${laneIndex}"><span class="case-opening-lane-tag">CASE ${laneIndex+1}</span><div class="case-opening-mini-viewport"><div class="case-opening-mini-marker marker-top"></div><div class="case-opening-mini-marker marker-bottom"></div><div class="case-opening-mini-center-line" aria-hidden="true"></div><div class="case-opening-mini-track" data-case-lane-track="${laneIndex}">${visual.map((frog,index)=>caseOpeningCard(frog,index,winnerIndex)).join('')}</div></div></div>`;
+    }).join('');
+    els.caseOpeningReelWrap.className=`case-opening-reel-wrap case-opening-multi-wrap case-opening-multi-count-${results.length} hidden`;
+    els.caseOpeningReel.className='case-opening-reel case-opening-multi-reel';els.caseOpeningReel.style.setProperty('--case-lanes',String(results.length));
+    els.caseOpeningReel.innerHTML=laneMarkup;
+  }
   function hideCaseOpening(){
-    clearCaseOpeningWork();caseOpeningRuntime.active=false;caseOpeningRuntime.phase='idle';state.animating=false;
+    clearCaseOpeningWork();caseOpeningRuntime.active=false;caseOpeningRuntime.phase='idle';caseOpeningRuntime.results=null;caseOpeningRuntime.quantity=1;state.animating=false;
     els.caseOpeningOverlay.classList.add('hidden');els.caseOpeningOverlay.className='case-opening-overlay hidden';
     els.caseOpeningClose.classList.add('hidden');els.caseOpeningSkip.classList.add('hidden');
+    els.caseOpeningChest.querySelector('b').textContent='UNLOCKING';
+    els.caseOpeningReelWrap.className='case-opening-reel-wrap hidden';els.caseOpeningReel.className='case-opening-reel';els.caseOpeningReel.style.removeProperty('--case-lanes');
+    els.caseOpeningResult.className='case-opening-result hidden';
     refresh();if(els.screens.cases.classList.contains('active'))renderCases();
   }
   function equipCaseFrog(id){
     if(!state.unlockedFrogs.includes(id))return false;
     const frog=FROGS.find(item=>item.id===id);if(!frog)return false;
     state.selectedFrog=id;audio.reward();haptic([10,28,18]);setStatus(`${frog.name} equipped!`,'win');refresh();
-    const button=els.caseOpeningResult.querySelector('[data-case-equip]');if(button){button.textContent='EQUIPPED';button.disabled=true;}
+    els.caseOpeningResult.querySelectorAll('[data-case-equip]').forEach(button=>{const equipped=button.dataset.caseEquip===id;button.textContent=equipped?'EQUIPPED':'EQUIP';button.disabled=equipped;});
     return true;
   }
   function finishCaseOpeningReveal(){
@@ -2977,13 +3008,32 @@
     els.caseOpeningKicker.textContent=`${frog.rarity} DROP · ${item.name}`;els.caseOpeningTitle.textContent=frog.name;
     els.caseOpeningSubtitle.textContent=duplicate?'Duplicate converted automatically.':'Added permanently to your Collection.';
     const duplicateCopy=duplicate?`<span class="case-opening-duplicate">DUPLICATE · +${money(duplicateCredit)} F</span>`:'<span class="case-opening-new">NEW FROG</span>';
-    els.caseOpeningResult.innerHTML=`<div class="case-opening-result-aura"></div><div class="case-opening-result-art">${frogSvg(frog,{collection:true})}</div><div class="case-opening-result-copy"><small>${frog.rarity}</small><h3>${frog.name}</h3>${duplicateCopy}<p>${duplicate?'You already owned this frog, so 50% of its Bank Value was returned to your wallet.':'The frog is yours. Equip it now or view it in Collection.'}</p><div class="case-opening-result-actions"><button class="pressable primary" data-case-equip="${frog.id}">${state.selectedFrog===frog.id?'EQUIPPED':'EQUIP'}</button><button class="pressable secondary" data-case-view="${frog.id}">COLLECTION</button><button class="pressable open-again" data-case-open-again="${item.id}" ${caseInventoryCount(item.id)<=0?'disabled':''}>OPEN NEXT · ${money(caseInventoryCount(item.id))} OWNED</button></div></div>`;
-    els.caseOpeningResult.classList.remove('hidden');
+    els.caseOpeningResult.className='case-opening-result';
+    els.caseOpeningResult.innerHTML=`<div class="case-opening-result-aura"></div><div class="case-opening-result-art">${frogSvg(frog,{collection:true})}</div><div class="case-opening-result-copy"><small>${frog.rarity}</small><h3>${frog.name}</h3>${duplicateCopy}<p>${duplicate?'You already owned this frog, so 50% of its Bank Value was returned to your wallet.':'The frog is yours. Equip it now or view it in Collection.'}</p><div class="case-opening-result-actions"><button class="pressable primary" data-case-equip="${frog.id}" ${state.selectedFrog===frog.id?'disabled':''}>${state.selectedFrog===frog.id?'EQUIPPED':'EQUIP'}</button><button class="pressable secondary" data-case-view="${frog.id}">COLLECTION</button><button class="pressable open-again" data-case-open-again="${item.id}" data-case-open-again-qty="1" ${caseInventoryCount(item.id)<=0?'disabled':''}>OPEN NEXT · ${money(caseInventoryCount(item.id))} OWNED</button></div></div>`;
     audio.caseReveal(frog.rarity);haptic(rank>=5?[35,45,70,55,110]:rank>=4?[25,35,55]:[18,25,35]);
     if(state.effects){confettiBurst(rank>=5?100:rank>=4?70:rank>=3?48:28);screenFeedback('win');}
     refresh();renderCases();saveState();
   }
-  function skipCaseOpening(){if(caseOpeningRuntime.active&&caseOpeningRuntime.phase!=='reveal')finishCaseOpeningReveal();}
+  function finishMultiCaseOpeningReveal(){
+    if(!caseOpeningRuntime.active||caseOpeningRuntime.phase==='reveal')return;
+    clearCaseOpeningWork();caseOpeningRuntime.phase='reveal';state.animating=false;
+    const {item,results=[]}=caseOpeningRuntime;if(!results.length)return hideCaseOpening();
+    const ranked=results.map(result=>({result,frog:result.frog||FROGS.find(f=>f.id===result.frogId)})).filter(row=>row.frog).sort((a,b)=>(FROG_RARITY_RANK[b.frog.rarity]??0)-(FROG_RARITY_RANK[a.frog.rarity]??0));
+    const best=ranked[0],bestRank=best?(FROG_RARITY_RANK[best.frog.rarity]??0):0,bestRarity=best?caseRarityClass(best.frog.rarity):'common';
+    const duplicateTotal=results.reduce((sum,result)=>sum+(result.duplicateCredit||0),0),newCount=results.filter(result=>!result.duplicate).length;
+    els.caseOpeningOverlay.className=`case-opening-overlay phase-reveal case-opening-multi-active case-opening-rarity-${bestRarity}`;
+    els.caseOpeningChest.classList.add('hidden');els.caseOpeningReelWrap.classList.add('hidden');els.caseOpeningSkip.classList.add('hidden');els.caseOpeningClose.classList.remove('hidden');
+    els.caseOpeningKicker.textContent=`MULTI OPEN · ${item.name}`;els.caseOpeningTitle.textContent=`${results.length} CASES OPENED`;
+    els.caseOpeningSubtitle.textContent=`${newCount} new · ${results.length-newCount} duplicate${results.length-newCount===1?'':'s'}${duplicateTotal?` · +${money(duplicateTotal)} F returned`:''}`;
+    const cards=results.map((result,index)=>{const frog=result.frog||FROGS.find(f=>f.id===result.frogId);if(!frog)return'';const rarity=caseRarityClass(frog.rarity),badge=result.duplicate?`<span class="case-opening-duplicate">DUPLICATE · +${money(result.duplicateCredit)} F</span>`:'<span class="case-opening-new">NEW FROG</span>';return `<article class="case-opening-multi-result-card rarity-${rarity}"><div class="case-opening-multi-result-number">CASE ${index+1}</div><div class="case-opening-multi-result-art">${frogSvg(frog,{collection:true})}</div><small>${frog.rarity}</small><h3>${frog.name}</h3>${badge}<div class="case-opening-multi-result-actions"><button class="pressable primary" data-case-equip="${frog.id}" ${state.selectedFrog===frog.id?'disabled':''}>${state.selectedFrog===frog.id?'EQUIPPED':'EQUIP'}</button><button class="pressable secondary" data-case-view="${frog.id}">COLLECTION</button></div></article>`;}).join('');
+    const qty=results.length;
+    els.caseOpeningResult.className='case-opening-result case-opening-multi-result';
+    els.caseOpeningResult.innerHTML=`<div class="case-opening-multi-result-grid" style="--case-result-count:${qty}">${cards}</div><div class="case-opening-multi-result-footer"><button class="pressable open-again" data-case-open-again="${item.id}" data-case-open-again-qty="${qty}" ${caseInventoryCount(item.id)<qty?'disabled':''}>OPEN ${qty} AGAIN · ${money(caseInventoryCount(item.id))} OWNED</button></div>`;
+    if(best){audio.caseReveal(best.frog.rarity);haptic(bestRank>=5?[35,45,70,55,110]:bestRank>=4?[25,35,55]:[18,25,35]);}
+    if(state.effects){confettiBurst(bestRank>=5?110:bestRank>=4?78:52);screenFeedback('win');}
+    refresh();renderCases();saveState();
+  }
+  function skipCaseOpening(){if(caseOpeningRuntime.active&&caseOpeningRuntime.phase!=='reveal'){if(caseOpeningRuntime.quantity>1)finishMultiCaseOpeningReveal();else finishCaseOpeningReveal();}}
   function animateCaseOpeningReel(){
     if(!caseOpeningRuntime.active)return;
     caseOpeningRuntime.phase='spin';els.caseOpeningOverlay.classList.remove('phase-intro');els.caseOpeningOverlay.classList.add('phase-spin');els.caseOpeningChest.classList.add('case-opening-chest-open');
@@ -3016,17 +3066,60 @@
       caseOpeningRuntime.raf=requestAnimationFrame(frame);
     }));
   }
+  function animateMultiCaseOpeningReels(){
+    if(!caseOpeningRuntime.active)return;
+    caseOpeningRuntime.phase='spin';els.caseOpeningOverlay.classList.remove('phase-intro');els.caseOpeningOverlay.classList.add('phase-spin');els.caseOpeningChest.classList.add('case-opening-chest-open');
+    els.caseOpeningReelWrap.classList.remove('hidden');queueCaseOpening(()=>els.caseOpeningChest.classList.add('hidden'),260);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      if(!caseOpeningRuntime.active||caseOpeningRuntime.phase!=='spin')return;
+      const laneNodes=[...els.caseOpeningReel.querySelectorAll('.case-opening-mini-lane')];
+      const animations=laneNodes.map((laneNode,laneIndex)=>{
+        const viewport=laneNode.querySelector('.case-opening-mini-viewport'),track=laneNode.querySelector('.case-opening-mini-track'),cards=[...track.children],winner=track.querySelector('[data-case-winner="true"]');
+        if(!viewport||!winner||cards.length<2)return null;
+        const first=cards[0],second=cards[1],firstCenter=first.offsetLeft+first.offsetWidth/2,step=(second.offsetLeft+second.offsetWidth/2)-firstCenter;
+        const safeMargin=Math.max(5,Math.min(11,winner.offsetWidth*.13)),maxLandingOffset=Math.max(0,winner.offsetWidth/2-safeMargin),landingOffset=(Math.random()*2-1)*maxLandingOffset;
+        const landingPoint=winner.offsetLeft+winner.offsetWidth/2+landingOffset,startFraction=.18+Math.random()*.64,startPoint=first.offsetLeft+first.offsetWidth*startFraction;
+        const startX=viewport.clientWidth/2-startPoint,targetX=viewport.clientWidth/2-landingPoint;
+        return {viewport,track,cards,winner,firstCenter,step,startX,targetX,duration:state.effects?4800+Math.random()*1250+laneIndex*120:1450+Math.random()*520+laneIndex*80,easingPower:3.65+Math.random()*1.15,lastIndex:-1,finished:false};
+      }).filter(Boolean);
+      if(!animations.length)return finishMultiCaseOpeningReveal();
+      const start=performance.now();let lastTickAt=0,lastHapticAt=0;
+      const frame=now=>{
+        if(!caseOpeningRuntime.active||caseOpeningRuntime.phase!=='spin')return;
+        let finishedCount=0;
+        animations.forEach(anim=>{
+          const p=clamp((now-start)/anim.duration,0,1),ease=1-Math.pow(1-p,anim.easingPower),x=anim.startX+(anim.targetX-anim.startX)*ease;
+          anim.track.style.transform=`translate3d(${x}px,0,0)`;
+          const centerInReel=anim.viewport.clientWidth/2-x,index=clamp(Math.round((centerInReel-anim.firstCenter)/anim.step),0,anim.cards.length-1);
+          if(index!==anim.lastIndex&&now-lastTickAt>54){anim.lastIndex=index;lastTickAt=now;audio.caseTick(p);if(p>.38&&now-lastHapticAt>100){lastHapticAt=now;haptic(3);}}
+          if(p>=1){finishedCount++;if(!anim.finished){anim.finished=true;anim.track.style.transform=`translate3d(${anim.targetX}px,0,0)`;anim.winner.classList.add('case-reel-winner');}}
+        });
+        if(finishedCount<animations.length){caseOpeningRuntime.raf=requestAnimationFrame(frame);return;}
+        audio.tone(280,.16,'triangle',.06,135);haptic([14,30,22,38]);queueCaseOpening(finishMultiCaseOpeningReveal,680);
+      };
+      caseOpeningRuntime.raf=requestAnimationFrame(frame);
+    }));
+  }
   function beginCaseOpening(item,frog,duplicate,duplicateCredit){
-    clearCaseOpeningWork();Object.assign(caseOpeningRuntime,{active:true,phase:'intro',item,frog,duplicate,duplicateCredit,lastTickIndex:-1,lastTickAt:0,lastHapticAt:0});
+    clearCaseOpeningWork();Object.assign(caseOpeningRuntime,{active:true,phase:'intro',item,frog,results:null,quantity:1,duplicate,duplicateCredit,lastTickIndex:-1,lastTickAt:0,lastHapticAt:0});
     state.animating=true;buildCaseOpeningReel(item,frog);
     els.caseOpeningOverlay.className=`case-opening-overlay phase-intro case-opening-case-${item.accent}`;els.caseOpeningClose.classList.add('hidden');els.caseOpeningSkip.classList.add('hidden');
-    els.caseOpeningChest.classList.remove('hidden','case-opening-chest-open');els.caseOpeningReelWrap.classList.add('hidden');els.caseOpeningResult.classList.add('hidden');els.caseOpeningResult.innerHTML='';els.caseOpeningReel.style.transform='translate3d(0,0,0)';
+    els.caseOpeningChest.classList.remove('hidden','case-opening-chest-open');els.caseOpeningChest.querySelector('b').textContent='UNLOCKING';els.caseOpeningReelWrap.classList.add('hidden');els.caseOpeningResult.className='case-opening-result hidden';els.caseOpeningResult.innerHTML='';els.caseOpeningReel.style.transform='translate3d(0,0,0)';
     els.caseOpeningKicker.textContent='FROGGY CASE OPENING';els.caseOpeningTitle.textContent=item.name;els.caseOpeningSubtitle.textContent='Watch the reel slow naturally. The marker can stop anywhere inside the winning card.';els.caseOpeningChestEmoji.textContent=item.emoji;
     audio.start();haptic(12);
     queueCaseOpening(()=>els.caseOpeningSkip.classList.remove('hidden'),1500);
     queueCaseOpening(animateCaseOpeningReel,850);
   }
+  function beginMultiCaseOpening(item,results){
+    clearCaseOpeningWork();Object.assign(caseOpeningRuntime,{active:true,phase:'intro',item,frog:null,results,quantity:results.length,duplicate:false,duplicateCredit:0,lastTickIndex:-1,lastTickAt:0,lastHapticAt:0});
+    state.animating=true;buildMultiCaseOpeningReels(item,results);
+    els.caseOpeningOverlay.className=`case-opening-overlay phase-intro case-opening-multi-active case-opening-case-${item.accent}`;els.caseOpeningClose.classList.add('hidden');els.caseOpeningSkip.classList.add('hidden');
+    els.caseOpeningChest.classList.remove('hidden','case-opening-chest-open');els.caseOpeningChest.querySelector('b').textContent=`UNLOCKING ${results.length} CASES`;els.caseOpeningReelWrap.classList.add('hidden');els.caseOpeningResult.className='case-opening-result hidden';els.caseOpeningResult.innerHTML='';
+    els.caseOpeningKicker.textContent='FROGGY MULTI-CASE OPENING';els.caseOpeningTitle.textContent=`${item.name} × ${results.length}`;els.caseOpeningSubtitle.textContent=`All ${results.length} outcomes are locked now. The reels spin together and stay visible.`;els.caseOpeningChestEmoji.textContent=item.emoji;
+    audio.start();haptic([10,18,10]);queueCaseOpening(()=>els.caseOpeningSkip.classList.remove('hidden'),1400);queueCaseOpening(animateMultiCaseOpeningReels,850);
+  }
   function openCase(id){
+    lastCaseBatch=null;
     if(anyRoundActive()||state.animating||caseOpeningRuntime.active){setStatus('Finish the current game or case opening first.','lose');return false;}
     const item=caseById(id);if(!item)return false;
     if(state.level<item.level){setStatus(`Reach level ${item.level} to open the ${item.name}.`,'lose');return false;}
@@ -3034,8 +3127,27 @@
     state.caseInventory[item.id]=stock-1;
     const frog=rollCase(item),duplicate=state.unlockedFrogs.includes(frog.id);let duplicateCredit=0;
     if(duplicate)duplicateCredit=creditBalance(Math.floor(Math.max(0,frog.cost)*.5));else state.unlockedFrogs.push(frog.id);
-    state.casesOpened+=1;state.caseHistory=[{caseId:item.id,frogId:frog.id,duplicate,duplicateCredit},...(state.caseHistory||[])].slice(0,8);
+    state.casesOpened+=1;state.caseHistory=[{caseId:item.id,frogId:frog.id,duplicate,duplicateCredit},...(state.caseHistory||[])].slice(0,30);
     saveState();refresh();renderCases();beginCaseOpening(item,frog,duplicate,duplicateCredit);
+    return true;
+  }
+
+  function openCases(id,quantity=1){
+    const qty=clamp(Math.floor(Number(quantity)||1),1,3);
+    if(qty===1)return openCase(id);
+    if(anyRoundActive()||state.animating||caseOpeningRuntime.active){setStatus('Finish the current game or case opening first.','lose');return false;}
+    const item=caseById(id);if(!item)return false;
+    if(state.level<item.level){setStatus(`Reach level ${item.level} to open the ${item.name}.`,'lose');return false;}
+    const stock=caseInventoryCount(item.id);if(stock<qty){setStatus(`You need ${money(qty-stock)} more ${item.name}${qty-stock===1?'':'s'} for OPEN ${qty}.`,'lose');renderCases();return false;}
+    state.caseInventory[item.id]=stock-qty;
+    const results=[];
+    for(let i=0;i<qty;i++){
+      const frog=rollCase(item),duplicate=state.unlockedFrogs.includes(frog.id);let duplicateCredit=0;
+      if(duplicate)duplicateCredit=creditBalance(Math.floor(Math.max(0,frog.cost)*.5));else state.unlockedFrogs.push(frog.id);
+      results.push({caseId:item.id,frogId:frog.id,frog,duplicate,duplicateCredit});
+    }
+    state.casesOpened+=qty;state.caseHistory=[...results.slice().reverse().map(({caseId,frogId,duplicate,duplicateCredit})=>({caseId,frogId,duplicate,duplicateCredit})),...(state.caseHistory||[])].slice(0,30);lastCaseBatch={caseId:item.id,results:results.map(({caseId,frogId,duplicate,duplicateCredit})=>({caseId,frogId,duplicate,duplicateCredit}))};
+    saveState();refresh();renderCases();beginMultiCaseOpening(item,results);
     return true;
   }
 
@@ -3123,7 +3235,7 @@
       const sellValue=collectionResaleValue(collectionMode,item);
       const sellButton=owned?`<button class="collection-action collection-sell pressable" data-collection-sell="${collectionMode}|${item.id}" ${(pledged||defaultItem)?'disabled':''}>${pledged?'PLEDGED · CANNOT SELL':defaultItem?'DEFAULT · CANNOT SELL':`SELL · ${money(sellValue)} F`}</button>`:'';
       const art=collectionMode==='frogs'?frogSvg(item,{collection:true}):`<span class="lake-preview lake-preview-${item.id}" role="img" aria-label="${item.name} environment preview"><img src="assets/lake-preview-${item.id}.webp" alt="" loading="lazy"><i class="lake-preview-glass"></i><i class="lake-preview-name">${item.emoji} ${item.name}</i></span>`,tier=String(item.rarity||'common').toLowerCase().replace(/[^a-z0-9]+/g,'-'),collateral=collectionMode==='frogs'&&item.id!=='classic'?`<span class="collateral-value">${pledged?'🔒 PLEDGED · ':''}BANK VALUE · ${money(skinCollateralValue(item))} F</span>`:collectionMode==='lakes'&&item.cost>0?`<span class="collateral-value">${pledged?'🔒 PLEDGED · ':''}BANK VALUE · ${money(lakeCollateralValue(item))} F</span>`:'',perkBox=collectionMode==='frogs'&&Array.isArray(item.perkLabels)&&item.perkLabels.length?`<div class="frog-perk-box"><b>${equipped?'ACTIVE PERKS':'PERKS · ACTIVE WHEN EQUIPPED'}</b>${item.perkLabels.map(label=>`<span>✦ ${label}</span>`).join('')}</div>`:'';
-      const rarityMarkup=collectionMode==='frogs'?`<div class="frog-rarity-row"><span class="rarity">${item.rarity}</span></div>`:`<span class="rarity">${item.rarity}</span>`;
+      const rarityMarkup=collectionMode==='frogs'?`<div class="frog-rarity-row"><span class="rarity">${item.rarity}</span></div>`:`<div class="lake-rarity-row"><span class="rarity">${item.rarity}</span></div>`;
       return `<article class="collection-card ${collectionMode==='frogs'?'frog-card':'lake'} tier-${tier} ${equipped?'selected':''}" data-item="${item.id}" style="--card-a:${item.colors?item.colors[0]:item.a};--card-b:${item.colors?item.colors[1]:item.b}">${rarityMarkup}<div class="collection-art">${art}<i class="portrait-spark s1"></i><i class="portrait-spark s2"></i></div><h3>${item.name}</h3><p>${item.description}</p>${perkBox}${collateral}<div class="collection-card-actions"><button class="collection-action pressable ${actionClass}" data-collection-action="${item.id}" ${equipped||(!canLevel&&!owned)?'disabled':''}>${action}</button>${sellButton}</div></article>`;
     }).join('');
   }
@@ -3469,10 +3581,10 @@
       const sell=e.target.closest('[data-collection-sell]');if(sell){const [kind,id]=sell.dataset.collectionSell.split('|');sellCollectionItem(kind,id);return;}
       const b=e.target.closest('[data-collection-action]');if(b)collectionAction(b.dataset.collectionAction);
     });
-    els.caseGrid.addEventListener('click',e=>{const buy=e.target.closest('[data-case-buy]');if(buy){buyCases(buy.dataset.caseBuy,buy.dataset.caseQty);return;}const button=e.target.closest('[data-case-open]');if(button)openCase(button.dataset.caseOpen);});
-    els.caseReveal.addEventListener('click',e=>{const open=e.target.closest('[data-case-open]');if(open){openCase(open.dataset.caseOpen);return;}const view=e.target.closest('[data-case-view]');if(view)viewCaseFrog(view.dataset.caseView);});
+    els.caseGrid.addEventListener('click',e=>{const buy=e.target.closest('[data-case-buy]');if(buy){buyCases(buy.dataset.caseBuy,buy.dataset.caseQty);return;}const button=e.target.closest('[data-case-open]');if(button)openCases(button.dataset.caseOpen,button.dataset.caseOpenQty||1);});
+    els.caseReveal.addEventListener('click',e=>{const open=e.target.closest('[data-case-open]');if(open){openCases(open.dataset.caseOpen,open.dataset.caseOpenQty||1);return;}const view=e.target.closest('[data-case-view]');if(view)viewCaseFrog(view.dataset.caseView);});
     els.caseOpeningSkip.addEventListener('click',skipCaseOpening);els.caseOpeningClose.addEventListener('click',hideCaseOpening);
-    els.caseOpeningResult.addEventListener('click',e=>{const equip=e.target.closest('[data-case-equip]');if(equip){equipCaseFrog(equip.dataset.caseEquip);return;}const view=e.target.closest('[data-case-view]');if(view){hideCaseOpening();viewCaseFrog(view.dataset.caseView);return;}const again=e.target.closest('[data-case-open-again]');if(again){const id=again.dataset.caseOpenAgain;hideCaseOpening();setTimeout(()=>openCase(id),80);}});
+    els.caseOpeningResult.addEventListener('click',e=>{const equip=e.target.closest('[data-case-equip]');if(equip){equipCaseFrog(equip.dataset.caseEquip);return;}const view=e.target.closest('[data-case-view]');if(view){hideCaseOpening();viewCaseFrog(view.dataset.caseView);return;}const again=e.target.closest('[data-case-open-again]');if(again){const id=again.dataset.caseOpenAgain,qty=clamp(Math.floor(Number(again.dataset.caseOpenAgainQty)||1),1,3);hideCaseOpening();setTimeout(()=>openCases(id,qty),80);}});
     els.installButton.addEventListener('click',installGame);
     document.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('click',closeModal));els.modalBackdrop.addEventListener('click',e=>{if(e.target===els.modalBackdrop)closeModal();});
     window.addEventListener('keydown',e=>{if(e.code==='Space'){if(caseOpeningRuntime.active)return;e.preventDefault();if(state.selectedGame==='crash'){state.crashActive?crashCashOut():startCrash();}else if(state.selectedGame==='plinko'){startPlinko();}else{state.roundActive?jump():startRound();}}if(e.code==='Escape'){if(plinkoFocusRuntime.active){exitPlinkoFocusMode();return;}if(caseOpeningRuntime.active){if(caseOpeningRuntime.phase==='reveal')hideCaseOpening();else skipCaseOpening();return;}if(!els.jobResult.classList.contains('hidden'))closeJobResult();else if(state.crashActive)crashCashOut();else state.roundActive?cashOut():closeModal();}});
@@ -3500,7 +3612,7 @@
       if(VEHICLES[0].refillCost!==25000||VEHICLES[1].refillCost!==150000||VEHICLES[2].refillCost!==750000||VEHICLES[3].refillCost!==4000000)throw new Error('refill prices failed');
       if(VEHICLES[0].max!==5||VEHICLES[1].max!==12||VEHICLES[2].max!==30||VEHICLES[3].max!==100)throw new Error('realistic redlines failed');
       state.vehicleCharges.glider=5;state.ownedVehicles=['glider'];state.selectedVehicle='glider';state.crashBet=100;state.balance=1000;if(crashPayoutFor(1)!==97||crashPayoutFor(2)!==194)throw new Error('Crash 3% starting edge failed');if(!startCrash()||!state.crashActive)throw new Error('crash start failed');state.crashStartedAt=performance.now()-5000;state.crashMultiplier=1.5;if(!crashCashOut()||state.crashActive||state.balance<=900)throw new Error('manual crash cashout failed');closeModal();state=deepClone(DEFAULT_STATE);state.unlockedGames=['leap','crash'];state.ownedVehicles=['glider'];state.vehicleCharges.glider=2;state.balance=1000;state.crashBet=100;state.safeRunCredits=1;if(!startCrash()||!state.roundSafe||state.safeRunCredits!==0)throw new Error('Crash protected-round activation failed');state.crashStartedAt=performance.now()-5000;state.crashMultiplier=1.5;if(!crashCashOut({automatic:true,reason:'protected'})||state.roundSafe)throw new Error('Crash protected payout failed');closeModal();if(crashMultiplierAtElapsed(10,VEHICLES[0])<=Math.exp(10*VEHICLES[0].growth))throw new Error('accelerating Crash curve failed');
-      state=deepClone(DEFAULT_STATE);state.unlockedFrogs.push('king');state.unlockedLakes.push('swamp');state.ownedVehicles.push('glider');state.vehicleCharges.glider=10;state.unlockedGames.push('crash');state.piggyBalance=1000000;const assets=collateralBreakdown();if(assets.skins!==15000||assets.lakes!==1500||assets.vehicles!==750000||assets.licenses!==500000||assets.piggy!==1000000||'flights' in assets)throw new Error('flight-free Bank Values failed');if(debtLimit()!==Math.min(MAX_LOAN_PAYOUT,BASE_UNSECURED_CREDIT+assets.total))throw new Error('direct asset-backed limit failed');const pledge=emptyCollateralSelection();if('flights' in pledge)throw new Error('flights remained pledgeable');pledge.piggy=5000;if(!takeLoan(10000,{skipConfirm:true,pledge})||state.pledgedPiggy!==5000)throw new Error('selected collateral loan failed');
+      state=deepClone(DEFAULT_STATE);state.unlockedFrogs.push('king');state.unlockedLakes.push('swamp');state.ownedVehicles.push('glider');state.vehicleCharges.glider=10;state.unlockedGames.push('crash');state.piggyBalance=1000000;const assets=collateralBreakdown();if(assets.skins!==15000||assets.lakes!==1500||assets.vehicles!==750000||assets.licenses!==500000||assets.piggy!==1000000||'flights' in assets)throw new Error('flight-free Bank Values failed');if(debtLimit()!==Math.min(MAX_LOAN_PAYOUT,BASE_UNSECURED_CREDIT+assets.total))throw new Error('direct asset-backed limit failed');const pledge=emptyCollateralSelection();if('flights' in pledge)throw new Error('flights remained pledgeable');pledge.piggy=5000;if(!takeLoan(10000,{skipConfirm:true,pledge})||state.pledgedPiggy!==5000||state.balance!==11000||state.loanPrincipalOriginal!==10000)throw new Error('exact selected-collateral loan disbursement failed');
       state=deepClone(DEFAULT_STATE);state.balance=1000000;state.level=10;collectionMode='vehicles';collectionAction('glider');const afterModel=state.balance;if(!buyVehicleFlights('glider',{skipConfirm:true})||state.balance!==afterModel-25000||vehicleCharges('glider')!==20)throw new Error('cheap refill failed');state.debt=1000;state.pledgedFlights.glider=20;if(availableVehicleFlights('glider')!==20||pledgedVehicleFlights('glider')!==0)throw new Error('old flight pledges were not ignored');
       state=deepClone(DEFAULT_STATE);state.unlockedFrogs.push('owner');state.piggyBalance=600000000;if(maxSingleLoan()!==5000000000)throw new Error('5B loan cap failed');state=deepClone(DEFAULT_STATE);state.debt=10800;state.loanPrincipalOriginal=10000;state.loanPrincipalRemaining=10000;state.loanInterestTotal=800;state.loanInstallment=1080;state.debtCycleStartRound=0;state.completedRounds=2;state.debtTurns=2;let countdown=completeDebtTurn();if(!countdown?.warning||countdown.dueIn!==2||countdown.message!=='Loan payment in 2 rounds: 1,080 F.')throw new Error('two-round loan notice failed');countdown=completeDebtTurn();if(!countdown?.warning||countdown.dueIn!==1||countdown.message!=='Loan payment next round: 1,080 F.')throw new Error('one-round loan notice failed');
       state=deepClone(DEFAULT_STATE);state.balance=321;state.debt=10800;state.loanPrincipalOriginal=10000;state.loanPrincipalRemaining=10000;state.loanInterestTotal=800;state.loanInstallment=1080;state.debtTurns=4;state.piggyBalance=5000;const automaticDue=completeDebtTurn();if(automaticDue?.paid!==1080||state.piggyBalance!==3920||state.balance!==321||state.debt!==9720||state.debtTurns!==0||state.debtDue||state.loanInstallmentsPaid!==1)throw new Error('automatic due-round Piggy payment or countdown reset failed');
@@ -3521,9 +3633,9 @@
       if(CRASH_MIN_POINT!==1.01)throw new Error('Crash minimum point failed');
       if(document.querySelector('[data-screen="rewards"]')||document.getElementById('rewardsScreen')||document.getElementById('rewardModal')||document.getElementById('spinButton'))throw new Error('Rewards UI still present');
       if(ownerPanelModal.querySelector('[data-owner-action="spins"]')||ownerPanelModal.querySelector('[data-owner-action="unlimited"]'))throw new Error('Reward-wheel owner controls still present');
-      if(PLINKO_BANK_ROUND_MS!==15000)throw new Error('15-second Plinko Bank round failed');const oldRounds=state.rounds,oldCompleted=state.completedRounds;plinkoBankRoundRuntime.active=true;plinkoBankRoundRuntime.remainingMs=1;plinkoBankRoundRuntime.lastTick=performance.now()-20;tickPlinkoBankRound();if(state.rounds!==oldRounds+1||state.completedRounds!==oldCompleted+1||plinkoBankRoundRuntime.active)throw new Error('Plinko Bank round completion failed');if(MAX_LOAN_PAYOUT!==5000000000)throw new Error('5B Bank cap constant failed');state.bankLimitDisabled=true;if(effectiveBankLimit()!==MAX_SAFE_BALANCE)throw new Error('Bank limit disable failed');state.bankLimitDisabled=false;const paidFrogs=FROGS.filter(f=>f.cost>0);if(paidFrogs.find(f=>f.id==='meadow')?.cost!==1500||paidFrogs.find(f=>f.id==='gigachad')?.cost!==2250000000||paidFrogs.find(f=>f.id==='owner')?.cost!==6000000000)throw new Error('3x frog pricing failed');if(plinkoRows('low')!==12||plinkoRows('medium')!==14||plinkoRows('high')!==16||plinkoTable('low').length!==13||plinkoTable('medium').length!==15||plinkoTable('high').length!==17)throw new Error('v76 Plinko board scaling failed');if(Math.abs(plinkoRtp('low')-.9720361328125)>.00001||Math.abs(plinkoRtp('medium')-.9669140625)>.00001||Math.abs(plinkoRtp('high')-.989764404296875)>.00001)throw new Error('v82 Plinko RTP table check failed');if(JSON.stringify(plinkoTable('high'))!==JSON.stringify([1000,130,26,9,4,2,.2,.2,.2,.2,.2,2,4,9,26,130,1000]))throw new Error('v82 exact 16-row High payout strip failed');if(els.plinkoMultipliers?.parentElement!==els.plinkoBoard)throw new Error('v85 multiplier rail must live inside Plinko board');if(PLINKO_MAX_ACTIVE_EGGS!==96||typeof updatePlinkoEggPhysics!=='function'||typeof primePlinkoEggPhysics!=='function'||typeof plinkoImpactTarget!=='function'||typeof getPlinkoBoardCache!=='function'||typeof getPlinkoEggSprite!=='function')throw new Error('v81 Plinko motion engine failed');state=deepClone(DEFAULT_STATE);state.balance=100000;state.safeRunCredits=3;state.plinkoBet=100;for(let i=0;i<3;i++){const rolled=rollPlinkoPath('medium',{protectedRound:true});if(plinkoTable('medium')[rolled.slot]<=1)throw new Error('Plinko protected path failed');}state.caseInventory.ultra=5;if(caseInventoryCount('ultra')!==5)throw new Error('case inventory failed');const ownerBase=caseAdjustedDropRows(caseById('ultra')).find(r=>r.frog.id==='owner').probability;state.caseLuckMultiplier=10;const ownerLucky=caseAdjustedDropRows(caseById('ultra')).find(r=>r.frog.id==='owner').probability;if(!(ownerLucky>ownerBase))throw new Error('case luck weighting failed');
-      const shopFrogs=frogShopItems();for(let i=1;i<shopFrogs.length;i++){if(shopFrogs[i].cost<shopFrogs[i-1].cost)throw new Error('frog shop price order failed');if((FROG_RARITY_RANK[shopFrogs[i].rarity]??99)<(FROG_RARITY_RANK[shopFrogs[i-1].rarity]??99))throw new Error('frog rarity progression failed');}const hill=FROGS.find(f=>f.id==='gigachad');if(!hill||hill.name!=='The Hill Frog'||hill.art!=='assets/the-hill-frog-game-v66.png'||hill.cardArt!=='assets/the-hill-frog-card-v64.webp')throw new Error('The Hill Frog art/name failed');const basicIds=['meadow','river','moss','sand','blue-dart','sunset'];if(!basicIds.every(id=>FROGS.some(f=>f.id===id)))throw new Error('v63 basic frog lineup missing');
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v98 cloud-save bridge + v90 one-screen mobile Plinko controls + board fit/no Plinko scrolling + v89 real mobile Plinko frame expansion/no flex compression + v88 pure mobile Plinko frame-height fix + v87 larger Plinko multiplier text + deeper mobile Medium/High payout rail + v86 extended mobile Plinko bottom frame + larger multiplier labels + v85 multiplier rail structurally inside Plinko board + visible mobile payout strip + v83 controls-before-board layout + high-contrast active-loan actions + fully dark loan builder/warning sheets + v82 exact classic 16-row High payout strip + v81 no idle/top egg + no fake pocket guides + analytic ballistic Plinko motion + instant multiplier landing + v78 performance cache + 96-egg cap + v77 15-second Plinko Bank rounds + 5x lower Plinko XP + Ultra Case 3% Hill / 0.1% Owner + v75 case inventory + owner case grants/luck + Bank limit toggle + protected Plinko eggs + v73 every-frog price-tier perks + v72 Piggy 0.3% open / 0.2% closed + loan-time deposits + v71 3x frog prices + 5B Bank cap + v68 CS-style case reel + v67 six-slot mobile nav + v66 approved The Hill Frog gameplay model';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      if(PLINKO_BANK_ROUND_MS!==15000)throw new Error('15-second Plinko Bank round failed');const oldRounds=state.rounds,oldCompleted=state.completedRounds;plinkoBankRoundRuntime.active=true;plinkoBankRoundRuntime.remainingMs=1;plinkoBankRoundRuntime.lastTick=performance.now()-20;tickPlinkoBankRound();if(state.rounds!==oldRounds+1||state.completedRounds!==oldCompleted+1||plinkoBankRoundRuntime.active)throw new Error('Plinko Bank round completion failed');if(MAX_LOAN_PAYOUT!==5000000000)throw new Error('5B Bank cap constant failed');state.bankLimitDisabled=true;if(effectiveBankLimit()!==MAX_SAFE_BALANCE)throw new Error('Bank limit disable failed');state.bankLimitDisabled=false;const paidFrogs=FROGS.filter(f=>f.cost>0);if(paidFrogs.find(f=>f.id==='meadow')?.cost!==1500||paidFrogs.find(f=>f.id==='gigachad')?.cost!==2250000000||paidFrogs.find(f=>f.id==='owner')?.cost!==6000000000)throw new Error('3x frog pricing failed');if(plinkoRows('low')!==12||plinkoRows('medium')!==14||plinkoRows('high')!==16||plinkoTable('low').length!==13||plinkoTable('medium').length!==15||plinkoTable('high').length!==17)throw new Error('v76 Plinko board scaling failed');if(Math.abs(plinkoRtp('low')-.9720361328125)>.00001||Math.abs(plinkoRtp('medium')-.9669140625)>.00001||Math.abs(plinkoRtp('high')-.989764404296875)>.00001)throw new Error('v82 Plinko RTP table check failed');if(JSON.stringify(plinkoTable('high'))!==JSON.stringify([1000,130,26,9,4,2,.2,.2,.2,.2,.2,2,4,9,26,130,1000]))throw new Error('v82 exact 16-row High payout strip failed');if(els.plinkoMultipliers?.parentElement!==els.plinkoBoard)throw new Error('v85 multiplier rail must live inside Plinko board');if(PLINKO_MAX_ACTIVE_EGGS!==96||typeof updatePlinkoEggPhysics!=='function'||typeof primePlinkoEggPhysics!=='function'||typeof plinkoImpactTarget!=='function'||typeof getPlinkoBoardCache!=='function'||typeof getPlinkoEggSprite!=='function')throw new Error('v81 Plinko motion engine failed');state=deepClone(DEFAULT_STATE);state.balance=100000;state.safeRunCredits=3;state.plinkoBet=100;for(let i=0;i<3;i++){const rolled=rollPlinkoPath('medium',{protectedRound:true});if(plinkoTable('medium')[rolled.slot]<=1)throw new Error('Plinko protected path failed');}state.caseInventory.ultra=5;if(caseInventoryCount('ultra')!==5)throw new Error('case inventory failed');state.level=100;state.caseInventory.pond=6;renderCases();if(!els.caseGrid.querySelector('[data-case-open-qty="2"]')||!els.caseGrid.querySelector('[data-case-open-qty="3"]')||els.caseGrid.querySelector('[data-case-open-qty="5"]')||els.caseGrid.querySelector('[data-case-open-qty="10"]'))throw new Error('v107 max-3 multi-case buttons failed');if(typeof beginMultiCaseOpening!=='function'||typeof animateMultiCaseOpeningReels!=='function'||typeof finishMultiCaseOpeningReveal!=='function')throw new Error('v107 simultaneous multi-reel animation functions missing');lastCaseBatch=null;const ownerBase=caseAdjustedDropRows(caseById('ultra')).find(r=>r.frog.id==='owner').probability;state.caseLuckMultiplier=10;const ownerLucky=caseAdjustedDropRows(caseById('ultra')).find(r=>r.frog.id==='owner').probability;if(!(ownerLucky>ownerBase))throw new Error('case luck weighting failed');
+      const shopFrogs=frogShopItems();for(let i=1;i<shopFrogs.length;i++){if(shopFrogs[i].cost<shopFrogs[i-1].cost)throw new Error('frog shop price order failed');if((FROG_RARITY_RANK[shopFrogs[i].rarity]??99)<(FROG_RARITY_RANK[shopFrogs[i-1].rarity]??99))throw new Error('frog rarity progression failed');}const hill=FROGS.find(f=>f.id==='gigachad');if(!hill||hill.name!=='The Hill Frog'||hill.art!=='assets/the-hill-frog-game-v66.png'||hill.cardArt!=='assets/the-hill-frog-card-v64.webp')throw new Error('The Hill Frog art/name failed');if(FROGS.find(f=>f.id==='robot')?.art!=='assets/robo-frog-v106.svg'||FROGS.find(f=>f.id==='owner')?.art!=='assets/owner-frog-v106.svg')throw new Error('v106 Robo/Owner preview art failed');const basicIds=['meadow','river','moss','sand','blue-dart','sunset'];if(!basicIds.every(id=>FROGS.some(f=>f.id===id)))throw new Error('v63 basic frog lineup missing');collectionMode='lakes';renderCollection();if(els.collectionGrid.querySelectorAll('.collection-card.lake .lake-rarity-row > .rarity').length!==LAKES.length)throw new Error('v106 lake rarity header rows failed');collectionMode='frogs';renderCollection();
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v107 simultaneous animated OPEN 2/3 case reels + v106 Robo/Owner preview assets + lake rarity header rows + exact loan principal disbursement + v98 cloud-save bridge + v90 one-screen mobile Plinko controls + board fit/no Plinko scrolling + v89 real mobile Plinko frame expansion/no flex compression + v88 pure mobile Plinko frame-height fix + v87 larger Plinko multiplier text + deeper mobile Medium/High payout rail + v86 extended mobile Plinko bottom frame + larger multiplier labels + v85 multiplier rail structurally inside Plinko board + visible mobile payout strip + v83 controls-before-board layout + high-contrast active-loan actions + fully dark loan builder/warning sheets + v82 exact classic 16-row High payout strip + v81 no idle/top egg + no fake pocket guides + analytic ballistic Plinko motion + instant multiplier landing + v78 performance cache + 96-egg cap + v77 15-second Plinko Bank rounds + 5x lower Plinko XP + Ultra Case 3% Hill / 0.1% Owner + v75 case inventory + owner case grants/luck + Bank limit toggle + protected Plinko eggs + v73 every-frog price-tier perks + v72 Piggy 0.3% open / 0.2% closed + loan-time deposits + v71 3x frog prices + 5B Bank cap + v68 CS-style case reel + v67 six-slot mobile nav + v66 approved The Hill Frog gameplay model';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 
@@ -3547,5 +3659,5 @@
   if(!state.tutorialSeen&&!TEST_MODE){state.tutorialSeen=true;saveState();setTimeout(()=>openModal(els.howToModal),600);}
   if(TEST_MODE)runSelfTest();
 
-  window.FroggyGame={version:BUILD_VERSION,prepareCloudRestore,selectedFrog,activeSkinPerks,skinJobMoneyMultiplier,skinJobXpMultiplier,skinJobStartBonusMs,skinLeapXp,skinCrashXp,skinPiggyRateBonus,jobPay,jobXpPerFry,jobXpNeeded,activateJobMoneyBoost,activateJobXpBoost,startJobShift,endJobShift,finishJobShiftRound,extendJobShiftTime,collectionResaleValue,sellCollectionItem,compactMoney,selectVehicle,buyVehicleFlights,getState:()=>deepClone(state),exportSave:()=>{saveState();try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');}catch{return null;}},importSave:(save)=>{if(!save||typeof save!=='object'||Array.isArray(save))return false;localStorage.setItem(STORAGE_KEY,JSON.stringify(save));return true;},setGameMode,unlockGame,startCrash,crashCashOut,crashLose,setCrashBet,crashPayoutFor,startPlinko,setPlinkoBet,setPlinkoRisk,enterPlinkoFocusMode,exitPlinkoFocusMode,plinkoRows,plinkoTable,plinkoRtp,rollPlinkoPath,buyCases,caseInventoryCount,caseAdjustedDropRows,selectBet,setBetAmount,adjustBet,applyCustomBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,creditBalance,takeLoan,repayDebt,completeDebtTurn,debtInstallment,debtLimit,availableCredit,maxSingleLoan,effectiveBankLimit,collateralBreakdown,collateralLoanLimit,allocateRoundStake,ownedWalletBalance,finishCompletedRound,earlyPayoffAmount,earlyPayoffCashRequired,earlyPayoffSavings,loanQuote,piggyLoanReserve,piggyTransferMaximum,transferPiggy,advancePiggyBankRound,selectedVehicle,vehicleCharges,pledgedVehicleFlights,availableVehicleFlights,vehicleOwned,collateralSelectionValue,completeVehicleFlight,vehicleCrashXp,advancePiggyTime,tickPiggyClock,trustedClosedElapsed,piggyOpenRate,piggyClosedRate,ensureCrashLevelUnlock,autoSelectCollateral,noUsableVehicleFlights,openVehicleShop,setBankPane,reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();refresh();}};
+  window.FroggyGame={version:BUILD_VERSION,prepareCloudRestore,selectedFrog,activeSkinPerks,skinJobMoneyMultiplier,skinJobXpMultiplier,skinJobStartBonusMs,skinLeapXp,skinCrashXp,skinPiggyRateBonus,jobPay,jobXpPerFry,jobXpNeeded,activateJobMoneyBoost,activateJobXpBoost,startJobShift,endJobShift,finishJobShiftRound,extendJobShiftTime,collectionResaleValue,sellCollectionItem,compactMoney,selectVehicle,buyVehicleFlights,getState:()=>deepClone(state),exportSave:()=>{saveState();try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');}catch{return null;}},importSave:(save)=>{if(!save||typeof save!=='object'||Array.isArray(save))return false;localStorage.setItem(STORAGE_KEY,JSON.stringify(save));return true;},setGameMode,unlockGame,startCrash,crashCashOut,crashLose,setCrashBet,crashPayoutFor,startPlinko,setPlinkoBet,setPlinkoRisk,enterPlinkoFocusMode,exitPlinkoFocusMode,plinkoRows,plinkoTable,plinkoRtp,rollPlinkoPath,buyCases,openCases,caseInventoryCount,caseAdjustedDropRows,selectBet,setBetAmount,adjustBet,applyCustomBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,creditBalance,takeLoan,repayDebt,completeDebtTurn,debtInstallment,debtLimit,availableCredit,maxSingleLoan,effectiveBankLimit,collateralBreakdown,collateralLoanLimit,allocateRoundStake,ownedWalletBalance,finishCompletedRound,earlyPayoffAmount,earlyPayoffCashRequired,earlyPayoffSavings,loanQuote,piggyLoanReserve,piggyTransferMaximum,transferPiggy,advancePiggyBankRound,selectedVehicle,vehicleCharges,pledgedVehicleFlights,availableVehicleFlights,vehicleOwned,collateralSelectionValue,completeVehicleFlight,vehicleCrashXp,advancePiggyTime,tickPiggyClock,trustedClosedElapsed,piggyOpenRate,piggyClosedRate,ensureCrashLevelUnlock,autoSelectCollateral,noUsableVehicleFlights,openVehicleShop,setBankPane,reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();refresh();}};
 })();

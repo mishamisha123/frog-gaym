@@ -1,7 +1,7 @@
 {
   "name": "Froggy Leap",
   "short_name": "Froggy Leap",
-  "description": "Froggy Leap v105 with Google accounts, Friends, Cloud Saves, and Plinko Focus fullscreen mode.",
+  "description": "Froggy Leap v107 with simultaneous animated 2/3-case reels (3 max), fixed shop previews, lake rarity headers, exact Bank loan disbursement, Friends, Cloud Saves, and Plinko Focus mode.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#eefbff"/><stop offset=".45" stop-color="#9bc6d7"/><stop offset="1" stop-color="#557b91"/></linearGradient>
+    <linearGradient id="belly" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#d9fbff"/><stop offset="1" stop-color="#77c8d8"/></linearGradient>
+    <radialGradient id="eye" cx="42%" cy="35%" r="70%"><stop stop-color="#dfffff"/><stop offset=".35" stop-color="#5cf4ff"/><stop offset="1" stop-color="#0c7ca3"/></radialGradient>
+  </defs>
+  <g stroke="#173248" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M132 340c-46 9-77 35-90 76 51 10 101 3 132-31" fill="url(#metal)"/>
+    <path d="M380 340c46 9 77 35 90 76-51 10-101 3-132-31" fill="url(#metal)"/>
+    <path d="M161 353c-22 48-17 87 11 113 35-22 55-52 57-95" fill="url(#metal)"/>
+    <path d="M351 353c22 48 17 87-11 113-35-22-55-52-57-95" fill="url(#metal)"/>
+    <path d="M127 184c10-92 55-135 129-135s119 43 129 135c28 27 44 66 44 113 0 111-77 170-173 170S83 408 83 297c0-47 16-86 44-113z" fill="url(#metal)"/>
+    <ellipse cx="256" cy="328" rx="82" ry="91" fill="url(#belly)"/>
+    <circle cx="175" cy="163" r="70" fill="#d9edf4"/>
+    <circle cx="337" cy="163" r="70" fill="#d9edf4"/>
+    <circle cx="175" cy="163" r="43" fill="url(#eye)"/>
+    <circle cx="337" cy="163" r="43" fill="url(#eye)"/>
+    <circle cx="181" cy="158" r="13" fill="#0c2030" stroke-width="9"/>
+    <circle cx="343" cy="158" r="13" fill="#0c2030" stroke-width="9"/>
+    <path d="M211 246c25 19 65 19 90 0" fill="none"/>
+    <path d="M202 281h108" fill="none" stroke="#429bb4" stroke-width="10"/>
+    <path d="M256 82v-30" fill="none"/>
+    <circle cx="256" cy="38" r="15" fill="#69f3ff"/>
+  </g>
+  <g fill="#69f3ff" stroke="#173248" stroke-width="9">
+    <circle cx="122" cy="278" r="12"/><circle cx="390" cy="278" r="12"/>
+    <circle cx="189" cy="386" r="10"/><circle cx="323" cy="386" r="10"/>
+  </g>
+  <g fill="none" stroke="#486b7e" stroke-width="8" stroke-linecap="round">
+    <path d="M143 228h38M331 228h38M117 317h36M359 317h36"/>
+    <path d="M219 105l18 10M293 105l-18 10"/>
+  </g>
+  <path d="M228 333h56v55h-56z" fill="#235069" stroke="#173248" stroke-width="10" rx="8"/>
+  <path d="M240 347h32v8h-32zM240 364h21v8h-21z" fill="#70f5ff"/>
+</svg>
