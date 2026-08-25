@@ -1,15 +1,14 @@
-# Froggy Leap v79
+# Froggy Leap v80
 
-> **Current-behavior note:** The v79 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+> **Current-behavior note:** The v80 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
-## v79 — Compact responsive Plinko layout
+## v80 — Smooth Plinko motion + instant multiplier landing
 
-- Shrinks the Plinko machine on desktop instead of allowing High risk to dominate most of the viewport.
-- Adds a dedicated compact phone layout: controls move above the board, headings collapse, controls tighten, and the board is roughly 225–305 px tall depending on screen/risk.
-- Low / Medium / High still use 12 / 14 / 16 rows and 13 / 15 / 17 payout pockets.
-- High still retains the 1000x edge payout, 96 active-egg limit, v78 performance caching, v77 15-second Bank-round window, and reduced Plinko XP.
-- Only presentation/layout and the internal canvas minimum height changed; odds and payout tables are untouched.
-- PWA/cache/build references are bumped to **v79**.
+- Replaced the expensive per-egg sub-step peg-collision loop with lightweight analytic ballistic arcs between the same pre-rolled 50/50 peg decisions. This keeps the odds/system unchanged while making crowded boards much smoother.
+- Removed the fake boxed pocket row drawn inside the Plinko canvas; only the actual colored multiplier row remains.
+- Eggs now pay out immediately when they reach the selected multiplier row. The old pocket-floor bounce/settle phase is gone, eliminating the hover/jitter at the bottom.
+- Preserves the 96-egg cap, 1000× High edge multiplier, 15-second Plinko Bank round window, protected eggs, reduced Plinko XP, case odds, and existing saves.
+- PWA/cache/build references are bumped to **v80**.
 
 ## v78 — Smoother high-volume Plinko + 1000x High max
 

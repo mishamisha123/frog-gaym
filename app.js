@@ -3,7 +3,7 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v79';
+  const BUILD_VERSION = 'v80';
   console.info(`Froggy Leap ${BUILD_VERSION} loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
@@ -1114,8 +1114,9 @@
     if(!plinkoRuntime.raf){resizePlinkoCanvas();drawPlinkoBoard();}
   }
   function plinkoLayout(risk=state.plinkoRisk){
-    const rows=plinkoRows(risk),canvas=els.plinkoCanvas,w=Math.max(300,canvas?.clientWidth||720),h=Math.max(210,canvas?.clientHeight||420),margin=Math.max(17,w*.045),top=52,pocketHeight=Math.max(34,Math.min(48,w/(rows+1)*.92)),pocketTop=h-pocketHeight-5,lastPegY=pocketTop-Math.max(27,pocketHeight*.72),spacing=(w-margin*2)/rows,rowGap=rows>1?(lastPegY-top)/(rows-1):0;
-    return {risk,rows,w,h,margin,top,pocketTop,pocketHeight,lastPegY,spacing,rowGap,cx:w/2,eggRadius:Math.max(5.2,Math.min(11.2,spacing*.285)),pegRadius:Math.max(2.4,Math.min(5.1,spacing*.105))};
+    const rows=plinkoRows(risk),canvas=els.plinkoCanvas,w=Math.max(300,canvas?.clientWidth||720),h=Math.max(210,canvas?.clientHeight||420),margin=Math.max(17,w*.045),top=44,spacing=(w-margin*2)/rows,bottomGap=Math.max(20,Math.min(34,spacing*.72)),lastPegY=h-bottomGap,rowGap=rows>1?(lastPegY-top)/(rows-1):0;
+    // Multiplier pockets live directly below the canvas. The canvas no longer draws a second fake row of boxes.
+    return {risk,rows,w,h,margin,top,pocketTop:h,pocketHeight:0,lastPegY,spacing,rowGap,cx:w/2,eggRadius:Math.max(5.2,Math.min(11.2,spacing*.285)),pegRadius:Math.max(2.4,Math.min(5.1,spacing*.105))};
   }
   function resizePlinkoCanvas(){
     const canvas=els.plinkoCanvas;if(!canvas)return;const rect=canvas.getBoundingClientRect();if(rect.width<10||rect.height<10)return;
@@ -1140,49 +1141,43 @@
   function plinkoFlightTime(deltaY,vy,g){
     const disc=Math.max(0,vy*vy+2*g*Math.max(1,deltaY));return Math.max(.12,(-vy+Math.sqrt(disc))/Math.max(1,g));
   }
-  function primePlinkoEggPhysics(egg,L){
-    egg.rows=L.rows;egg.row=-1;egg.rights=0;egg.nextRow=0;egg.landing=false;egg.finished=false;egg.bounce=0;egg.pocketBounces=0;egg.settleTime=0;egg.gravity=Math.max(900,L.rowGap*41);egg.x=L.cx+(Math.random()-.5)*L.eggRadius*.35;egg.y=L.top-Math.max(46,L.rowGap*.92);egg.vx=(Math.random()-.5)*10;egg.vy=20+Math.random()*22;egg.rotation=(Math.random()-.5)*.22;egg.angularVelocity=(Math.random()-.5)*2.2;rebuildPlinkoEggTargets(egg,L);
+  function beginPlinkoMotionSegment(egg,L,toX,toY,kind='peg'){
+    egg.segmentKind=kind;egg.segmentElapsed=0;egg.segmentFromX=egg.x;egg.segmentFromY=egg.y;egg.segmentToX=toX;egg.segmentToY=toY;
+    const distance=Math.hypot(toX-egg.x,toY-egg.y),firstDrop=kind==='peg'&&egg.nextRow===0&&egg.row<0;
+    egg.segmentDuration=kind==='landing'?clamp(.16+distance/1250,.17,.28):firstDrop?clamp(.22+distance/1300,.23,.34):clamp(.14+distance/1450,.15,.24);
+    egg.segmentArc=kind==='landing'?Math.max(4,L.rowGap*.13):firstDrop?0:Math.max(8,L.rowGap*(.28+Math.random()*.10));
   }
-  function bouncePlinkoEgg(egg,L){
+  function primePlinkoEggPhysics(egg,L){
+    egg.rows=L.rows;egg.row=-1;egg.rights=0;egg.nextRow=0;egg.landing=false;egg.finished=false;egg.bounce=0;egg.x=L.cx+(Math.random()-.5)*L.eggRadius*.28;egg.y=L.top-Math.max(38,L.rowGap*.82);egg.vx=0;egg.vy=0;egg.rotation=(Math.random()-.5)*.18;egg.angularVelocity=(Math.random()-.5)*1.4;rebuildPlinkoEggTargets(egg,L);
+    const first=egg.targets?.[0]||plinkoImpactTarget(egg,0,L);beginPlinkoMotionSegment(egg,L,first.x,first.y,'peg');
+  }
+  function triggerPlinkoPegImpact(egg,L){
     const row=egg.nextRow;if(row>=egg.rows)return;
     const hit=egg.targets?.[row]||plinkoImpactTarget(egg,row,L),dir=hit.dir;
-    // Reflect the incoming velocity off the circular peg normal first. A gentle lane bias is applied
-    // only after that collision so the pre-rolled 50/50 result stays authoritative without looking scripted.
-    const nx=(hit.x-hit.peg.x)/hit.combined,ny=(hit.y-hit.peg.y)/hit.combined,restitution=.54+Math.random()*.08,vn=egg.vx*nx+egg.vy*ny;
-    let reflectedX=egg.vx,reflectedY=egg.vy;if(vn<0){reflectedX-= (1+restitution)*vn*nx;reflectedY-= (1+restitution)*vn*ny;}
-    egg.x=hit.x;egg.y=hit.y;egg.row=row;egg.rights+=egg.path[row]||0;egg.nextRow=row+1;egg.bounce=1;egg.angularVelocity=dir*(4.2+Math.random()*3.2);
-    egg.vy=clamp(reflectedY,-145,-38);
-    const now=performance.now(),activeEggs=plinkoRuntime.eggs.length,fxGap=activeEggs>48?95:activeEggs>20?65:32;if(now-plinkoRuntime.lastPegSoundAt>fxGap){plinkoRuntime.lastPegSoundAt=now;audio.fryRim();if(activeEggs<=18)haptic(4);}
+    egg.x=hit.x;egg.y=hit.y;egg.row=row;egg.rights+=egg.path[row]||0;egg.nextRow=row+1;egg.bounce=1;egg.angularVelocity=dir*(3.6+Math.random()*2.4);
+    const now=performance.now(),activeEggs=plinkoRuntime.eggs.length,fxGap=activeEggs>60?120:activeEggs>30?85:activeEggs>14?55:34;
+    if(now-plinkoRuntime.lastPegSoundAt>fxGap){plinkoRuntime.lastPegSoundAt=now;audio.fryRim();if(activeEggs<=14)haptic(3);}
     if(egg.nextRow>=egg.rows){
-      egg.landing=true;const slotX=L.cx+(egg.slot-egg.rows/2)*L.spacing,dy=L.pocketTop-egg.y,t=plinkoFlightTime(dy,egg.vy,egg.gravity),ideal=(slotX-egg.x)/t;egg.vx=reflectedX*.42+ideal*.58+(Math.random()-.5)*L.spacing*.10;return;
+      egg.landing=true;const slotX=L.cx+(egg.slot-egg.rows/2)*L.spacing;
+      // The final segment ends exactly at the canvas edge, directly against the real multiplier row.
+      beginPlinkoMotionSegment(egg,L,slotX,L.h-L.eggRadius*.12,'landing');return;
     }
-    const next=egg.targets?.[egg.nextRow]||plinkoImpactTarget(egg,egg.nextRow,L),dy=next.y-egg.y,t=plinkoFlightTime(dy,egg.vy,egg.gravity),ideal=(next.x-egg.x)/t;
-    egg.vx=reflectedX*.46+ideal*.54+(Math.random()-.5)*9;
-    if(Math.sign(egg.vx)!==dir&&Math.abs(egg.vx)<Math.abs(ideal)*.55)egg.vx=ideal*.72;
+    const next=egg.targets?.[egg.nextRow]||plinkoImpactTarget(egg,egg.nextRow,L);beginPlinkoMotionSegment(egg,L,next.x,next.y,'peg');
   }
   function updatePlinkoEggPhysics(egg,dt,L){
     if(egg.finished)return true;
-    const safeDt=Math.min(.034,Math.max(0,dt)),steps=Math.max(1,Math.ceil(safeDt/.012)),step=safeDt/steps;
-    for(let n=0;n<steps;n++){
-      egg.bounce=Math.max(0,egg.bounce-step*7.2);egg.rotation+=egg.angularVelocity*step;egg.angularVelocity*=Math.pow(.989,step*60);
-      if(egg.landing){
-        const targetX=L.cx+(egg.slot-egg.rows/2)*L.spacing,left=targetX-L.spacing*.43,right=targetX+L.spacing*.43,floor=L.h-L.eggRadius-5;
-        egg.vx+=(targetX-egg.x)*3.0*step;egg.vx*=Math.pow(.994,step*60);egg.vy+=egg.gravity*step;egg.x+=egg.vx*step;egg.y+=egg.vy*step;
-        if(egg.x<left+L.eggRadius*.45){egg.x=left+L.eggRadius*.45;egg.vx=Math.abs(egg.vx)*.38;}else if(egg.x>right-L.eggRadius*.45){egg.x=right-L.eggRadius*.45;egg.vx=-Math.abs(egg.vx)*.38;}
-        if(egg.y>=floor){egg.y=floor;if(Math.abs(egg.vy)>58&&egg.pocketBounces<2){egg.vy=-Math.abs(egg.vy)*(.23+Math.random()*.06);egg.vx*=.58;egg.pocketBounces++;egg.bounce=1;const bounceNow=performance.now(),activeEggs=plinkoRuntime.eggs.length;if(bounceNow-plinkoRuntime.lastPegSoundAt>(activeEggs>32?85:42)){plinkoRuntime.lastPegSoundAt=bounceNow;audio.fryRim();if(activeEggs<=18)haptic(3);}}else{egg.vy=0;egg.vx*=.72;egg.settleTime+=step;if(egg.settleTime>.14){egg.finished=true;return true;}}}
-        continue;
-      }
-      const target=egg.targets?.[egg.nextRow]||plinkoImpactTarget(egg,egg.nextRow,L),distanceY=target.y-egg.y;
-      // A light steering force corrects tiny numerical drift only; the visible movement is gravity + velocity.
-      if(distanceY>0&&distanceY<L.rowGap*1.55){const steer=clamp((target.x-egg.x)*7.5-egg.vx*.7,-L.spacing*11,L.spacing*11);egg.vx+=steer*step;}
-      const prevY=egg.y;egg.vy+=egg.gravity*step;egg.x+=egg.vx*step;egg.y+=egg.vy*step;
-      const dx=egg.x-target.peg.x,dy=egg.y-target.peg.y,combined=target.combined;
-      if((dx*dx+dy*dy)<=combined*combined&&egg.vy>0){bouncePlinkoEgg(egg,L);continue;}
-      // Anti-tunnelling: if a fast frame crosses the intended peg surface, resolve that same physical hit.
-      if(prevY<target.y&&egg.y>=target.y&&Math.abs(egg.x-target.peg.x)<combined*1.28){bouncePlinkoEgg(egg,L);continue;}
-      if(egg.y>target.peg.y+combined*.72){bouncePlinkoEgg(egg,L);}
+    // One analytic ballistic segment per frame: constant-acceleration-looking arcs without expensive
+    // sub-step collision loops. This stays smooth even with a crowded 96-egg board.
+    const step=Math.min(.05,Math.max(0,dt));egg.bounce=Math.max(0,egg.bounce-step*8.5);egg.segmentElapsed+=step;
+    const duration=Math.max(.001,egg.segmentDuration||.2),t=clamp(egg.segmentElapsed/duration,0,1),fromX=egg.segmentFromX,fromY=egg.segmentFromY,toX=egg.segmentToX,toY=egg.segmentToY,dx=toX-fromX,dy=toY-fromY,arc=egg.segmentArc||0;
+    egg.x=fromX+dx*t;egg.y=fromY+dy*t-4*arc*t*(1-t);egg.vx=dx/duration;egg.vy=(dy-4*arc*(1-2*t))/duration;egg.rotation+=egg.angularVelocity*step;egg.angularVelocity*=Math.pow(.985,step*60);
+    if(t<1)return false;
+    egg.x=toX;egg.y=toY;
+    if(egg.segmentKind==='landing'){
+      // Pay immediately when the egg reaches the multiplier row. No floor bounce, hover, or settle delay.
+      egg.finished=true;return true;
     }
-    return false;
+    triggerPlinkoPegImpact(egg,L);return false;
   }
   function getPlinkoEggSprite(L,protectedEgg=false){
     const r=L.eggRadius,key=`${Math.round(r*20)}:${protectedEgg?1:0}`;if(plinkoRuntime.eggSpriteCache.has(key))return plinkoRuntime.eggSpriteCache.get(key);
@@ -1200,7 +1195,7 @@
     const halo=c.createRadialGradient(L.cx,L.top,10,L.cx,L.top,L.w*.55);halo.addColorStop(0,'rgba(44,211,255,.18)');halo.addColorStop(1,'rgba(44,211,255,0)');c.fillStyle=halo;c.fillRect(0,0,L.w,L.h);
     c.strokeStyle='rgba(76,194,255,.24)';c.lineWidth=2;c.beginPath();c.moveTo(L.margin*.7,L.top-18);c.lineTo(L.margin*.7,L.h-4);c.moveTo(L.w-L.margin*.7,L.top-18);c.lineTo(L.w-L.margin*.7,L.h-4);c.stroke();
     for(let r=0;r<L.rows;r++)for(let col=0;col<=r;col++){const x=L.cx+(col-r/2)*L.spacing,y=L.top+r*L.rowGap,rad=L.pegRadius;c.shadowColor='rgba(118,224,255,.65)';c.shadowBlur=7;c.fillStyle='#d7f7ff';c.beginPath();c.arc(x,y,rad,0,Math.PI*2);c.fill();c.shadowBlur=0;c.fillStyle='#54a9dd';c.beginPath();c.arc(x+rad*.18,y+rad*.18,rad*.38,0,Math.PI*2);c.fill();}
-    c.fillStyle='rgba(3,18,49,.72)';c.fillRect(L.margin*.75,L.pocketTop,L.w-L.margin*1.5,L.pocketHeight);c.strokeStyle='rgba(104,210,255,.25)';c.lineWidth=1;for(let i=0;i<=L.rows+1;i++){const x=L.cx+(i-.5-L.rows/2)*L.spacing;c.beginPath();c.moveTo(x,L.pocketTop);c.lineTo(x,L.h);c.stroke();}c.strokeStyle='rgba(105,218,255,.3)';c.beginPath();c.moveTo(L.margin*.75,L.pocketTop);c.lineTo(L.w-L.margin*.75,L.pocketTop);c.stroke();
+    // No fake pocket boxes inside the canvas. The colored multiplier buttons below are the only pockets.
   }
   function getPlinkoBoardCache(L){
     const dpr=plinkoRuntime.renderDpr||1,key=`${L.risk}:${Math.round(L.w)}:${Math.round(L.h)}:${dpr}`;if(plinkoRuntime.boardCache&&plinkoRuntime.boardCacheKey===key)return plinkoRuntime.boardCache;
