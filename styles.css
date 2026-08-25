@@ -5587,3 +5587,87 @@ input[type="range"]{opacity:1!important;filter:none!important}
   .plinko-board[data-risk="medium"]{height:490px!important;min-height:490px!important}
   .plinko-board[data-risk="high"]{height:570px!important;min-height:570px!important}
 }
+
+/* ================================================================
+   v90 — one-screen mobile Plinko
+   Keep betting controls and the complete board visible together.
+   The board fills the remaining phone height instead of forcing scroll.
+   ================================================================ */
+@media(max-width:759px){
+  #playScreen.plinko-mode.active{
+    height:calc(100svh - 148px - var(--safe-top) - var(--safe-bottom))!important;
+    min-height:0!important;
+    overflow:hidden!important;
+    padding-bottom:6px!important;
+    scroll-padding-bottom:0!important;
+  }
+  #playScreen.plinko-mode>.arcade-switcher{
+    flex:0 0 auto!important;
+    margin:0 0 4px!important;
+    padding:5px!important;
+  }
+  #playScreen.plinko-mode .arcade-tabs button{
+    min-height:43px!important;
+    padding:3px 5px!important;
+  }
+  #playScreen.plinko-mode #plinkoGamePane{
+    flex:1 1 0!important;
+    height:auto!important;
+    min-height:0!important;
+    overflow:hidden!important;
+    padding:0!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    grid-template-areas:"controls" "board"!important;
+    grid-template-rows:auto minmax(0,1fr)!important;
+    gap:5px!important;
+  }
+  #playScreen.plinko-mode #plinkoGamePane>.plinko-controls{
+    grid-area:controls!important;
+    flex:0 0 auto!important;
+    min-height:0!important;
+    margin:0!important;
+  }
+  #playScreen.plinko-mode #plinkoGamePane>.plinko-shell{
+    grid-area:board!important;
+    height:100%!important;
+    min-height:0!important;
+    overflow:hidden!important;
+    display:grid!important;
+    grid-template-rows:auto minmax(0,1fr)!important;
+    align-content:stretch!important;
+    margin:0!important;
+    padding:6px!important;
+  }
+  #playScreen.plinko-mode .plinko-heading{
+    flex:0 0 auto!important;
+    margin:0 0 4px!important;
+  }
+  #playScreen.plinko-mode .plinko-board,
+  #playScreen.plinko-mode .plinko-board[data-risk="low"],
+  #playScreen.plinko-mode .plinko-board[data-risk="medium"],
+  #playScreen.plinko-mode .plinko-board[data-risk="high"]{
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    max-height:none!important;
+    align-self:stretch!important;
+  }
+  #playScreen.plinko-mode #plinkoCanvas{
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    max-height:none!important;
+  }
+  #playScreen.plinko-mode .plinko-status{display:none!important}
+}
+
+@media(max-width:390px){
+  #playScreen.plinko-mode.active{
+    height:calc(100svh - 144px - var(--safe-top) - var(--safe-bottom))!important;
+  }
+  #playScreen.plinko-mode>.arcade-switcher{padding:4px!important}
+  #playScreen.plinko-mode .arcade-tabs button{min-height:40px!important}
+  #playScreen.plinko-mode #plinkoGamePane{gap:4px!important}
+  #playScreen.plinko-mode #plinkoGamePane>.plinko-shell{padding:5px!important}
+}

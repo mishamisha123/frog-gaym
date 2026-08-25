@@ -1,8 +1,15 @@
-# Froggy Leap v89
+# Froggy Leap v90
 
-> **Current-behavior note:** The v89 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+> **Current-behavior note:** The v90 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
+## v90 — One-screen mobile Plinko
 
+- Removes Plinko-mode scrolling on phones.
+- Keeps the compact bet/risk/drop controls visible above the board while eggs are falling.
+- The Plinko machine fills the remaining mobile screen height between the game selector and bottom dock instead of using fixed mobile frame heights.
+- The full multiplier rail remains inside the same Plinko frame.
+- Plinko odds, physics, High 1000× table, 96-egg cap, 15-second Bank-round window, XP, cases, Bank logic and saves are unchanged.
+- PWA/cache/build references are bumped to **v90**.
 
 ## v89 — Real mobile Plinko frame expansion
 
