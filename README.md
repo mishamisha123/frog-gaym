@@ -1,8 +1,6 @@
-# Froggy Leap v72
+# Froggy Leap v73
 
-> **Current-behavior note:** The v72 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
-
-
+> **Current-behavior note:** The v73 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
 
 
@@ -15,6 +13,18 @@
 
 
 
+
+
+
+## v73 — Frog perks + Ultra Case jackpot rebalance
+
+- Every frog now has at least one perk, with stronger/more varied perks toward the expensive end of the collection.
+- The Hill Frog is upgraded to +20% Job F, +20% Job XP, +3 seconds Job start, and +15% Lily Leap XP while equipped.
+- Owner Frog is the strongest skin perk package: +25% Job F/XP/Lily XP/Sky Crash XP, +5 seconds Job start, +0.05 percentage points Piggy interest per cycle, +20% level-up F, and 15% vehicle-flight refund chance while equipped.
+- Ultra Case remains 250,000,000 F but now contains only Legendary-or-better frogs: Dino 32%, Ninja 26%, Alien 18%, Rockstar 14%, The Hill Frog 9.5%, and Owner Frog 0.5%.
+- Owner Frog is explicitly the rarest Ultra Case pull. Both The Hill Frog and Owner Frog have resale/duplicate values above the case price, so the case has real jackpot outcomes.
+- Ultra Case shows the two jackpot odds directly on its card, and One-of-One pulls receive dedicated gold/black reel and reveal styling.
+- Existing saves remain compatible. PWA asset URLs, service-worker cache, refresh helper, build label, and self-tests are bumped to **v73**.
 
 ## v72 — Piggy rate rebalance + loan-time deposits
 
