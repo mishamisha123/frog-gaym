@@ -3,7 +3,7 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v77';
+  const BUILD_VERSION = 'v78';
   console.info(`Froggy Leap ${BUILD_VERSION} loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
@@ -32,13 +32,13 @@
   const CRASH_GROWTH_RATE = 0.12;
   const CRASH_LAUNCH_COUNTDOWN_MS = 1800;
   const PLINKO_TARGET_RTP = 0.97;
-  // v76 keeps the same fair 50/50 left/right system while letting harder boards grow.
-  // Low retains the original 12-row table. Medium/High add rows and pockets while preserving
-  // their previous overall RTPs (about 96.69% and 97.05% respectively).
+  // Plinko keeps the same independent 50/50 left/right path system while harder boards grow.
+  // v78 changes only High's two extreme edge payouts to 1000x; the chance of reaching those edge
+  // pockets is unchanged, while Low and Medium payout tables remain untouched.
   const PLINKO_CONFIGS = Object.freeze({
     low:Object.freeze({rows:12,payouts:Object.freeze([6.76,2.54,1.69,1.33,1.21,0.85,0.60,0.85,1.21,1.33,1.69,2.54,6.76])}),
     medium:Object.freeze({rows:14,payouts:Object.freeze([26.708692,10.970214,4.766737,2.766601,1.836766,1.021444,0.615309,0.331320,0.615309,1.021444,1.836766,2.766601,4.766737,10.970214,26.708692])}),
-    high:Object.freeze({rows:16,payouts:Object.freeze([186.283586,74.517764,23.285448,7.912146,3.723363,1.634383,0.656640,0.303064,0.086590,0.303064,0.656640,1.634383,3.723363,7.912146,23.285448,74.517764,186.283586])})
+    high:Object.freeze({rows:16,payouts:Object.freeze([1000,74.517764,23.285448,7.912146,3.723363,1.634383,0.656640,0.303064,0.086590,0.303064,0.656640,1.634383,3.723363,7.912146,23.285448,74.517764,1000])})
   });
   const MAX_LOAN_PAYOUT = 5000000000;
   const MAX_CASE_LUCK_MULTIPLIER = 100;
@@ -1020,8 +1020,8 @@
     });
     return true;
   }
-  const PLINKO_MAX_ACTIVE_EGGS = 48;
-  const plinkoRuntime={raf:0,eggs:[],nextId:1,lastFrame:0,lastPegSoundAt:0};
+  const PLINKO_MAX_ACTIVE_EGGS = 96;
+  const plinkoRuntime={raf:0,eggs:[],nextId:1,lastFrame:0,lastPegSoundAt:0,lastCelebrationAt:0,layout:null,renderDpr:1,boardCache:null,boardCacheKey:'',eggSpriteCache:new Map(),uiRefreshTimer:0};
   function plinkoConfig(risk=state.plinkoRisk){return PLINKO_CONFIGS[['low','medium','high'].includes(risk)?risk:'medium'];}
   function plinkoRows(risk=state.plinkoRisk){return plinkoConfig(risk).rows;}
   function plinkoTable(risk=state.plinkoRisk){return plinkoConfig(risk).payouts;}
@@ -1033,6 +1033,22 @@
   }
   function binomialCoefficient(n,k){let value=1;for(let i=1;i<=k;i++)value=value*(n-k+i)/i;return value;}
   function setPlinkoStatus(text,kind=''){if(!els.plinkoStatus)return;els.plinkoStatus.textContent=text;els.plinkoStatus.className=`plinko-status ${kind}`.trim();}
+  function refreshPlinkoLiveUi(){
+    const own=ownedWalletBalance(),exactWallet=`${money(state.balance)} F`,exactOwned=`${money(own)} F`,xpNeeded=nextXp();
+    els.balance.textContent=compactMoney(state.balance);els.balance.title=exactWallet;els.balance.setAttribute('aria-label',exactWallet);
+    els.collectionBalance.textContent=compactMoney(own);els.collectionBalance.title=exactOwned;els.collectionBalance.setAttribute('aria-label',exactOwned);
+    if(els.caseBalance){els.caseBalance.textContent=compactMoney(own);els.caseBalance.title=exactOwned;els.caseBalance.setAttribute('aria-label',exactOwned);}
+    els.level.textContent=`Lv. ${state.level}`;els.xp.textContent=state.xp;els.xpNext.textContent=xpNeeded;els.xpRing.style.setProperty('--xp',`${clamp(state.xp/xpNeeded*100,0,100)}%`);
+    if(els.biggestWinStat)els.biggestWinStat.textContent=`${money(state.biggestWin)} F`;refreshPlinkoHud();saveState();
+  }
+  function schedulePlinkoUiRefresh(delay=120){
+    if(plinkoRuntime.uiRefreshTimer)return;
+    plinkoRuntime.uiRefreshTimer=setTimeout(()=>{plinkoRuntime.uiRefreshTimer=0;refreshPlinkoLiveUi();},Math.max(0,delay));
+  }
+  function flushPlinkoUiRefresh(){
+    if(plinkoRuntime.uiRefreshTimer){clearTimeout(plinkoRuntime.uiRefreshTimer);plinkoRuntime.uiRefreshTimer=0;}
+    refreshPlinkoLiveUi();
+  }
   function plinkoRoundTimeText(){
     if(!plinkoBankRoundRuntime.active)return 'READY';
     return `${Math.max(0,plinkoBankRoundRuntime.remainingMs/1000).toFixed(1)}s`;
@@ -1090,62 +1106,73 @@
     els.plinkoQuickBets.querySelectorAll('button').forEach(button=>button.disabled=state.plinkoActive);
     els.plinkoBetInput.disabled=state.plinkoActive;
     els.plinkoBoard.dataset.risk=risk;els.plinkoBoard.dataset.rows=String(rows);
-    els.plinkoMultipliers.dataset.slots=String(table.length);els.plinkoMultipliers.style.gridTemplateColumns=`repeat(${table.length},minmax(0,1fr))`;
-    els.plinkoMultipliers.innerHTML=table.map((m,i)=>`<span class="plinko-slot slot-${i}" style="--slot-intensity:${Math.abs(i-rows/2)/(rows/2)}"><b>${m.toFixed(2)}×</b></span>`).join('');
+    const multiplierKey=`${risk}:${table.join(',')}`;els.plinkoMultipliers.dataset.slots=String(table.length);if(els.plinkoMultipliers.dataset.tableKey!==multiplierKey){els.plinkoMultipliers.dataset.tableKey=multiplierKey;els.plinkoMultipliers.style.gridTemplateColumns=`repeat(${table.length},minmax(0,1fr))`;els.plinkoMultipliers.innerHTML=table.map((m,i)=>`<span class="plinko-slot slot-${i}" style="--slot-intensity:${Math.abs(i-rows/2)/(rows/2)}"><b>${m>=100?m.toFixed(0):m.toFixed(2)}×</b></span>`).join('');}
     const info=$('plinkoBoardInfo');if(info)info.textContent=`${rows} peg rows · ${table.length} payout pockets · each peg is still a fair 50/50 left/right bounce.`;
     els.plinkoLastLabel.textContent=state.plinkoLastMultiplier>0?`${state.plinkoLastMultiplier.toFixed(2)}×`:'—';
     els.plinkoDropsLabel.textContent=money(state.plinkoDrops);
     els.plinkoRtpLabel.textContent=`${(plinkoRtp()*100).toFixed(1)}%`;
-    resizePlinkoCanvas();drawPlinkoBoard();
+    if(!plinkoRuntime.raf){resizePlinkoCanvas();drawPlinkoBoard();}
   }
   function plinkoLayout(risk=state.plinkoRisk){
     const rows=plinkoRows(risk),canvas=els.plinkoCanvas,w=Math.max(300,canvas?.clientWidth||720),h=Math.max(360,canvas?.clientHeight||560),margin=Math.max(17,w*.045),top=52,pocketHeight=Math.max(34,Math.min(48,w/(rows+1)*.92)),pocketTop=h-pocketHeight-5,lastPegY=pocketTop-Math.max(27,pocketHeight*.72),spacing=(w-margin*2)/rows,rowGap=rows>1?(lastPegY-top)/(rows-1):0;
     return {risk,rows,w,h,margin,top,pocketTop,pocketHeight,lastPegY,spacing,rowGap,cx:w/2,eggRadius:Math.max(5.2,Math.min(11.2,spacing*.285)),pegRadius:Math.max(2.4,Math.min(5.1,spacing*.105))};
   }
   function resizePlinkoCanvas(){
-    const canvas=els.plinkoCanvas;if(!canvas)return;const rect=canvas.getBoundingClientRect();if(rect.width<10||rect.height<10)return;const dpr=Math.min(2,window.devicePixelRatio||1),w=Math.round(rect.width*dpr),h=Math.round(rect.height*dpr);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}const c=canvas.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);
+    const canvas=els.plinkoCanvas;if(!canvas)return;const rect=canvas.getBoundingClientRect();if(rect.width<10||rect.height<10)return;
+    // Retina canvases were the biggest mobile cost once many eggs were active. 1.5x remains crisp on phones
+    // while cutting the number of pixels painted every animation frame by roughly 44% versus the old 2x cap.
+    const dpr=Math.min(rect.width<760?1.5:1.85,window.devicePixelRatio||1),w=Math.round(rect.width*dpr),h=Math.round(rect.height*dpr),sizeChanged=canvas.width!==w||canvas.height!==h;
+    if(sizeChanged){canvas.width=w;canvas.height=h;}const c=canvas.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);plinkoRuntime.renderDpr=dpr;plinkoRuntime.layout=plinkoLayout();
+    if(sizeChanged){plinkoRuntime.boardCacheKey='';plinkoRuntime.eggSpriteCache.clear();}
+    for(const egg of plinkoRuntime.eggs)rebuildPlinkoEggTargets(egg,plinkoRuntime.layout);
   }
   function plinkoPegCenter(row,rightsBefore,L){return {x:L.cx+(rightsBefore-row/2)*L.spacing,y:L.top+row*L.rowGap};}
   function plinkoImpactTarget(egg,row,L){
     const peg=plinkoPegCenter(row,egg.rights,L),dir=egg.path[row]?1:-1,combined=L.eggRadius*.72+L.pegRadius,side=Math.min(combined*.56,L.spacing*.18),vertical=Math.sqrt(Math.max(1,combined*combined-side*side));
     return {peg,dir,x:peg.x+dir*side,y:peg.y-vertical,combined};
   }
+  function rebuildPlinkoEggTargets(egg,L){
+    if(!egg||!Array.isArray(egg.path)||!L)return;let rights=0;egg.targets=[];
+    for(let row=0;row<egg.rows;row++){
+      const probe={rights,path:egg.path},target=plinkoImpactTarget(probe,row,L);egg.targets.push(target);rights+=egg.path[row]||0;
+    }
+  }
   function plinkoFlightTime(deltaY,vy,g){
     const disc=Math.max(0,vy*vy+2*g*Math.max(1,deltaY));return Math.max(.12,(-vy+Math.sqrt(disc))/Math.max(1,g));
   }
   function primePlinkoEggPhysics(egg,L){
-    egg.rows=L.rows;egg.row=-1;egg.rights=0;egg.nextRow=0;egg.landing=false;egg.finished=false;egg.bounce=0;egg.pocketBounces=0;egg.settleTime=0;egg.gravity=Math.max(900,L.rowGap*41);egg.x=L.cx+(Math.random()-.5)*L.eggRadius*.35;egg.y=L.top-Math.max(46,L.rowGap*.92);egg.vx=(Math.random()-.5)*10;egg.vy=20+Math.random()*22;egg.rotation=(Math.random()-.5)*.22;egg.angularVelocity=(Math.random()-.5)*2.2;
+    egg.rows=L.rows;egg.row=-1;egg.rights=0;egg.nextRow=0;egg.landing=false;egg.finished=false;egg.bounce=0;egg.pocketBounces=0;egg.settleTime=0;egg.gravity=Math.max(900,L.rowGap*41);egg.x=L.cx+(Math.random()-.5)*L.eggRadius*.35;egg.y=L.top-Math.max(46,L.rowGap*.92);egg.vx=(Math.random()-.5)*10;egg.vy=20+Math.random()*22;egg.rotation=(Math.random()-.5)*.22;egg.angularVelocity=(Math.random()-.5)*2.2;rebuildPlinkoEggTargets(egg,L);
   }
   function bouncePlinkoEgg(egg,L){
     const row=egg.nextRow;if(row>=egg.rows)return;
-    const hit=plinkoImpactTarget(egg,row,L),dir=hit.dir;
+    const hit=egg.targets?.[row]||plinkoImpactTarget(egg,row,L),dir=hit.dir;
     // Reflect the incoming velocity off the circular peg normal first. A gentle lane bias is applied
     // only after that collision so the pre-rolled 50/50 result stays authoritative without looking scripted.
     const nx=(hit.x-hit.peg.x)/hit.combined,ny=(hit.y-hit.peg.y)/hit.combined,restitution=.54+Math.random()*.08,vn=egg.vx*nx+egg.vy*ny;
     let reflectedX=egg.vx,reflectedY=egg.vy;if(vn<0){reflectedX-= (1+restitution)*vn*nx;reflectedY-= (1+restitution)*vn*ny;}
     egg.x=hit.x;egg.y=hit.y;egg.row=row;egg.rights+=egg.path[row]||0;egg.nextRow=row+1;egg.bounce=1;egg.angularVelocity=dir*(4.2+Math.random()*3.2);
     egg.vy=clamp(reflectedY,-145,-38);
-    const now=performance.now();if(now-plinkoRuntime.lastPegSoundAt>22){plinkoRuntime.lastPegSoundAt=now;audio.fryRim();haptic(4);}
+    const now=performance.now(),activeEggs=plinkoRuntime.eggs.length,fxGap=activeEggs>48?95:activeEggs>20?65:32;if(now-plinkoRuntime.lastPegSoundAt>fxGap){plinkoRuntime.lastPegSoundAt=now;audio.fryRim();if(activeEggs<=18)haptic(4);}
     if(egg.nextRow>=egg.rows){
       egg.landing=true;const slotX=L.cx+(egg.slot-egg.rows/2)*L.spacing,dy=L.pocketTop-egg.y,t=plinkoFlightTime(dy,egg.vy,egg.gravity),ideal=(slotX-egg.x)/t;egg.vx=reflectedX*.42+ideal*.58+(Math.random()-.5)*L.spacing*.10;return;
     }
-    const next=plinkoImpactTarget(egg,egg.nextRow,L),dy=next.y-egg.y,t=plinkoFlightTime(dy,egg.vy,egg.gravity),ideal=(next.x-egg.x)/t;
+    const next=egg.targets?.[egg.nextRow]||plinkoImpactTarget(egg,egg.nextRow,L),dy=next.y-egg.y,t=plinkoFlightTime(dy,egg.vy,egg.gravity),ideal=(next.x-egg.x)/t;
     egg.vx=reflectedX*.46+ideal*.54+(Math.random()-.5)*9;
     if(Math.sign(egg.vx)!==dir&&Math.abs(egg.vx)<Math.abs(ideal)*.55)egg.vx=ideal*.72;
   }
   function updatePlinkoEggPhysics(egg,dt,L){
     if(egg.finished)return true;
-    const safeDt=Math.min(.034,Math.max(0,dt)),steps=Math.max(1,Math.ceil(safeDt/.008)),step=safeDt/steps;
+    const safeDt=Math.min(.034,Math.max(0,dt)),steps=Math.max(1,Math.ceil(safeDt/.012)),step=safeDt/steps;
     for(let n=0;n<steps;n++){
       egg.bounce=Math.max(0,egg.bounce-step*7.2);egg.rotation+=egg.angularVelocity*step;egg.angularVelocity*=Math.pow(.989,step*60);
       if(egg.landing){
         const targetX=L.cx+(egg.slot-egg.rows/2)*L.spacing,left=targetX-L.spacing*.43,right=targetX+L.spacing*.43,floor=L.h-L.eggRadius-5;
         egg.vx+=(targetX-egg.x)*3.0*step;egg.vx*=Math.pow(.994,step*60);egg.vy+=egg.gravity*step;egg.x+=egg.vx*step;egg.y+=egg.vy*step;
         if(egg.x<left+L.eggRadius*.45){egg.x=left+L.eggRadius*.45;egg.vx=Math.abs(egg.vx)*.38;}else if(egg.x>right-L.eggRadius*.45){egg.x=right-L.eggRadius*.45;egg.vx=-Math.abs(egg.vx)*.38;}
-        if(egg.y>=floor){egg.y=floor;if(Math.abs(egg.vy)>58&&egg.pocketBounces<2){egg.vy=-Math.abs(egg.vy)*(.23+Math.random()*.06);egg.vx*=.58;egg.pocketBounces++;egg.bounce=1;audio.fryRim();haptic(3);}else{egg.vy=0;egg.vx*=.72;egg.settleTime+=step;if(egg.settleTime>.14){egg.finished=true;return true;}}}
+        if(egg.y>=floor){egg.y=floor;if(Math.abs(egg.vy)>58&&egg.pocketBounces<2){egg.vy=-Math.abs(egg.vy)*(.23+Math.random()*.06);egg.vx*=.58;egg.pocketBounces++;egg.bounce=1;const bounceNow=performance.now(),activeEggs=plinkoRuntime.eggs.length;if(bounceNow-plinkoRuntime.lastPegSoundAt>(activeEggs>32?85:42)){plinkoRuntime.lastPegSoundAt=bounceNow;audio.fryRim();if(activeEggs<=18)haptic(3);}}else{egg.vy=0;egg.vx*=.72;egg.settleTime+=step;if(egg.settleTime>.14){egg.finished=true;return true;}}}
         continue;
       }
-      const target=plinkoImpactTarget(egg,egg.nextRow,L),distanceY=target.y-egg.y;
+      const target=egg.targets?.[egg.nextRow]||plinkoImpactTarget(egg,egg.nextRow,L),distanceY=target.y-egg.y;
       // A light steering force corrects tiny numerical drift only; the visible movement is gravity + velocity.
       if(distanceY>0&&distanceY<L.rowGap*1.55){const steer=clamp((target.x-egg.x)*7.5-egg.vx*.7,-L.spacing*11,L.spacing*11);egg.vx+=steer*step;}
       const prevY=egg.y;egg.vy+=egg.gravity*step;egg.x+=egg.vx*step;egg.y+=egg.vy*step;
@@ -1157,37 +1184,46 @@
     }
     return false;
   }
-  function drawPlinkoEgg(c,egg,L){
-    const speed=Math.hypot(egg.vx||0,egg.vy||0),r=L.eggRadius,squash=egg.bounce?1-Math.sin(Math.min(1,egg.bounce)*Math.PI)*.11:1,stretch=clamp(1+speed/3200,1,1.08);
-    c.save();c.translate(egg.x,egg.y);c.rotate(egg.rotation||0);c.scale(stretch,squash/stretch);c.shadowColor='rgba(120,255,188,.72)';c.shadowBlur=12;const g=c.createRadialGradient(-r*.34,-r*.48,r*.15,0,0,r*1.35);g.addColorStop(0,'#fbfff5');g.addColorStop(.46,'#dff5c0');g.addColorStop(1,'#70bd60');c.fillStyle=g;c.beginPath();c.ellipse(0,0,r*.78,r,0,0,Math.PI*2);c.fill();c.shadowBlur=0;c.fillStyle='#4f9b45';[[-r*.34,-r*.28,r*.20],[r*.36,-r*.08,r*.16],[0,r*.42,r*.14]].forEach(([sx,sy,sr])=>{c.beginPath();c.arc(sx,sy,sr,0,Math.PI*2);c.fill();});c.fillStyle='rgba(255,255,255,.72)';c.beginPath();c.ellipse(-r*.28,-r*.48,r*.18,r*.10,-.45,0,Math.PI*2);c.fill();if(egg.protected){c.strokeStyle='#ffe66b';c.lineWidth=2;c.shadowColor='rgba(255,226,83,.9)';c.shadowBlur=8;c.beginPath();c.ellipse(0,0,r*.88,r*1.1,0,0,Math.PI*2);c.stroke();c.shadowBlur=0;}c.restore();
+  function getPlinkoEggSprite(L,protectedEgg=false){
+    const r=L.eggRadius,key=`${Math.round(r*20)}:${protectedEgg?1:0}`;if(plinkoRuntime.eggSpriteCache.has(key))return plinkoRuntime.eggSpriteCache.get(key);
+    const cssSize=r*2.75,scale=2,canvas=document.createElement('canvas');canvas.width=Math.ceil(cssSize*scale);canvas.height=Math.ceil(cssSize*scale);const c=canvas.getContext('2d');c.setTransform(scale,0,0,scale,0,0);c.translate(cssSize/2,cssSize/2);
+    c.shadowColor='rgba(120,255,188,.72)';c.shadowBlur=10;const g=c.createRadialGradient(-r*.34,-r*.48,r*.15,0,0,r*1.35);g.addColorStop(0,'#fbfff5');g.addColorStop(.46,'#dff5c0');g.addColorStop(1,'#70bd60');c.fillStyle=g;c.beginPath();c.ellipse(0,0,r*.78,r,0,0,Math.PI*2);c.fill();c.shadowBlur=0;c.fillStyle='#4f9b45';[[-r*.34,-r*.28,r*.20],[r*.36,-r*.08,r*.16],[0,r*.42,r*.14]].forEach(([sx,sy,sr])=>{c.beginPath();c.arc(sx,sy,sr,0,Math.PI*2);c.fill();});c.fillStyle='rgba(255,255,255,.72)';c.beginPath();c.ellipse(-r*.28,-r*.48,r*.18,r*.10,-.45,0,Math.PI*2);c.fill();
+    if(protectedEgg){c.strokeStyle='#ffe66b';c.lineWidth=2;c.shadowColor='rgba(255,226,83,.9)';c.shadowBlur=7;c.beginPath();c.ellipse(0,0,r*.88,r*1.1,0,0,Math.PI*2);c.stroke();}
+    const sprite={canvas,cssSize};plinkoRuntime.eggSpriteCache.set(key,sprite);return sprite;
   }
-  function drawPlinkoBoard(){
-    const canvas=els.plinkoCanvas;if(!canvas||canvas.clientWidth<10)return;const c=canvas.getContext('2d'),L=plinkoLayout();c.clearRect(0,0,L.w,L.h);
+  function drawPlinkoEgg(c,egg,L){
+    const speed=Math.hypot(egg.vx||0,egg.vy||0),r=L.eggRadius,squash=egg.bounce?1-Math.sin(Math.min(1,egg.bounce)*Math.PI)*.11:1,stretch=clamp(1+speed/3200,1,1.08),sprite=getPlinkoEggSprite(L,Boolean(egg.protected));
+    c.save();c.translate(egg.x,egg.y);c.rotate(egg.rotation||0);c.scale(stretch,squash/stretch);c.drawImage(sprite.canvas,-sprite.cssSize/2,-sprite.cssSize/2,sprite.cssSize,sprite.cssSize);c.restore();
+  }
+  function renderPlinkoStaticBoard(c,L){
     const bg=c.createLinearGradient(0,0,0,L.h);bg.addColorStop(0,'#061a44');bg.addColorStop(.55,'#0b2f68');bg.addColorStop(1,'#07152f');c.fillStyle=bg;c.fillRect(0,0,L.w,L.h);
     const halo=c.createRadialGradient(L.cx,L.top,10,L.cx,L.top,L.w*.55);halo.addColorStop(0,'rgba(44,211,255,.18)');halo.addColorStop(1,'rgba(44,211,255,0)');c.fillStyle=halo;c.fillRect(0,0,L.w,L.h);
-    // Side rails make the growing boards feel like a real boxed Plinko machine.
     c.strokeStyle='rgba(76,194,255,.24)';c.lineWidth=2;c.beginPath();c.moveTo(L.margin*.7,L.top-18);c.lineTo(L.margin*.7,L.h-4);c.moveTo(L.w-L.margin*.7,L.top-18);c.lineTo(L.w-L.margin*.7,L.h-4);c.stroke();
     for(let r=0;r<L.rows;r++)for(let col=0;col<=r;col++){const x=L.cx+(col-r/2)*L.spacing,y=L.top+r*L.rowGap,rad=L.pegRadius;c.shadowColor='rgba(118,224,255,.65)';c.shadowBlur=7;c.fillStyle='#d7f7ff';c.beginPath();c.arc(x,y,rad,0,Math.PI*2);c.fill();c.shadowBlur=0;c.fillStyle='#54a9dd';c.beginPath();c.arc(x+rad*.18,y+rad*.18,rad*.38,0,Math.PI*2);c.fill();}
-    // Draw the actual pocket boxes in the canvas; multiplier labels remain directly below them.
-    c.fillStyle='rgba(3,18,49,.72)';c.fillRect(L.margin*.75,L.pocketTop,L.w-L.margin*1.5,L.pocketHeight);
-    c.strokeStyle='rgba(104,210,255,.25)';c.lineWidth=1;for(let i=0;i<=L.rows+1;i++){const x=L.cx+(i-.5-L.rows/2)*L.spacing;c.beginPath();c.moveTo(x,L.pocketTop);c.lineTo(x,L.h);c.stroke();}
-    c.strokeStyle='rgba(105,218,255,.3)';c.beginPath();c.moveTo(L.margin*.75,L.pocketTop);c.lineTo(L.w-L.margin*.75,L.pocketTop);c.stroke();
+    c.fillStyle='rgba(3,18,49,.72)';c.fillRect(L.margin*.75,L.pocketTop,L.w-L.margin*1.5,L.pocketHeight);c.strokeStyle='rgba(104,210,255,.25)';c.lineWidth=1;for(let i=0;i<=L.rows+1;i++){const x=L.cx+(i-.5-L.rows/2)*L.spacing;c.beginPath();c.moveTo(x,L.pocketTop);c.lineTo(x,L.h);c.stroke();}c.strokeStyle='rgba(105,218,255,.3)';c.beginPath();c.moveTo(L.margin*.75,L.pocketTop);c.lineTo(L.w-L.margin*.75,L.pocketTop);c.stroke();
+  }
+  function getPlinkoBoardCache(L){
+    const dpr=plinkoRuntime.renderDpr||1,key=`${L.risk}:${Math.round(L.w)}:${Math.round(L.h)}:${dpr}`;if(plinkoRuntime.boardCache&&plinkoRuntime.boardCacheKey===key)return plinkoRuntime.boardCache;
+    const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(L.w*dpr));canvas.height=Math.max(1,Math.round(L.h*dpr));const c=canvas.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);renderPlinkoStaticBoard(c,L);plinkoRuntime.boardCache=canvas;plinkoRuntime.boardCacheKey=key;return canvas;
+  }
+  function drawPlinkoBoard(){
+    const canvas=els.plinkoCanvas;if(!canvas||canvas.clientWidth<10)return;let L=plinkoRuntime.layout;if(!L||L.risk!==state.plinkoRisk){L=plinkoLayout();plinkoRuntime.layout=L;plinkoRuntime.boardCacheKey='';}const c=canvas.getContext('2d');c.clearRect(0,0,L.w,L.h);const board=getPlinkoBoardCache(L);c.drawImage(board,0,0,board.width,board.height,0,0,L.w,L.h);
     if(plinkoRuntime.eggs.length){for(const egg of plinkoRuntime.eggs)drawPlinkoEgg(c,egg,L);}else drawPlinkoEgg(c,{x:L.cx,y:L.top-Math.max(25,L.rowGap*.7),rotation:0,vx:0,vy:0,bounce:0},L);
   }
   function flashPlinkoSlot(slot){
-    const el=els.plinkoMultipliers?.querySelector(`.slot-${slot}`);if(!el)return;el.classList.remove('hit');void el.offsetWidth;el.classList.add('hit');setTimeout(()=>el.classList.remove('hit'),420);
+    const el=els.plinkoMultipliers?.querySelector(`.slot-${slot}`);if(!el)return;el.classList.add('hit');clearTimeout(el._plinkoHitTimer);el._plinkoHitTimer=setTimeout(()=>el.classList.remove('hit'),420);
   }
   function finishPlinkoEgg(egg){
     const bet=egg.bet,multiplier=egg.multiplier,payout=creditBalance(egg.payout);state.plinkoLastMultiplier=multiplier;state.bestPlinkoMultiplier=Math.max(state.bestPlinkoMultiplier,multiplier);state.biggestWin=Math.max(state.biggestWin,payout);session.net+=payout;
     const profitable=payout>bet,returned=payout>=bet;if(returned){state.plinkoWins++;session.wins++;session.lossStreak=0;}else{session.losses++;session.lossStreak++;}
     state.roundBetForXp=bet;const plinkoXp=Math.max(1,Math.floor((8+wagerXpBonus())/5));addXp(plinkoXp);recordXpWager();const profit=payout-bet;setPlinkoStatus(`${multiplier.toFixed(2)}× · ${profit>=0?'+':''}${money(profit)} F · +${plinkoXp} XP`,profitable?'win':returned?'':'lose');flashPlinkoSlot(egg.slot);
-    if(multiplier>=5){audio.reward();haptic([12,30,20]);confettiBurst(Math.min(90,24+Math.floor(multiplier)));}else if(returned){audio.cash();haptic(12);}else{audio.croak();haptic(14);}
+    const activeEggs=plinkoRuntime.eggs.length,now=performance.now(),crowded=activeEggs>18;if(multiplier>=5){audio.reward();if(!crowded)haptic([12,30,20]);if((!crowded||multiplier>=50)&&now-plinkoRuntime.lastCelebrationAt>220){plinkoRuntime.lastCelebrationAt=now;confettiBurst(Math.min(crowded?42:90,24+Math.floor(multiplier)));}}else if(returned){audio.cash();if(!crowded)haptic(12);}else{audio.croak();if(!crowded)haptic(14);}
   }
   function animatePlinko(now){
-    if(!plinkoRuntime.eggs.length){plinkoRuntime.raf=0;plinkoRuntime.lastFrame=0;state.plinkoActive=false;refreshPlinkoHud();drawPlinkoBoard();return;}
-    const dt=plinkoRuntime.lastFrame?Math.min(.034,(now-plinkoRuntime.lastFrame)/1000):1/60;plinkoRuntime.lastFrame=now;const L=plinkoLayout(),finished=[];
+    if(!plinkoRuntime.eggs.length){plinkoRuntime.raf=0;plinkoRuntime.lastFrame=0;state.plinkoActive=false;flushPlinkoUiRefresh();return;}
+    const dt=plinkoRuntime.lastFrame?Math.min(.034,(now-plinkoRuntime.lastFrame)/1000):1/60;plinkoRuntime.lastFrame=now;const L=plinkoRuntime.layout||plinkoLayout(),finished=[];
     for(const egg of plinkoRuntime.eggs){if(updatePlinkoEggPhysics(egg,dt,L))finished.push(egg);}
-    if(finished.length){const ids=new Set(finished.map(egg=>egg.id));plinkoRuntime.eggs=plinkoRuntime.eggs.filter(egg=>!ids.has(egg.id));for(const egg of finished)finishPlinkoEgg(egg);state.plinkoActive=plinkoRuntime.eggs.length>0;refresh();}
+    if(finished.length){const ids=new Set(finished.map(egg=>egg.id));plinkoRuntime.eggs=plinkoRuntime.eggs.filter(egg=>!ids.has(egg.id));for(const egg of finished)finishPlinkoEgg(egg);state.plinkoActive=plinkoRuntime.eggs.length>0;schedulePlinkoUiRefresh(120);}
     drawPlinkoBoard();plinkoRuntime.raf=requestAnimationFrame(animatePlinko);
   }
   function rollPlinkoPath(risk,{protectedRound=false}={}){
@@ -1205,7 +1241,7 @@
     audio.unlock();if(state.roundActive||state.crashActive)return false;if(plinkoRuntime.eggs.length>=PLINKO_MAX_ACTIVE_EGGS){setPlinkoStatus(`Let one of the ${PLINKO_MAX_ACTIVE_EGGS} eggs land before dropping another.`,'lose');return false;}
     const bet=Math.floor(Number(state.plinkoBet)||0),risk=state.plinkoRisk;if(bet<MIN_BET||bet>ownedWalletBalance()){setPlinkoStatus(`You need ${money(Math.max(MIN_BET,bet))} F in your wallet.`,'lose');refreshPlinkoHud();return false;}if(!spendOwnedFunds(bet))return false;
     const protectedRound=state.safeRunCredits>0;if(protectedRound)state.safeRunCredits=Math.max(0,state.safeRunCredits-1);
-    const rows=plinkoRows(risk),{path,slot}=rollPlinkoPath(risk,{protectedRound}),multiplier=plinkoTable(risk)[slot],payout=Math.floor(bet*multiplier),egg={id:plinkoRuntime.nextId++,bet,risk,rows,path,slot,multiplier,payout,protected:protectedRound};primePlinkoEggPhysics(egg,plinkoLayout(risk));plinkoRuntime.eggs.push(egg);state.plinkoActive=true;state.plinkoDrops++;session.net-=bet;if(!plinkoBankRoundRuntime.active)startPlinkoBankRound();setPlinkoStatus(`${protectedRound?'🛡️ Protected · ':''}${plinkoRuntime.eggs.length} egg${plinkoRuntime.eggs.length===1?'':'s'} in flight · Plinko round ends in ${plinkoRoundTimeText()}.`,protectedRound?'win':'');audio.start();haptic(protectedRound?[9,20,9]:9);refresh();resizePlinkoCanvas();if(!plinkoRuntime.raf){plinkoRuntime.lastFrame=0;plinkoRuntime.raf=requestAnimationFrame(animatePlinko);}return true;
+    if(!plinkoRuntime.layout||plinkoRuntime.layout.risk!==risk)resizePlinkoCanvas();const rows=plinkoRows(risk),{path,slot}=rollPlinkoPath(risk,{protectedRound}),multiplier=plinkoTable(risk)[slot],payout=Math.floor(bet*multiplier),egg={id:plinkoRuntime.nextId++,bet,risk,rows,path,slot,multiplier,payout,protected:protectedRound};primePlinkoEggPhysics(egg,plinkoRuntime.layout||plinkoLayout(risk));plinkoRuntime.eggs.push(egg);state.plinkoActive=true;state.plinkoDrops++;session.net-=bet;if(!plinkoBankRoundRuntime.active)startPlinkoBankRound();setPlinkoStatus(`${protectedRound?'🛡️ Protected · ':''}${plinkoRuntime.eggs.length} egg${plinkoRuntime.eggs.length===1?'':'s'} in flight · Plinko round ends in ${plinkoRoundTimeText()}.`,protectedRound?'win':'');if(plinkoRuntime.eggs.length<=12||plinkoRuntime.eggs.length%4===0)audio.start();if(plinkoRuntime.eggs.length<=12)haptic(protectedRound?[9,20,9]:9);if(!plinkoRuntime.raf){plinkoRuntime.lastFrame=0;plinkoRuntime.raf=requestAnimationFrame(animatePlinko);}schedulePlinkoUiRefresh(120);return true;
   }
 
   function setGameMode(mode){
@@ -3390,7 +3426,7 @@
     document.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('click',closeModal));els.modalBackdrop.addEventListener('click',e=>{if(e.target===els.modalBackdrop)closeModal();});
     window.addEventListener('keydown',e=>{if(e.code==='Space'){if(caseOpeningRuntime.active)return;e.preventDefault();if(state.selectedGame==='crash'){state.crashActive?crashCashOut():startCrash();}else if(state.selectedGame==='plinko'){startPlinko();}else{state.roundActive?jump():startRound();}}if(e.code==='Escape'){if(caseOpeningRuntime.active){if(caseOpeningRuntime.phase==='reveal')hideCaseOpening();else skipCaseOpening();return;}if(!els.jobResult.classList.contains('hidden'))closeJobResult();else if(state.crashActive)crashCashOut();else state.roundActive?cashOut():closeModal();}});
     document.addEventListener('visibilitychange',()=>{if(plinkoBankRoundRuntime.active)plinkoBankRoundRuntime.lastTick=performance.now();});
-    window.addEventListener('pagehide',()=>{if(plinkoBankRoundRuntime.active)cancelPlinkoBankRound();});
+    window.addEventListener('pagehide',()=>{if(plinkoRuntime.uiRefreshTimer)flushPlinkoUiRefresh();if(plinkoBankRoundRuntime.active)cancelPlinkoBankRound();});
     window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;els.installButton.classList.remove('hidden');});
     window.addEventListener('appinstalled',()=>els.installButton.classList.add('hidden'));
   }
@@ -3433,9 +3469,9 @@
       if(CRASH_MIN_POINT!==1.01)throw new Error('Crash minimum point failed');
       if(document.querySelector('[data-screen="rewards"]')||document.getElementById('rewardsScreen')||document.getElementById('rewardModal')||document.getElementById('spinButton'))throw new Error('Rewards UI still present');
       if(ownerPanelModal.querySelector('[data-owner-action="spins"]')||ownerPanelModal.querySelector('[data-owner-action="unlimited"]'))throw new Error('Reward-wheel owner controls still present');
-      if(PLINKO_BANK_ROUND_MS!==15000)throw new Error('15-second Plinko Bank round failed');const oldRounds=state.rounds,oldCompleted=state.completedRounds;plinkoBankRoundRuntime.active=true;plinkoBankRoundRuntime.remainingMs=1;plinkoBankRoundRuntime.lastTick=performance.now()-20;tickPlinkoBankRound();if(state.rounds!==oldRounds+1||state.completedRounds!==oldCompleted+1||plinkoBankRoundRuntime.active)throw new Error('Plinko Bank round completion failed');if(MAX_LOAN_PAYOUT!==5000000000)throw new Error('5B Bank cap constant failed');state.bankLimitDisabled=true;if(effectiveBankLimit()!==MAX_SAFE_BALANCE)throw new Error('Bank limit disable failed');state.bankLimitDisabled=false;const paidFrogs=FROGS.filter(f=>f.cost>0);if(paidFrogs.find(f=>f.id==='meadow')?.cost!==1500||paidFrogs.find(f=>f.id==='gigachad')?.cost!==2250000000||paidFrogs.find(f=>f.id==='owner')?.cost!==6000000000)throw new Error('3x frog pricing failed');if(plinkoRows('low')!==12||plinkoRows('medium')!==14||plinkoRows('high')!==16||plinkoTable('low').length!==13||plinkoTable('medium').length!==15||plinkoTable('high').length!==17)throw new Error('v76 Plinko board scaling failed');if(Math.abs(plinkoRtp('low')-.9720361328125)>.00001||Math.abs(plinkoRtp('medium')-.9669140625)>.00001||Math.abs(plinkoRtp('high')-.9705126953125)>.00001)throw new Error('v76 Plinko RTP preservation failed');if(PLINKO_MAX_ACTIVE_EGGS!==48||typeof updatePlinkoEggPhysics!=='function'||typeof primePlinkoEggPhysics!=='function'||typeof plinkoImpactTarget!=='function')throw new Error('v76 Plinko continuous physics/spam engine failed');state=deepClone(DEFAULT_STATE);state.balance=100000;state.safeRunCredits=3;state.plinkoBet=100;for(let i=0;i<3;i++){const rolled=rollPlinkoPath('medium',{protectedRound:true});if(plinkoTable('medium')[rolled.slot]<=1)throw new Error('Plinko protected path failed');}state.caseInventory.ultra=5;if(caseInventoryCount('ultra')!==5)throw new Error('case inventory failed');const ownerBase=caseAdjustedDropRows(caseById('ultra')).find(r=>r.frog.id==='owner').probability;state.caseLuckMultiplier=10;const ownerLucky=caseAdjustedDropRows(caseById('ultra')).find(r=>r.frog.id==='owner').probability;if(!(ownerLucky>ownerBase))throw new Error('case luck weighting failed');
+      if(PLINKO_BANK_ROUND_MS!==15000)throw new Error('15-second Plinko Bank round failed');const oldRounds=state.rounds,oldCompleted=state.completedRounds;plinkoBankRoundRuntime.active=true;plinkoBankRoundRuntime.remainingMs=1;plinkoBankRoundRuntime.lastTick=performance.now()-20;tickPlinkoBankRound();if(state.rounds!==oldRounds+1||state.completedRounds!==oldCompleted+1||plinkoBankRoundRuntime.active)throw new Error('Plinko Bank round completion failed');if(MAX_LOAN_PAYOUT!==5000000000)throw new Error('5B Bank cap constant failed');state.bankLimitDisabled=true;if(effectiveBankLimit()!==MAX_SAFE_BALANCE)throw new Error('Bank limit disable failed');state.bankLimitDisabled=false;const paidFrogs=FROGS.filter(f=>f.cost>0);if(paidFrogs.find(f=>f.id==='meadow')?.cost!==1500||paidFrogs.find(f=>f.id==='gigachad')?.cost!==2250000000||paidFrogs.find(f=>f.id==='owner')?.cost!==6000000000)throw new Error('3x frog pricing failed');if(plinkoRows('low')!==12||plinkoRows('medium')!==14||plinkoRows('high')!==16||plinkoTable('low').length!==13||plinkoTable('medium').length!==15||plinkoTable('high').length!==17)throw new Error('v76 Plinko board scaling failed');if(Math.abs(plinkoRtp('low')-.9720361328125)>.00001||Math.abs(plinkoRtp('medium')-.9669140625)>.00001||Math.abs(plinkoRtp('high')-.9953453759155274)>.00001)throw new Error('v78 Plinko RTP table check failed');if(plinkoTable('high')[0]!==1000||plinkoTable('high')[plinkoTable('high').length-1]!==1000)throw new Error('v78 1000x High max failed');if(PLINKO_MAX_ACTIVE_EGGS!==96||typeof updatePlinkoEggPhysics!=='function'||typeof primePlinkoEggPhysics!=='function'||typeof plinkoImpactTarget!=='function'||typeof getPlinkoBoardCache!=='function'||typeof getPlinkoEggSprite!=='function')throw new Error('v78 Plinko performance/spam engine failed');state=deepClone(DEFAULT_STATE);state.balance=100000;state.safeRunCredits=3;state.plinkoBet=100;for(let i=0;i<3;i++){const rolled=rollPlinkoPath('medium',{protectedRound:true});if(plinkoTable('medium')[rolled.slot]<=1)throw new Error('Plinko protected path failed');}state.caseInventory.ultra=5;if(caseInventoryCount('ultra')!==5)throw new Error('case inventory failed');const ownerBase=caseAdjustedDropRows(caseById('ultra')).find(r=>r.frog.id==='owner').probability;state.caseLuckMultiplier=10;const ownerLucky=caseAdjustedDropRows(caseById('ultra')).find(r=>r.frog.id==='owner').probability;if(!(ownerLucky>ownerBase))throw new Error('case luck weighting failed');
       const shopFrogs=frogShopItems();for(let i=1;i<shopFrogs.length;i++){if(shopFrogs[i].cost<shopFrogs[i-1].cost)throw new Error('frog shop price order failed');if((FROG_RARITY_RANK[shopFrogs[i].rarity]??99)<(FROG_RARITY_RANK[shopFrogs[i-1].rarity]??99))throw new Error('frog rarity progression failed');}const hill=FROGS.find(f=>f.id==='gigachad');if(!hill||hill.name!=='The Hill Frog'||hill.art!=='assets/the-hill-frog-game-v66.png'||hill.cardArt!=='assets/the-hill-frog-card-v64.webp')throw new Error('The Hill Frog art/name failed');const basicIds=['meadow','river','moss','sand','blue-dart','sunset'];if(!basicIds.every(id=>FROGS.some(f=>f.id===id)))throw new Error('v63 basic frog lineup missing');
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v77 15-second Plinko Bank rounds + 5x lower Plinko XP + Ultra Case 3% Hill / 0.1% Owner + loan UI polish + v76 continuous Plinko gravity/peg/pocket physics + 12/14/16-row difficulty boards + 13/15/17 multiplier pockets + preserved per-risk RTP + v75 case inventory + owner case grants/luck + Bank limit toggle + protected Plinko eggs + mobile input contrast + v74 multi-egg one-tap spam drops + v73 every-frog price-tier perks + Ultra Case Hill/Owner jackpots + Owner rarest + v72 Piggy 0.3% open / 0.2% closed + loan-time deposits + v71 Frog Egg Plinko + 3x frog prices + 5B Bank cap + v70 natural case landings + variable reel travel + v68 CS-style case reel + delayed skip + rarity reveal + v67 Cases + six-slot mobile nav + v66 approved smiling The Hill Frog gameplay model + v64 polished The Hill Frog Collection portrait + v63 basic frog lineup + The Hill Frog rename, v62 rarity header rows + price/rarity order, v60 Rewards removal, v59 gameplay skin art, v55 early Crash risk, Piggy rates, trusted-time warning, restartable Shift Over dialog, and app-visible no-flight badge';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v78 Plinko performance cache + 96-egg cap + 1000x High edge payout + v77 15-second Plinko Bank rounds + 5x lower Plinko XP + Ultra Case 3% Hill / 0.1% Owner + loan UI polish + v76 continuous Plinko gravity/peg/pocket physics + 12/14/16-row difficulty boards + 13/15/17 multiplier pockets + v75 case inventory + owner case grants/luck + Bank limit toggle + protected Plinko eggs + mobile input contrast + v74 multi-egg one-tap spam drops + v73 every-frog price-tier perks + Ultra Case Hill/Owner jackpots + Owner rarest + v72 Piggy 0.3% open / 0.2% closed + loan-time deposits + v71 Frog Egg Plinko + 3x frog prices + 5B Bank cap + v70 natural case landings + variable reel travel + v68 CS-style case reel + delayed skip + rarity reveal + v67 Cases + six-slot mobile nav + v66 approved smiling The Hill Frog gameplay model + v64 polished The Hill Frog Collection portrait + v63 basic frog lineup + The Hill Frog rename, v62 rarity header rows + price/rarity order, v60 Rewards removal, v59 gameplay skin art, v55 early Crash risk, Piggy rates, trusted-time warning, restartable Shift Over dialog, and app-visible no-flight badge';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 

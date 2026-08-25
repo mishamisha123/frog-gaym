@@ -1,7 +1,7 @@
 {
   "name": "Froggy Leap",
   "short_name": "Froggy Leap",
-  "description": "Froggy Leap v77 with 15-second Plinko Bank rounds, reduced Plinko XP, rebalanced Ultra Case jackpots, polished loan UI, case inventory, owner controls, and offline PWA support.",
+  "description": "Froggy Leap v78 with smoother high-volume Frog Egg Plinko, a 96-egg active cap, 1000x High-risk edge pockets, 15-second Plinko Bank rounds, case inventory, owner controls, and offline PWA support.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

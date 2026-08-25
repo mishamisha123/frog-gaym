@@ -1,8 +1,6 @@
-# Froggy Leap v77
+# Froggy Leap v78
 
-> **Current-behavior note:** The v77 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
-
-
+> **Current-behavior note:** The v78 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
 
 
@@ -17,6 +15,19 @@
 
 
 
+
+
+
+
+## v78 — Smoother high-volume Plinko + 1000x High max
+
+- Optimized Frog Egg Plinko for heavy spam play by caching the static peg-board layer and reusable egg sprites instead of rebuilding gradients, peg shadows, and egg art for every egg on every animation frame.
+- Cached each egg's pre-rolled peg impact targets, reduced unnecessary physics substeps, removed forced DOM reflow from pocket flashes, and throttled peg haptics/confetti under heavy loads. The independent 50/50 path/outcome system is unchanged.
+- Mobile Plinko render resolution is capped more efficiently while keeping the board crisp, reducing the amount of canvas pixel work on Retina phones.
+- Doubled the simultaneous in-flight egg limit from **48 to 96**. One tap still drops one egg and the 15-second Plinko Bank-round window remains unchanged.
+- High risk / 16 rows now pays **1000x** in either extreme edge pocket, matching Stake's current High/16 maximum. All other High multipliers and the probability of reaching an edge pocket are unchanged, so High's displayed RTP rises to about **99.53%**. Low and Medium tables are unchanged.
+- Preserves the v77 Ultra Case odds (**The Hill Frog 3.0% / Owner Frog 0.1%**), loan UI redesign, reduced Plinko XP, case inventory/luck, protected eggs, Piggy rates, and existing saves.
+- PWA/cache/build references are bumped to **v78**.
 
 ## v77 — 15-second Plinko Bank rounds + XP/case/loan polish
 
