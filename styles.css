@@ -4399,7 +4399,7 @@ button:focus-visible{outline:2px solid #74e6ff!important;outline-offset:2px!impo
 
 
 /* ==========================================================================
-   v61 — Frog shop cleanup: clean GigaChad portrait, visible rarity strip,
+   v61 — Frog shop cleanup: clean The Hill Frog portrait, visible rarity strip,
          cheapest→most-expensive order with monotonic rarity progression
    ========================================================================== */
 .collection-card.frog-card{
@@ -4485,7 +4485,7 @@ button:focus-visible{outline:2px solid #74e6ff!important;outline-offset:2px!impo
 }
 
 /* ==========================================================================
-   v62 — Real rarity header rows + uncropped transparent GigaChad portrait
+   v62 — Real rarity header rows + uncropped transparent The Hill Frog portrait
    ========================================================================== */
 .collection-card.frog-card{
   padding-top:12px!important;
@@ -4563,3 +4563,6 @@ button:focus-visible{outline:2px solid #74e6ff!important;outline-offset:2px!impo
   .collection-card.frog-card[data-item="gigachad"] .collection-art{min-height:210px!important;padding:10px 14px 0!important}
   .collection-card.frog-card[data-item="gigachad"] .collection-art .frog-avatar-img{max-height:190px!important;max-width:90%!important}
 }
+
+
+/* v63 — Expanded basic frog lineup. The Hill Frog keeps legacy data-item="gigachad" for save compatibility. */

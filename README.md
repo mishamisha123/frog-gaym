@@ -1,8 +1,6 @@
-# Froggy Leap v62
+# Froggy Leap v63
 
-> **Current-behavior note:** The v62 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
-
-
+> **Current-behavior note:** The v63 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
 
 
@@ -10,23 +8,35 @@
 
 
 
-## v62 — Real transparent GigaChad art + rarity header fix
 
-- Replaced the previous GigaChad PNG, which still contained a baked starry background and ULTRA badge, with a genuinely transparent full-body character sprite.
+
+
+## v63 — More basic frogs + The Hill Frog rename
+
+- Added six early-game frog skins: **Meadow Frog**, **River Frog**, **Moss Frog**, **Sand Frog**, **Blue Dart Frog**, and **Sunset Frog**.
+- New basic frogs use clean transparent sprites, modest 1–2% perks, and prices from **500 F to 12,000 F**.
+- The frog shop remains sorted strictly cheapest to most expensive, with rarity never decreasing as price rises.
+- Renamed the existing Ultra reference skin to **The Hill Frog** while preserving its legacy internal ID so existing owners/saves keep the skin and its perks.
+- The Hill Frog remains **750,000,000 F** with **+10% Job F**, **+10% Job XP**, and **+1.5 seconds Job start time**.
+- PWA asset URLs, refresh helper, service-worker cache, and build label bumped to **v63**.
+
+## v62 — Real transparent The Hill Frog art + rarity header fix
+
+- Replaced the previous The Hill Frog PNG, which still contained a baked starry background and ULTRA badge, with a genuinely transparent full-body character sprite.
 - Frog Collection rarity badges now live in a dedicated normal-flow header row above each portrait instead of being absolutely overlaid on the card.
-- GigaChad portrait sizing now shows the full character with breathing room and no destructive crop.
+- The Hill Frog portrait sizing now shows the full character with breathing room and no destructive crop.
 - Frog shop remains strictly sorted cheapest to most expensive with monotonic rarity progression.
 - PWA asset URLs, refresh helper, service-worker cache, and build label bumped to v62.
 
 ## v61 — Frog shop portrait + rarity/order cleanup
 
-- GigaChad Frog no longer uses the old baked Collection card image with an `ULTRA` label inside the artwork. Collection now uses the clean transparent character sprite over the premium Ultra frame.
+- The Hill Frog no longer uses the old baked Collection card image with an `ULTRA` label inside the artwork. Collection now uses the clean transparent character sprite over the premium Ultra frame.
 - Frog rarity badges now live in a dedicated strip above the portrait instead of overlapping or disappearing behind the image frame.
 - Frog shop order is enforced from cheapest to most expensive.
 - Frog rarities now rise monotonically with price: Common → Rare → Epic → Legendary → Mythic → Ultra → One of One.
 - Updated early/mid frog rarity assignments to match that progression without changing their prices, level requirements, ownership, saves, or gameplay stats.
-- Added a Rare portrait-frame treatment and v61 regression checks for price order, rarity progression, and clean GigaChad shop art.
-- Removed the obsolete baked GigaChad card image from the shipped assets.
+- Added a Rare portrait-frame treatment and v61 regression checks for price order, rarity progression, and clean The Hill Frog shop art.
+- Removed the obsolete baked The Hill Frog card image from the shipped assets.
 - PWA asset URLs, refresh helper, and service-worker cache were bumped to v61.
 
 ## v60 — Rewards tab removed
@@ -40,9 +50,9 @@
 
 ## v59 — Proper gameplay sprites + Collection rarity frames
 
-- GigaChad Frog now uses separate art for gameplay and Collection.
+- The Hill Frog now uses separate art for gameplay and Collection.
 - Lily Leap, Sky Crash, and profile views use a transparent character cutout instead of pasting the rectangular shop card into the game world.
-- Collection keeps the polished framed GigaChad card art.
+- Collection keeps the polished framed The Hill Frog card art.
 - Every frog rarity now has a stronger premium portrait-frame treatment in Collection (Common, Royal, Epic, Legendary, Mythic, Ultra, and One of One).
 - Gameplay sprite drawing preserves image aspect ratio.
 - Existing saves and all v58 gameplay/economy behavior are preserved.
@@ -50,10 +60,10 @@
 
 ## v58 — Keep only the reference-based Ultra skin
 
-- Removed the other 11 v56 Ultra skins from the live frog catalog, leaving only **GigaChad Frog**, the skin based on the user-supplied reference image.
-- GigaChad Frog keeps its existing **750,000,000 F** price and equipped perks: **+10% Job F**, **+10% Job XP**, and **+1.5 seconds Job start time**.
+- Removed the other 11 v56 Ultra skins from the live frog catalog, leaving only **The Hill Frog**, the skin based on the user-supplied reference image.
+- The Hill Frog keeps its existing **750,000,000 F** price and equipped perks: **+10% Job F**, **+10% Job XP**, and **+1.5 seconds Job start time**.
 - Old saves are normalized so removed Ultra IDs cannot remain equipped, owned, or pledged; an invalid removed selection falls back safely to Classic Frog.
-- Replaced the old 12-skin sprite sheet with a dedicated GigaChad Frog asset so the removed skins are no longer shipped in the build.
+- Replaced the old 12-skin sprite sheet with a dedicated The Hill Frog asset so the removed skins are no longer shipped in the build.
 - Preserved the v57 premium-blue redesign and all existing v55/v54 gameplay/economy changes.
 - PWA asset URLs, refresh helper, and service-worker cache were bumped to v58.
 
@@ -67,7 +77,7 @@
 
 ## v56 — Ultra frog skins and equipped perks
 
-- Added 12 expensive **ULTRA** frog skins based on the approved visual concept: GigaChad Frog, Shrek Frog, Messi Frog, HeisenFrog, Doge Frog, Elon Frog, Trump Frog, McFroggy CEO, Snoop Frog, Naruto Frog, Rick Frog, and PewDiePog Frog.
+- Added 12 expensive **ULTRA** frog skins based on the approved visual concept: The Hill Frog, Shrek Frog, Messi Frog, HeisenFrog, Doge Frog, Elon Frog, Trump Frog, McFroggy CEO, Snoop Frog, Naruto Frog, Rick Frog, and PewDiePog Frog.
 - Prices range from **450,000,000 F to 800,000,000 F** and each Ultra skin has visible perks that are active only while that frog is equipped.
 - Perks cover Job money/XP/start time, Lily Leap XP, Crash XP, Piggy interest-rate bonuses, level-up F bonuses, and a flight-refund chance. No skin changes Sky Crash crash odds or payout math.
 - Ultra skin art uses the approved concept sheet as an in-game sprite source, including the reference-based face skin, so the expensive skins are visually recognizable in Collection and game views.
