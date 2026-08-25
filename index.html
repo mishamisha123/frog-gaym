@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=94-nav-source-fix" />
+  <link rel="stylesheet" href="styles.css?v=95-firestore-profile" />
   <title>Froggy Leap</title>
 </head>
 <body>
@@ -107,7 +107,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v94 · FROGGY LEAP</div>
+          <div class="build-version" aria-label="Installed game version">v95 · FROGGY LEAP</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -508,14 +508,14 @@
         <section class="froggy-account-panel glass" aria-labelledby="froggyAccountTitle">
           <div class="froggy-account-head">
             <div><small>FROGGY ACCOUNT · BETA</small><h2 id="froggyAccountTitle">Your identity</h2></div>
-            <span class="froggy-account-beta">AUTH v1</span>
+            <span class="froggy-account-beta">PROFILE v1</span>
           </div>
 
           <div id="froggyAccountSignedOut" class="froggy-account-state">
             <div class="froggy-account-mark" aria-hidden="true">🐸</div>
             <div class="froggy-account-copy">
               <b>Connect a permanent Froggy account</b>
-              <p>Use Google to get a permanent Firebase account ID. Cloud saves and friends come next.</p>
+              <p>Use Google to get a permanent account ID, then claim your unique public Froggy username.</p>
             </div>
             <button id="froggyGoogleSignIn" class="froggy-google-button pressable" type="button">
               <span class="google-g" aria-hidden="true">G</span>
@@ -526,18 +526,41 @@
           <div id="froggyAccountSignedIn" class="froggy-account-state froggy-account-signed-in hidden">
             <div class="froggy-account-identity">
               <div class="froggy-account-avatar-wrap"><img id="froggyAccountAvatar" class="froggy-account-avatar" alt="" /></div>
-              <div><small>GOOGLE ACCOUNT CONNECTED</small><h3 id="froggyAccountName">Froggy Player</h3><p id="froggyAccountEmail"></p></div>
+              <div><small>PRIVATE GOOGLE LOGIN</small><h3 id="froggyAccountName">Froggy Player</h3><p id="froggyAccountEmail"></p></div>
               <span class="froggy-account-connected">CONNECTED</span>
             </div>
+
+            <div id="froggyUsernameSetup" class="froggy-username-setup hidden">
+              <div>
+                <small>CREATE YOUR PUBLIC FROGGY USERNAME</small>
+                <h3>How other players will know you</h3>
+                <p>Choose 3–16 letters, numbers, or underscores. Usernames are unique and permanent during this beta.</p>
+              </div>
+              <form id="froggyUsernameForm" class="froggy-username-form">
+                <label for="froggyUsernameInput">USERNAME</label>
+                <div class="froggy-username-row">
+                  <span aria-hidden="true">@</span>
+                  <input id="froggyUsernameInput" type="text" inputmode="text" autocomplete="off" autocapitalize="none" spellcheck="false" minlength="3" maxlength="16" pattern="[A-Za-z0-9_]{3,16}" placeholder="frogmaster" />
+                  <button id="froggyUsernameClaim" class="pressable" type="submit">CLAIM</button>
+                </div>
+                <small id="froggyUsernameHint">This is public. Your Google email stays private.</small>
+              </form>
+            </div>
+
+            <div id="froggyPublicProfile" class="froggy-public-profile hidden">
+              <div><small>PUBLIC FROGGY USERNAME</small><b id="froggyPublicUsername">@—</b></div>
+              <span>PROFILE READY</span>
+            </div>
+
             <div class="froggy-account-meta">
               <div><small>FROGGY ACCOUNT ID</small><b id="froggyAccountUid">—</b></div>
-              <div><small>CLOUD SAVE</small><b>COMING NEXT</b></div>
-              <div><small>FRIENDS</small><b>COMING NEXT</b></div>
+              <div><small>PUBLIC USERNAME</small><b id="froggyAccountUsernameMeta">NOT SET</b></div>
+              <div><small>FRIENDS</small><b id="froggyFriendsMeta">USERNAME NEEDED</b></div>
             </div>
             <button id="froggyAccountSignOut" class="froggy-account-signout pressable" type="button">SIGN OUT</button>
           </div>
           <p id="froggyAccountStatus" class="froggy-account-status" data-state="info" aria-live="polite">Loading Froggy Accounts…</p>
-          <p class="froggy-account-privacy">Your Google email is only shown to you here. Other players will eventually see a separate Froggy username, never your private email.</p>
+          <p class="froggy-account-privacy">Your Google email is only shown to you here. Other players will see your Froggy username, never your private email.</p>
         </section>
         <div class="stats-grid">
           <div class="stat-card glass"><small>TOTAL JUMPS</small><b id="totalJumpsStat">0</b></div>
@@ -732,7 +755,7 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script type="module" src="firebase-account.js?v=94-nav-source-fix"></script>
-  <script src="app.js?v=94-nav-source-fix"></script>
+  <script type="module" src="firebase-account.js?v=95-firestore-profile"></script>
+  <script src="app.js?v=95-firestore-profile"></script>
 </body>
 </html>

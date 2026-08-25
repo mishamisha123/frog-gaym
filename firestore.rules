@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function validUsername(name) {
+      return name is string
+        && name.size() >= 3
+        && name.size() <= 16
+        && name.matches('^[A-Za-z0-9_]+$');
+    }
+
+    function validProfile(uid) {
+      return request.resource.data.keys().hasOnly([
+          'username', 'usernameLower', 'createdAt', 'updatedAt', 'schemaVersion'
+        ])
+        && validUsername(request.resource.data.username)
+        && request.resource.data.usernameLower == request.resource.data.username.lower()
+        && request.resource.data.schemaVersion == 1
+        && getAfter(
+          /databases/$(database)/documents/usernames/$(request.resource.data.usernameLower)
+        ).data.uid == uid
+        && getAfter(
+          /databases/$(database)/documents/usernames/$(request.resource.data.usernameLower)
+        ).data.username == request.resource.data.username;
+    }
+
+    match /profiles/{uid} {
+      // Signed-in players may view public Froggy profiles.
+      allow read: if signedIn();
+
+      // A player may create exactly one profile for their own Firebase UID.
+      // The matching username reservation must be created atomically with it.
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && !exists(/databases/$(database)/documents/profiles/$(uid))
+        && validProfile(uid);
+
+      // Username/profile editing will be added later with server-side moderation.
+      allow update, delete: if false;
+    }
+
+    match /usernames/{handle} {
+      // Exact username lookups are available to signed-in players.
+      allow read: if signedIn();
+
+      // The username document ID is the lowercase username. The player's
+      // profile must be created in the same atomic transaction.
+      allow create: if signedIn()
+        && !exists(/databases/$(database)/documents/usernames/$(handle))
+        && request.resource.data.keys().hasOnly(['uid', 'username', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && validUsername(request.resource.data.username)
+        && handle == request.resource.data.username.lower()
+        && getAfter(
+          /databases/$(database)/documents/profiles/$(request.auth.uid)
+        ).data.usernameLower == handle
+        && getAfter(
+          /databases/$(database)/documents/profiles/$(request.auth.uid)
+        ).data.username == request.resource.data.username;
+
+      allow update, delete: if false;
+    }
+
+    // Everything else remains locked until a later Froggy backend phase.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

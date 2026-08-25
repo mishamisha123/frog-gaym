@@ -1,6 +1,19 @@
-# Froggy Leap v94
+# Froggy Leap v95
 
-> **Current-behavior note:** The v94 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+> **Current-behavior note:** The v95 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+
+## v95 — Firestore public profiles + unique usernames
+
+- Keeps v94 navigation and all gameplay/economy behavior unchanged.
+- Adds Cloud Firestore to the existing Google-auth account module.
+- Signed-in players without a profile can claim one unique public Froggy username.
+- Usernames are 3–16 letters, numbers, or underscores and are case-insensitively unique.
+- Username reservation and profile creation happen together in a Firestore transaction.
+- Google email remains private in the client UI and is not written into the public profile document.
+- Adds `firestore.rules` with authenticated read access for public profiles/usernames and owner-only atomic profile creation. All unrelated Firestore paths remain denied.
+- Cloud game saves are still local; this release syncs identity/profile only.
+- PWA asset URLs and service-worker cache are bumped to v95.
+
 ## v94 — Account/navigation placement
 
 - Profile now has an explicit top-bar shortcut beside the existing Bank shortcut.
