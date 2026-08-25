@@ -1,7 +1,7 @@
 {
   "name": "Froggy Leap",
   "short_name": "Froggy Leap",
-  "description": "Froggy Leap v57 with the premium blue arcade redesign, Ultra frog skins and perks, early Sky Crash risk, Piggy savings, Job shifts, and offline PWA support.",
+  "description": "Froggy Leap v58 with the premium blue arcade redesign, the single GigaChad Ultra frog skin and perks, early Sky Crash risk, Piggy savings, Job shifts, and offline PWA support.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

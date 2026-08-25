@@ -1,10 +1,20 @@
-# Froggy Leap v57
+# Froggy Leap v58
 
-> **Current-behavior note:** The v55 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
-
-
+> **Current-behavior note:** The v58 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
 
+
+
+
+
+## v58 — Keep only the reference-based Ultra skin
+
+- Removed the other 11 v56 Ultra skins from the live frog catalog, leaving only **GigaChad Frog**, the skin based on the user-supplied reference image.
+- GigaChad Frog keeps its existing **750,000,000 F** price and equipped perks: **+10% Job F**, **+10% Job XP**, and **+1.5 seconds Job start time**.
+- Old saves are normalized so removed Ultra IDs cannot remain equipped, owned, or pledged; an invalid removed selection falls back safely to Classic Frog.
+- Replaced the old 12-skin sprite sheet with a dedicated GigaChad Frog asset so the removed skins are no longer shipped in the build.
+- Preserved the v57 premium-blue redesign and all existing v55/v54 gameplay/economy changes.
+- PWA asset URLs, refresh helper, and service-worker cache were bumped to v58.
 
 ## v57 — Premium blue arcade redesign
 
