@@ -1,6 +1,16 @@
-# Froggy Leap v84
+# Froggy Leap v85
 
-> **Current-behavior note:** The v84 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+> **Current-behavior note:** The v85 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+
+
+## v85 — Mobile Plinko rail-in-board fix
+
+- Moves the multiplier rail **inside the Plinko machine itself**, directly under the canvas, so iPhone/Safari can no longer clip it below the play pane.
+- Reserves a real bottom rail zone in the board: eggs animate to the canvas edge and the payout boxes remain visible immediately beneath them inside the same frame.
+- Removes the oversized v84 artificial bottom gap and makes the Plinko play screen vertically scrollable on mobile as a fallback instead of silently clipping content.
+- Uses compact 205/225/245 px Low/Medium/High boards on very narrow phones and 220/240/260 px on other phones, including the multiplier rail.
+- Plinko odds, v82 Stake-style High table, egg motion, 96-egg cap, Bank timing, cases, Bank UI, and saves are unchanged.
+- PWA/cache/build references are bumped to **v85**.
 
 
 ## v84 — Mobile Plinko viewport clearance
