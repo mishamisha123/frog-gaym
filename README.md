@@ -1,9 +1,42 @@
-# Froggy Leap v53
+# Froggy Leap v57
 
-> **Current-behavior note:** The v53 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+> **Current-behavior note:** The v55 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
 
 
+
+
+## v57 — Premium blue arcade redesign
+
+- Rebuilt the visual shell around the supplied glossy blue Collection reference: navy/cobalt panels, cyan outlines, 3D mobile-game buttons, bright rarity framing, upgraded HUDs, and a blue floating navigation dock.
+- Restyled Lily Leap, Sky Crash, Job, Collection, Rewards, Bank/Piggy, Profile, modals, and the refresh helper while preserving existing gameplay math and save data.
+- Collection now uses a denser premium card grid with stronger selected/Ultra treatments and a more reference-like tab bar.
+- Existing v56 Ultra frog skins and perks remain intact. No case-opening system was added in this visual-only release.
+- PWA asset URLs and service-worker cache were bumped to v57.
+
+## v56 — Ultra frog skins and equipped perks
+
+- Added 12 expensive **ULTRA** frog skins based on the approved visual concept: GigaChad Frog, Shrek Frog, Messi Frog, HeisenFrog, Doge Frog, Elon Frog, Trump Frog, McFroggy CEO, Snoop Frog, Naruto Frog, Rick Frog, and PewDiePog Frog.
+- Prices range from **450,000,000 F to 800,000,000 F** and each Ultra skin has visible perks that are active only while that frog is equipped.
+- Perks cover Job money/XP/start time, Lily Leap XP, Crash XP, Piggy interest-rate bonuses, level-up F bonuses, and a flight-refund chance. No skin changes Sky Crash crash odds or payout math.
+- Ultra skin art uses the approved concept sheet as an in-game sprite source, including the reference-based face skin, so the expensive skins are visually recognizable in Collection and game views.
+- Existing saves remain compatible. The PWA asset URLs, refresh helper, and service-worker cache were bumped to v56 and the new Ultra skin sheet is precached.
+- Frog cases are intentionally **not included yet**; this build isolates the skins first.
+
+## v55 — Early Sky Crash risk
+
+- Sky Crash can now crash as early as **1.01×** instead of being protected by a **1.10×** minimum.
+- This removes the guaranteed-profit strategy at very low cash-out targets such as 1.07× while keeping the existing Crash distribution and 3% full-return payout edge.
+- The built-in self-test now checks the 1.01× Crash minimum.
+- App asset URLs, the refresh helper, and the service-worker cache were bumped so website and installed-PWA copies receive the new Crash behavior.
+
+## v54 — Piggy interest update
+
+- Piggy savings now earn **1% per existing 20-minute cycle while the app is open**.
+- Trusted closed-time Piggy interest is now **0.3% per existing 20-minute cycle**.
+- The trusted-time warning still explains that closed-time interest pauses while trusted time is unavailable, but the final phone-clock sentence was removed as requested.
+- The existing trusted-time / tamper-resistant clock logic and save format remain unchanged.
+- App asset URLs, the refresh helper, built-in Piggy rate checks, and the service-worker cache were bumped for the new release.
 
 ## v53 — Restartable, softer Shift Over screen
 

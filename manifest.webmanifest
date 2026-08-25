@@ -1,13 +1,13 @@
 {
   "name": "Froggy Leap",
   "short_name": "Froggy Leap",
-  "description": "Froggy Leap v52 with an app-visible no-flights shortcut, reliable Shift Over dismissal, timed Job shifts, exact Piggy installments, and save compatibility.",
+  "description": "Froggy Leap v57 with the premium blue arcade redesign, Ultra frog skins and perks, early Sky Crash risk, Piggy savings, Job shifts, and offline PWA support.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#bff3ef",
-  "theme_color": "#10263a",
+  "background_color": "#071a36",
+  "theme_color": "#071a36",
   "icons": [
     {
       "src": "icons/icon-192.png",
