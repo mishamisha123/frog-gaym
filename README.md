@@ -1,8 +1,6 @@
-# Froggy Leap v64
+# Froggy Leap v66
 
-> **Current-behavior note:** The v64 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
-
-
+> **Current-behavior note:** The v66 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
 
 
@@ -11,6 +9,25 @@
 
 
 
+
+
+
+
+## v66 — Approved The Hill Frog gameplay model
+
+- Replaced only The Hill Frog's in-game sprite with the user-approved smiling model wearing frayed denim shorts and the gold cross necklace.
+- Uses the approved transparent character render, normalized onto a centered square gameplay canvas so it sits cleanly on lily pads.
+- Collection/shop artwork remains unchanged; gameplay and shop art remain separate.
+- No changes to The Hill Frog's price, rarity, perks, ownership ID, saves, or any game economy/balance logic.
+- PWA asset URLs, refresh helper, service-worker cache, self-test label, and build label bumped to **v66**.
+
+## v65 — The Hill Frog gameplay model polish
+
+- Replaced The Hill Frog gameplay cutout with a newly rendered, centered, substantially more symmetrical full-body character sprite.
+- Clean transparent silhouette and balanced left/right limbs improve the look on Lily Leap pads and other in-game placements.
+- Collection/shop portrait remains unchanged from v64; gameplay and shop art stay separate.
+- Preserved The Hill Frog legacy `gigachad` save ID, ownership, price, perks, and equipped state.
+- PWA asset URLs, refresh helper, service-worker cache, and build label bumped to **v65**.
 
 ## v64 — The Hill Frog portrait polish
 
