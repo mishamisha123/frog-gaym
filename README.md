@@ -1,6 +1,13 @@
-# Froggy Leap v90
+# Froggy Leap v91
 
-> **Current-behavior note:** The v90 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+> **Current-behavior note:** The v91 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+
+## v91 — Bank final-warning contrast
+
+- Final loan warning CANCEL button now uses dark navy text on a light surface with a stronger border.
+- REDEEM MONEY title/subtext are larger, fully opaque, and high-contrast on the red button.
+- No gameplay, economy, Plinko, case, save, or loan-math changes.
+- PWA/cache/build references are bumped to **v91**.
 
 ## v90 — One-screen mobile Plinko
 
