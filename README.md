@@ -1,13 +1,13 @@
-# Froggy Leap v93
+# Froggy Leap v94
 
-> **Current-behavior note:** The v93 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
-## v93 — Account/navigation placement
+> **Current-behavior note:** The v94 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+## v94 — Account/navigation placement
 
 - Profile now has an explicit top-bar shortcut beside the existing Bank shortcut.
 - Removed Profile from the bottom dock.
 - Bottom navigation is now five slots: Games · Job · BANK · Collection · Cases, putting BANK exactly in the center.
 - Firebase identity/auth behavior from v92 is unchanged.
-- PWA asset URLs and service-worker cache are bumped to v93.
+- PWA asset URLs and service-worker cache are bumped to v94.
 
 
 ## v91 — Bank final-warning contrast
@@ -1467,3 +1467,9 @@ The promo changes affect future elapsed time. Already credited Piggy interest is
 - This build intentionally does **not** move game saves, wallet, Piggy, inventory, cases, loans, or game results to Firestore yet. Those remain local until server-authoritative cloud-save rules are designed and tested.
 - No Firebase Admin credentials, OAuth client secrets, or service-account secrets are present in the client build. The Firebase web configuration is public client configuration.
 - Added `firebase-account.js` and bumped PWA assets/cache to v92.
+
+## v94 navigation source fix
+- Player avatar/level at top-left is now display-only.
+- Explicit BANK and PROFILE shortcut buttons are paired in the top bar.
+- Bottom dock is hard-coded to Games · Job · BANK · Collection · Cases, with BANK in column 3.
+- Refresh helper unregisters service workers and clears caches before loading v94.

@@ -11,18 +11,18 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=93-account-nav" />
+  <link rel="stylesheet" href="styles.css?v=94-nav-source-fix" />
   <title>Froggy Leap</title>
 </head>
 <body>
   <div id="app" class="app" data-theme="forest">
     <header class="topbar glass">
-      <button id="profileButton" class="profile-chip pressable" aria-label="Open profile">
+      <div id="profileButton" class="profile-chip profile-status" aria-label="Player status">
         <span id="accountStatusDot" class="account-status-dot" aria-label="Froggy account not connected"></span>
         <span class="profile-frog" id="profileFrog">🐸</span>
         <span class="profile-copy"><b id="levelLabel">Lv. 1</b><small><span id="xpLabel">0</span>/<span id="xpNextLabel">100</span> XP</small></span>
         <span class="xp-ring"><i id="xpRing"></i></span>
-      </button>
+      </div>
 
       <div class="brand" aria-label="Froggy Leap">
         <span class="brand-kicker">FROGGY</span>
@@ -30,8 +30,10 @@
       </div>
 
       <div class="top-actions">
-        <button id="bankShortcutButton" class="icon-button bank-shortcut pressable" aria-label="Open Bank">🏦</button>
-        <button id="profileTopButton" class="icon-button profile-top-shortcut pressable" aria-label="Open Profile">🏆</button>
+        <div class="top-nav-pair" aria-label="Bank and Profile shortcuts">
+          <button id="bankShortcutButton" class="top-nav-shortcut bank-shortcut pressable" aria-label="Open Bank"><span>🏦</span><small>BANK</small></button>
+          <button id="profileTopButton" class="top-nav-shortcut profile-top-shortcut pressable" aria-label="Open Profile"><span>👤</span><small>PROFILE</small></button>
+        </div>
         <button id="soundButton" class="icon-button pressable" aria-label="Toggle sound">🔊</button>
         <div class="balance-pill">
           <span class="coin-icon">F</span>
@@ -105,7 +107,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v93 · FROGGY LEAP</div>
+          <div class="build-version" aria-label="Installed game version">v94 · FROGGY LEAP</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -730,7 +732,7 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script type="module" src="firebase-account.js?v=93-account-nav"></script>
-  <script src="app.js?v=93-account-nav"></script>
+  <script type="module" src="firebase-account.js?v=94-nav-source-fix"></script>
+  <script src="app.js?v=94-nav-source-fix"></script>
 </body>
 </html>
