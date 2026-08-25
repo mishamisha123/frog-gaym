@@ -64,6 +64,25 @@ const outgoingCount = byId('froggyOutgoingCount');
 const friendsCount = byId('froggyFriendsCount');
 const friendsStatus = byId('froggyFriendsStatus');
 
+const cloudPanel = byId('froggyCloudPanel');
+const cloudBadge = byId('froggyCloudBadge');
+const cloudLocalSummary = byId('froggyCloudLocalSummary');
+const cloudRemoteSummary = byId('froggyCloudRemoteSummary');
+const cloudRevisionLabel = byId('froggyCloudRevision');
+const cloudUpdatedLabel = byId('froggyCloudUpdated');
+const cloudConflict = byId('froggyCloudConflict');
+const cloudUploadButton = byId('froggyCloudUploadButton');
+const cloudLoadButton = byId('froggyCloudLoadButton');
+const cloudKeepLocalButton = byId('froggyCloudKeepLocalButton');
+const cloudSyncButton = byId('froggyCloudSyncButton');
+const cloudStatus = byId('froggyCloudStatus');
+
+const GAME_STORAGE_KEY = 'froggy-leap-deluxe-v3';
+const CLOUD_DEVICE_KEY = 'froggy-cloud-device-v1';
+const CLOUD_META_PREFIX = 'froggy-cloud-meta-v1:';
+const CLOUD_BUILD_VERSION = 'v98';
+const CLOUD_AUTOSAVE_DELAY_MS = 12000;
+
 let auth;
 let db;
 let activeProfile = null;
@@ -73,6 +92,18 @@ let incomingRequests = new Map();
 let outgoingRequests = new Map();
 let friendships = new Map();
 let searchedProfile = null;
+
+let cloudUid = '';
+let cloudSaveRef = null;
+let cloudUnsub = null;
+let cloudUploadTimer = 0;
+let cloudRemote = null;
+let cloudRemoteRevision = 0;
+let cloudBaseRevision = 0;
+let cloudSyncedSignature = '';
+let cloudLastObservedSignature = '';
+let cloudInitialized = false;
+let cloudBusy = false;
 
 function setStatus(message, type = 'info') {
   if (!status) return;
@@ -166,7 +197,7 @@ function renderUser(user) {
     if (nameLabel) nameLabel.textContent = 'Not signed in';
     if (emailLabel) emailLabel.textContent = '';
     if (uidLabel) uidLabel.textContent = '—';
-    setStatus('Sign in to create your permanent Froggy account ID and public username. Your game save stays local for now.', 'info');
+    setStatus('Sign in to reconnect your Froggy identity, friends, and private Cloud Save.', 'info');
     return;
   }
 
@@ -317,7 +348,7 @@ function renderSocialLists() {
 }
 
 function socialPermissionMessage() {
-  setFriendsStatus('Firestore is blocking Friends v1. Publish the included v96 Firestore rules, then reload.', 'error');
+  setFriendsStatus('Firestore is blocking Friends v1. Publish the included v98 Firestore rules, then reload.', 'error');
 }
 
 async function loadPublicProfile(user) {
@@ -331,7 +362,7 @@ async function loadPublicProfile(user) {
     if (snapshot.exists()) {
       const profile = { uid: user.uid, ...snapshot.data() };
       renderProfile(profile);
-      setStatus(`Froggy account connected as @${profile.username}. Cloud game saves are still local in v96.`, 'success');
+      setStatus(`Froggy account connected as @${profile.username}. Cloud Save v1 is available below.`, 'success');
       subscribeSocial(user, profile);
     } else {
       renderProfile(null);
@@ -343,7 +374,7 @@ async function loadPublicProfile(user) {
     const code = String(error?.code || '');
     renderProfile(null);
     if (code.includes('permission-denied')) {
-      setStatus('Firestore is blocking player profiles. Publish the included v96 Firestore rules, then reload.', 'error');
+      setStatus('Firestore is blocking player profiles. Publish the included v98 Firestore rules, then reload.', 'error');
     } else if (code.includes('unavailable')) {
       setStatus('Could not reach Firestore. Check your connection and try again.', 'error');
     } else {
@@ -411,7 +442,7 @@ async function claimUsername(user, rawUsername) {
       setStatus('That Froggy username belongs to another player.', 'warning');
     } else if (code.includes('permission-denied')) {
       setUsernameHint('Firestore rules have not been published yet.', 'error');
-      setStatus('Publish the included v96 Firestore rules in Firebase, then try claiming the username again.', 'error');
+      setStatus('Publish the included v98 Firestore rules in Firebase, then try claiming the username again.', 'error');
     } else if (code.includes('unavailable')) {
       setUsernameHint('You must be online to claim a username.', 'error');
       setStatus('Username claiming requires an internet connection.', 'error');
@@ -671,6 +702,414 @@ async function removeFriend(item) {
   }
 }
 
+function setCloudStatus(message, state = 'info') {
+  if (!cloudStatus) return;
+  cloudStatus.textContent = message || '';
+  cloudStatus.dataset.state = state;
+}
+
+function setCloudBadge(label, state = 'info') {
+  if (!cloudBadge) return;
+  cloudBadge.textContent = label;
+  cloudBadge.dataset.state = state;
+}
+
+function toggleCloudButton(button, visible) {
+  button?.classList.toggle('hidden', !visible);
+}
+
+function clearCloudActions() {
+  toggleCloudButton(cloudUploadButton, false);
+  toggleCloudButton(cloudLoadButton, false);
+  toggleCloudButton(cloudKeepLocalButton, false);
+  toggleCloudButton(cloudSyncButton, false);
+  cloudConflict?.classList.add('hidden');
+}
+
+function getCloudDeviceId() {
+  let id = localStorage.getItem(CLOUD_DEVICE_KEY) || '';
+  if (!id) {
+    try { id = crypto.randomUUID(); }
+    catch { id = `device-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`; }
+    localStorage.setItem(CLOUD_DEVICE_KEY, id);
+  }
+  return id;
+}
+
+function cloudMetaKey(uid) {
+  return `${CLOUD_META_PREFIX}${uid}`;
+}
+
+function readCloudMeta(uid) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(cloudMetaKey(uid)) || 'null');
+    return raw && typeof raw === 'object' ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCloudMeta(uid, revision, signature) {
+  localStorage.setItem(cloudMetaKey(uid), JSON.stringify({
+    revision: Math.max(0, Math.floor(Number(revision) || 0)),
+    signature: String(signature || ''),
+    deviceId: getCloudDeviceId(),
+    syncedAt: Date.now()
+  }));
+}
+
+function canonicalize(value) {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value && typeof value === 'object') {
+    const result = {};
+    for (const key of Object.keys(value).sort()) result[key] = canonicalize(value[key]);
+    return result;
+  }
+  return value;
+}
+
+function saveSignature(save) {
+  const text = JSON.stringify(canonicalize(save || {}));
+  let a = 2166136261;
+  let b = 2246822519;
+  for (let i = 0; i < text.length; i += 1) {
+    const c = text.charCodeAt(i);
+    a ^= c;
+    a = Math.imul(a, 16777619) >>> 0;
+    b ^= c + (i & 255);
+    b = Math.imul(b, 3266489917) >>> 0;
+  }
+  return `${a.toString(16).padStart(8, '0')}${b.toString(16).padStart(8, '0')}`;
+}
+
+function readLocalGameSave({ ensure = true } = {}) {
+  try {
+    const raw = localStorage.getItem(GAME_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed;
+    }
+  } catch (error) {
+    console.warn('Local Froggy save could not be parsed', error);
+  }
+  if (ensure) {
+    try {
+      const exported = window.FroggyGame?.exportSave?.();
+      if (exported && typeof exported === 'object' && !Array.isArray(exported)) return exported;
+    } catch (error) {
+      console.warn('Could not export current Froggy save', error);
+    }
+  }
+  return null;
+}
+
+function compactCloudMoney(value) {
+  const n = Math.max(0, Number(value) || 0);
+  if (n >= 1e12) return `${(n / 1e12).toFixed(n >= 1e13 ? 1 : 2).replace(/\.0+$/, '')}T`;
+  if (n >= 1e9) return `${(n / 1e9).toFixed(n >= 1e10 ? 1 : 2).replace(/\.0+$/, '')}B`;
+  if (n >= 1e6) return `${(n / 1e6).toFixed(n >= 1e7 ? 1 : 2).replace(/\.0+$/, '')}M`;
+  if (n >= 1e3) return `${(n / 1e3).toFixed(n >= 1e4 ? 1 : 2).replace(/\.0+$/, '')}K`;
+  return Math.floor(n).toLocaleString();
+}
+
+function summarizeSave(save) {
+  if (!save) return 'No save found';
+  const level = Math.max(1, Math.floor(Number(save.level) || 1));
+  const wallet = compactCloudMoney(save.balance);
+  const frogs = Array.isArray(save.unlockedFrogs) ? save.unlockedFrogs.length : 1;
+  const cases = save.caseInventory && typeof save.caseInventory === 'object'
+    ? Object.values(save.caseInventory).reduce((sum, value) => sum + Math.max(0, Math.floor(Number(value) || 0)), 0)
+    : 0;
+  return `Lv. ${level} · ${wallet} F · ${frogs} frogs · ${cases} cases`;
+}
+
+function formatCloudUpdated(value) {
+  try {
+    const date = value?.toDate?.();
+    if (!date) return 'Pending sync';
+    return date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  } catch {
+    return 'Cloud save';
+  }
+}
+
+function renderCloudSummaries() {
+  const local = readLocalGameSave();
+  if (cloudLocalSummary) cloudLocalSummary.textContent = summarizeSave(local);
+  if (cloudRemoteSummary) cloudRemoteSummary.textContent = cloudRemote?.save ? summarizeSave(cloudRemote.save) : 'No cloud save yet';
+  if (cloudRevisionLabel) cloudRevisionLabel.textContent = cloudRemoteRevision > 0 ? `#${cloudRemoteRevision}` : '—';
+  if (cloudUpdatedLabel) cloudUpdatedLabel.textContent = cloudRemote ? formatCloudUpdated(cloudRemote.updatedAt) : '—';
+}
+
+function stopCloudSave({ hide = true } = {}) {
+  if (cloudUploadTimer) clearTimeout(cloudUploadTimer);
+  cloudUploadTimer = 0;
+  try { cloudUnsub?.(); } catch {}
+  cloudUnsub = null;
+  cloudUid = '';
+  cloudSaveRef = null;
+  cloudRemote = null;
+  cloudRemoteRevision = 0;
+  cloudBaseRevision = 0;
+  cloudSyncedSignature = '';
+  cloudLastObservedSignature = '';
+  cloudInitialized = false;
+  cloudBusy = false;
+  clearCloudActions();
+  if (hide) cloudPanel?.classList.add('hidden');
+}
+
+function renderCloudConnected(message = 'Cloud Save is connected. Local changes will sync automatically.') {
+  clearCloudActions();
+  setCloudBadge('SYNCED', 'success');
+  toggleCloudButton(cloudSyncButton, true);
+  setCloudStatus(message, 'success');
+  renderCloudSummaries();
+}
+
+function renderCloudConflict(message = 'Both saves have changes. Choose which progress should win.') {
+  if (cloudUploadTimer) { clearTimeout(cloudUploadTimer); cloudUploadTimer = 0; }
+  clearCloudActions();
+  cloudConflict?.classList.remove('hidden');
+  toggleCloudButton(cloudLoadButton, true);
+  toggleCloudButton(cloudKeepLocalButton, true);
+  setCloudBadge('CONFLICT', 'warning');
+  setCloudStatus(message, 'warning');
+  renderCloudSummaries();
+}
+
+function renderRemoteNewer() {
+  if (cloudUploadTimer) { clearTimeout(cloudUploadTimer); cloudUploadTimer = 0; }
+  clearCloudActions();
+  toggleCloudButton(cloudLoadButton, true);
+  setCloudBadge('CLOUD NEWER', 'warning');
+  setCloudStatus('A newer cloud save exists. Load it to continue from the latest synced progress.', 'warning');
+  renderCloudSummaries();
+}
+
+function renderNoCloud() {
+  if (cloudUploadTimer) { clearTimeout(cloudUploadTimer); cloudUploadTimer = 0; }
+  clearCloudActions();
+  toggleCloudButton(cloudUploadButton, true);
+  setCloudBadge('LOCAL ONLY', 'warning');
+  setCloudStatus('No cloud save exists yet. Upload this device once to start cross-device syncing.', 'warning');
+  renderCloudSummaries();
+}
+
+function renderLocalDirty() {
+  clearCloudActions();
+  toggleCloudButton(cloudSyncButton, true);
+  setCloudBadge('SYNC PENDING', 'warning');
+  setCloudStatus('This device has newer local progress. It will auto-sync shortly, or press SYNC NOW.', 'warning');
+  renderCloudSummaries();
+}
+
+function evaluateCloudState({ schedule = false } = {}) {
+  if (!cloudInitialized || !cloudUid || cloudBusy) return;
+  const local = readLocalGameSave();
+  const localSignature = saveSignature(local);
+  cloudLastObservedSignature = localSignature;
+
+  if (!cloudRemote) {
+    renderNoCloud();
+    return;
+  }
+
+  const meta = readCloudMeta(cloudUid);
+  cloudBaseRevision = Math.max(0, Math.floor(Number(meta?.revision) || 0));
+  cloudSyncedSignature = String(meta?.signature || '');
+  const localDirty = Boolean(cloudSyncedSignature) && localSignature !== cloudSyncedSignature;
+
+  if (!meta) {
+    renderCloudConflict('A cloud save already exists, but this device has never synced it. Choose the cloud save or keep this device.');
+    return;
+  }
+
+  if (cloudRemoteRevision > cloudBaseRevision) {
+    if (localDirty) renderCloudConflict('The cloud changed on another device and this device also has unsynced progress. Choose which save should win.');
+    else renderRemoteNewer();
+    return;
+  }
+
+  if (cloudRemoteRevision < cloudBaseRevision) {
+    renderCloudConflict('This device has cloud metadata newer than the save currently returned by Firestore. Wait a moment or choose a save manually.');
+    return;
+  }
+
+  if (localDirty) {
+    renderLocalDirty();
+    if (schedule) scheduleCloudUpload();
+    return;
+  }
+
+  renderCloudConnected();
+}
+
+function scheduleCloudUpload() {
+  if (cloudUploadTimer || !cloudInitialized || !cloudRemote || cloudBusy) return;
+  cloudUploadTimer = setTimeout(() => {
+    cloudUploadTimer = 0;
+    void uploadLocalToCloud({ force: false, automatic: true });
+  }, CLOUD_AUTOSAVE_DELAY_MS);
+}
+
+async function uploadLocalToCloud({ force = false, automatic = false } = {}) {
+  const user = auth?.currentUser;
+  if (!user || user.uid !== cloudUid || !cloudSaveRef || cloudBusy) return false;
+  const local = readLocalGameSave();
+  if (!local) {
+    setCloudStatus('No local Froggy save was found on this device.', 'error');
+    return false;
+  }
+  const serializedLocal = JSON.stringify(local);
+  if (serializedLocal.length > 850000) {
+    setCloudBadge('TOO LARGE', 'error');
+    setCloudStatus('This local save is too large for a single Firestore document. Nothing was uploaded.', 'error');
+    return false;
+  }
+  const localSignature = saveSignature(local);
+  const expectedRevision = cloudBaseRevision;
+  cloudBusy = true;
+  clearCloudActions();
+  setCloudBadge('SYNCING', 'info');
+  setCloudStatus(automatic ? 'Autosaving this device to Froggy Cloud…' : 'Saving this device to Froggy Cloud…', 'loading');
+  try {
+    const nextRevision = await runTransaction(db, async (transaction) => {
+      const snapshot = await transaction.get(cloudSaveRef);
+      const exists = snapshot.exists();
+      const current = exists ? snapshot.data() : null;
+      const currentRevision = exists ? Math.max(0, Math.floor(Number(current?.saveRevision) || 0)) : 0;
+      if (!force && currentRevision !== expectedRevision) {
+        const conflictError = new Error('cloud-revision-conflict');
+        conflictError.froggyCode = 'cloud-revision-conflict';
+        throw conflictError;
+      }
+      const revision = currentRevision + 1;
+      transaction.set(cloudSaveRef, {
+        save: local,
+        saveRevision: revision,
+        updatedAt: serverTimestamp(),
+        schemaVersion: 1,
+        gameVersion: CLOUD_BUILD_VERSION,
+        deviceId: getCloudDeviceId()
+      });
+      return revision;
+    });
+    cloudBaseRevision = nextRevision;
+    cloudRemoteRevision = nextRevision;
+    cloudSyncedSignature = localSignature;
+    writeCloudMeta(user.uid, nextRevision, localSignature);
+    cloudRemote = { ...(cloudRemote || {}), save: local, saveRevision: nextRevision, gameVersion: CLOUD_BUILD_VERSION, deviceId: getCloudDeviceId() };
+    renderCloudConnected(automatic ? 'Cloud autosave complete.' : 'This device is now saved to Froggy Cloud.');
+    return true;
+  } catch (error) {
+    console.error('Cloud save upload failed', error);
+    if (error?.froggyCode === 'cloud-revision-conflict' || String(error?.message || '').includes('cloud-revision-conflict')) {
+      try {
+        const latest = await getDoc(cloudSaveRef);
+        cloudRemote = latest.exists() ? latest.data() : null;
+        cloudRemoteRevision = cloudRemote ? Math.max(0, Math.floor(Number(cloudRemote.saveRevision) || 0)) : 0;
+      } catch {}
+      renderCloudConflict('Another device updated the cloud before this upload finished. Nothing was overwritten. Choose which save should win.');
+    } else if (String(error?.code || '').includes('permission-denied')) {
+      setCloudBadge('BLOCKED', 'error');
+      setCloudStatus('Firestore is blocking Cloud Save. Confirm the v98 gameSaves rules are published.', 'error');
+      toggleCloudButton(cloudSyncButton, true);
+    } else {
+      setCloudBadge('OFFLINE', 'error');
+      setCloudStatus('Cloud Save could not sync. Your local progress is still safe on this device.', 'error');
+      toggleCloudButton(cloudSyncButton, true);
+    }
+    return false;
+  } finally {
+    cloudBusy = false;
+  }
+}
+
+async function loadCloudOntoDevice() {
+  const user = auth?.currentUser;
+  if (!user || user.uid !== cloudUid || !cloudRemote?.save || cloudBusy) return;
+  if (!confirm('Replace this device\'s local Froggy progress with the cloud save?')) return;
+  cloudBusy = true;
+  clearCloudActions();
+  setCloudBadge('LOADING', 'info');
+  setCloudStatus('Loading your cloud progress onto this device…', 'loading');
+  try {
+    const cloudSave = cloudRemote.save;
+    const signature = saveSignature(cloudSave);
+    localStorage.setItem(GAME_STORAGE_KEY, JSON.stringify(cloudSave));
+    writeCloudMeta(user.uid, cloudRemoteRevision, signature);
+    setCloudStatus('Cloud progress loaded. Restarting Froggy Leap…', 'success');
+    setTimeout(() => location.reload(), 250);
+  } catch (error) {
+    console.error('Cloud save load failed', error);
+    cloudBusy = false;
+    setCloudBadge('ERROR', 'error');
+    setCloudStatus('Could not apply the cloud save to this device. Nothing was overwritten.', 'error');
+    evaluateCloudState();
+  }
+}
+
+async function keepThisDevice() {
+  if (!cloudRemote) {
+    await uploadLocalToCloud({ force: false });
+    return;
+  }
+  if (!confirm('Overwrite the current cloud save with this device\'s progress? The cloud revision will advance so the older copy can still be detected on other devices.')) return;
+  await uploadLocalToCloud({ force: true });
+}
+
+async function startCloudSave(user) {
+  stopCloudSave({ hide: false });
+  if (!user?.uid) return;
+  cloudUid = user.uid;
+  cloudSaveRef = doc(db, 'gameSaves', user.uid);
+  cloudPanel?.classList.remove('hidden');
+  setCloudBadge('CHECKING', 'info');
+  setCloudStatus('Checking this device against Froggy Cloud…', 'loading');
+  renderCloudSummaries();
+  try {
+    const snapshot = await getDoc(cloudSaveRef);
+    if (auth.currentUser?.uid !== user.uid) return;
+    cloudRemote = snapshot.exists() ? snapshot.data() : null;
+    cloudRemoteRevision = cloudRemote ? Math.max(0, Math.floor(Number(cloudRemote.saveRevision) || 0)) : 0;
+    cloudInitialized = true;
+    evaluateCloudState({ schedule: true });
+
+    cloudUnsub = onSnapshot(cloudSaveRef, (nextSnapshot) => {
+      if (!cloudInitialized || auth.currentUser?.uid !== user.uid) return;
+      const previousRevision = cloudRemoteRevision;
+      cloudRemote = nextSnapshot.exists() ? nextSnapshot.data() : null;
+      cloudRemoteRevision = cloudRemote ? Math.max(0, Math.floor(Number(cloudRemote.saveRevision) || 0)) : 0;
+      renderCloudSummaries();
+      if (!cloudBusy && cloudRemoteRevision !== previousRevision) evaluateCloudState({ schedule: false });
+    }, (error) => {
+      console.error('Cloud save listener failed', error);
+      if (String(error?.code || '').includes('permission-denied')) {
+        setCloudBadge('BLOCKED', 'error');
+        setCloudStatus('Firestore is blocking Cloud Save. Confirm the v98 gameSaves rules are published.', 'error');
+      }
+    });
+  } catch (error) {
+    console.error('Cloud save initialization failed', error);
+    cloudInitialized = false;
+    setCloudBadge('ERROR', 'error');
+    if (String(error?.code || '').includes('permission-denied')) {
+      setCloudStatus('Firestore is blocking Cloud Save. Confirm the v98 gameSaves rules are published.', 'error');
+    } else {
+      setCloudStatus('Could not reach Froggy Cloud. Your local game still works normally.', 'error');
+    }
+  }
+}
+
+function handleLocalSaveEvent() {
+  if (!cloudInitialized || !cloudUid || cloudBusy) return;
+  const signature = saveSignature(readLocalGameSave());
+  if (signature === cloudLastObservedSignature) return;
+  cloudLastObservedSignature = signature;
+  evaluateCloudState({ schedule: true });
+}
+
 try {
   const firebaseApp = initializeApp(firebaseConfig);
   auth = getAuth(firebaseApp);
@@ -682,7 +1121,12 @@ try {
   onAuthStateChanged(auth, async (user) => {
     renderUser(user);
     document.documentElement.dataset.froggyAccount = user ? 'signed-in' : 'signed-out';
-    if (user) await loadPublicProfile(user);
+    if (user) {
+      await loadPublicProfile(user);
+      await startCloudSave(user);
+    } else {
+      stopCloudSave();
+    }
   });
 
   usernameInput?.addEventListener('input', () => {
@@ -706,6 +1150,12 @@ try {
     event.preventDefault();
     await searchPlayer(friendSearchInput?.value || '');
   });
+
+  cloudUploadButton?.addEventListener('click', () => { void uploadLocalToCloud({ force: false }); });
+  cloudLoadButton?.addEventListener('click', () => { void loadCloudOntoDevice(); });
+  cloudKeepLocalButton?.addEventListener('click', () => { void keepThisDevice(); });
+  cloudSyncButton?.addEventListener('click', () => { void uploadLocalToCloud({ force: false }); });
+  window.addEventListener('froggy:save', handleLocalSaveEvent);
 
   signInButton?.addEventListener('click', async () => {
     if (signInButton.disabled) return;
@@ -739,6 +1189,7 @@ try {
     try {
       ++profileLoadToken;
       clearSocialSubscriptions();
+      stopCloudSave();
       await signOut(auth);
       renderUser(null);
     } catch (error) {
@@ -753,6 +1204,7 @@ try {
   signedOut?.classList.remove('hidden');
   signedIn?.classList.add('hidden');
   friendsPanel?.classList.add('hidden');
+  cloudPanel?.classList.add('hidden');
   if (signInButton) signInButton.disabled = true;
   setStatus('Froggy Accounts could not load. The game itself still works normally.', 'error');
 }

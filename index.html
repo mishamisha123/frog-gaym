@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=97-friends-visible" />
+  <link rel="stylesheet" href="styles.css?v=98-cloud-save" />
   <title>Froggy Leap</title>
 </head>
 <body>
@@ -107,7 +107,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v97 · FROGGY LEAP</div>
+          <div class="build-version" aria-label="Installed game version">v98 · FROGGY LEAP</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -508,7 +508,7 @@
         <section class="froggy-account-panel glass" aria-labelledby="froggyAccountTitle">
           <div class="froggy-account-head">
             <div><small>FROGGY ACCOUNT · BETA</small><h2 id="froggyAccountTitle">Your identity</h2></div>
-            <span class="froggy-account-beta">PROFILE v2</span>
+            <span class="froggy-account-beta">ACCOUNT v3</span>
           </div>
 
           <div id="froggyAccountSignedOut" class="froggy-account-state">
@@ -561,6 +561,31 @@
           </div>
           <p id="froggyAccountStatus" class="froggy-account-status" data-state="info" aria-live="polite">Loading Froggy Accounts…</p>
           <p class="froggy-account-privacy">Your Google email is only shown to you here. Other players will see your Froggy username, never your private email.</p>
+        </section>
+
+        <section id="froggyCloudPanel" class="froggy-cloud-panel glass hidden" aria-labelledby="froggyCloudTitle">
+          <div class="froggy-cloud-head">
+            <div><small>FROGGY CLOUD SAVE · BETA</small><h2 id="froggyCloudTitle">Your progress, on every device</h2><p>Private to this Froggy account. Cloud Save v1 backs up the existing browser save.</p></div>
+            <span id="froggyCloudBadge">CHECKING</span>
+          </div>
+          <div class="froggy-cloud-grid">
+            <div><small>THIS DEVICE</small><b id="froggyCloudLocalSummary">Checking local save…</b></div>
+            <div><small>CLOUD</small><b id="froggyCloudRemoteSummary">Checking Firestore…</b></div>
+            <div><small>REVISION</small><b id="froggyCloudRevision">—</b></div>
+            <div><small>LAST CLOUD UPDATE</small><b id="froggyCloudUpdated">—</b></div>
+          </div>
+          <div id="froggyCloudConflict" class="froggy-cloud-conflict hidden">
+            <b>SAVE CONFLICT</b>
+            <span>Both this device and the cloud have progress that may be newer. Choose which one should win.</span>
+          </div>
+          <div class="froggy-cloud-actions">
+            <button id="froggyCloudUploadButton" class="froggy-cloud-button primary pressable hidden" type="button">UPLOAD THIS DEVICE</button>
+            <button id="froggyCloudLoadButton" class="froggy-cloud-button secondary pressable hidden" type="button">USE CLOUD SAVE</button>
+            <button id="froggyCloudKeepLocalButton" class="froggy-cloud-button warning pressable hidden" type="button">KEEP THIS DEVICE</button>
+            <button id="froggyCloudSyncButton" class="froggy-cloud-button primary pressable hidden" type="button">SYNC NOW</button>
+          </div>
+          <p id="froggyCloudStatus" class="froggy-cloud-status" data-state="info" aria-live="polite">Sign in to connect Cloud Save.</p>
+          <p class="froggy-cloud-note">Cloud Save v1 is for backup and cross-device progress. The browser still calculates the economy, so trading/transfers will stay disabled until the server-authoritative phase.</p>
         </section>
 
         <section id="froggyFriendsPanel" class="froggy-friends-panel glass" aria-labelledby="froggyFriendsTitle">
@@ -790,7 +815,7 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script type="module" src="firebase-account.js?v=97-friends-visible"></script>
-  <script src="app.js?v=97-friends-visible"></script>
+  <script type="module" src="firebase-account.js?v=98-cloud-save"></script>
+  <script src="app.js?v=98-cloud-save"></script>
 </body>
 </html>

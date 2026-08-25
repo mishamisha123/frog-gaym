@@ -1,7 +1,7 @@
 {
   "name": "Froggy Leap",
   "short_name": "Froggy Leap",
-  "description": "Froggy Leap v81 with smooth analytic Frog Egg Plinko motion, instant multiplier landing, a 96-egg active cap, 1000x High-risk edge pockets, case inventory, owner controls, and offline PWA support.",
+  "description": "Froggy Leap v98 with Google accounts, unique usernames, Friends v1, private cross-device Cloud Saves, and offline PWA support.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

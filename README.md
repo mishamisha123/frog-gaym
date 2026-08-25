@@ -1,6 +1,19 @@
-# Froggy Leap v97
+# Froggy Leap v98
 
-> **Current-behavior note:** The v96 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+> **Current-behavior note:** The v98 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+
+## v98 — Cloud Saves v1
+
+- Adds private Firestore `gameSaves/{uid}` cloud saves using the authenticated Firebase UID.
+- Adds first-time upload of the current browser save and cross-device cloud loading.
+- Adds save revision tracking and conflict detection so a stale device cannot silently overwrite a newer cloud revision.
+- Adds explicit conflict actions: **USE CLOUD SAVE** or **KEEP THIS DEVICE**.
+- Adds debounced autosync after a device has established a clean cloud baseline, plus a manual **SYNC NOW** action.
+- Adds cloud summaries for wallet, level, frogs, cases, revision, and last cloud update.
+- Cloud saves remain a backup/sync layer, not a server-authoritative economy; trading/transfers remain out of scope until rewards and balances move server-side.
+- Keeps Friends v1, usernames, Google auth, gameplay, economy, cases, Plinko, Bank, and local save compatibility unchanged.
+- PWA asset URLs and service-worker cache are bumped to v98.
+
 
 
 ## v97 — Friends v1 · cache-proof
