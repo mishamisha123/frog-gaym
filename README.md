@@ -1,13 +1,22 @@
-# Froggy Leap v61
+# Froggy Leap v62
 
-> **Current-behavior note:** The v61 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
-
-
+> **Current-behavior note:** The v62 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
 
 
 
 
+
+
+
+
+## v62 — Real transparent GigaChad art + rarity header fix
+
+- Replaced the previous GigaChad PNG, which still contained a baked starry background and ULTRA badge, with a genuinely transparent full-body character sprite.
+- Frog Collection rarity badges now live in a dedicated normal-flow header row above each portrait instead of being absolutely overlaid on the card.
+- GigaChad portrait sizing now shows the full character with breathing room and no destructive crop.
+- Frog shop remains strictly sorted cheapest to most expensive with monotonic rarity progression.
+- PWA asset URLs, refresh helper, service-worker cache, and build label bumped to v62.
 
 ## v61 — Frog shop portrait + rarity/order cleanup
 

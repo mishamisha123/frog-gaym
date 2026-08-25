@@ -4483,3 +4483,83 @@ button:focus-visible{outline:2px solid #74e6ff!important;outline-offset:2px!impo
   .collection-card.frog-card{padding-top:34px!important;}
   .collection-card.frog-card > .rarity{top:6px!important;left:7px!important;min-height:20px;padding:4px 7px!important;font-size:6px!important;}
 }
+
+/* ==========================================================================
+   v62 — Real rarity header rows + uncropped transparent GigaChad portrait
+   ========================================================================== */
+.collection-card.frog-card{
+  padding-top:12px!important;
+  overflow:visible!important;
+}
+.collection-card.frog-card .frog-rarity-row{
+  position:relative!important;
+  z-index:30!important;
+  min-height:30px;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  padding:0 2px 7px!important;
+  margin:0!important;
+  overflow:visible!important;
+}
+.collection-card.frog-card .frog-rarity-row > .rarity{
+  position:relative!important;
+  inset:auto!important;
+  left:auto!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:auto!important;
+  z-index:31!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:24px!important;
+  padding:5px 10px!important;
+  margin:0!important;
+  border-radius:8px!important;
+  font-size:7px!important;
+  line-height:1!important;
+  letter-spacing:.08em!important;
+  box-shadow:0 4px 12px rgba(0,0,0,.35)!important;
+  white-space:nowrap!important;
+}
+.collection-card.frog-card.tier-common .frog-rarity-row > .rarity{color:#06243b!important;background:linear-gradient(180deg,#9cf5ff,#45d7f5)!important;border-color:#c8fbff!important}
+.collection-card.frog-card.tier-rare .frog-rarity-row > .rarity{color:#fff!important;background:linear-gradient(180deg,#3f9dff,#1767d7)!important;border-color:#88c8ff!important}
+.collection-card.frog-card.tier-epic .frog-rarity-row > .rarity{color:#fff!important;background:linear-gradient(180deg,#b26cff,#6a31d0)!important;border-color:#dfb9ff!important}
+.collection-card.frog-card.tier-legendary .frog-rarity-row > .rarity{color:#3d2100!important;background:linear-gradient(180deg,#ffe46a,#ffad25)!important;border-color:#fff0a0!important}
+.collection-card.frog-card.tier-mythic .frog-rarity-row > .rarity{color:#fff!important;background:linear-gradient(180deg,#ff70df,#c32dac)!important;border-color:#ffc0f0!important}
+.collection-card.frog-card.tier-ultra .frog-rarity-row > .rarity{color:#3b2100!important;background:linear-gradient(180deg,#fff178,#ffbd31)!important;border-color:#fff8b0!important;box-shadow:0 0 0 1px #ff58dc,0 4px 12px rgba(0,0,0,.38),0 0 14px rgba(255,94,220,.4)!important}
+.collection-card.frog-card.tier-one-of-one .frog-rarity-row > .rarity{color:#ffe66d!important;background:linear-gradient(180deg,#262c35,#0d1117)!important;border-color:#ffe36a!important}
+.collection-card.frog-card .collection-art{
+  margin-top:0!important;
+  overflow:hidden!important;
+}
+.collection-card.frog-card[data-item="gigachad"] .collection-art{
+  min-height:230px!important;
+  display:flex!important;
+  align-items:flex-end!important;
+  justify-content:center!important;
+  padding:12px 18px 0!important;
+  background:radial-gradient(circle at 50% 25%,rgba(55,190,255,.55),rgba(37,74,160,.68) 45%,rgba(25,18,79,.98) 84%)!important;
+}
+.collection-card.frog-card[data-item="gigachad"] .collection-art .frog-avatar-img{
+  position:relative!important;
+  z-index:2!important;
+  display:block!important;
+  width:auto!important;
+  height:auto!important;
+  max-width:88%!important;
+  max-height:210px!important;
+  object-fit:contain!important;
+  object-position:center bottom!important;
+  transform:none!important;
+  border-radius:0!important;
+  filter:saturate(1.04) contrast(1.02) drop-shadow(0 12px 9px rgba(0,0,0,.42))!important;
+}
+@media(max-width:759px){
+  .collection-card.frog-card{padding-top:9px!important}
+  .collection-card.frog-card .frog-rarity-row{min-height:27px;padding:0 1px 6px!important}
+  .collection-card.frog-card .frog-rarity-row > .rarity{min-height:21px!important;padding:4px 7px!important;font-size:6px!important}
+  .collection-card.frog-card[data-item="gigachad"] .collection-art{min-height:210px!important;padding:10px 14px 0!important}
+  .collection-card.frog-card[data-item="gigachad"] .collection-art .frog-avatar-img{max-height:190px!important;max-width:90%!important}
+}
