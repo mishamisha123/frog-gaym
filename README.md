@@ -1,7 +1,15 @@
-# Froggy Leap v81
+# Froggy Leap v82
 
-> **Current-behavior note:** The v81 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+> **Current-behavior note:** The v82 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
+## v82 — Premium Plinko board + exact classic 16-row High table
+
+- Redesigned Plinko's cached board art with a cleaner premium machine look, more side breathing room, smaller illuminated pegs, and a tighter multiplier rail.
+- Multiplier boxes are narrower/shorter and centered safely inside the outer Plinko frame on desktop and mobile.
+- High risk keeps 16 rows / 17 pockets and now uses the classic exact payout strip: `1000, 130, 26, 9, 4, 2, 0.2, 0.2, 0.2, 0.2, 0.2, 2, 4, 9, 26, 130, 1000`.
+- With Froggy Leap's unchanged independent 50/50 16-step path, that High table is approximately 98.9764% RTP.
+- Low and Medium payout tables, egg motion, protected eggs, 96-egg cap, 15-second Bank-round window, cases, saves, and other v81 systems are unchanged.
+- PWA/cache/build references are bumped to **v82**.
 
 ## v81 — Plinko visual cleanup + rebuilt motion
 
