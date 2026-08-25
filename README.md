@@ -1,8 +1,6 @@
-# Froggy Leap v71
+# Froggy Leap v72
 
-> **Current-behavior note:** The v71 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
-
-
+> **Current-behavior note:** The v72 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
 
 
@@ -15,6 +13,15 @@
 
 
 
+
+
+
+## v72 — Piggy rate rebalance + loan-time deposits
+
+- Piggy base interest is now **0.3% per 20-minute cycle while the app is open** and **0.2% per 20-minute cycle for trusted closed-time**.
+- Players may now deposit wallet Froggy into Piggy while a loan is active; the old early-payoff wallet reserve no longer blocks deposits.
+- Existing pledged Piggy remains protected from manual withdrawal while the loan is active, and automatic installments may still collect from Piggy when due.
+- Existing saves remain compatible. PWA asset URLs, service-worker cache, refresh helper, build label, and self-tests are bumped to **v72**.
 
 ## v71 — Frog Egg Plinko + economy scale-up
 

@@ -3,7 +3,7 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v71';
+  const BUILD_VERSION = 'v72';
   console.info(`Froggy Leap ${BUILD_VERSION} loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
@@ -78,8 +78,8 @@
   const DEBT_ROUND_INTERVAL = 5;
   const LOAN_TERM_ROUNDS = LOAN_INSTALLMENTS * DEBT_ROUND_INTERVAL;
   const PIGGY_CYCLE_MS = 20 * 60 * 1000;
-  const PIGGY_OPEN_RATE = 0.01;
-  const PIGGY_CLOSED_RATE = 0.003;
+  const PIGGY_OPEN_RATE = 0.003;
+  const PIGGY_CLOSED_RATE = 0.002;
   const PIGGY_OWNER_RATE_STEP = 0.01;
   const MAX_PIGGY_RATE_BONUS = 10000;
   const OWNER_TAP_TARGET = 20;
@@ -1430,18 +1430,14 @@
     state.piggyUntrustedOpenMs=0;
   }
 
+  // Compatibility helper: v72 no longer reserves wallet funds against an active loan.
   function piggyLoanReserve(){
-    return state.debt>0?earlyPayoffAmount():0;
+    return 0;
   }
 
   function piggyTransferMaximum(){
-    if(piggyTransferMode==='deposit')return Math.max(0,ownedWalletBalance()-piggyLoanReserve());
+    if(piggyTransferMode==='deposit')return Math.max(0,ownedWalletBalance());
     return Math.max(0,state.piggyBalance-(state.debt>0?state.pledgedPiggy:0));
-  }
-
-  function piggyLoanReserveExplanation(maximum=piggyTransferMaximum()){
-    const reserve=piggyLoanReserve();
-    return `Deposit denied: ${money(reserve)} F is your current early-payoff amount and must stay available in the wallet for the Bank. You can deposit only the ${money(maximum)} F above that reserve. As completed rounds earn more loan interest, the reserved payoff amount rises automatically.`;
   }
 
   function piggyTransferStep(maximum=piggyTransferMaximum()){
@@ -1469,12 +1465,10 @@
   function setPiggyTransferAmount(raw,{fromInput=false}={}){
     const requested=Math.max(0,Math.floor(Number(raw)||0));
     const maximum=piggyTransferMaximum();
-    const denied=piggyTransferMode==='deposit'&&state.debt>0&&requested>maximum;
-    piggyTransferAmount=denied?0:clampPiggyTransfer(requested);
+    piggyTransferAmount=clampPiggyTransfer(requested);
     els.piggyTransferAmountLabel.textContent=money(piggyTransferAmount);
     els.piggyTransferSlider.value=String(piggyTransferAmount);
     if(!fromInput)els.piggyTransferInput.value=String(piggyTransferAmount);
-    if(denied)setPiggyMessage(piggyLoanReserveExplanation(maximum),'error');
     syncPiggyTransferAction();
   }
 
@@ -1496,7 +1490,7 @@
     els.piggyTransferKicker.textContent=piggyTransferMode==='deposit'?'MOVE TO SAVINGS':'MOVE TO WALLET';
     els.piggyTransferButton.querySelector('span').textContent=piggyTransferMode==='deposit'?'DEPOSIT TO PIGGY':'WITHDRAW TO WALLET';
     els.piggyTransferButton.querySelector('small').textContent=piggyTransferMode==='deposit'
-      ? state.debt>0?`Bank reserve: ${money(piggyLoanReserve())} F stays in wallet`:`${formatPiggyRate(piggyOpenRate())} open · ${formatPiggyRate(piggyClosedRate())} closed with trusted time`
+      ? `${formatPiggyRate(piggyOpenRate())} open · ${formatPiggyRate(piggyClosedRate())} closed with trusted time`
       : 'No fee · available instantly';
     if(piggyTransferAmount>maximum)setPiggyTransferAmount(maximum);
   }
@@ -1509,7 +1503,7 @@
     setPiggyMessage(
       piggyTransferMode==='deposit'
         ? state.debt>0
-          ? `The Bank keeps ${money(piggyLoanReserve())} F—the exact current early-payoff amount—available in your wallet. You may deposit up to ${money(piggyTransferMaximum())} F above it. The reserve increases as completed rounds earn loan interest.`
+          ? 'Deposits stay available while a loan is active. Automatic installments may still collect from Piggy when payment is due.'
           : 'Choose how much wallet Froggy to protect in savings.'
         : state.debt>0&&state.pledgedPiggy>0?`${money(state.pledgedPiggy)} F is pledged until the loan is cleared. Choose from the unpledged remainder.`:'Choose how much savings to return to your wallet.'
     );
@@ -1522,18 +1516,11 @@
     }
     const amount=clampPiggyTransfer(piggyTransferAmount);
     if(amount<=0){
-      if(piggyTransferMode==='deposit'&&state.debt>0)setPiggyMessage(piggyLoanReserveExplanation(),'error');
-      else setPiggyMessage('Choose a positive transfer amount.','error');
+      setPiggyMessage('Choose a positive transfer amount.','error');
       return false;
     }
 
     if(piggyTransferMode==='deposit'){
-      const reserve=piggyLoanReserve();
-      if(state.balance-amount<reserve){
-        setPiggyMessage(piggyLoanReserveExplanation(),'error');
-        haptic([18,45,18]);
-        return false;
-      }
       invalidateUntrustedClosedAccrual();
       const wasEmpty=state.piggyBalance<=0;
       state.balance-=amount;
@@ -3253,9 +3240,9 @@
       state=deepClone(DEFAULT_STATE);state.balance=321;state.debt=10800;state.loanPrincipalOriginal=10000;state.loanPrincipalRemaining=10000;state.loanInterestTotal=800;state.loanInstallment=1080;state.debtTurns=4;state.piggyBalance=5000;const automaticDue=completeDebtTurn();if(automaticDue?.paid!==1080||state.piggyBalance!==3920||state.balance!==321||state.debt!==9720||state.debtTurns!==0||state.debtDue||state.loanInstallmentsPaid!==1)throw new Error('automatic due-round Piggy payment or countdown reset failed');
       state=deepClone(DEFAULT_STATE);state.balance=777;state.debt=10800;state.loanPrincipalOriginal=10000;state.loanPrincipalRemaining=10000;state.loanInterestTotal=800;state.loanInterestPaid=0;state.loanInstallment=1080;state.loanInstallmentsPaid=0;state.debtDue=true;state.debtDueAmount=10800;state.debtTurns=DEBT_ROUND_INTERVAL;state.piggyBalance=5000;const overduePiggy=completeDebtTurn();if(overduePiggy.due!==1080||overduePiggy.paid!==1080||state.piggyBalance!==3920||state.balance!==777||state.debt!==9720||state.debtDue||state.loanInstallmentsPaid!==1)throw new Error('exact direct Piggy installment payment failed');
       state=deepClone(DEFAULT_STATE);state.debt=10800;state.loanPrincipalOriginal=10000;state.loanPrincipalRemaining=10000;state.loanInterestTotal=800;state.loanInterestPaid=0;state.loanInstallment=1080;state.loanInstallmentsPaid=0;state.debtDue=true;state.debtDueAmount=1080;state.debtTurns=DEBT_ROUND_INTERVAL;state.piggyBalance=80;state.unlockedFrogs.push('king');state.pledgedFrogs=['king'];const overdueAsset=completeDebtTurn();if(overdueAsset.paid!==1080||state.piggyBalance!==0||state.debt!==9720||state.balance!==14000||state.unlockedFrogs.includes('king')||state.debtDue)throw new Error('partial Piggy then asset installment collection failed');
-      state=deepClone(DEFAULT_STATE);state.balance=20000;state.debt=10800;state.loanPrincipalOriginal=10000;state.loanPrincipalRemaining=10000;state.loanInterestTotal=800;state.loanInterestPaid=0;state.loanInstallment=1080;state.loanInstallmentsPaid=0;state.debtCycleStartRound=0;state.completedRounds=0;piggyTransferMode='deposit';if(earlyPayoffAmount()!==10000||piggyTransferMaximum()!==10000)throw new Error('initial loan Piggy reserve failed');state.completedRounds=3;if(earlyPayoffAmount()!==10048||piggyTransferMaximum()!==9952)throw new Error('round-adjusted loan Piggy reserve failed');if(trustedClosedElapsed(3600000,0,0)!==3600000||trustedClosedElapsed(4600000,1000000,600000)!==3000000)throw new Error('trusted closed-time calculation failed');
+      state=deepClone(DEFAULT_STATE);state.balance=20000;state.debt=10800;state.loanPrincipalOriginal=10000;state.loanPrincipalRemaining=10000;state.loanInterestTotal=800;state.loanInterestPaid=0;state.loanInstallment=1080;state.loanInstallmentsPaid=0;state.debtCycleStartRound=0;state.completedRounds=0;piggyTransferMode='deposit';if(earlyPayoffAmount()!==10000||piggyTransferMaximum()!==20000)throw new Error('active-loan Piggy deposit maximum failed');state.completedRounds=3;if(earlyPayoffAmount()!==10048||piggyTransferMaximum()!==20000)throw new Error('loan interest incorrectly reduced Piggy deposit maximum');piggyTransferAmount=20000;if(!transferPiggy()||state.balance!==0||state.piggyBalance!==20000)throw new Error('active-loan Piggy deposit failed');if(trustedClosedElapsed(3600000,0,0)!==3600000||trustedClosedElapsed(4600000,1000000,600000)!==3000000)throw new Error('trusted closed-time calculation failed');
       state=deepClone(DEFAULT_STATE);piggyTrustedAnchorMs=0;state.piggyTrustedTimestamp=123456;state.piggyUntrustedOpenMs=789;invalidateUntrustedClosedAccrual();if(state.piggyTrustedTimestamp!==0||state.piggyUntrustedOpenMs!==0)throw new Error('untrusted Piggy balance-change invalidation failed');piggyTrustedAnchorMs=Date.now();piggyTrustedAnchorPerformance=performance.now();
-      state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;state.piggyLastTimestamp=Date.now();let result=advancePiggyTime(PIGGY_CYCLE_MS,piggyOpenRate(),'open');if(result.interest!==10000||state.piggyBalance!==1010000)throw new Error('open-app Piggy rate failed');state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;result=advancePiggyTime(PIGGY_CYCLE_MS,piggyClosedRate(),'closed');if(result.interest!==3000||state.piggyBalance!==1003000)throw new Error('closed-app Piggy rate failed');state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;advancePiggyTime(PIGGY_CYCLE_MS/2,piggyOpenRate(),'open');result=advancePiggyTime(PIGGY_CYCLE_MS/2,piggyClosedRate(),'closed');if(result.interest!==6500)throw new Error('mixed Piggy cycle failed');state=deepClone(DEFAULT_STATE);state.piggyInterestRateBonus+=PIGGY_OWNER_RATE_STEP;state.piggyInterestRateBonus+=PIGGY_OWNER_RATE_STEP;if(state.piggyInterestRateBonus!==0.02||piggyOpenRate()!==0.03||piggyClosedRate()!==0.023)throw new Error('repeatable Piggy owner boost failed');state.piggyBalance=1000000;result=advancePiggyTime(PIGGY_CYCLE_MS,piggyOpenRate(),'open');if(result.interest!==30000)throw new Error('stacked Piggy rate failed');state.piggyInterestRateBonus=0;if(piggyOpenRate()!==PIGGY_OPEN_RATE||piggyClosedRate()!==PIGGY_CLOSED_RATE)throw new Error('Piggy owner reset failed');if(!ownerAccessModal||!ownerPanelModal)throw new Error('maintenance UI failed');const ownerMinus=applyOwnerOperation(1000,'-250',{minimum:0,maximum:MAX_SAFE_BALANCE}),ownerTimes=applyOwnerOperation(1000,'x2',{minimum:0,maximum:MAX_SAFE_BALANCE}),ownerDivide=applyOwnerOperation(1000,'/4',{minimum:0,maximum:MAX_SAFE_BALANCE});if(ownerMinus?.target!==750||ownerTimes?.target!==2000||ownerDivide?.target!==250)throw new Error('owner arithmetic operations failed');if(!ownerPanelModal.querySelector('[data-owner-action="wallet"] [data-owner-value]')||ownerPanelModal.querySelector('[data-owner-summary]')?.textContent.includes('wallet ·'))throw new Error('streamlined owner values failed');
+      state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;state.piggyLastTimestamp=Date.now();let result=advancePiggyTime(PIGGY_CYCLE_MS,piggyOpenRate(),'open');if(result.interest!==3000||state.piggyBalance!==1003000)throw new Error('open-app Piggy rate failed');state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;result=advancePiggyTime(PIGGY_CYCLE_MS,piggyClosedRate(),'closed');if(result.interest!==2000||state.piggyBalance!==1002000)throw new Error('closed-app Piggy rate failed');state=deepClone(DEFAULT_STATE);state.piggyBalance=1000000;advancePiggyTime(PIGGY_CYCLE_MS/2,piggyOpenRate(),'open');result=advancePiggyTime(PIGGY_CYCLE_MS/2,piggyClosedRate(),'closed');if(result.interest!==2500)throw new Error('mixed Piggy cycle failed');state=deepClone(DEFAULT_STATE);state.piggyInterestRateBonus+=PIGGY_OWNER_RATE_STEP;state.piggyInterestRateBonus+=PIGGY_OWNER_RATE_STEP;if(state.piggyInterestRateBonus!==0.02||piggyOpenRate()!==0.023||piggyClosedRate()!==0.022)throw new Error('repeatable Piggy owner boost failed');state.piggyBalance=1000000;result=advancePiggyTime(PIGGY_CYCLE_MS,piggyOpenRate(),'open');if(result.interest!==23000)throw new Error('stacked Piggy rate failed');state.piggyInterestRateBonus=0;if(piggyOpenRate()!==PIGGY_OPEN_RATE||piggyClosedRate()!==PIGGY_CLOSED_RATE)throw new Error('Piggy owner reset failed');if(!ownerAccessModal||!ownerPanelModal)throw new Error('maintenance UI failed');const ownerMinus=applyOwnerOperation(1000,'-250',{minimum:0,maximum:MAX_SAFE_BALANCE}),ownerTimes=applyOwnerOperation(1000,'x2',{minimum:0,maximum:MAX_SAFE_BALANCE}),ownerDivide=applyOwnerOperation(1000,'/4',{minimum:0,maximum:MAX_SAFE_BALANCE});if(ownerMinus?.target!==750||ownerTimes?.target!==2000||ownerDivide?.target!==250)throw new Error('owner arithmetic operations failed');if(!ownerPanelModal.querySelector('[data-owner-action="wallet"] [data-owner-value]')||ownerPanelModal.querySelector('[data-owner-summary]')?.textContent.includes('wallet ·'))throw new Error('streamlined owner values failed');
       const testMetrics={bagWidth:200,bagHeight:260};const testGeometry={bagTop:100};jobRuntime.bagX=200;if(jobMouthRimY(200,testGeometry,testMetrics)<=jobMouthRimY(120,testGeometry,testMetrics))throw new Error('bag mouth curve failed');
       state=deepClone(DEFAULT_STATE);state.unlockedFrogs.push('gigachad');state.selectedFrog='gigachad';if(selectedFrog().name!=='The Hill Frog'||skinJobMoneyMultiplier()!==1.1||skinJobXpMultiplier()!==1.1||skinJobStartBonusMs()!==1500)throw new Error('The Hill Frog name or Job perks failed');if(FROGS.some(frog=>['shrek','messi','heisenfrog','doge','elon','trump','mcfroggy','snoop','naruto','rick','pewdiepog'].includes(frog.id)))throw new Error('removed Ultra skins still present');state=deepClone(DEFAULT_STATE);state.jobLevel=1;const baseJobPay=jobPay(),baseJobXp=jobXpPerFry();state.jobLevel=2000;const highJobXp=jobXpPerFry();if(jobPay()>=250||jobPay()<=baseJobPay||baseJobPay!==15||baseJobXp!==5||highJobXp<=baseJobXp||highJobXp>12)throw new Error('rebalanced Job pay or XP progression failed');
       state=deepClone(DEFAULT_STATE);jobRuntime.active=true;jobRuntime.shiftRoundCounted=false;jobRuntime.lastDebtResult=null;jobRuntime.shiftEndsAt=performance.now()+15000;const shiftEndBefore=jobRuntime.shiftEndsAt;extendJobShiftTime(2000);if(jobRuntime.shiftEndsAt!==shiftEndBefore+2000)throw new Error('Job +2 second fry bonus failed');const jobRoundsBefore=state.completedRounds;finishJobShiftRound('loss');finishJobShiftRound('loss');if(state.completedRounds!==jobRoundsBefore+1||state.rounds!==1)throw new Error('Job shift did not count as exactly one round');jobRuntime.active=false;
@@ -3270,7 +3257,7 @@
       if(ownerPanelModal.querySelector('[data-owner-action="spins"]')||ownerPanelModal.querySelector('[data-owner-action="unlimited"]'))throw new Error('Reward-wheel owner controls still present');
       if(MAX_LOAN_PAYOUT!==5000000000)throw new Error('5B Bank cap constant failed');const paidFrogs=FROGS.filter(f=>f.cost>0);if(paidFrogs.find(f=>f.id==='meadow')?.cost!==1500||paidFrogs.find(f=>f.id==='gigachad')?.cost!==2250000000||paidFrogs.find(f=>f.id==='owner')?.cost!==6000000000)throw new Error('3x frog pricing failed');if(PLINKO_ROWS!==12||plinkoTable('medium').length!==13||Math.abs(plinkoRtp('medium')-PLINKO_TARGET_RTP)>.01)throw new Error('Plinko payout table failed');
       const shopFrogs=frogShopItems();for(let i=1;i<shopFrogs.length;i++){if(shopFrogs[i].cost<shopFrogs[i-1].cost)throw new Error('frog shop price order failed');if((FROG_RARITY_RANK[shopFrogs[i].rarity]??99)<(FROG_RARITY_RANK[shopFrogs[i-1].rarity]??99))throw new Error('frog rarity progression failed');}const hill=FROGS.find(f=>f.id==='gigachad');if(!hill||hill.name!=='The Hill Frog'||hill.art!=='assets/the-hill-frog-game-v66.png'||hill.cardArt!=='assets/the-hill-frog-card-v64.webp')throw new Error('The Hill Frog art/name failed');const basicIds=['meadow','river','moss','sand','blue-dart','sunset'];if(!basicIds.every(id=>FROGS.some(f=>f.id===id)))throw new Error('v63 basic frog lineup missing');
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v71 Frog Egg Plinko + 3x frog prices + 5B Bank cap + v70 natural case landings + variable reel travel + v68 CS-style case reel + delayed skip + rarity reveal + v67 Cases + six-slot mobile nav + v66 approved smiling The Hill Frog gameplay model + v64 polished The Hill Frog Collection portrait + v63 basic frog lineup + The Hill Frog rename, v62 rarity header rows + price/rarity order, v60 Rewards removal, v59 gameplay skin art, v55 early Crash risk, Piggy rates, trusted-time warning, restartable Shift Over dialog, and app-visible no-flight badge';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v72 Piggy 0.3% open / 0.2% closed + loan-time deposits + v71 Frog Egg Plinko + 3x frog prices + 5B Bank cap + v70 natural case landings + variable reel travel + v68 CS-style case reel + delayed skip + rarity reveal + v67 Cases + six-slot mobile nav + v66 approved smiling The Hill Frog gameplay model + v64 polished The Hill Frog Collection portrait + v63 basic frog lineup + The Hill Frog rename, v62 rarity header rows + price/rarity order, v60 Rewards removal, v59 gameplay skin art, v55 early Crash risk, Piggy rates, trusted-time warning, restartable Shift Over dialog, and app-visible no-flight badge';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 

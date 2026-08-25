@@ -1,7 +1,7 @@
 {
   "name": "Froggy Leap",
   "short_name": "Froggy Leap",
-  "description": "Froggy Leap v71 with Frog Egg Plinko, Cases, premium blue arcade UI, expanded frog collection, The Hill Frog, Sky Crash, Piggy savings, Job shifts, and offline PWA support.",
+  "description": "Froggy Leap v72 with 0.3% online and 0.2% trusted closed-time Piggy interest, Piggy deposits during active loans, Frog Egg Plinko, Cases, and offline PWA support.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
