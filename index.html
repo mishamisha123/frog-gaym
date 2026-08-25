@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=67-cases-nav" />
+  <link rel="stylesheet" href="styles.css?v=68-case-reel" />
   <title>Froggy Leap</title>
 </head>
 <body>
@@ -102,7 +102,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v67 · FROGGY LEAP</div>
+          <div class="build-version" aria-label="Installed game version">v68 · FROGGY LEAP</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -432,6 +432,32 @@
         <p class="virtual-note">Cases contain only existing Froggy Leap frogs. No real-money purchase, cash-out, or prize is involved.</p>
       </section>
 
+
+      <div id="caseOpeningOverlay" class="case-opening-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="caseOpeningTitle" aria-live="polite">
+        <div id="caseOpeningShell" class="case-opening-shell">
+          <button id="caseOpeningClose" class="case-opening-close hidden" type="button" aria-label="Close case result">×</button>
+          <button id="caseOpeningSkip" class="case-opening-skip hidden" type="button">SKIP</button>
+          <div class="case-opening-head">
+            <small id="caseOpeningKicker">FROGGY CASE OPENING</small>
+            <h2 id="caseOpeningTitle">Opening case…</h2>
+            <p id="caseOpeningSubtitle">The result is locked in when the case is opened.</p>
+          </div>
+          <div id="caseOpeningChest" class="case-opening-chest">
+            <div class="case-opening-chest-glow"></div>
+            <span id="caseOpeningChestEmoji" aria-hidden="true">📦</span>
+            <b>UNLOCKING</b>
+            <i></i>
+          </div>
+          <div id="caseOpeningReelWrap" class="case-opening-reel-wrap hidden">
+            <div class="case-opening-marker marker-top"></div>
+            <div class="case-opening-marker marker-bottom"></div>
+            <div class="case-opening-center-line" aria-hidden="true"></div>
+            <div id="caseOpeningReel" class="case-opening-reel"></div>
+          </div>
+          <div id="caseOpeningResult" class="case-opening-result hidden"></div>
+        </div>
+      </div>
+
       <section id="statsScreen" class="screen" aria-label="Stats and settings">
         <div class="section-heading"><div><small>PLAYER PROFILE</small><h1>Stats & Settings</h1></div></div>
         <div class="profile-hero glass">
@@ -632,6 +658,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=67-cases-nav"></script>
+  <script src="app.js?v=68-case-reel"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v67';
+  const BUILD_VERSION = 'v68';
   console.info(`Froggy Leap ${BUILD_VERSION} loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
@@ -277,7 +277,7 @@
     leapGamePane: $('leapGamePane'), crashGamePane: $('crashGamePane'), leapGameTab: $('leapGameTab'), crashGameTab: $('crashGameTab'), crashTabStatus: $('crashTabStatus'), crashLicenseCard: $('crashLicenseCard'), crashGameContent: $('crashGameContent'), unlockCrashButton: $('unlockCrashButton'), crashMultiplierLabel: $('crashMultiplierLabel'), crashPayoutLabel: $('crashPayoutLabel'), crashVehicleLabel: $('crashVehicleLabel'), crashChargesLabel: $('crashChargesLabel'), crashVehicleMaxLabel: $('crashVehicleMaxLabel'), crashBetInput: $('crashBetInput'), crashVehicleSelect: $('crashVehicleSelect'), crashQuickBets: $('crashQuickBets'), crashStartButton: $('crashStartButton'), crashNoFlights: $('crashNoFlights'), crashNoFlightsTitle: $('crashNoFlightsTitle'), crashNoFlightsText: $('crashNoFlightsText'), crashVehicleShopButton: $('crashVehicleShopButton'), crashFlightDock: $('crashFlightDock'), crashCashButton: $('crashCashButton'), crashCashValue: $('crashCashValue'), betDisplay: $('betDisplay'), start: $('startButton'), jumpButton: $('jumpButton'), cash: $('cashButton'), cashValue: $('cashButtonValue'), quickBets: $('quickBets'), betAdjusters: $('betAdjusters'), customBetToggle: $('customBetToggle'), customBetRow: $('customBetRow'), customBetInput: $('customBetInput'), customBetClose: $('customBetClose'), customBetError: $('customBetError'),
     sound: $('soundButton'), bankShortcut: $('bankShortcutButton'), settingsSound: $('settingsSound'), settingsMotion: $('settingsMotion'), luckyBadge: $('luckyBadge'), luckyCount: $('luckyCount'), debtBadge: $('debtBadge'), debtBadgeAmount: $('debtBadgeAmount'), debtBadgeTurns: $('debtBadgeTurns'), debtBadgeStatus: $('debtBadgeStatus'), debtDueDot: $('debtDueDot'), debtDueFlag: $('debtDueFlag'),
     screens: { play:$('playScreen'), job:$('jobScreen'), collection:$('collectionScreen'), bank:$('bankScreen'), cases:$('casesScreen'), stats:$('statsScreen') },
-    collectionGrid: $('collectionGrid'), caseGrid:$('caseGrid'), caseBalance:$('caseBalance'), casesOpenedLabel:$('casesOpenedLabel'), caseReveal:$('caseReveal'), caseHistoryList:$('caseHistoryList'), installButton: $('installButton'),
+    collectionGrid: $('collectionGrid'), caseGrid:$('caseGrid'), caseBalance:$('caseBalance'), casesOpenedLabel:$('casesOpenedLabel'), caseReveal:$('caseReveal'), caseHistoryList:$('caseHistoryList'), caseOpeningOverlay:$('caseOpeningOverlay'), caseOpeningShell:$('caseOpeningShell'), caseOpeningClose:$('caseOpeningClose'), caseOpeningSkip:$('caseOpeningSkip'), caseOpeningKicker:$('caseOpeningKicker'), caseOpeningTitle:$('caseOpeningTitle'), caseOpeningSubtitle:$('caseOpeningSubtitle'), caseOpeningChest:$('caseOpeningChest'), caseOpeningChestEmoji:$('caseOpeningChestEmoji'), caseOpeningReelWrap:$('caseOpeningReelWrap'), caseOpeningReel:$('caseOpeningReel'), caseOpeningResult:$('caseOpeningResult'), installButton: $('installButton'),
     modalBackdrop: $('modalBackdrop'), resultModal: $('resultModal'), howToModal: $('howToModal'), installModal: $('installModal'), loanBuilderModal: $('loanBuilderModal'), loanWarningModal: $('loanWarningModal'),
     resultIcon: $('resultIcon'), resultKicker: $('resultKicker'), resultTitle: $('resultTitle'), resultAmount: $('resultAmount'), resultProfit: $('resultProfit'), resultText: $('resultText'), resultButton: $('resultButton'),
     profileFrog: $('profileFrog'), bigProfileFrog: $('bigProfileFrog'), currentFrogName: $('currentFrogName'),
@@ -611,6 +611,13 @@
     cash(){ [0,1,2,3].forEach(i=>this.tone(480*Math.pow(1.19,i),.15,'triangle',.06,60,i*.07)); }
     win(){ [0,1,2,3,4,5].forEach(i=>this.tone([392,494,587,784,988,1175][i],.24,'triangle',.065,80,i*.09)); }
     reward(){ [0,1,2,3].forEach(i=>this.tone(520+i*130,.18,'sine',.05,80,i*.09)); }
+    caseTick(progress=0){ const p=clamp(Number(progress)||0,0,1); this.tone(760-p*280,.038,'square',.025,-45); }
+    caseReveal(rarity='COMMON'){
+      const rank=FROG_RARITY_RANK[rarity]??0;
+      if(rank<=1){this.tone(620,.1,'triangle',.05,100);this.tone(820,.12,'sine',.035,120,.06);return;}
+      if(rank<=3){[0,1,2,3].forEach(i=>this.tone(480+i*145,.17,'triangle',.055,80,i*.07));return;}
+      [0,1,2,3,4,5].forEach(i=>this.tone([392,494,587,784,988,1175][i],.22,'triangle',.065,90,i*.075));
+    }
     fryGrab(){this.tone(760,.06,'square',.025,-80);}
     fryDrop(){this.tone(420,.1,'triangle',.035,-180);}
     fryRim(){this.tone(240,.075,'square',.04,90);this.tone(480,.07,'triangle',.025,-120,.025);}
@@ -2605,21 +2612,96 @@
     els.caseHistoryList.innerHTML=history.map(entry=>{const frog=FROGS.find(f=>f.id===entry.frogId),item=caseById(entry.caseId);if(!frog||!item)return'';return `<div class="case-history-row"><span>${item.emoji}</span><div><b>${frog.name}</b><small>${item.name} · ${frog.rarity}</small></div><strong>${entry.duplicate?`+${money(entry.duplicateCredit)} F`:'NEW'}</strong></div>`;}).join('');
   }
 
+  const caseOpeningRuntime={active:false,phase:'idle',raf:0,timers:[],item:null,frog:null,duplicate:false,duplicateCredit:0,winnerIndex:0,lastTickIndex:-1,lastTickAt:0,lastHapticAt:0};
+  function caseRarityClass(rarity){return String(rarity||'COMMON').toLowerCase().replace(/[^a-z0-9]+/g,'-');}
+  function clearCaseOpeningWork(){
+    if(caseOpeningRuntime.raf)cancelAnimationFrame(caseOpeningRuntime.raf);caseOpeningRuntime.raf=0;
+    caseOpeningRuntime.timers.forEach(id=>clearTimeout(id));caseOpeningRuntime.timers=[];
+  }
+  function queueCaseOpening(fn,ms){const id=setTimeout(fn,ms);caseOpeningRuntime.timers.push(id);return id;}
+  function caseOpeningCard(frog,index,winnerIndex){
+    const rarity=caseRarityClass(frog.rarity),winner=index===winnerIndex?' data-case-winner="true"':'';
+    return `<div class="case-reel-card rarity-${rarity}" data-case-reel-index="${index}"${winner}><div class="case-reel-rarity">${frog.rarity}</div><div class="case-reel-art">${frogSvg(frog,{collection:true})}</div><b>${frog.name}</b></div>`;
+  }
+  function buildCaseOpeningReel(item,winner){
+    const total=46,winnerIndex=40,visual=[];
+    for(let i=0;i<total;i++)visual.push(i===winnerIndex?winner:rollCase(item));
+    caseOpeningRuntime.winnerIndex=winnerIndex;
+    els.caseOpeningReel.innerHTML=visual.map((frog,index)=>caseOpeningCard(frog,index,winnerIndex)).join('');
+  }
+  function hideCaseOpening(){
+    clearCaseOpeningWork();caseOpeningRuntime.active=false;caseOpeningRuntime.phase='idle';state.animating=false;
+    els.caseOpeningOverlay.classList.add('hidden');els.caseOpeningOverlay.className='case-opening-overlay hidden';
+    els.caseOpeningClose.classList.add('hidden');els.caseOpeningSkip.classList.add('hidden');
+    refresh();if(els.screens.cases.classList.contains('active'))renderCases();
+  }
+  function equipCaseFrog(id){
+    if(!state.unlockedFrogs.includes(id))return false;
+    const frog=FROGS.find(item=>item.id===id);if(!frog)return false;
+    state.selectedFrog=id;audio.reward();haptic([10,28,18]);setStatus(`${frog.name} equipped!`,'win');refresh();
+    const button=els.caseOpeningResult.querySelector('[data-case-equip]');if(button){button.textContent='EQUIPPED';button.disabled=true;}
+    return true;
+  }
+  function finishCaseOpeningReveal(){
+    if(!caseOpeningRuntime.active||caseOpeningRuntime.phase==='reveal')return;
+    clearCaseOpeningWork();caseOpeningRuntime.phase='reveal';state.animating=false;
+    const {item,frog,duplicate,duplicateCredit}=caseOpeningRuntime,rarity=caseRarityClass(frog.rarity),rank=FROG_RARITY_RANK[frog.rarity]??0;
+    els.caseOpeningOverlay.className=`case-opening-overlay phase-reveal case-opening-rarity-${rarity}`;
+    els.caseOpeningChest.classList.add('hidden');els.caseOpeningReelWrap.classList.add('hidden');els.caseOpeningSkip.classList.add('hidden');els.caseOpeningClose.classList.remove('hidden');
+    els.caseOpeningKicker.textContent=`${frog.rarity} DROP · ${item.name}`;els.caseOpeningTitle.textContent=frog.name;
+    els.caseOpeningSubtitle.textContent=duplicate?'Duplicate converted automatically.':'Added permanently to your Collection.';
+    const duplicateCopy=duplicate?`<span class="case-opening-duplicate">DUPLICATE · +${money(duplicateCredit)} F</span>`:'<span class="case-opening-new">NEW FROG</span>';
+    els.caseOpeningResult.innerHTML=`<div class="case-opening-result-aura"></div><div class="case-opening-result-art">${frogSvg(frog,{collection:true})}</div><div class="case-opening-result-copy"><small>${frog.rarity}</small><h3>${frog.name}</h3>${duplicateCopy}<p>${duplicate?'You already owned this frog, so 50% of its Bank Value was returned to your wallet.':'The frog is yours. Equip it now or view it in Collection.'}</p><div class="case-opening-result-actions"><button class="pressable primary" data-case-equip="${frog.id}">${state.selectedFrog===frog.id?'EQUIPPED':'EQUIP'}</button><button class="pressable secondary" data-case-view="${frog.id}">COLLECTION</button><button class="pressable open-again" data-case-open-again="${item.id}">OPEN AGAIN · ${money(item.cost)} F</button></div></div>`;
+    els.caseOpeningResult.classList.remove('hidden');
+    audio.caseReveal(frog.rarity);haptic(rank>=5?[35,45,70,55,110]:rank>=4?[25,35,55]:[18,25,35]);
+    if(state.effects){confettiBurst(rank>=5?100:rank>=4?70:rank>=3?48:28);screenFeedback('win');}
+    refresh();renderCases();saveState();
+  }
+  function skipCaseOpening(){if(caseOpeningRuntime.active&&caseOpeningRuntime.phase!=='reveal')finishCaseOpeningReveal();}
+  function animateCaseOpeningReel(){
+    if(!caseOpeningRuntime.active)return;
+    caseOpeningRuntime.phase='spin';els.caseOpeningOverlay.classList.remove('phase-intro');els.caseOpeningOverlay.classList.add('phase-spin');els.caseOpeningChest.classList.add('case-opening-chest-open');
+    els.caseOpeningReelWrap.classList.remove('hidden');
+    queueCaseOpening(()=>els.caseOpeningChest.classList.add('hidden'),260);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      if(!caseOpeningRuntime.active||caseOpeningRuntime.phase!=='spin')return;
+      const cards=[...els.caseOpeningReel.children],winner=cards[caseOpeningRuntime.winnerIndex],viewport=els.caseOpeningReelWrap;if(!winner)return finishCaseOpeningReveal();
+      const first=cards[0],second=cards[1],firstCenter=first.offsetLeft+first.offsetWidth/2,step=second?(second.offsetLeft+second.offsetWidth/2)-firstCenter:first.offsetWidth+9;
+      const startX=viewport.clientWidth/2-firstCenter,targetX=viewport.clientWidth/2-(winner.offsetLeft+winner.offsetWidth/2),duration=state.effects?5600:1700,start=performance.now();
+      caseOpeningRuntime.lastTickIndex=-1;caseOpeningRuntime.lastTickAt=0;caseOpeningRuntime.lastHapticAt=0;
+      const frame=now=>{
+        if(!caseOpeningRuntime.active||caseOpeningRuntime.phase!=='spin')return;
+        const p=clamp((now-start)/duration,0,1),ease=1-Math.pow(1-p,4.25),x=startX+(targetX-startX)*ease;
+        els.caseOpeningReel.style.transform=`translate3d(${x}px,0,0)`;
+        const centerInReel=viewport.clientWidth/2-x,index=clamp(Math.round((centerInReel-firstCenter)/step),0,cards.length-1);
+        if(index!==caseOpeningRuntime.lastTickIndex&&now-caseOpeningRuntime.lastTickAt>42){
+          caseOpeningRuntime.lastTickIndex=index;caseOpeningRuntime.lastTickAt=now;audio.caseTick(p);if(p>.34&&now-caseOpeningRuntime.lastHapticAt>85){caseOpeningRuntime.lastHapticAt=now;haptic(4);}
+        }
+        if(p<1){caseOpeningRuntime.raf=requestAnimationFrame(frame);return;}
+        els.caseOpeningReel.style.transform=`translate3d(${targetX}px,0,0)`;winner.classList.add('case-reel-winner');audio.tone(260,.13,'triangle',.055,120);haptic([12,34,28]);queueCaseOpening(finishCaseOpeningReveal,620);
+      };
+      caseOpeningRuntime.raf=requestAnimationFrame(frame);
+    }));
+  }
+  function beginCaseOpening(item,frog,duplicate,duplicateCredit){
+    clearCaseOpeningWork();Object.assign(caseOpeningRuntime,{active:true,phase:'intro',item,frog,duplicate,duplicateCredit,lastTickIndex:-1,lastTickAt:0,lastHapticAt:0});
+    state.animating=true;buildCaseOpeningReel(item,frog);
+    els.caseOpeningOverlay.className=`case-opening-overlay phase-intro case-opening-case-${item.accent}`;els.caseOpeningClose.classList.add('hidden');els.caseOpeningSkip.classList.add('hidden');
+    els.caseOpeningChest.classList.remove('hidden','case-opening-chest-open');els.caseOpeningReelWrap.classList.add('hidden');els.caseOpeningResult.classList.add('hidden');els.caseOpeningResult.innerHTML='';els.caseOpeningReel.style.transform='translate3d(0,0,0)';
+    els.caseOpeningKicker.textContent='FROGGY CASE OPENING';els.caseOpeningTitle.textContent=item.name;els.caseOpeningSubtitle.textContent='Watch the reel. The center marker decides the reveal.';els.caseOpeningChestEmoji.textContent=item.emoji;
+    audio.start();haptic(12);
+    queueCaseOpening(()=>els.caseOpeningSkip.classList.remove('hidden'),1500);
+    queueCaseOpening(animateCaseOpeningReel,850);
+  }
   function openCase(id){
-    if(anyRoundActive()||state.animating){setStatus('Finish the current game first.','lose');return false;}
+    if(anyRoundActive()||state.animating||caseOpeningRuntime.active){setStatus('Finish the current game or case opening first.','lose');return false;}
     const item=caseById(id);if(!item)return false;
     if(state.level<item.level){setStatus(`Reach level ${item.level} to open the ${item.name}.`,'lose');return false;}
     if(!spendOwnedFunds(item.cost)){setStatus(`You need ${money(item.cost-ownedWalletBalance())} more Froggy.`,'lose');renderCases();return false;}
     const frog=rollCase(item),duplicate=state.unlockedFrogs.includes(frog.id);let duplicateCredit=0;
-    if(duplicate)duplicateCredit=creditBalance(Math.floor(Math.max(0,frog.cost)*.5));
-    else state.unlockedFrogs.push(frog.id);
-    state.casesOpened+=1;
-    state.caseHistory=[{caseId:item.id,frogId:frog.id,duplicate,duplicateCredit},...(state.caseHistory||[])].slice(0,8);
-    audio.reward();haptic(22);if(state.effects)confettiBurst(frog.rarity==='ULTRA'?70:frog.rarity==='MYTHIC'?48:28);
-    setStatus(duplicate?`${frog.name} duplicate · +${money(duplicateCredit)} F returned.`:`${frog.name} unlocked from ${item.name}!`,'win');
-    refresh();renderCases();
-    els.caseReveal?.classList.remove('case-reveal-pop');void els.caseReveal?.offsetWidth;els.caseReveal?.classList.add('case-reveal-pop');
-    requestAnimationFrame(()=>els.caseReveal?.scrollIntoView({behavior:'smooth',block:'start'}));
+    if(duplicate)duplicateCredit=creditBalance(Math.floor(Math.max(0,frog.cost)*.5));else state.unlockedFrogs.push(frog.id);
+    state.casesOpened+=1;state.caseHistory=[{caseId:item.id,frogId:frog.id,duplicate,duplicateCredit},...(state.caseHistory||[])].slice(0,8);
+    saveState();refresh();renderCases();beginCaseOpening(item,frog,duplicate,duplicateCredit);
     return true;
   }
 
@@ -3036,9 +3118,11 @@
     });
     els.caseGrid.addEventListener('click',e=>{const button=e.target.closest('[data-case-open]');if(button)openCase(button.dataset.caseOpen);});
     els.caseReveal.addEventListener('click',e=>{const open=e.target.closest('[data-case-open]');if(open){openCase(open.dataset.caseOpen);return;}const view=e.target.closest('[data-case-view]');if(view)viewCaseFrog(view.dataset.caseView);});
+    els.caseOpeningSkip.addEventListener('click',skipCaseOpening);els.caseOpeningClose.addEventListener('click',hideCaseOpening);
+    els.caseOpeningResult.addEventListener('click',e=>{const equip=e.target.closest('[data-case-equip]');if(equip){equipCaseFrog(equip.dataset.caseEquip);return;}const view=e.target.closest('[data-case-view]');if(view){hideCaseOpening();viewCaseFrog(view.dataset.caseView);return;}const again=e.target.closest('[data-case-open-again]');if(again){const id=again.dataset.caseOpenAgain;hideCaseOpening();setTimeout(()=>openCase(id),80);}});
     els.installButton.addEventListener('click',installGame);
     document.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('click',closeModal));els.modalBackdrop.addEventListener('click',e=>{if(e.target===els.modalBackdrop)closeModal();});
-    window.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();if(state.selectedGame==='crash'){state.crashActive?crashCashOut():startCrash();}else{state.roundActive?jump():startRound();}}if(e.code==='Escape'){if(!els.jobResult.classList.contains('hidden'))closeJobResult();else if(state.crashActive)crashCashOut();else state.roundActive?cashOut():closeModal();}});
+    window.addEventListener('keydown',e=>{if(e.code==='Space'){if(caseOpeningRuntime.active)return;e.preventDefault();if(state.selectedGame==='crash'){state.crashActive?crashCashOut():startCrash();}else{state.roundActive?jump():startRound();}}if(e.code==='Escape'){if(caseOpeningRuntime.active){if(caseOpeningRuntime.phase==='reveal')hideCaseOpening();else skipCaseOpening();return;}if(!els.jobResult.classList.contains('hidden'))closeJobResult();else if(state.crashActive)crashCashOut();else state.roundActive?cashOut():closeModal();}});
     window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;els.installButton.classList.remove('hidden');});
     window.addEventListener('appinstalled',()=>els.installButton.classList.add('hidden'));
   }
@@ -3082,7 +3166,7 @@
       if(document.querySelector('[data-screen="rewards"]')||document.getElementById('rewardsScreen')||document.getElementById('rewardModal')||document.getElementById('spinButton'))throw new Error('Rewards UI still present');
       if(ownerPanelModal.querySelector('[data-owner-action="spins"]')||ownerPanelModal.querySelector('[data-owner-action="unlimited"]'))throw new Error('Reward-wheel owner controls still present');
       const shopFrogs=frogShopItems();for(let i=1;i<shopFrogs.length;i++){if(shopFrogs[i].cost<shopFrogs[i-1].cost)throw new Error('frog shop price order failed');if((FROG_RARITY_RANK[shopFrogs[i].rarity]??99)<(FROG_RARITY_RANK[shopFrogs[i-1].rarity]??99))throw new Error('frog rarity progression failed');}const hill=FROGS.find(f=>f.id==='gigachad');if(!hill||hill.name!=='The Hill Frog'||hill.art!=='assets/the-hill-frog-game-v66.png'||hill.cardArt!=='assets/the-hill-frog-card-v64.webp')throw new Error('The Hill Frog art/name failed');const basicIds=['meadow','river','moss','sand','blue-dart','sunset'];if(!basicIds.every(id=>FROGS.some(f=>f.id===id)))throw new Error('v63 basic frog lineup missing');
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v67 Cases + six-slot mobile nav + v66 approved smiling The Hill Frog gameplay model + v64 polished The Hill Frog Collection portrait + v63 basic frog lineup + The Hill Frog rename, v62 rarity header rows + price/rarity order, v60 Rewards removal, v59 gameplay skin art, v55 early Crash risk, Piggy rates, trusted-time warning, restartable Shift Over dialog, and app-visible no-flight badge';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v68 CS-style case reel + delayed skip + rarity reveal + v67 Cases + six-slot mobile nav + v66 approved smiling The Hill Frog gameplay model + v64 polished The Hill Frog Collection portrait + v63 basic frog lineup + The Hill Frog rename, v62 rarity header rows + price/rarity order, v60 Rewards removal, v59 gameplay skin art, v55 early Crash risk, Piggy rates, trusted-time warning, restartable Shift Over dialog, and app-visible no-flight badge';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 

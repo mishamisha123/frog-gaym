@@ -1,8 +1,6 @@
-# Froggy Leap v67
+# Froggy Leap v68
 
-> **Current-behavior note:** The v67 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
-
-
+> **Current-behavior note:** The v68 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
 
 
@@ -12,6 +10,20 @@
 
 
 
+
+
+
+
+## v68 — CS-style case opening reel
+
+- Replaced instant case results with a full-screen CS-style horizontal frog reel.
+- Case result is determined and saved when OPEN CASE is pressed, then the reel animates toward that locked result; frame rate cannot change the outcome.
+- Added an 850ms case shake/unlock intro, fast-to-slow 5.6-second reel, fixed center marker, card ticking sounds, mobile vibration pulses, and a stronger stop vibration.
+- SKIP appears after 1.5 seconds and jumps directly to the legitimate locked result.
+- Winning frog expands into a rarity-styled reveal with EQUIP, COLLECTION, and OPEN AGAIN actions.
+- Common/Rare, Epic/Legendary, Mythic, and Ultra reveals use increasingly strong sound, glow, haptic, and confetti feedback.
+- The visual reel uses only frogs actually obtainable from the selected case; published case odds and costs are unchanged from v67.
+- PWA asset URLs, refresh helper, service-worker cache, self-test label, and build label bumped to **v68**.
 
 ## v67 — Cases + six-slot mobile navigation
 
