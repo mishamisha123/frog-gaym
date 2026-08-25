@@ -5862,9 +5862,9 @@ input[type="range"]{opacity:1!important;filter:none!important}
 .froggy-cloud-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.froggy-cloud-grid>div{min-width:0;padding:11px 12px;border-radius:14px;background:#092d61;border:1px solid rgba(79,172,255,.25)}.froggy-cloud-grid small{display:block;color:#72cfff;font-size:8px;font-weight:1000;letter-spacing:.1em}.froggy-cloud-grid b{display:block;margin-top:4px;color:#fff;font-size:11px;line-height:1.35;overflow-wrap:anywhere}.froggy-cloud-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.froggy-cloud-button{min-height:42px;padding:0 16px;border-radius:12px;font-weight:1000;letter-spacing:.05em;border:1px solid rgba(127,214,255,.45)}.froggy-cloud-button.hidden{display:none!important}.froggy-cloud-button.primary{color:#0c3526;background:linear-gradient(180deg,#d9ff68,#6ed94b);border-color:#cbff8f}.froggy-cloud-button.secondary{color:#fff;background:linear-gradient(180deg,#438bd8,#1853a0)}.froggy-cloud-button.warning{color:#3b2707;background:linear-gradient(180deg,#ffe06e,#e7a631);border-color:#ffe99b}.froggy-cloud-conflict{display:grid;gap:3px;margin-top:12px;padding:11px 12px;border-radius:12px;background:rgba(140,74,19,.30);border:1px solid rgba(255,192,77,.42);color:#ffe8a4}.froggy-cloud-conflict.hidden{display:none!important}.froggy-cloud-conflict b{font-size:11px;letter-spacing:.08em}.froggy-cloud-conflict span{font-size:10px;line-height:1.4;color:#ffedc1}.froggy-cloud-status{margin:12px 0 0;padding:10px 12px;border-radius:12px;background:rgba(44,133,191,.16);border:1px solid rgba(77,184,245,.22);color:#a9ddff;font-size:10px;font-weight:800}.froggy-cloud-status[data-state="success"]{color:#b9ffbf;background:rgba(56,165,87,.16);border-color:rgba(83,221,116,.32)}.froggy-cloud-status[data-state="warning"]{color:#ffe7a3;background:rgba(205,145,35,.15);border-color:rgba(255,192,75,.28)}.froggy-cloud-status[data-state="error"]{color:#ffc1ce;background:rgba(190,48,80,.16);border-color:rgba(255,93,126,.31)}.froggy-cloud-status[data-state="loading"]{color:#b7eaff}.froggy-cloud-note{margin:8px 1px 0;color:#6187ae;font-size:9px;line-height:1.45}
 @media(max-width:900px){.froggy-cloud-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.froggy-cloud-panel{padding:12px!important}.froggy-cloud-head{flex-direction:column;gap:7px}.froggy-cloud-head h2{font-size:18px}.froggy-cloud-grid{grid-template-columns:1fr}.froggy-cloud-actions{display:grid;grid-template-columns:1fr}.froggy-cloud-button{width:100%}}
-\n\n/* ================================================================\n   v99 — mobile-only compact Plinko payout rail\n   Preserve v98 one-screen structure and all desktop rules.\n   ================================================================ */\n@media(max-width:759px){\n  #playScreen.plinko-mode .plinko-board{\n    --plinko-rail-zone:48px!important;\n  }\n  #playScreen.plinko-mode .plinko-multipliers{\n    bottom:8px!important;\n    width:92%!important;\n    gap:2px!important;\n  }\n  #playScreen.plinko-mode .plinko-slot{\n    height:28px!important;\n    min-height:28px!important;\n    border-radius:5px!important;\n    padding:0 1px!important;\n  }\n  #playScreen.plinko-mode .plinko-slot b{\n    font-size:8px!important;\n    line-height:1!important;\n    letter-spacing:-.07em!important;\n    transform:scaleX(.88)!important;\n  }\n  #playScreen.plinko-mode .plinko-multipliers[data-slots="15"]{\n    width:93%!important;\n    gap:1.5px!important;\n  }\n  #playScreen.plinko-mode .plinko-multipliers[data-slots="15"] .plinko-slot b{\n    font-size:7.5px!important;\n    transform:scaleX(.82)!important;\n  }\n  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"]{\n    width:94%!important;\n    gap:1px!important;\n  }\n  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"] .plinko-slot{\n    height:27px!important;\n    min-height:27px!important;\n  }\n  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"] .plinko-slot b{\n    font-size:7px!important;\n    transform:scaleX(.76)!important;\n  }\n}\n@media(max-width:390px){\n  #playScreen.plinko-mode .plinko-board{--plinko-rail-zone:45px!important}\n  #playScreen.plinko-mode .plinko-multipliers{bottom:7px!important;width:94%!important;gap:1px!important}\n  #playScreen.plinko-mode .plinko-slot{height:26px!important;min-height:26px!important}\n  #playScreen.plinko-mode .plinko-slot b{font-size:7.5px!important}\n  #playScreen.plinko-mode .plinko-multipliers[data-slots="15"] .plinko-slot b{font-size:7px!important}\n  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"] .plinko-slot b{font-size:6.5px!important;transform:scaleX(.72)!important}\n}\n
+\n\n/* ================================================================\n   v100 — mobile-only compact Plinko payout rail\n   Preserve v98 one-screen structure and all desktop rules.\n   ================================================================ */\n@media(max-width:759px){\n  #playScreen.plinko-mode .plinko-board{\n    --plinko-rail-zone:48px!important;\n  }\n  #playScreen.plinko-mode .plinko-multipliers{\n    bottom:8px!important;\n    width:92%!important;\n    gap:2px!important;\n  }\n  #playScreen.plinko-mode .plinko-slot{\n    height:28px!important;\n    min-height:28px!important;\n    border-radius:5px!important;\n    padding:0 1px!important;\n  }\n  #playScreen.plinko-mode .plinko-slot b{\n    font-size:8px!important;\n    line-height:1!important;\n    letter-spacing:-.07em!important;\n    transform:scaleX(.88)!important;\n  }\n  #playScreen.plinko-mode .plinko-multipliers[data-slots="15"]{\n    width:93%!important;\n    gap:1.5px!important;\n  }\n  #playScreen.plinko-mode .plinko-multipliers[data-slots="15"] .plinko-slot b{\n    font-size:7.5px!important;\n    transform:scaleX(.82)!important;\n  }\n  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"]{\n    width:94%!important;\n    gap:1px!important;\n  }\n  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"] .plinko-slot{\n    height:27px!important;\n    min-height:27px!important;\n  }\n  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"] .plinko-slot b{\n    font-size:7px!important;\n    transform:scaleX(.76)!important;\n  }\n}\n@media(max-width:390px){\n  #playScreen.plinko-mode .plinko-board{--plinko-rail-zone:45px!important}\n  #playScreen.plinko-mode .plinko-multipliers{bottom:7px!important;width:94%!important;gap:1px!important}\n  #playScreen.plinko-mode .plinko-slot{height:26px!important;min-height:26px!important}\n  #playScreen.plinko-mode .plinko-slot b{font-size:7.5px!important}\n  #playScreen.plinko-mode .plinko-multipliers[data-slots="15"] .plinko-slot b{font-size:7px!important}\n  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"] .plinko-slot b{font-size:6.5px!important;transform:scaleX(.72)!important}\n}\n
 /* ================================================================
-   v99 — mobile-only compact Plinko payout rail (final overrides)
+   v100 — mobile-only compact Plinko payout rail (final overrides)
    Preserve the v98 one-screen mobile layout and all desktop rules.
    ================================================================ */
 @media(max-width:759px){
@@ -5916,4 +5916,91 @@ input[type="range"]{opacity:1!important;filter:none!important}
   #playScreen.plinko-mode .plinko-slot b{font-size:7.5px!important}
   #playScreen.plinko-mode .plinko-multipliers[data-slots="15"] .plinko-slot b{font-size:7px!important}
   #playScreen.plinko-mode .plinko-multipliers[data-slots="17"] .plinko-slot b{font-size:6.5px!important;transform:scaleX(.72)!important}
+}
+
+/* ================================================================
+   v102 — mobile Plinko multiplier box resize
+   Desktop is intentionally untouched. Shrink/center the payout rail
+   progressively as slot count grows so Medium/High no longer crowd frame.
+   ================================================================ */
+@media (max-width: 759px) {
+  #playScreen.plinko-mode .plinko-board {
+    --plinko-rail-zone: 42px !important;
+  }
+
+  #playScreen.plinko-mode .plinko-multipliers {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    bottom: 7px !important;
+    width: 91% !important;
+    gap: 2px !important;
+    justify-content: center !important;
+  }
+
+  #playScreen.plinko-mode .plinko-slot {
+    height: 25px !important;
+    min-height: 25px !important;
+    border-radius: 5px !important;
+    padding: 0 !important;
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+  }
+
+  #playScreen.plinko-mode .plinko-slot b {
+    font-size: 7.5px !important;
+    line-height: 1 !important;
+    letter-spacing: -0.08em !important;
+    transform: scaleX(.82) !important;
+    transform-origin: center !important;
+    white-space: nowrap !important;
+  }
+
+  #playScreen.plinko-mode .plinko-multipliers[data-slots="15"] {
+    width: 88% !important;
+    gap: 1.5px !important;
+  }
+  #playScreen.plinko-mode .plinko-multipliers[data-slots="15"] .plinko-slot {
+    height: 24px !important;
+    min-height: 24px !important;
+  }
+  #playScreen.plinko-mode .plinko-multipliers[data-slots="15"] .plinko-slot b {
+    font-size: 7px !important;
+    transform: scaleX(.76) !important;
+  }
+
+  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"] {
+    width: 84% !important;
+    gap: 1px !important;
+  }
+  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"] .plinko-slot {
+    height: 23px !important;
+    min-height: 23px !important;
+    border-radius: 4px !important;
+  }
+  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"] .plinko-slot b {
+    font-size: 6.6px !important;
+    letter-spacing: -0.10em !important;
+    transform: scaleX(.70) !important;
+  }
+}
+
+@media (max-width: 390px) {
+  #playScreen.plinko-mode .plinko-board {
+    --plinko-rail-zone: 40px !important;
+  }
+  #playScreen.plinko-mode .plinko-multipliers {
+    width: 90% !important;
+    bottom: 6px !important;
+  }
+  #playScreen.plinko-mode .plinko-multipliers[data-slots="15"] {
+    width: 86% !important;
+  }
+  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"] {
+    width: 82% !important;
+  }
+  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"] .plinko-slot b {
+    font-size: 6.25px !important;
+    transform: scaleX(.68) !important;
+  }
 }

@@ -36,14 +36,18 @@ service cloud.firestore {
     function validFriendRequestCreate(requestId) {
       let data = request.resource.data;
       return data.keys().hasOnly([
-          'fromUid', 'toUid', 'fromUsername', 'toUsername',
+          'fromUid', 'toUid', 'participants', 'fromUsername', 'toUsername',
           'status', 'createdAt', 'schemaVersion'
         ])
         && request.auth.uid == data.fromUid
         && data.fromUid != data.toUid
+        && data.participants is list
+        && data.participants.size() == 2
+        && data.participants[0] == data.fromUid
+        && data.participants[1] == data.toUid
         && requestId == data.fromUid + '__' + data.toUid
         && data.status == 'pending'
-        && data.schemaVersion == 1
+        && data.schemaVersion == 2
         && data.createdAt == request.time
         && exists(/databases/$(database)/documents/profiles/$(data.fromUid))
         && exists(/databases/$(database)/documents/profiles/$(data.toUid))
@@ -123,7 +127,11 @@ service cloud.firestore {
     }
 
     match /friendRequests/{requestId} {
-      allow read: if requestParticipant(resource.data);
+      // List queries must use where('participants', 'array-contains', request.auth.uid).
+      // This aligns the query with the rule, so Firestore can prove every result is private to the player.
+      allow read: if signedIn()
+        && resource.data.participants is list
+        && request.auth.uid in resource.data.participants;
       allow create: if signedIn() && validFriendRequestCreate(requestId);
       allow update: if signedIn()
         && request.auth.uid == resource.data.toUid
@@ -132,7 +140,9 @@ service cloud.firestore {
         && request.resource.data.status == 'accepted'
         && request.resource.data.respondedAt == request.time
         && existsAfter(/databases/$(database)/documents/friendships/$(requestId));
-      allow delete: if requestParticipant(resource.data)
+      allow delete: if signedIn()
+        && resource.data.participants is list
+        && request.auth.uid in resource.data.participants
         && !existsAfter(/databases/$(database)/documents/friendships/$(requestId));
     }
 

@@ -12,6 +12,7 @@ import {
   getFirestore,
   doc,
   getDoc,
+  setDoc,
   runTransaction,
   serverTimestamp,
   collection,
@@ -80,7 +81,7 @@ const cloudStatus = byId('froggyCloudStatus');
 const GAME_STORAGE_KEY = 'froggy-leap-deluxe-v3';
 const CLOUD_DEVICE_KEY = 'froggy-cloud-device-v1';
 const CLOUD_META_PREFIX = 'froggy-cloud-meta-v1:';
-const CLOUD_BUILD_VERSION = 'v99';
+const CLOUD_BUILD_VERSION = 'v101';
 const CLOUD_AUTOSAVE_DELAY_MS = 12000;
 
 let auth;
@@ -348,7 +349,7 @@ function renderSocialLists() {
 }
 
 function socialPermissionMessage() {
-  setFriendsStatus('Firestore is blocking Friends v1. Publish the included v99 Firestore rules, then reload.', 'error');
+  setFriendsStatus('Firestore is blocking Friends v1. Publish the included v101 Firestore rules, then reload.', 'error');
 }
 
 async function loadPublicProfile(user) {
@@ -374,7 +375,7 @@ async function loadPublicProfile(user) {
     const code = String(error?.code || '');
     renderProfile(null);
     if (code.includes('permission-denied')) {
-      setStatus('Firestore is blocking player profiles. Publish the included v99 Firestore rules, then reload.', 'error');
+      setStatus('Firestore is blocking player profiles. Publish the included v101 Firestore rules, then reload.', 'error');
     } else if (code.includes('unavailable')) {
       setStatus('Could not reach Firestore. Check your connection and try again.', 'error');
     } else {
@@ -442,7 +443,7 @@ async function claimUsername(user, rawUsername) {
       setStatus('That Froggy username belongs to another player.', 'warning');
     } else if (code.includes('permission-denied')) {
       setUsernameHint('Firestore rules have not been published yet.', 'error');
-      setStatus('Publish the included v99 Firestore rules in Firebase, then try claiming the username again.', 'error');
+      setStatus('Publish the included v101 Firestore rules in Firebase, then try claiming the username again.', 'error');
     } else if (code.includes('unavailable')) {
       setUsernameHint('You must be online to claim a username.', 'error');
       setStatus('Username claiming requires an internet connection.', 'error');
@@ -462,31 +463,23 @@ function subscribeSocial(user, profile) {
   friendsPanel?.classList.remove('hidden');
   setFriendsStatus('Friends are live. Search an exact Froggy username to connect.', 'success');
 
-  const incomingQuery = query(collection(db, 'friendRequests'), where('toUid', '==', user.uid));
-  const outgoingQuery = query(collection(db, 'friendRequests'), where('fromUid', '==', user.uid));
+  // A single participant query matches the Firestore read rule exactly.
+  // This avoids collection-query permission failures caused by fromUid/toUid OR rules.
+  const requestsQuery = query(collection(db, 'friendRequests'), where('participants', 'array-contains', user.uid));
   const friendsQuery = query(collection(db, 'friendships'), where('members', 'array-contains', user.uid));
 
-  socialUnsubs.push(onSnapshot(incomingQuery, (snapshot) => {
+  socialUnsubs.push(onSnapshot(requestsQuery, (snapshot) => {
     incomingRequests = new Map();
-    snapshot.forEach((snap) => {
-      const data = snap.data();
-      if (data.status === 'pending') incomingRequests.set(data.fromUid, { id: snap.id, ...data });
-    });
-    renderSocialLists();
-  }, (error) => {
-    console.error('Incoming friend requests listener failed', error);
-    if (String(error?.code || '').includes('permission-denied')) socialPermissionMessage();
-  }));
-
-  socialUnsubs.push(onSnapshot(outgoingQuery, (snapshot) => {
     outgoingRequests = new Map();
     snapshot.forEach((snap) => {
       const data = snap.data();
-      if (data.status === 'pending') outgoingRequests.set(data.toUid, { id: snap.id, ...data });
+      if (data.status !== 'pending') return;
+      if (data.toUid === user.uid) incomingRequests.set(data.fromUid, { id: snap.id, ...data });
+      else if (data.fromUid === user.uid) outgoingRequests.set(data.toUid, { id: snap.id, ...data });
     });
     renderSocialLists();
   }, (error) => {
-    console.error('Outgoing friend requests listener failed', error);
+    console.error('Friend requests listener failed', error);
     if (String(error?.code || '').includes('permission-denied')) socialPermissionMessage();
   }));
 
@@ -572,31 +565,24 @@ async function sendFriendRequest(targetProfile) {
 
   setFriendsStatus(`Sending friend request to @${targetProfile.username}…`, 'loading');
   try {
-    await runTransaction(db, async (transaction) => {
-      const [directSnap, reverseSnap, directFriendSnap, reverseFriendSnap] = await Promise.all([
-        transaction.get(directRef),
-        transaction.get(reverseRef),
-        transaction.get(directFriendRef),
-        transaction.get(reverseFriendRef)
-      ]);
-      if (directFriendSnap.exists() || reverseFriendSnap.exists()) throw Object.assign(new Error('already-friends'), { froggyCode: 'already-friends' });
-      if (directSnap.exists() || reverseSnap.exists()) throw Object.assign(new Error('request-exists'), { froggyCode: 'request-exists' });
-      transaction.set(directRef, {
-        fromUid: user.uid,
-        toUid: targetProfile.uid,
-        fromUsername: activeProfile.username,
-        toUsername: targetProfile.username,
-        status: 'pending',
-        createdAt: serverTimestamp(),
-        schemaVersion: 1
-      });
+    // Create directly. Firestore rules atomically reject reverse requests or existing friendships,
+    // so the client never needs permission to probe missing private documents first.
+    await setDoc(directRef, {
+      fromUid: user.uid,
+      toUid: targetProfile.uid,
+      participants: [user.uid, targetProfile.uid],
+      fromUsername: activeProfile.username,
+      toUsername: targetProfile.username,
+      status: 'pending',
+      createdAt: serverTimestamp(),
+      schemaVersion: 2
     });
     setFriendsStatus(`Friend request sent to @${targetProfile.username}.`, 'success');
   } catch (error) {
     console.error('Friend request send failed', error);
     if (error?.froggyCode === 'already-friends') setFriendsStatus(`You are already friends with @${targetProfile.username}.`, 'warning');
     else if (error?.froggyCode === 'request-exists') setFriendsStatus('A friend request between these players already exists.', 'warning');
-    else if (String(error?.code || '').includes('permission-denied')) socialPermissionMessage();
+    else if (String(error?.code || '').includes('permission-denied')) setFriendsStatus('Request blocked: you may already have a request/friendship with this player, or v101 Firestore rules are not published yet.', 'warning');
     else setFriendsStatus('Could not send that friend request.', 'error');
   }
 }
@@ -610,11 +596,9 @@ async function acceptFriendRequest(item) {
   try {
     await runTransaction(db, async (transaction) => {
       const requestSnap = await transaction.get(requestRef);
-      const friendshipSnap = await transaction.get(friendshipRef);
       if (!requestSnap.exists()) throw Object.assign(new Error('missing-request'), { froggyCode: 'missing-request' });
       const current = requestSnap.data();
       if (current.status !== 'pending' || current.toUid !== user.uid) throw Object.assign(new Error('request-changed'), { froggyCode: 'request-changed' });
-      if (friendshipSnap.exists()) return;
       const now = serverTimestamp();
       transaction.update(requestRef, { status: 'accepted', respondedAt: now });
       transaction.set(friendshipRef, {
@@ -1013,7 +997,7 @@ async function uploadLocalToCloud({ force = false, automatic = false } = {}) {
       renderCloudConflict('Another device updated the cloud before this upload finished. Nothing was overwritten. Choose which save should win.');
     } else if (String(error?.code || '').includes('permission-denied')) {
       setCloudBadge('BLOCKED', 'error');
-      setCloudStatus('Firestore is blocking Cloud Save. Confirm the v99 gameSaves rules are published.', 'error');
+      setCloudStatus('Firestore is blocking Cloud Save. Confirm the v101 gameSaves rules are published.', 'error');
       toggleCloudButton(cloudSyncButton, true);
     } else {
       setCloudBadge('OFFLINE', 'error');
@@ -1037,7 +1021,8 @@ async function loadCloudOntoDevice() {
   try {
     const cloudSave = cloudRemote.save;
     const signature = saveSignature(cloudSave);
-    localStorage.setItem(GAME_STORAGE_KEY, JSON.stringify(cloudSave));
+    const prepared = window.FroggyGame?.prepareCloudRestore?.(cloudSave);
+    if (!prepared) localStorage.setItem(GAME_STORAGE_KEY, JSON.stringify(cloudSave));
     writeCloudMeta(user.uid, cloudRemoteRevision, signature);
     setCloudStatus('Cloud progress loaded. Restarting Froggy Leap…', 'success');
     setTimeout(() => location.reload(), 250);
@@ -1087,7 +1072,7 @@ async function startCloudSave(user) {
       console.error('Cloud save listener failed', error);
       if (String(error?.code || '').includes('permission-denied')) {
         setCloudBadge('BLOCKED', 'error');
-        setCloudStatus('Firestore is blocking Cloud Save. Confirm the v99 gameSaves rules are published.', 'error');
+        setCloudStatus('Firestore is blocking Cloud Save. Confirm the v101 gameSaves rules are published.', 'error');
       }
     });
   } catch (error) {
@@ -1095,7 +1080,7 @@ async function startCloudSave(user) {
     cloudInitialized = false;
     setCloudBadge('ERROR', 'error');
     if (String(error?.code || '').includes('permission-denied')) {
-      setCloudStatus('Firestore is blocking Cloud Save. Confirm the v99 gameSaves rules are published.', 'error');
+      setCloudStatus('Firestore is blocking Cloud Save. Confirm the v101 gameSaves rules are published.', 'error');
     } else {
       setCloudStatus('Could not reach Froggy Cloud. Your local game still works normally.', 'error');
     }
