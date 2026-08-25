@@ -1,12 +1,33 @@
-# Froggy Leap v59
+# Froggy Leap v61
 
-> **Current-behavior note:** The v59 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
-
-
+> **Current-behavior note:** The v61 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
 
 
 
+
+
+
+
+## v61 — Frog shop portrait + rarity/order cleanup
+
+- GigaChad Frog no longer uses the old baked Collection card image with an `ULTRA` label inside the artwork. Collection now uses the clean transparent character sprite over the premium Ultra frame.
+- Frog rarity badges now live in a dedicated strip above the portrait instead of overlapping or disappearing behind the image frame.
+- Frog shop order is enforced from cheapest to most expensive.
+- Frog rarities now rise monotonically with price: Common → Rare → Epic → Legendary → Mythic → Ultra → One of One.
+- Updated early/mid frog rarity assignments to match that progression without changing their prices, level requirements, ownership, saves, or gameplay stats.
+- Added a Rare portrait-frame treatment and v61 regression checks for price order, rarity progression, and clean GigaChad shop art.
+- Removed the obsolete baked GigaChad card image from the shipped assets.
+- PWA asset URLs, refresh helper, and service-worker cache were bumped to v61.
+
+## v60 — Rewards tab removed
+
+- Removed the Rewards tab from the main navigation.
+- Removed the daily reward wheel, streak panel, reward result modal, and their live UI/event hooks.
+- Removed free-spin and unlimited-spin controls from the private owner console.
+- Old reward-wheel save fields are discarded on load so they cannot leave stale UI state behind.
+- Preserves the v59 gameplay/shop skin-art separation, rarity frames, existing economy, saves, Crash balance, Piggy rates, Job behavior, and premium blue redesign.
+- PWA asset URLs, refresh helper, and service-worker cache were bumped to v60.
 
 ## v59 — Proper gameplay sprites + Collection rarity frames
 

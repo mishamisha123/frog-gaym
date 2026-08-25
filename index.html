@@ -7,11 +7,11 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Froggy Leap" />
-  <meta name="description" content="A juicy lily-pad risk game with virtual Froggy currency, unlockable frogs, lakes, daily rewards and offline play." />
+  <meta name="description" content="A juicy lily-pad risk game with virtual Froggy currency, unlockable frogs, lakes and offline play." />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=59-skin-frames" />
+  <link rel="stylesheet" href="styles.css?v=61-shop-order" />
   <title>Froggy Leap</title>
 </head>
 <body>
@@ -102,7 +102,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v59 · FROGGY LEAP</div>
+          <div class="build-version" aria-label="Installed game version">v61 · FROGGY LEAP</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -248,33 +248,6 @@
           <button class="segment" data-collection="vehicles">Vehicles</button>
         </div>
         <div id="collectionGrid" class="collection-grid"></div>
-      </section>
-
-      <section id="rewardsScreen" class="screen" aria-label="Daily rewards">
-        <div class="section-heading">
-          <div><small>COME BACK DAILY</small><h1>Froggy Rewards</h1></div>
-          <div class="reward-heading-actions">
-            <div class="free-spin-pill"><small>FREE SPINS</small><b id="freeSpinCounter">0</b></div>
-            <div class="streak-pill">🔥 <b id="streakLabel">1</b> day streak</div>
-          </div>
-        </div>
-        <div class="reward-hero glass">
-          <div class="reward-copy">
-            <small>DAILY SPIN</small>
-            <h2 id="rewardHeadline">Your reward is ready!</h2>
-            <p id="rewardSubtext">Every slice shows its prize—including a golden 50,000 Froggy jackpot slice.</p>
-            <div class="jackpot-note"><span>★</span><b>50,000 F JACKPOT</b><small>1 in 10 daily spins</small></div>
-          </div>
-          <div id="wheel" class="reward-wheel" aria-label="Daily reward wheel">
-            <div class="wheel-pointer">▼</div>
-            <div id="wheelDisc" class="wheel-disc" aria-label="Prize slices"></div>
-            <button id="spinButton" class="spin-button" type="button"><span>SPIN</span><small>DAILY</small></button>
-          </div>
-        </div>
-        <div class="calendar-card glass">
-          <div class="calendar-title"><b>7-day streak bonus</b><span>Reach day 7 for a guaranteed skin</span></div>
-          <div id="streakDays" class="streak-days"></div>
-        </div>
       </section>
 
       <section id="bankScreen" class="screen" aria-label="Bank">
@@ -475,7 +448,6 @@
       <button class="nav-button active pressable" data-screen="play"><span>🎮</span><small>Games</small></button>
       <button class="nav-button pressable" data-screen="job"><span>🍟</span><small>Job</small></button>
       <button class="nav-button pressable" data-screen="collection"><span>🎒</span><small>Collection</small></button>
-      <button class="nav-button pressable" data-screen="rewards"><span>🎁</span><small>Rewards</small><i id="rewardDot" class="notification-dot"></i></button>
       <button class="nav-button bank-nav-button pressable" data-screen="bank"><span>🏦</span><small>BANK</small><i id="debtDueDot" class="debt-alert hidden" aria-label="Debt payment due">!</i></button>
       <button class="nav-button pressable" data-screen="stats"><span>🏆</span><small>Profile</small></button>
     </nav>
@@ -522,14 +494,6 @@
           <p><b>2.</b> Tap the Share button <span class="share-symbol">□↑</span>.</p>
           <p><b>3.</b> Choose <b>Add to Home Screen</b>.</p>
         </div>
-      </div>
-
-      <div id="rewardModal" class="modal-card reward-modal hidden">
-        <div class="result-icon">🎁</div>
-        <small>DAILY REWARD</small>
-        <h2 id="rewardResultTitle">500 Froggy!</h2>
-        <p id="rewardResultText">Added to your balance.</p>
-        <button class="action-button start pressable" data-close-modal><span>CLAIM</span></button>
       </div>
 
       <div id="loanBuilderModal" class="modal-card loan-builder-modal fixed-action-modal hidden">
@@ -640,6 +604,6 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=59-skin-frames"></script>
+  <script src="app.js?v=61-shop-order"></script>
 </body>
 </html>

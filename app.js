@@ -3,7 +3,7 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v59';
+  const BUILD_VERSION = 'v61';
   console.info(`Froggy Leap ${BUILD_VERSION} loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
@@ -97,23 +97,27 @@
   });
 
   const GIGACHAD_FROG_ART = 'assets/gigachad-frog-sprite-v59.png';
-  const GIGACHAD_FROG_CARD_ART = 'assets/gigachad-frog-card-v59.png';
 
   const FROGS = [
     { id:'classic', name:'Classic Frog', rarity:'COMMON', cost:0, level:1, description:'The bright-eyed mascot with a perfect storybook hop.', colors:['#baff72','#4fb84d'], art:CHARACTER_ART.classic },
-    { id:'king', name:'King Frog', rarity:'ROYAL', cost:5000, level:3, description:'A smug pond monarch in a jeweled crown and velvet cape.', colors:['#d6ef65','#70b944'], art:CHARACTER_ART.king },
-    { id:'robot', name:'Robo Frog', rarity:'EPIC', cost:15000, level:5, description:'Polished alloy, cyan display eyes, and calibrated landing legs.', colors:['#dff6ff','#6d97b3'], art:CHARACTER_ART.robot },
+    { id:'king', name:'King Frog', rarity:'RARE', cost:5000, level:3, description:'A smug pond monarch in a jeweled crown and velvet cape.', colors:['#d6ef65','#70b944'], art:CHARACTER_ART.king },
+    { id:'robot', name:'Robo Frog', rarity:'RARE', cost:15000, level:5, description:'Polished alloy, cyan display eyes, and calibrated landing legs.', colors:['#dff6ff','#6d97b3'], art:CHARACTER_ART.robot },
     { id:'ghost', name:'Ghost Frog', rarity:'EPIC', cost:35000, level:7, description:'A translucent, grumpy little spirit that floats over the pond.', colors:['#b9f5ff','#6bc8e8'], art:CHARACTER_ART.ghost },
-    { id:'dragon', name:'Dragon Frog', rarity:'LEGENDARY', cost:80000, level:10, description:'Tiny wings, bright scales, horns, and enormous confidence.', colors:['#ff9c42','#e75235'], art:CHARACTER_ART.dragon },
+    { id:'dragon', name:'Dragon Frog', rarity:'EPIC', cost:80000, level:10, description:'Tiny wings, bright scales, horns, and enormous confidence.', colors:['#ff9c42','#e75235'], art:CHARACTER_ART.dragon },
     { id:'dino', name:'Dino Frog', rarity:'LEGENDARY', cost:150000, level:13, description:'A chunky prehistoric hopper with spikes and a toothy grin.', colors:['#c8ff70','#4eb650'], art:CHARACTER_ART.dino },
-    { id:'ninja', name:'Ninja Frog', rarity:'EPIC', cost:300000, level:20, description:'Masked, focused, and nearly silent until the landing splash.', colors:['#344348','#161f24'], art:CHARACTER_ART.ninja },
+    { id:'ninja', name:'Ninja Frog', rarity:'LEGENDARY', cost:300000, level:20, description:'Masked, focused, and nearly silent until the landing splash.', colors:['#344348','#161f24'], art:CHARACTER_ART.ninja },
     { id:'alien', name:'Alien Frog', rarity:'MYTHIC', cost:750000, level:30, description:'Stalk eyes, cosmic curiosity, and suspiciously accurate jumps.', colors:['#b7ff67','#5dc84a'], art:CHARACTER_ART.alien },
     { id:'rockstar', name:'Rockstar Frog', rarity:'MYTHIC', cost:2500000, level:50, description:'Spiky hair, reflective shades, and a stadium-sized landing pose.', colors:['#92e95c','#4ba848'], art:CHARACTER_ART.rockstar },
 
-    { id:'gigachad', name:'GigaChad Frog', rarity:'ULTRA', cost:750000000, level:150, description:'The heavyweight flex skin from the Ultra lineup.', colors:['#ffd968','#6b4cff'], art:GIGACHAD_FROG_ART, cardArt:GIGACHAD_FROG_CARD_ART, perks:{jobMoney:.10,jobXp:.10,jobStartMs:1500}, perkLabels:['+10% Job F','+10% Job XP','+1.5s Job start'] },
+    { id:'gigachad', name:'GigaChad Frog', rarity:'ULTRA', cost:750000000, level:150, description:'The heavyweight flex skin from the Ultra lineup.', colors:['#ffd968','#6b4cff'], art:GIGACHAD_FROG_ART, perks:{jobMoney:.10,jobXp:.10,jobStartMs:1500}, perkLabels:['+10% Job F','+10% Job XP','+1.5s Job start'] },
 
     { id:'owner', name:'Owner Frog', rarity:'ONE OF ONE', cost:2000000000, level:3000, description:'A photo-inspired pond boss with cropped dark hair, heavy-lidded brown eyes, stubble, and an unbreakable deadpan stare.', colors:['#8ad467','#4f9d50'], art:CHARACTER_ART.owner }
   ];
+
+  const FROG_RARITY_RANK = Object.freeze({COMMON:0,RARE:1,EPIC:2,LEGENDARY:3,MYTHIC:4,ULTRA:5,'ONE OF ONE':6});
+  function frogShopItems(){
+    return [...FROGS].sort((a,b)=>(a.cost-b.cost)||((FROG_RARITY_RANK[a.rarity]??99)-(FROG_RARITY_RANK[b.rarity]??99))||a.name.localeCompare(b.name));
+  }
 
   const FROG_IMAGES = Object.fromEntries(FROGS.map(frog=>{
     const image=new Image(); image.decoding='async'; image.src=frog.art; return [frog.id,image];
@@ -141,21 +145,6 @@
     {id:'starship',name:'Cosmic Starship',emoji:'🛸',rarity:'MYTHIC',cost:120000000,refillCost:4000000,charges:100,max:100,range:[3.00,15.00],growth:0.110,xpBonus:0.15,freeEvery:10,freeFlights:2,level:60,type:'starship',description:'An advanced starship with 15% bonus Crash XP and two free flights every ten completed flights.'}
   ]);
 
-
-
-  const WHEEL_SEGMENTS = [
-    { label:'300', sub:'FROGGY', color:'#ffca4b', kind:'froggy', amount:300 },
-    { label:'×3', sub:'LUCKY', color:'#59cf92', kind:'lucky', amount:3 },
-    { label:'500', sub:'FROGGY', color:'#4bcddd', kind:'froggy', amount:500 },
-    { label:'750', sub:'FROGGY', color:'#ff788d', kind:'froggy', amount:750 },
-    { label:'FROG', sub:'SKIN', color:'#9c7ee8', kind:'skin' },
-    { label:'1,000', sub:'FROGGY', color:'#5fa7ee', kind:'froggy', amount:1000 },
-    { label:'250', sub:'FROGGY', color:'#9bd94e', kind:'froggy', amount:250 },
-    { label:'×5', sub:'LUCKY', color:'#ed83c4', kind:'lucky', amount:5 },
-    { label:'1,500', sub:'FROGGY', color:'#f29b43', kind:'froggy', amount:1500 },
-    { label:'50K', sub:'JACKPOT', color:'#ffe15d', kind:'jackpot', amount:50000 }
-  ];
-
   const DEFAULT_STATE = {
     balance: 1000,
     bet: 100,
@@ -174,16 +163,11 @@
     bestJump: 0,
     biggestWin: 0,
     rounds: 0,
-    lastDaily: '',
-    streak: 0,
     luckyCharges: 0,
-    wheelRotation: 0,
     tutorialSeen: false,
     redeemedCodes: [],
     safeRunCredits: 0,
     roundSafe: false,
-    unlimitedSpins: false,
-    freeSpins: 0,
     promoCoinClaimed: false,
     safeJumps: 0,
     bestCashMultiplier: 0,
@@ -255,12 +239,10 @@
     jump: $('jumpLabel'), multiplier: $('multiplierLabel'), risk: $('riskLabel'), payout: $('payoutLabel'), danger: $('dangerLabel'), riskFill: $('riskFill'), riskMarker: $('riskMarker'),
     leapGamePane: $('leapGamePane'), crashGamePane: $('crashGamePane'), leapGameTab: $('leapGameTab'), crashGameTab: $('crashGameTab'), crashTabStatus: $('crashTabStatus'), crashLicenseCard: $('crashLicenseCard'), crashGameContent: $('crashGameContent'), unlockCrashButton: $('unlockCrashButton'), crashMultiplierLabel: $('crashMultiplierLabel'), crashPayoutLabel: $('crashPayoutLabel'), crashVehicleLabel: $('crashVehicleLabel'), crashChargesLabel: $('crashChargesLabel'), crashVehicleMaxLabel: $('crashVehicleMaxLabel'), crashBetInput: $('crashBetInput'), crashVehicleSelect: $('crashVehicleSelect'), crashQuickBets: $('crashQuickBets'), crashStartButton: $('crashStartButton'), crashNoFlights: $('crashNoFlights'), crashNoFlightsTitle: $('crashNoFlightsTitle'), crashNoFlightsText: $('crashNoFlightsText'), crashVehicleShopButton: $('crashVehicleShopButton'), crashFlightDock: $('crashFlightDock'), crashCashButton: $('crashCashButton'), crashCashValue: $('crashCashValue'), betDisplay: $('betDisplay'), start: $('startButton'), jumpButton: $('jumpButton'), cash: $('cashButton'), cashValue: $('cashButtonValue'), quickBets: $('quickBets'), betAdjusters: $('betAdjusters'), customBetToggle: $('customBetToggle'), customBetRow: $('customBetRow'), customBetInput: $('customBetInput'), customBetClose: $('customBetClose'), customBetError: $('customBetError'),
     sound: $('soundButton'), bankShortcut: $('bankShortcutButton'), settingsSound: $('settingsSound'), settingsMotion: $('settingsMotion'), luckyBadge: $('luckyBadge'), luckyCount: $('luckyCount'), debtBadge: $('debtBadge'), debtBadgeAmount: $('debtBadgeAmount'), debtBadgeTurns: $('debtBadgeTurns'), debtBadgeStatus: $('debtBadgeStatus'), debtDueDot: $('debtDueDot'), debtDueFlag: $('debtDueFlag'),
-    screens: { play:$('playScreen'), job:$('jobScreen'), collection:$('collectionScreen'), rewards:$('rewardsScreen'), bank:$('bankScreen'), stats:$('statsScreen') },
-    collectionGrid: $('collectionGrid'), spin: $('spinButton'), wheelDisc: $('wheelDisc'), rewardDot: $('rewardDot'), streakLabel: $('streakLabel'), streakDays: $('streakDays'),
-    rewardHeadline: $('rewardHeadline'), rewardSubtext: $('rewardSubtext'), freeSpinCounter: $('freeSpinCounter'), installButton: $('installButton'),
-    modalBackdrop: $('modalBackdrop'), resultModal: $('resultModal'), howToModal: $('howToModal'), installModal: $('installModal'), rewardModal: $('rewardModal'), loanBuilderModal: $('loanBuilderModal'), loanWarningModal: $('loanWarningModal'),
+    screens: { play:$('playScreen'), job:$('jobScreen'), collection:$('collectionScreen'), bank:$('bankScreen'), stats:$('statsScreen') },
+    collectionGrid: $('collectionGrid'), installButton: $('installButton'),
+    modalBackdrop: $('modalBackdrop'), resultModal: $('resultModal'), howToModal: $('howToModal'), installModal: $('installModal'), loanBuilderModal: $('loanBuilderModal'), loanWarningModal: $('loanWarningModal'),
     resultIcon: $('resultIcon'), resultKicker: $('resultKicker'), resultTitle: $('resultTitle'), resultAmount: $('resultAmount'), resultProfit: $('resultProfit'), resultText: $('resultText'), resultButton: $('resultButton'),
-    rewardResultTitle: $('rewardResultTitle'), rewardResultText: $('rewardResultText'),
     profileFrog: $('profileFrog'), bigProfileFrog: $('bigProfileFrog'), currentFrogName: $('currentFrogName'),
     totalJumpsStat: $('totalJumpsStat'), bestJumpStat: $('bestJumpStat'), biggestWinStat: $('biggestWinStat'), roundsStat: $('roundsStat'), nextLevelBonusStat: $('nextLevelBonusStat'), debtAmountLabel: $('debtAmountLabel'), debtInstallmentLabel: $('debtInstallmentLabel'), debtTurnsLabel: $('debtTurnsLabel'), debtPayoffLabel: $('debtPayoffLabel'), debtInterestSavedLabel: $('debtInterestSavedLabel'), debtLimitLabel: $('debtLimitLabel'), creditTierCeilingLabel: $('creditTierCeilingLabel'), creditScoreLabel: $('creditScoreLabel'), creditScoreGradeLabel: $('creditScoreGradeLabel'), creditLimitFactorLabel: $('creditLimitFactorLabel'), creditTierLabel: $('creditTierLabel'), creditTierProgressFill: $('creditTierProgressFill'), creditHistoryLabel: $('creditHistoryLabel'), creditNextTierLabel: $('creditNextTierLabel'), skinAssetLabel: $('skinAssetLabel'), lakeAssetLabel: $('lakeAssetLabel'), vehicleAssetLabel: $('vehicleAssetLabel'), licenseAssetLabel: $('licenseAssetLabel'), piggyAssetLabel: $('piggyAssetLabel'), activePledgeList: $('activePledgeList'), debtMessage: $('debtMessage'), borrowedWalletBankLabel: $('borrowedWalletBankLabel'), activeLoanRateLabel: $('activeLoanRateLabel'), activeLoanCard: $('activeLoanCard'), loanPaymentDock: $('loanPaymentDock'), loanPaymentDockStatus: $('loanPaymentDockStatus'), openLoanBuilderButton: $('openLoanBuilderButton'), loanEntryHeadline: $('loanEntryHeadline'), loanEntrySubtext: $('loanEntrySubtext'), repayInstallmentButton: $('repayInstallmentButton'), repayAllButton: $('repayAllButton'),
     bankLoansTab: $('bankLoansTab'), bankPiggyTab: $('bankPiggyTab'), bankLoansPane: $('bankLoansPane'), bankPiggyPane: $('bankPiggyPane'), bankTotalWealthLabel: $('bankTotalWealthLabel'), piggyBalanceLabel: $('piggyBalanceLabel'), piggyWalletLabel: $('piggyWalletLabel'), piggyNextInterestLabel: $('piggyNextInterestLabel'), piggyRoundsLabel: $('piggyRoundsLabel'), piggyRateModeLabel: $('piggyRateModeLabel'), piggyRateSummary: $('piggyRateSummary'), piggyProgressFill: $('piggyProgressFill'), piggyTransferKicker: $('piggyTransferKicker'), piggyTransferAmountLabel: $('piggyTransferAmountLabel'), piggyTransferSlider: $('piggyTransferSlider'), piggyTransferInput: $('piggyTransferInput'), piggyTransferButton: $('piggyTransferButton'), piggyMessage: $('piggyMessage'),
@@ -273,8 +255,6 @@
   };
 
   function deepClone(value) { return JSON.parse(JSON.stringify(value)); }
-  function todayKey(date = new Date()) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`; }
-  function yesterdayKey() { const d = new Date(); d.setDate(d.getDate()-1); return todayKey(d); }
   function clamp(n,min,max){ return Math.max(min,Math.min(max,n)); }
   function lerp(a,b,t){ return a+(b-a)*t; }
   function easeOutBack(t){ const c1=1.70158,c3=c1+1; return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2); }
@@ -382,17 +362,6 @@
     return true;
   }
 
-  function renderWheel(){
-    const size=WHEEL_SEGMENTS.length, step=360/size;
-    els.wheelDisc.style.background=`conic-gradient(${WHEEL_SEGMENTS.map((seg,i)=>`${seg.color} ${i*step}deg ${(i+1)*step}deg`).join(',')})`;
-    els.wheelDisc.innerHTML=WHEEL_SEGMENTS.map((seg,i)=>{
-      const angle=(i*step+step/2)*Math.PI/180;
-      const x=50+34*Math.sin(angle), y=50-34*Math.cos(angle);
-      return `<span class="wheel-label ${seg.kind==='jackpot'?'jackpot':''}" style="--x:${x.toFixed(2)}%;--y:${y.toFixed(2)}%"><b>${seg.label}</b><small>${seg.sub}</small></span>`;
-    }).join('');
-    els.wheelDisc.style.transform=`rotate(${state.wheelRotation||0}deg)`;
-  }
-
   function loadState(){
     if (TEST_MODE) return deepClone(DEFAULT_STATE);
     try {
@@ -404,8 +373,7 @@
       merged.roundSafe = false;
       merged.redeemedCodes = Array.isArray(merged.redeemedCodes) ? merged.redeemedCodes.map(String).filter(code=>!LEGACY_REPEATABLE_CODES.has(code)) : [];
       merged.safeRunCredits = Number.isFinite(merged.safeRunCredits) ? Math.max(0, Math.floor(merged.safeRunCredits)) : 0;
-      merged.unlimitedSpins = Boolean(merged.unlimitedSpins);
-      merged.freeSpins = Number.isFinite(merged.freeSpins) ? Math.max(0, Math.floor(merged.freeSpins)) : 0;
+      ['lastDaily','streak','wheelRotation','unlimitedSpins','freeSpins'].forEach(key=>delete merged[key]);
       merged.promoCoinClaimed = Boolean(merged.promoCoinClaimed);
       merged.safeJumps = Number.isFinite(merged.safeJumps) ? Math.max(0, Math.floor(merged.safeJumps)) : 0;
       merged.bestCashMultiplier = Number.isFinite(merged.bestCashMultiplier) ? Math.max(0, merged.bestCashMultiplier) : 0;
@@ -1114,8 +1082,6 @@
   let forcedOutcome = null;
   let installPrompt = null;
   let collectionMode = 'frogs';
-  let wheelSpinning = false;
-  let currentSpinSource = null;
   const session = {startedAt:Date.now(), rounds:0, wins:0, losses:0, net:0, lossStreak:0, reminded:false};
 
   function setStatus(text,kind=''){
@@ -1820,8 +1786,6 @@
   }
 
   function resetAfterDebtDefault(previousDebt){
-    wheelSpinning=false;
-    currentSpinSource=null;
     state=deepClone(DEFAULT_STATE);
     localStorage.removeItem(STORAGE_KEY);
     session.startedAt=Date.now();
@@ -1832,7 +1796,6 @@
     session.lossStreak=0;
     session.reminded=false;
     scene.reset();
-    renderWheel();
     renderCollection();
     setDebtMessage(`Debt default on ${money(previousDebt)} F reset the save. Fresh start: level 1 and 1,000 Froggy.`,'error');
     setStatus('Debt default: progress reset to a fresh pond.','lose');
@@ -2051,7 +2014,7 @@
     const crashUnlocked=gameUnlocked('crash'),crashFree=crashUnlockIsFree();els.crashLicenseCard.classList.toggle('hidden',crashUnlocked);els.crashGameContent.classList.toggle('hidden',!crashUnlocked);els.crashTabStatus.textContent=crashUnlocked?'UNLOCKED':`${compactMoney(CRASH_LICENSE_COST)} / LV${CRASH_UNLOCK_LEVEL}`;els.unlockCrashButton.textContent=crashFree?`UNLOCK FREE AT LEVEL ${CRASH_UNLOCK_LEVEL}`:`PAY ${money(CRASH_LICENSE_COST)} F TO UNLOCK`;els.unlockCrashButton.disabled=anyRoundActive()||(!crashFree&&own<CRASH_LICENSE_COST);
     const leapMode=state.selectedGame!=='crash';els.leapGamePane.classList.toggle('hidden',!leapMode);els.crashGamePane.classList.toggle('hidden',leapMode);els.leapGameTab.classList.toggle('active',leapMode);els.crashGameTab.classList.toggle('active',!leapMode);
     refreshCrashHud();
-    refreshDaily(); refreshEngagement(); saveState();
+    refreshEngagement(); saveState();
   }
 
   let levelToastTimer=0;
@@ -2199,7 +2162,7 @@
     els.resultProfit.classList.toggle('hidden',!profit);els.resultProfit.classList.toggle('negative',/^[-−]/.test(profit));els.resultProfit.querySelector('small').textContent=profitLabel;els.resultProfit.querySelector('b').textContent=profit||'';
     els.resultText.textContent=text;openModal(els.resultModal);
   }
-  function modalCards(){return [els.resultModal,els.howToModal,els.installModal,els.rewardModal,els.loanBuilderModal,els.loanWarningModal,ownerAccessModal,ownerPanelModal].filter(Boolean);}
+  function modalCards(){return [els.resultModal,els.howToModal,els.installModal,els.loanBuilderModal,els.loanWarningModal,ownerAccessModal,ownerPanelModal].filter(Boolean);}
   function openModal(modal){els.modalBackdrop.classList.remove('hidden');modalCards().forEach(m=>m.classList.add('hidden'));modal.classList.remove('hidden');}
   function closeModal(){els.modalBackdrop.classList.add('hidden');modalCards().forEach(m=>m.classList.add('hidden'));}
   function screenFeedback(kind){if(!state.effects)return;els.flash.className=`flash-layer flash-${kind}`;els.gameFrame.classList.toggle('shake',kind==='lose');setTimeout(()=>{els.flash.className='flash-layer';els.gameFrame.classList.remove('shake');},500);}
@@ -2576,7 +2539,7 @@
 
   function navigate(screen){
     if(screen!=='play')els.customBetRow.classList.add('hidden');
-    Object.entries(els.screens).forEach(([key,node])=>node.classList.toggle('active',key===screen));document.querySelectorAll('.nav-button').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));audio.tap();if(screen!=='job'&&jobRuntime.active)endJobShift('quit');if(screen==='job'){renderJob();requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'auto'}));}if(screen==='collection')renderCollection();if(screen==='play')refresh();if(screen==='rewards')refreshDaily();if(screen==='bank'){if(state.debtDue)setBankPane('loans');refresh();}if(screen==='stats')refresh();
+    Object.entries(els.screens).forEach(([key,node])=>node.classList.toggle('active',key===screen));document.querySelectorAll('.nav-button').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));audio.tap();if(screen!=='job'&&jobRuntime.active)endJobShift('quit');if(screen==='job'){renderJob();requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'auto'}));}if(screen==='collection')renderCollection();if(screen==='play')refresh();if(screen==='bank'){if(state.debtDue)setBankPane('loans');refresh();}if(screen==='stats')refresh();
   }
 
   function collectionResaleValue(kind,item){
@@ -2641,7 +2604,7 @@
         return `<article class="collection-card vehicle-card tier-${item.rarity.toLowerCase()} ${selected?'selected':''} ${modelPledged?'bank-pledged':''}" data-item="${item.id}"><span class="rarity">${item.rarity}</span>${modelPledged?'<span class="pledged-lock">🔒 MODEL PLEDGED</span>':''}<div class="collection-art vehicle-shop-art">${vehicleSvg(item)}<i>${item.max.toFixed(0)}× REDLINE</i></div><h3>${item.name}</h3><p>${item.description}</p><div class="vehicle-economy-grid"><span><small>MODEL PRICE</small><b>${money(item.cost)} F</b></span><span><small>MODEL BANK VALUE</small><b>${money(vehicleCollateralValue(item))} F</b></span><span><small>REFILL PACK</small><b>${item.charges} · ${money(item.refillCost)} F</b></span><span><small>SUGGESTED PULLOUT</small><b>${item.range[0].toFixed(2)}×–${item.range[1].toFixed(2)}×</b></span></div><span class="vehicle-charge-count">${charges} flights available · flights have 0 F Bank Value</span><span class="vehicle-perk-line">${perk}${milestone}</span><div class="vehicle-shop-actions">${ownershipButton}${refillButton}${sellButton}</div></article>`;
       }).join('');return;
     }
-    const items=collectionMode==='frogs'?FROGS:LAKES,unlocked=collectionMode==='frogs'?state.unlockedFrogs:state.unlockedLakes,selected=collectionMode==='frogs'?state.selectedFrog:state.selectedLake;
+    const items=collectionMode==='frogs'?frogShopItems():LAKES,unlocked=collectionMode==='frogs'?state.unlockedFrogs:state.unlockedLakes,selected=collectionMode==='frogs'?state.selectedFrog:state.selectedLake;
     els.collectionGrid.innerHTML=items.map(item=>{
       const owned=unlocked.includes(item.id),equipped=selected===item.id,canLevel=state.level>=item.level;
       const action=equipped?'EQUIPPED':owned?'EQUIP':canLevel?`UNLOCK · ${money(item.cost)} F`:`LEVEL ${item.level} REQUIRED`;
@@ -2651,7 +2614,7 @@
       const sellValue=collectionResaleValue(collectionMode,item);
       const sellButton=owned?`<button class="collection-action collection-sell pressable" data-collection-sell="${collectionMode}|${item.id}" ${(pledged||defaultItem)?'disabled':''}>${pledged?'PLEDGED · CANNOT SELL':defaultItem?'DEFAULT · CANNOT SELL':`SELL · ${money(sellValue)} F`}</button>`:'';
       const art=collectionMode==='frogs'?frogSvg(item,{collection:true}):`<span class="lake-preview lake-preview-${item.id}" role="img" aria-label="${item.name} environment preview"><img src="assets/lake-preview-${item.id}.webp" alt="" loading="lazy"><i class="lake-preview-glass"></i><i class="lake-preview-name">${item.emoji} ${item.name}</i></span>`,tier=String(item.rarity||'common').toLowerCase().replace(/[^a-z0-9]+/g,'-'),collateral=collectionMode==='frogs'&&item.id!=='classic'?`<span class="collateral-value">${pledged?'🔒 PLEDGED · ':''}BANK VALUE · ${money(skinCollateralValue(item))} F</span>`:collectionMode==='lakes'&&item.cost>0?`<span class="collateral-value">${pledged?'🔒 PLEDGED · ':''}BANK VALUE · ${money(lakeCollateralValue(item))} F</span>`:'',perkBox=collectionMode==='frogs'&&Array.isArray(item.perkLabels)&&item.perkLabels.length?`<div class="frog-perk-box"><b>${equipped?'ACTIVE PERKS':'PERKS · ACTIVE WHEN EQUIPPED'}</b>${item.perkLabels.map(label=>`<span>✦ ${label}</span>`).join('')}</div>`:'';
-      return `<article class="collection-card ${collectionMode==='lakes'?'lake':''} tier-${tier} ${equipped?'selected':''}" data-item="${item.id}" style="--card-a:${item.colors?item.colors[0]:item.a};--card-b:${item.colors?item.colors[1]:item.b}"><span class="rarity">${item.rarity}</span><div class="collection-art">${art}<i class="portrait-spark s1"></i><i class="portrait-spark s2"></i></div><h3>${item.name}</h3><p>${item.description}</p>${perkBox}${collateral}<div class="collection-card-actions"><button class="collection-action pressable ${actionClass}" data-collection-action="${item.id}" ${equipped||(!canLevel&&!owned)?'disabled':''}>${action}</button>${sellButton}</div></article>`;
+      return `<article class="collection-card ${collectionMode==='frogs'?'frog-card':'lake'} tier-${tier} ${equipped?'selected':''}" data-item="${item.id}" style="--card-a:${item.colors?item.colors[0]:item.a};--card-b:${item.colors?item.colors[1]:item.b}"><span class="rarity">${item.rarity}</span><div class="collection-art">${art}<i class="portrait-spark s1"></i><i class="portrait-spark s2"></i></div><h3>${item.name}</h3><p>${item.description}</p>${perkBox}${collateral}<div class="collection-card-actions"><button class="collection-action pressable ${actionClass}" data-collection-action="${item.id}" ${equipped||(!canLevel&&!owned)?'disabled':''}>${action}</button>${sellButton}</div></article>`;
     }).join('');
   }
 
@@ -2784,7 +2747,6 @@
     ownerButtonValue('xp',`${compactMoney(state.xp)} XP`,`Current XP: ${money(state.xp)}`);
     ownerButtonValue('levels',`Lv ${compactMoney(state.level)}`,`Player Level ${money(state.level)}`);
     ownerButtonValue('job-levels',`Job Lv ${compactMoney(state.jobLevel)}`,`Job Level ${money(state.jobLevel)} · ${money(jobPay())} F/fry`);
-    ownerButtonValue('spins',`${compactMoney(state.freeSpins)} spins`,`Free spins: ${money(state.freeSpins)}`);
     ownerButtonValue('safe',`${compactMoney(state.safeRunCredits)} protected`,`Protected rounds: ${money(state.safeRunCredits)}`);
     ownerButtonValue('lucky',`${compactMoney(state.luckyCharges)} lucky`,`Lucky jumps: ${money(state.luckyCharges)}`);
     ownerButtonValue('job-money-boost',moneyBoost.label,`Job money boost: ${moneyBoost.label}`);
@@ -2798,7 +2760,6 @@
     ownerButtonValue('unlock-games',`${state.unlockedGames.length}/${GAME_LICENSES.length}`);
     ownerButtonValue('unlock-everything',`${state.unlockedFrogs.length+state.unlockedLakes.length+state.ownedVehicles.length+state.unlockedGames.length}/${FROGS.length+LAKES.length+VEHICLES.length+GAME_LICENSES.length}`);
     ownerButtonValue('flights',`${compactMoney(VEHICLES.reduce((total,item)=>total+vehicleCharges(item.id),0))} total`);
-    ownerButtonValue('unlimited',state.unlimitedSpins?'ON':'OFF');
     ownerButtonValue('debt',`${compactMoney(state.debt)} F`,`Debt: ${money(state.debt)} F`);
   }
 
@@ -2862,9 +2823,9 @@
       const result=applyOwnerOperation(Math.max(1,state.jobLevel),raw,{minimum:1,maximum:MAX_OWNER_LEVEL});
       if(!result)return ownerStatus(ownerOperationHelp(),'error');
       state.jobLevel=result.target;state.jobXp=0;message=`${ownerOperationResult('Job Level',result)} Pay is now ${money(jobPay())} F per fry.`;
-    }else if(action==='spins'||action==='safe'||action==='lucky'){
-      const key=action==='spins'?'freeSpins':action==='safe'?'safeRunCredits':'luckyCharges';
-      const label=action==='spins'?'Free spins':action==='safe'?'Protected rounds':'Lucky jumps';
+    }else if(action==='safe'||action==='lucky'){
+      const key=action==='safe'?'safeRunCredits':'luckyCharges';
+      const label=action==='safe'?'Protected rounds':'Lucky jumps';
       const result=applyOwnerOperation(state[key],raw,{minimum:0,maximum:Number.MAX_SAFE_INTEGER});
       if(!result)return ownerStatus(ownerOperationHelp(),'error');
       state[key]=result.target;message=ownerOperationResult(label,result);
@@ -2883,8 +2844,6 @@
       tickPiggyClock();invalidateUntrustedClosedAccrual();state.piggyInterestRateBonus=0;message=`Piggy boost removed. Rates are back to ${formatPiggyRate(piggyOpenRate())} open and ${formatPiggyRate(piggyClosedRate())} closed.`;
     }else if(action==='flights'){
       VEHICLES.forEach(item=>{state.ownedVehicles.includes(item.id)||state.ownedVehicles.push(item.id);state.vehicleCharges[item.id]=Math.min(Number.MAX_SAFE_INTEGER,vehicleCharges(item.id)+100);});message='Added 100 flights to every vehicle.';
-    }else if(action==='unlimited'){
-      state.unlimitedSpins=!state.unlimitedSpins;message=state.unlimitedSpins?'Unlimited wheel spins enabled.':'Unlimited wheel spins disabled.';
     }else if(action==='debt'){
       clearOwnerDebt();return;
     }else if(action.startsWith('unlock-')){
@@ -2929,11 +2888,11 @@
       <div class="owner-grid">
         <section data-owner-group><b>Wallet / Piggy</b><input value="1000000" inputmode="text" autocomplete="off" spellcheck="false" aria-label="Wallet or Piggy operation"><div><button data-owner-action="wallet"><span>Wallet F</span><small data-owner-value>0 F</small></button><button data-owner-action="piggy"><span>Piggy F</span><small data-owner-value>0 F</small></button></div></section>
         <section data-owner-group><b>Progression</b><input value="1000" inputmode="text" autocomplete="off" spellcheck="false" aria-label="XP or level operation"><div><button data-owner-action="xp"><span>XP</span><small data-owner-value>0 XP</small></button><button data-owner-action="levels"><span>Levels</span><small data-owner-value>Lv 1</small></button><button data-owner-action="job-levels"><span>Job levels</span><small data-owner-value>Job Lv 1</small></button></div></section>
-        <section data-owner-group><b>Rewards</b><input value="10" inputmode="text" autocomplete="off" spellcheck="false" aria-label="Reward operation"><div><button data-owner-action="spins"><span>Free spins</span><small data-owner-value>0 spins</small></button><button data-owner-action="safe"><span>Protected</span><small data-owner-value>0 protected</small></button><button data-owner-action="lucky"><span>Lucky jumps</span><small data-owner-value>0 lucky</small></button></div></section>
+        <section data-owner-group><b>Bonuses</b><input value="10" inputmode="text" autocomplete="off" spellcheck="false" aria-label="Bonus operation"><div><button data-owner-action="safe"><span>Protected</span><small data-owner-value>0 protected</small></button><button data-owner-action="lucky"><span>Lucky jumps</span><small data-owner-value>0 lucky</small></button></div></section>
         <section data-owner-group><b>Job boosts</b><input value="1" inputmode="text" autocomplete="off" spellcheck="false" aria-label="Job boost operation"><div><button data-owner-action="job-money-boost"><span>Money boost</span><small data-owner-value>Off</small></button><button data-owner-action="job-xp-boost"><span>XP boost</span><small data-owner-value>Off</small></button><button data-owner-action="job-boost-reset"><span>Clear boosts</span><small data-owner-value>F 1× · XP 1×</small></button></div></section>
         <section data-owner-group><b>Piggy interest</b><div><button data-owner-action="piggy-plus"><span>+1% boost</span><small data-owner-value>+0% boost</small></button><button data-owner-action="piggy-reset"><span>Remove boost</span><small data-owner-value>0.2% / 0.1%</small></button></div></section>
         <section data-owner-group><b>Unlock content</b><div><button data-owner-action="unlock-frogs"><span>All frogs</span><small data-owner-value>0/0</small></button><button data-owner-action="unlock-lakes"><span>All lakes</span><small data-owner-value>0/0</small></button><button data-owner-action="unlock-vehicles"><span>All vehicles</span><small data-owner-value>0/0</small></button><button data-owner-action="unlock-games"><span>All games</span><small data-owner-value>0/0</small></button><button data-owner-action="unlock-everything"><span>Unlock everything</span><small data-owner-value>0/0</small></button></div></section>
-        <section data-owner-group><b>Extras</b><div><button data-owner-action="flights"><span>+100 all flights</span><small data-owner-value>0 total</small></button><button data-owner-action="unlimited"><span>Unlimited spins</span><small data-owner-value>OFF</small></button><button data-owner-action="debt"><span>Clear loan</span><small data-owner-value>0 F</small></button></div></section>
+        <section data-owner-group><b>Extras</b><div><button data-owner-action="flights"><span>+100 all flights</span><small data-owner-value>0 total</small></button><button data-owner-action="debt"><span>Clear loan</span><small data-owner-value>0 F</small></button></div></section>
       </div>
       <p class="owner-status" data-owner-status role="status" aria-live="polite">Ready.</p>`;
     els.modalBackdrop.append(ownerAccessModal,ownerPanelModal);
@@ -2953,55 +2912,8 @@
     return true;
   }
 
-  function hasDailySpin(){return state.lastDaily!==todayKey();}
-  function dailyAvailable(){return state.unlimitedSpins||state.freeSpins>0||hasDailySpin();}
-  function freeSpinDisplay(){return state.unlimitedSpins?'unlimintos':String(state.freeSpins);}
-  function refreshDaily(){
-    const ready=dailyAvailable(),unlimited=state.unlimitedSpins,daily=hasDailySpin(),free=state.freeSpins;
-    els.rewardDot.classList.toggle('hidden',!ready);els.spin.disabled=!ready||wheelSpinning;
-    els.freeSpinCounter.textContent=freeSpinDisplay();
-    els.spin.querySelector('span').textContent=wheelSpinning?'SPINNING':ready?'SPIN':'DONE';
-    els.spin.querySelector('small').textContent=wheelSpinning?'GOOD LUCK':unlimited?'UNLIMITED':daily?'DAILY':free>0?`FREE ×${free}`:'TOMORROW';
-    els.rewardHeadline.textContent=unlimited?'Unlimited spins unlocked!':daily?'Your daily reward is ready!':free>0?`${free} free spin${free===1?'':'s'} ready!`:'Come back tomorrow!';
-    els.rewardSubtext.textContent=unlimited?'Spin as often as you like. The free-spin counter shows unlimintos.':daily?'Your daily spin is ready. Extra promo spins are shown in the counter above.':free>0?'Each tap consumes one free spin after your daily spin has been used.':`Day ${state.streak} claimed. Your streak is safe.`;
-    els.streakLabel.textContent=Math.max(1,state.streak);
-    els.streakDays.innerHTML=Array.from({length:7},(_,i)=>`<div class="streak-day ${i<Math.min(state.streak,7)?'claimed':''} ${i===Math.min(state.streak,7)-1?'today':''}">${i===6?'🎁':i+1}</div>`).join('');
-  }
-
-  function rewardFromSegment(index,lockedFrogs){
-    const segment=WHEEL_SEGMENTS[index];
-    if(segment.kind==='skin'){
-      if(lockedFrogs.length)return{type:'skin',item:lockedFrogs[Math.floor(Math.random()*lockedFrogs.length)]};
-      return{type:'froggy',amount:2000};
-    }
-    if(segment.kind==='lucky')return{type:'lucky',amount:segment.amount};
-    return{type:'froggy',amount:segment.amount};
-  }
-
-  function pickDailyReward(){
-    const nextStreak=state.unlimitedSpins?1:(state.lastDaily===yesterdayKey()?state.streak+1:1);
-    const lockedFrogs=FROGS.filter(f=>!state.unlockedFrogs.includes(f.id)&&state.level>=f.level);
-    if(nextStreak%7===0&&lockedFrogs.length)return{index:4,reward:{type:'skin',item:lockedFrogs[Math.floor(Math.random()*lockedFrogs.length)]}};
-    const index=Math.floor(Math.random()*WHEEL_SEGMENTS.length);
-    return{index,reward:rewardFromSegment(index,lockedFrogs)};
-  }
-
-  function spinDaily(){
-    if(!dailyAvailable()||wheelSpinning)return;wheelSpinning=true;currentSpinSource=state.unlimitedSpins?'unlimited':hasDailySpin()?'daily':'free';audio.unlock();els.spin.disabled=true;els.spin.querySelector('span').textContent='SPINNING';els.spin.querySelector('small').textContent='GOOD LUCK';
-    const result=pickDailyReward(),step=360/WHEEL_SEGMENTS.length,center=result.index*step+step/2,current=((state.wheelRotation%360)+360)%360,target=(360-center)%360,delta=(target-current+360)%360;
-    state.wheelRotation+=1440+delta;els.wheelDisc.style.transform=`rotate(${state.wheelRotation}deg)`;audio.reward();haptic([10,60,10]);setTimeout(()=>claimDaily(result.reward),TEST_MODE?1:4050);
-  }
-  function claimDaily(reward){
-    if(currentSpinSource===null)currentSpinSource=state.unlimitedSpins?'unlimited':hasDailySpin()?'daily':'free';
-    wheelSpinning=false;const previous=state.lastDaily;if(currentSpinSource==='daily'){state.streak=previous===yesterdayKey()?state.streak+1:1;state.lastDaily=todayKey();}else if(currentSpinSource==='free'){state.freeSpins=Math.max(0,state.freeSpins-1);}currentSpinSource=null;let title,text;
-    if(reward.type==='froggy'){state.balance+=reward.amount;title=reward.amount===50000?'JACKPOT — 50,000 Froggy!':`${money(reward.amount)} Froggy!`;text=reward.amount===50000?'You landed on the golden jackpot slice. Ribbit-rich!':'Added to your virtual balance.';}
-    else if(reward.type==='lucky'){state.luckyCharges+=reward.amount;title='Lucky Charm!';text=`The next ${reward.amount} jumps each get 5% less risk.`;}
-    else{if(!state.unlockedFrogs.includes(reward.item.id))state.unlockedFrogs.push(reward.item.id);title=`${reward.item.name} unlocked!`;text='Find it in your frog collection.';}
-    addXp(30);audio.reward();confettiBurst(reward.type==='froggy'&&reward.amount===50000?180:70);if(reward.type==='froggy'&&reward.amount===50000){screenFeedback('win');haptic([30,40,30,40,80]);}els.rewardResultTitle.textContent=title;els.rewardResultText.textContent=text;refresh();openModal(els.rewardModal);
-  }
-
   function toggleSound(){state.sound=!state.sound;audio.enabled=state.sound;if(state.sound)audio.tap();refresh();}
-  function resetProgress(){if(!confirm('Reset all Froggy, skins, lakes, stats, and daily progress?'))return;wheelSpinning=false;currentSpinSource=null;state=deepClone(DEFAULT_STATE);localStorage.removeItem(STORAGE_KEY);scene.reset();renderWheel();refresh();renderCollection();setStatus('Fresh pond, fresh start.');navigate('play');}
+  function resetProgress(){if(!confirm('Reset all Froggy, skins, lakes, and stats?'))return;state=deepClone(DEFAULT_STATE);localStorage.removeItem(STORAGE_KEY);scene.reset();refresh();renderCollection();setStatus('Fresh pond, fresh start.');navigate('play');}
 
   function installGame(){
     if(installPrompt){installPrompt.prompt();installPrompt.userChoice.finally(()=>{installPrompt=null;els.installButton.classList.add('hidden');});}
@@ -3028,7 +2940,7 @@
       const sell=e.target.closest('[data-collection-sell]');if(sell){const [kind,id]=sell.dataset.collectionSell.split('|');sellCollectionItem(kind,id);return;}
       const b=e.target.closest('[data-collection-action]');if(b)collectionAction(b.dataset.collectionAction);
     });
-    els.spin.addEventListener('click',spinDaily);els.installButton.addEventListener('click',installGame);
+    els.installButton.addEventListener('click',installGame);
     document.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('click',closeModal));els.modalBackdrop.addEventListener('click',e=>{if(e.target===els.modalBackdrop)closeModal();});
     window.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();if(state.selectedGame==='crash'){state.crashActive?crashCashOut():startCrash();}else{state.roundActive?jump():startRound();}}if(e.code==='Escape'){if(!els.jobResult.classList.contains('hidden'))closeJobResult();else if(state.crashActive)crashCashOut();else state.roundActive?cashOut():closeModal();}});
     window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;els.installButton.classList.remove('hidden');});
@@ -3070,7 +2982,10 @@
       els.jobIntro.classList.add('hidden');els.jobBag.classList.remove('hidden');jobRuntime.active=false;jobRuntime.shiftRoundCounted=true;els.jobResult.classList.remove('hidden');els.jobResult.dispatchEvent(new MouseEvent('click',{bubbles:true}));if(!els.jobResult.classList.contains('hidden')||els.jobIntro.classList.contains('hidden')||!els.jobBag.classList.contains('hidden')||jobRuntime.shiftRoundCounted)throw new Error('Shift Over dismissal did not restore a new-shift start state');startJobShift();if(!jobRuntime.active||!els.jobIntro.classList.contains('hidden'))throw new Error('new shift could not start after dismissing Shift Over');endJobShift('quit');closeJobResult();
       showResult({icon:'🪂',kicker:'TEST',title:'Crash profit',amount:'150 F returned',profit:'+50 F',text:'Profit is separate.'});if(els.resultProfit.classList.contains('hidden')||els.resultProfit.querySelector('b').textContent!=='+50 F')throw new Error('separate Crash profit failed');closeModal();
       if(CRASH_MIN_POINT!==1.01)throw new Error('Crash minimum point failed');
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v59 separated gameplay skin art + rarity frames, v55 early Crash risk, Piggy rates, trusted-time warning, restartable Shift Over dialog, and app-visible no-flight badge';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      if(document.querySelector('[data-screen="rewards"]')||document.getElementById('rewardsScreen')||document.getElementById('rewardModal')||document.getElementById('spinButton'))throw new Error('Rewards UI still present');
+      if(ownerPanelModal.querySelector('[data-owner-action="spins"]')||ownerPanelModal.querySelector('[data-owner-action="unlimited"]'))throw new Error('Reward-wheel owner controls still present');
+      const shopFrogs=frogShopItems();for(let i=1;i<shopFrogs.length;i++){if(shopFrogs[i].cost<shopFrogs[i-1].cost)throw new Error('frog shop price order failed');if((FROG_RARITY_RANK[shopFrogs[i].rarity]??99)<(FROG_RARITY_RANK[shopFrogs[i-1].rarity]??99))throw new Error('frog rarity progression failed');}const giga=FROGS.find(f=>f.id==='gigachad');if(!giga||giga.cardArt)throw new Error('GigaChad shop art must use clean sprite');
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v61 frog shop art + price/rarity order, v60 Rewards removal, v59 gameplay skin art, v55 early Crash risk, Piggy rates, trusted-time warning, restartable Shift Over dialog, and app-visible no-flight badge';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 
@@ -3088,10 +3003,10 @@
   window.addEventListener('online',()=>{void syncTrustedPiggyTime();});
   window.addEventListener('pagehide',()=>{tickPiggyClock();saveState();});
   window.addEventListener('beforeunload',()=>{tickPiggyClock();saveState();});
-  renderWheel();createOwnerUi();bind();setupInstall();setGameMode(state.selectedGame);refresh();renderCollection();scene.reset();
+  createOwnerUi();bind();setupInstall();setGameMode(state.selectedGame);refresh();renderCollection();scene.reset();
   if(pendingOfflinePiggyResult?.cycles>0){setPiggyMessage(pendingOfflinePiggyResult.message,pendingOfflinePiggyResult.interest>0?'success':'');if(pendingOfflinePiggyResult.interest>0)setStatus(pendingOfflinePiggyResult.message,'win');}
   if(!state.tutorialSeen&&!TEST_MODE){state.tutorialSeen=true;saveState();setTimeout(()=>openModal(els.howToModal),600);}
   if(TEST_MODE)runSelfTest();
 
-  window.FroggyGame={version:BUILD_VERSION,selectedFrog,activeSkinPerks,skinJobMoneyMultiplier,skinJobXpMultiplier,skinJobStartBonusMs,skinLeapXp,skinCrashXp,skinPiggyRateBonus,jobPay,jobXpPerFry,jobXpNeeded,activateJobMoneyBoost,activateJobXpBoost,startJobShift,endJobShift,finishJobShiftRound,extendJobShiftTime,collectionResaleValue,sellCollectionItem,compactMoney,selectVehicle,buyVehicleFlights,getState:()=>deepClone(state),setGameMode,unlockGame,startCrash,crashCashOut,crashLose,setCrashBet,crashPayoutFor,selectBet,setBetAmount,adjustBet,applyCustomBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,spinDaily,creditBalance,takeLoan,repayDebt,completeDebtTurn,debtInstallment,debtLimit,availableCredit,maxSingleLoan,collateralBreakdown,collateralLoanLimit,allocateRoundStake,ownedWalletBalance,finishCompletedRound,earlyPayoffAmount,earlyPayoffCashRequired,earlyPayoffSavings,loanQuote,piggyLoanReserve,piggyTransferMaximum,transferPiggy,advancePiggyBankRound,selectedVehicle,vehicleCharges,pledgedVehicleFlights,availableVehicleFlights,vehicleOwned,collateralSelectionValue,completeVehicleFlight,vehicleCrashXp,advancePiggyTime,tickPiggyClock,trustedClosedElapsed,piggyOpenRate,piggyClosedRate,ensureCrashLevelUnlock,autoSelectCollateral,noUsableVehicleFlights,openVehicleShop,setBankPane,wheelSegments:deepClone(WHEEL_SEGMENTS),reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();refresh();}};
+  window.FroggyGame={version:BUILD_VERSION,selectedFrog,activeSkinPerks,skinJobMoneyMultiplier,skinJobXpMultiplier,skinJobStartBonusMs,skinLeapXp,skinCrashXp,skinPiggyRateBonus,jobPay,jobXpPerFry,jobXpNeeded,activateJobMoneyBoost,activateJobXpBoost,startJobShift,endJobShift,finishJobShiftRound,extendJobShiftTime,collectionResaleValue,sellCollectionItem,compactMoney,selectVehicle,buyVehicleFlights,getState:()=>deepClone(state),setGameMode,unlockGame,startCrash,crashCashOut,crashLose,setCrashBet,crashPayoutFor,selectBet,setBetAmount,adjustBet,applyCustomBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,creditBalance,takeLoan,repayDebt,completeDebtTurn,debtInstallment,debtLimit,availableCredit,maxSingleLoan,collateralBreakdown,collateralLoanLimit,allocateRoundStake,ownedWalletBalance,finishCompletedRound,earlyPayoffAmount,earlyPayoffCashRequired,earlyPayoffSavings,loanQuote,piggyLoanReserve,piggyTransferMaximum,transferPiggy,advancePiggyBankRound,selectedVehicle,vehicleCharges,pledgedVehicleFlights,availableVehicleFlights,vehicleOwned,collateralSelectionValue,completeVehicleFlight,vehicleCrashXp,advancePiggyTime,tickPiggyClock,trustedClosedElapsed,piggyOpenRate,piggyClosedRate,ensureCrashLevelUnlock,autoSelectCollateral,noUsableVehicleFlights,openVehicleShop,setBankPane,reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();refresh();}};
 })();
