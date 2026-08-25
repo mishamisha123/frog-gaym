@@ -3,7 +3,7 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v74';
+  const BUILD_VERSION = 'v75';
   console.info(`Froggy Leap ${BUILD_VERSION} loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
@@ -39,6 +39,7 @@
     high:Object.freeze([129.08,25.82,6.45,2.58,0.65,0.26,0.06,0.26,0.65,2.58,6.45,25.82,129.08])
   });
   const MAX_LOAN_PAYOUT = 5000000000;
+  const MAX_CASE_LUCK_MULTIPLIER = 100;
   const BASE_UNSECURED_CREDIT = 5000;
   const COLLATERAL_PLEDGE_VERSION = 2;
   const CREDIT_TIERS = Object.freeze([
@@ -147,18 +148,34 @@
   const CASE_ODDS_SCALE = 10000;
   function caseById(id){return CASES.find(item=>item.id===id)||null;}
   function caseDropRows(item){return item.drops.map(([frogId,weight])=>({frog:FROGS.find(f=>f.id===frogId),weight})).filter(row=>row.frog);}
-  function caseRaritySummary(item){
-    const totals={};caseDropRows(item).forEach(({frog,weight})=>{totals[frog.rarity]=(totals[frog.rarity]||0)+weight;});
-    return Object.entries(totals).sort((a,b)=>(FROG_RARITY_RANK[a[0]]??99)-(FROG_RARITY_RANK[b[0]]??99)).map(([rarity,weight])=>`${rarity} ${(weight/100).toFixed(weight%100?1:0)}%`).join(' · ');
+  function caseLuckMultiplier(){return clamp(Number(state?.caseLuckMultiplier)||1,1,MAX_CASE_LUCK_MULTIPLIER);}
+  function caseLuckWeight(frog,baseWeight){
+    const rank=clamp(FROG_RARITY_RANK[frog?.rarity]??0,0,6),luck=caseLuckMultiplier();
+    // 1× preserves the published base odds exactly. Above 1×, each rarity tier compounds the
+    // multiplier once more, making high-rarity pulls meaningfully more likely in private mod mode.
+    return Math.max(0,Number(baseWeight)||0)*Math.pow(luck,rank);
   }
+  function caseAdjustedDropRows(item){
+    const rows=caseDropRows(item).map(row=>({...row,adjustedWeight:caseLuckWeight(row.frog,row.weight)})),total=rows.reduce((sum,row)=>sum+row.adjustedWeight,0)||1;
+    return rows.map(row=>({...row,probability:row.adjustedWeight/total}));
+  }
+  function formatCaseOdds(probability){
+    const pct=Math.max(0,Number(probability)||0)*100;
+    return pct>=10?`${pct.toFixed(1).replace(/\.0$/,'')}%`:pct>=1?`${pct.toFixed(2).replace(/0$/,'').replace(/\.0$/,'')}%`:`${pct.toFixed(3).replace(/0+$/,'').replace(/\.$/,'')}%`;
+  }
+  function caseRaritySummary(item){
+    const totals={};caseAdjustedDropRows(item).forEach(({frog,probability})=>{totals[frog.rarity]=(totals[frog.rarity]||0)+probability;});
+    return Object.entries(totals).sort((a,b)=>(FROG_RARITY_RANK[a[0]]??99)-(FROG_RARITY_RANK[b[0]]??99)).map(([rarity,probability])=>`${rarity} ${formatCaseOdds(probability)}`).join(' · ');
+  }
+  function caseInventoryCount(id){return Math.max(0,Math.floor(Number(state?.caseInventory?.[id])||0));}
   function randomCaseUnit(){
     try{if(globalThis.crypto?.getRandomValues){const value=new Uint32Array(1);globalThis.crypto.getRandomValues(value);return value[0]/4294967296;}}catch{}
     return Math.random();
   }
   function rollCase(item){
-    const roll=Math.floor(randomCaseUnit()*CASE_ODDS_SCALE);let cursor=0;
-    for(const [frogId,weight] of item.drops){cursor+=weight;if(roll<cursor)return FROGS.find(f=>f.id===frogId)||FROGS[0];}
-    const last=item.drops[item.drops.length-1];return FROGS.find(f=>f.id===last[0])||FROGS[0];
+    const rows=caseAdjustedDropRows(item),total=rows.reduce((sum,row)=>sum+row.adjustedWeight,0),roll=randomCaseUnit()*total;let cursor=0;
+    for(const row of rows){cursor+=row.adjustedWeight;if(roll<cursor)return row.frog||FROGS[0];}
+    return rows.at(-1)?.frog||FROGS[0];
   }
 
   const FROG_IMAGES = Object.fromEntries(FROGS.map(frog=>{
@@ -281,6 +298,9 @@
     loanCollateralAtOrigination: 0,
     casesOpened: 0,
     caseHistory: [],
+    caseInventory: {pond:0,neon:0,ultra:0},
+    caseLuckMultiplier: 1,
+    bankLimitDisabled: false,
     loanRate: 0.08
   };
 
@@ -567,6 +587,9 @@
       }
       merged.collateralPledgeVersion=COLLATERAL_PLEDGE_VERSION;
       merged.loanCollateralAtOrigination=Math.max(0,Math.floor(Number(raw.loanCollateralAtOrigination)||0));
+      merged.caseInventory=Object.fromEntries(CASES.map(item=>[item.id,Math.max(0,Math.floor(Number(raw.caseInventory?.[item.id])||0))]));
+      merged.caseLuckMultiplier=clamp(Number(raw.caseLuckMultiplier)||1,1,MAX_CASE_LUCK_MULTIPLIER);
+      merged.bankLimitDisabled=Boolean(raw.bankLimitDisabled);
       merged.loanRate=LOAN_TOTAL_INTEREST_RATE;
       return merged;
     } catch { return deepClone(DEFAULT_STATE); }
@@ -1072,7 +1095,7 @@
   }
   function drawPlinkoEgg(c,egg,L){
     const speed=Math.hypot(egg.vx||0,egg.vy||0),r=L.eggRadius,squash=egg.bounce?1-Math.sin(Math.min(1,egg.bounce)*Math.PI)*.13:1,stretch=clamp(1+speed/2500,1,1.10);
-    c.save();c.translate(egg.x,egg.y);c.rotate(egg.rotation||0);c.scale(stretch,squash/stretch);c.shadowColor='rgba(120,255,188,.72)';c.shadowBlur=13;const g=c.createRadialGradient(-r*.34,-r*.48,r*.15,0,0,r*1.35);g.addColorStop(0,'#fbfff5');g.addColorStop(.46,'#dff5c0');g.addColorStop(1,'#70bd60');c.fillStyle=g;c.beginPath();c.ellipse(0,0,r*.78,r,0,0,Math.PI*2);c.fill();c.shadowBlur=0;c.fillStyle='#4f9b45';[[-r*.34,-r*.28,r*.20],[r*.36,-r*.08,r*.16],[0,r*.42,r*.14]].forEach(([sx,sy,sr])=>{c.beginPath();c.arc(sx,sy,sr,0,Math.PI*2);c.fill();});c.fillStyle='rgba(255,255,255,.72)';c.beginPath();c.ellipse(-r*.28,-r*.48,r*.18,r*.10,-.45,0,Math.PI*2);c.fill();c.restore();
+    c.save();c.translate(egg.x,egg.y);c.rotate(egg.rotation||0);c.scale(stretch,squash/stretch);c.shadowColor='rgba(120,255,188,.72)';c.shadowBlur=13;const g=c.createRadialGradient(-r*.34,-r*.48,r*.15,0,0,r*1.35);g.addColorStop(0,'#fbfff5');g.addColorStop(.46,'#dff5c0');g.addColorStop(1,'#70bd60');c.fillStyle=g;c.beginPath();c.ellipse(0,0,r*.78,r,0,0,Math.PI*2);c.fill();c.shadowBlur=0;c.fillStyle='#4f9b45';[[-r*.34,-r*.28,r*.20],[r*.36,-r*.08,r*.16],[0,r*.42,r*.14]].forEach(([sx,sy,sr])=>{c.beginPath();c.arc(sx,sy,sr,0,Math.PI*2);c.fill();});c.fillStyle='rgba(255,255,255,.72)';c.beginPath();c.ellipse(-r*.28,-r*.48,r*.18,r*.10,-.45,0,Math.PI*2);c.fill();if(egg.protected){c.strokeStyle='#ffe66b';c.lineWidth=2.2;c.shadowColor='rgba(255,226,83,.9)';c.shadowBlur=9;c.beginPath();c.ellipse(0,0,r*.88,r*1.1,0,0,Math.PI*2);c.stroke();c.shadowBlur=0;}c.restore();
   }
   function drawPlinkoBoard(){
     const canvas=els.plinkoCanvas;if(!canvas||canvas.clientWidth<10)return;const c=canvas.getContext('2d'),L=plinkoLayout();c.clearRect(0,0,L.w,L.h);
@@ -1098,10 +1121,22 @@
     if(finished.length){const ids=new Set(finished.map(egg=>egg.id));plinkoRuntime.eggs=plinkoRuntime.eggs.filter(egg=>!ids.has(egg.id));for(const egg of finished)finishPlinkoEgg(egg);state.plinkoActive=plinkoRuntime.eggs.length>0;refresh();}
     drawPlinkoBoard();plinkoRuntime.raf=requestAnimationFrame(animatePlinko);
   }
+  function rollPlinkoPath(risk,{protectedRound=false}={}){
+    const table=plinkoTable(risk);
+    // Rejection sampling keeps the original 12 independent 50/50 system. A protected egg simply
+    // conditions that same distribution on landing in a genuinely profitable (>1×) pocket.
+    for(let attempt=0;attempt<2048;attempt++){
+      const path=Array.from({length:PLINKO_ROWS},()=>Math.random()<.5?0:1),slot=path.reduce((sum,v)=>sum+v,0);
+      if(!protectedRound||table[slot]>1)return {path,slot};
+    }
+    const winningSlots=table.map((m,i)=>m>1?i:-1).filter(i=>i>=0),slot=winningSlots[Math.floor(Math.random()*winningSlots.length)];
+    const path=Array(PLINKO_ROWS).fill(0);for(let i=0;i<slot;i++)path[i]=1;return {path,slot};
+  }
   function startPlinko(){
     audio.unlock();if(state.roundActive||state.crashActive)return false;if(plinkoRuntime.eggs.length>=PLINKO_MAX_ACTIVE_EGGS){setPlinkoStatus(`Let one of the ${PLINKO_MAX_ACTIVE_EGGS} eggs land before dropping another.`,'lose');return false;}
     const bet=Math.floor(Number(state.plinkoBet)||0),risk=state.plinkoRisk;if(bet<MIN_BET||bet>ownedWalletBalance()){setPlinkoStatus(`You need ${money(Math.max(MIN_BET,bet))} F in your wallet.`,'lose');refreshPlinkoHud();return false;}if(!spendOwnedFunds(bet))return false;
-    const path=Array.from({length:PLINKO_ROWS},()=>Math.random()<.5?0:1),slot=path.reduce((sum,v)=>sum+v,0),multiplier=plinkoTable(risk)[slot],payout=Math.floor(bet*multiplier),egg={id:plinkoRuntime.nextId++,bet,risk,path,slot,multiplier,payout};primePlinkoEggPhysics(egg,plinkoLayout());plinkoRuntime.eggs.push(egg);state.plinkoActive=true;state.plinkoDrops++;state.rounds++;session.rounds++;session.net-=bet;setPlinkoStatus(`${plinkoRuntime.eggs.length} egg${plinkoRuntime.eggs.length===1?'':'s'} in flight — tap DROP again to spam.`);audio.start();haptic(9);refresh();resizePlinkoCanvas();if(!plinkoRuntime.raf){plinkoRuntime.lastFrame=0;plinkoRuntime.raf=requestAnimationFrame(animatePlinko);}return true;
+    const protectedRound=state.safeRunCredits>0;if(protectedRound)state.safeRunCredits=Math.max(0,state.safeRunCredits-1);
+    const {path,slot}=rollPlinkoPath(risk,{protectedRound}),multiplier=plinkoTable(risk)[slot],payout=Math.floor(bet*multiplier),egg={id:plinkoRuntime.nextId++,bet,risk,path,slot,multiplier,payout,protected:protectedRound};primePlinkoEggPhysics(egg,plinkoLayout());plinkoRuntime.eggs.push(egg);state.plinkoActive=true;state.plinkoDrops++;state.rounds++;session.rounds++;session.net-=bet;setPlinkoStatus(`${protectedRound?'🛡️ Protected · ':''}${plinkoRuntime.eggs.length} egg${plinkoRuntime.eggs.length===1?'':'s'} in flight — tap DROP again to spam.`,protectedRound?'win':'');audio.start();haptic(protectedRound?[9,20,9]:9);refresh();resizePlinkoCanvas();if(!plinkoRuntime.raf){plinkoRuntime.lastFrame=0;plinkoRuntime.raf=requestAnimationFrame(animatePlinko);}return true;
   }
 
   function setGameMode(mode){
@@ -1389,8 +1424,9 @@
   }
   function pledgedCollateralValue(){return state.debt>0?collateralSelectionValue(currentPledgeSelection()):0;}
   function availableCollateralValue(){return Math.max(0,collateralBreakdown().total-pledgedCollateralValue());}
-  function collateralLoanLimit(){const total=collateralBreakdown().total;return Math.min(MAX_LOAN_PAYOUT,Math.max(MIN_LOAN_AMOUNT,BASE_UNSECURED_CREDIT+total));}
-  function tierCeiling(){return MAX_LOAN_PAYOUT;}
+  function effectiveBankLimit(){return state.bankLimitDisabled?MAX_SAFE_BALANCE:MAX_LOAN_PAYOUT;}
+  function collateralLoanLimit(){const total=collateralBreakdown().total;return Math.min(effectiveBankLimit(),Math.max(MIN_LOAN_AMOUNT,BASE_UNSECURED_CREDIT+total));}
+  function tierCeiling(){return effectiveBankLimit();}
   function debtLimit(){return collateralLoanLimit();}
   function availableCredit(){return state.debt>0?0:debtLimit();}
   function maxSingleLoan(){return availableCredit();}
@@ -2139,9 +2175,9 @@
     els.debtPayoffLabel.textContent=`${money(earlyPayoffCashRequired())} F`;
     els.debtInterestSavedLabel.textContent=`${money(earlyPayoffSavings())} F`;
     const pledgedValue=pledgedCollateralValue(),availableCollateral=availableCollateralValue(),availableLoan=maxSingleLoan();
-    els.debtLimitLabel.textContent=`${money(availableLoan)} F`;els.creditTierCeilingLabel.textContent='Characters, lakes, permanent models, licenses and Piggy';els.creditScoreLabel.textContent=`${money(availableCollateral)} F`;els.creditScoreGradeLabel.textContent=state.debt>0?'Unpledged assets remain yours':'Full direct Bank Value';els.creditLimitFactorLabel.textContent='5B F hard cap';
+    els.debtLimitLabel.textContent=`${money(availableLoan)} F`;els.creditTierCeilingLabel.textContent='Characters, lakes, permanent models, licenses and Piggy';els.creditScoreLabel.textContent=`${money(availableCollateral)} F`;els.creditScoreGradeLabel.textContent=state.debt>0?'Unpledged assets remain yours':'Full direct Bank Value';els.creditLimitFactorLabel.textContent=state.bankLimitDisabled?'Bank hard cap disabled':'5B F hard cap';
     els.creditTierLabel.textContent=`${money(assets.total)} F`;
-    els.creditTierProgressFill.style.width=`${Math.min(100,(state.debt>0?state.loanPrincipalOriginal:availableLoan)/MAX_LOAN_PAYOUT*100)}%`;
+    els.creditTierProgressFill.style.width=state.bankLimitDisabled?'100%':`${Math.min(100,(state.debt>0?state.loanPrincipalOriginal:availableLoan)/MAX_LOAN_PAYOUT*100)}%`;
     els.creditHistoryLabel.textContent=`${money(BASE_UNSECURED_CREDIT)} F starter credit`;
     els.creditNextTierLabel.textContent='Each 1 F of Bank Value adds 1 F of capacity';
     els.skinAssetLabel.textContent=`${money(assets.skins)} F`;els.lakeAssetLabel.textContent=`${money(assets.lakes)} F`;els.vehicleAssetLabel.textContent=`${money(assets.vehicles)} F`;els.licenseAssetLabel.textContent=`${money(assets.licenses)} F`;els.piggyAssetLabel.textContent=`${money(assets.piggy)} F`;
@@ -2708,17 +2744,29 @@
 
   function renderCases(){
     if(!els.caseGrid)return;
-    const own=ownedWalletBalance();
+    const own=ownedWalletBalance(),luck=caseLuckMultiplier();
     els.caseBalance.textContent=compactMoney(own);els.caseBalance.title=`${money(own)} F`;
     els.casesOpenedLabel.textContent=money(state.casesOpened);
     els.caseGrid.innerHTML=CASES.map(item=>{
-      const locked=state.level<item.level,canAfford=own>=item.cost;
-      const drops=caseDropRows(item).map(({frog,weight})=>`<span><b>${frog.name}</b><i>${(weight/100).toFixed(weight%100?1:0)}%</i></span>`).join('');
-      const buttonLabel=locked?`LEVEL ${item.level} REQUIRED`:`OPEN CASE · ${money(item.cost)} F`;
-      const jackpots=item.id==='ultra'?`<div class="case-jackpots"><small>JACKPOTS</small><span><b>The Hill Frog</b><i>9.5%</i></span><span class="owner-jackpot"><b>Owner Frog · RAREST</b><i>0.5%</i></span></div>`:'';
-      return `<article class="case-card case-${item.accent}"><div class="case-rarity-beam"></div><div class="case-card-head"><span class="case-tier">${item.id==='ultra'?'ULTRA DROP':'FROG CASE'}</span><small>LEVEL ${item.level}+</small></div><div class="case-chest" aria-hidden="true">${item.emoji}</div><h2>${item.name}</h2><p>${item.tagline}</p>${jackpots}<div class="case-rarity-summary">${caseRaritySummary(item)}</div><details class="case-odds"><summary>VIEW EXACT ODDS</summary><div>${drops}</div></details><button class="case-open-button pressable" data-case-open="${item.id}" ${locked||!canAfford?'disabled':''}>${buttonLabel}<small>${locked?'Level locked':canAfford?'Froggy only':'Not enough F'}</small></button></article>`;
+      const locked=state.level<item.level,stock=caseInventoryCount(item.id),rows=caseAdjustedDropRows(item),canBuy1=own>=item.cost;
+      const drops=rows.map(({frog,probability})=>`<span><b>${frog.name}</b><i>${formatCaseOdds(probability)}</i></span>`).join('');
+      const chanceFor=id=>rows.find(row=>row.frog.id===id)?.probability||0;
+      const jackpots=item.id==='ultra'?`<div class="case-jackpots"><small>JACKPOTS${luck>1?` · ${luck.toFixed(2)}× LUCK`:''}</small><span><b>The Hill Frog</b><i>${formatCaseOdds(chanceFor('gigachad'))}</i></span><span class="owner-jackpot"><b>Owner Frog · RAREST</b><i>${formatCaseOdds(chanceFor('owner'))}</i></span></div>`:'';
+      const luckNote=luck>1?`<div class="case-luck-active">🍀 MOD LUCK ${luck.toFixed(2)}× ACTIVE · ODDS BELOW ARE ADJUSTED</div>`:'';
+      const buys=[1,5,10].map(qty=>`<button class="case-buy-button pressable" data-case-buy="${item.id}" data-case-qty="${qty}" ${locked||own<item.cost*qty?'disabled':''}>BUY ${qty}<small>${money(item.cost*qty)} F</small></button>`).join('');
+      const openLabel=locked?`LEVEL ${item.level} REQUIRED`:stock?`OPEN OWNED CASE`:'NO CASES OWNED';
+      return `<article class="case-card case-${item.accent}"><div class="case-rarity-beam"></div><div class="case-card-head"><span class="case-tier">${item.id==='ultra'?'ULTRA DROP':'FROG CASE'}</span><small>LEVEL ${item.level}+</small></div><div class="case-stock-pill">OWNED <b>${money(stock)}</b></div><div class="case-chest" aria-hidden="true">${item.emoji}</div><h2>${item.name}</h2><p>${item.tagline}</p>${luckNote}${jackpots}<div class="case-rarity-summary">${caseRaritySummary(item)}</div><details class="case-odds"><summary>VIEW EXACT ODDS</summary><div>${drops}</div></details><div class="case-buy-grid">${buys}</div><button class="case-open-button pressable" data-case-open="${item.id}" ${locked||stock<=0?'disabled':''}>${openLabel}<small>${locked?'Level locked':stock?`${money(stock)} ready to open`:'Buy cases first — opening does not charge F'}</small></button></article>`;
     }).join('');
     renderCaseHistory();
+  }
+
+  function buyCases(id,quantity=1){
+    if(anyRoundActive()||state.animating||caseOpeningRuntime.active){setStatus('Finish the current game or case opening first.','lose');return false;}
+    const item=caseById(id),qty=clamp(Math.floor(Number(quantity)||0),1,1000);if(!item)return false;
+    if(state.level<item.level){setStatus(`Reach level ${item.level} to buy the ${item.name}.`,'lose');return false;}
+    const total=item.cost*qty;if(!Number.isSafeInteger(total)||total>ownedWalletBalance()){setStatus(`You need ${money(Math.max(0,total-ownedWalletBalance()))} more Froggy.`,'lose');return false;}
+    if(!spendOwnedFunds(total))return false;
+    state.caseInventory[item.id]=caseInventoryCount(item.id)+qty;saveState();refresh();renderCases();audio.cash();haptic(10);setStatus(`Bought ${qty} ${item.name}${qty===1?'':'s'} · ${money(caseInventoryCount(item.id))} owned.`,'win');return true;
   }
 
   function renderCaseHistory(){
@@ -2728,7 +2776,7 @@
     if(latestFrog&&latestCase){
       const duplicateCopy=latest.duplicate?`<span class="case-duplicate">DUPLICATE · +${money(latest.duplicateCredit)} F</span>`:'<span class="case-new">NEW FROG</span>';
       els.caseReveal.className=`case-reveal glass reveal-${String(latestFrog.rarity).toLowerCase().replace(/[^a-z0-9]+/g,'-')}`;
-      els.caseReveal.innerHTML=`<div class="case-reveal-copy"><small>LATEST PULL · ${latestCase.name}</small><h2>${latestFrog.name}</h2>${duplicateCopy}<p>${latest.duplicate?'You already owned this frog, so the duplicate converted to 50% of its Bank Value.':'Added permanently to your Collection.'}</p><div class="case-reveal-actions"><button class="pressable" data-case-open="${latestCase.id}">OPEN AGAIN · ${money(latestCase.cost)} F</button><button class="pressable secondary" data-case-view="${latestFrog.id}">VIEW IN COLLECTION</button></div></div><div class="case-reveal-art">${frogSvg(latestFrog,{collection:true})}<span>${latestFrog.rarity}</span></div>`;
+      els.caseReveal.innerHTML=`<div class="case-reveal-copy"><small>LATEST PULL · ${latestCase.name}</small><h2>${latestFrog.name}</h2>${duplicateCopy}<p>${latest.duplicate?'You already owned this frog, so the duplicate converted to 50% of its Bank Value.':'Added permanently to your Collection.'}</p><div class="case-reveal-actions"><button class="pressable" data-case-open="${latestCase.id}" ${caseInventoryCount(latestCase.id)<=0?'disabled':''}>OPEN NEXT · ${money(caseInventoryCount(latestCase.id))} OWNED</button><button class="pressable secondary" data-case-view="${latestFrog.id}">VIEW IN COLLECTION</button></div></div><div class="case-reveal-art">${frogSvg(latestFrog,{collection:true})}<span>${latestFrog.rarity}</span></div>`;
     }
     els.caseHistoryList.innerHTML=history.map(entry=>{const frog=FROGS.find(f=>f.id===entry.frogId),item=caseById(entry.caseId);if(!frog||!item)return'';return `<div class="case-history-row"><span>${item.emoji}</span><div><b>${frog.name}</b><small>${item.name} · ${frog.rarity}</small></div><strong>${entry.duplicate?`+${money(entry.duplicateCredit)} F`:'NEW'}</strong></div>`;}).join('');
   }
@@ -2773,7 +2821,7 @@
     els.caseOpeningKicker.textContent=`${frog.rarity} DROP · ${item.name}`;els.caseOpeningTitle.textContent=frog.name;
     els.caseOpeningSubtitle.textContent=duplicate?'Duplicate converted automatically.':'Added permanently to your Collection.';
     const duplicateCopy=duplicate?`<span class="case-opening-duplicate">DUPLICATE · +${money(duplicateCredit)} F</span>`:'<span class="case-opening-new">NEW FROG</span>';
-    els.caseOpeningResult.innerHTML=`<div class="case-opening-result-aura"></div><div class="case-opening-result-art">${frogSvg(frog,{collection:true})}</div><div class="case-opening-result-copy"><small>${frog.rarity}</small><h3>${frog.name}</h3>${duplicateCopy}<p>${duplicate?'You already owned this frog, so 50% of its Bank Value was returned to your wallet.':'The frog is yours. Equip it now or view it in Collection.'}</p><div class="case-opening-result-actions"><button class="pressable primary" data-case-equip="${frog.id}">${state.selectedFrog===frog.id?'EQUIPPED':'EQUIP'}</button><button class="pressable secondary" data-case-view="${frog.id}">COLLECTION</button><button class="pressable open-again" data-case-open-again="${item.id}">OPEN AGAIN · ${money(item.cost)} F</button></div></div>`;
+    els.caseOpeningResult.innerHTML=`<div class="case-opening-result-aura"></div><div class="case-opening-result-art">${frogSvg(frog,{collection:true})}</div><div class="case-opening-result-copy"><small>${frog.rarity}</small><h3>${frog.name}</h3>${duplicateCopy}<p>${duplicate?'You already owned this frog, so 50% of its Bank Value was returned to your wallet.':'The frog is yours. Equip it now or view it in Collection.'}</p><div class="case-opening-result-actions"><button class="pressable primary" data-case-equip="${frog.id}">${state.selectedFrog===frog.id?'EQUIPPED':'EQUIP'}</button><button class="pressable secondary" data-case-view="${frog.id}">COLLECTION</button><button class="pressable open-again" data-case-open-again="${item.id}" ${caseInventoryCount(item.id)<=0?'disabled':''}>OPEN NEXT · ${money(caseInventoryCount(item.id))} OWNED</button></div></div>`;
     els.caseOpeningResult.classList.remove('hidden');
     audio.caseReveal(frog.rarity);haptic(rank>=5?[35,45,70,55,110]:rank>=4?[25,35,55]:[18,25,35]);
     if(state.effects){confettiBurst(rank>=5?100:rank>=4?70:rank>=3?48:28);screenFeedback('win');}
@@ -2826,7 +2874,8 @@
     if(anyRoundActive()||state.animating||caseOpeningRuntime.active){setStatus('Finish the current game or case opening first.','lose');return false;}
     const item=caseById(id);if(!item)return false;
     if(state.level<item.level){setStatus(`Reach level ${item.level} to open the ${item.name}.`,'lose');return false;}
-    if(!spendOwnedFunds(item.cost)){setStatus(`You need ${money(item.cost-ownedWalletBalance())} more Froggy.`,'lose');renderCases();return false;}
+    const stock=caseInventoryCount(item.id);if(stock<=0){setStatus(`You do not own a ${item.name} yet. Buy one first.`,'lose');renderCases();return false;}
+    state.caseInventory[item.id]=stock-1;
     const frog=rollCase(item),duplicate=state.unlockedFrogs.includes(frog.id);let duplicateCredit=0;
     if(duplicate)duplicateCredit=creditBalance(Math.floor(Math.max(0,frog.cost)*.5));else state.unlockedFrogs.push(frog.id);
     state.casesOpened+=1;state.caseHistory=[{caseId:item.id,frogId:frog.id,duplicate,duplicateCredit},...(state.caseHistory||[])].slice(0,8);
@@ -3054,6 +3103,11 @@
     ownerButtonValue('job-levels',`Job Lv ${compactMoney(state.jobLevel)}`,`Job Level ${money(state.jobLevel)} · ${money(jobPay())} F/fry`);
     ownerButtonValue('safe',`${compactMoney(state.safeRunCredits)} protected`,`Protected rounds: ${money(state.safeRunCredits)}`);
     ownerButtonValue('lucky',`${compactMoney(state.luckyCharges)} lucky`,`Lucky jumps: ${money(state.luckyCharges)}`);
+    CASES.forEach(item=>ownerButtonValue(`case-${item.id}`,`${compactMoney(caseInventoryCount(item.id))} owned`,`${item.name}: ${money(caseInventoryCount(item.id))} owned`));
+    ownerButtonValue('case-luck',`${caseLuckMultiplier().toFixed(2)}×`,`Case luck multiplier: ${caseLuckMultiplier().toFixed(2)}×`);
+    ownerButtonValue('case-luck-reset','Reset to 1×');
+    ownerButtonValue('bank-limit',state.bankLimitDisabled?'DISABLED':'5B F',state.bankLimitDisabled?'Bank hard cap is disabled':'Bank hard cap is 5,000,000,000 F');
+    const bankLimitButton=ownerPanelModal.querySelector('[data-owner-action="bank-limit"] span');if(bankLimitButton)bankLimitButton.textContent=state.bankLimitDisabled?'Restore Bank limit':'Disable Bank limit';
     ownerButtonValue('job-money-boost',moneyBoost.label,`Job money boost: ${moneyBoost.label}`);
     ownerButtonValue('job-xp-boost',xpBoost.label,`Job XP boost: ${xpBoost.label}`);
     ownerButtonValue('job-boost-reset',`F ${moneyBoost.multiplier}× · XP ${xpBoost.multiplier}×`);
@@ -3134,6 +3188,18 @@
       const result=applyOwnerOperation(state[key],raw,{minimum:0,maximum:Number.MAX_SAFE_INTEGER});
       if(!result)return ownerStatus(ownerOperationHelp(),'error');
       state[key]=result.target;message=ownerOperationResult(label,result);
+    }else if(action==='case-luck'){
+      const result=applyOwnerOperation(caseLuckMultiplier(),raw,{minimum:1,maximum:MAX_CASE_LUCK_MULTIPLIER});
+      if(!result)return ownerStatus(ownerOperationHelp(),'error');
+      state.caseLuckMultiplier=Math.max(1,result.target);message=`Case luck is now ${state.caseLuckMultiplier.toFixed(2)}×. Each rarity tier compounds the luck multiplier, so high-rarity frogs become much more likely.`;
+    }else if(action==='case-luck-reset'){
+      state.caseLuckMultiplier=1;message='Case luck reset to 1×. Published base odds restored.';
+    }else if(action==='case-pond'||action==='case-neon'||action==='case-ultra'){
+      const id=action.slice(5),item=caseById(id),before=caseInventoryCount(id),result=applyOwnerOperation(before,raw,{minimum:0,maximum:Number.MAX_SAFE_INTEGER});
+      if(!item||!result)return ownerStatus(ownerOperationHelp(),'error');
+      state.caseInventory[id]=result.target;message=ownerOperationResult(`${item.name} inventory`,result);
+    }else if(action==='bank-limit'){
+      state.bankLimitDisabled=!state.bankLimitDisabled;message=state.bankLimitDisabled?'Bank 5B hard cap disabled. Loans remain limited by available collateral.':'Bank 5B hard cap restored.';
     }else if(action==='job-money-boost'||action==='job-xp-boost'){
       const kind=action==='job-money-boost'?'money':'xp';
       const before=ownerJobBoostSnapshot(kind);
@@ -3194,10 +3260,12 @@
         <section data-owner-group><b>Wallet / Piggy</b><input value="1000000" inputmode="text" autocomplete="off" spellcheck="false" aria-label="Wallet or Piggy operation"><div><button data-owner-action="wallet"><span>Wallet F</span><small data-owner-value>0 F</small></button><button data-owner-action="piggy"><span>Piggy F</span><small data-owner-value>0 F</small></button></div></section>
         <section data-owner-group><b>Progression</b><input value="1000" inputmode="text" autocomplete="off" spellcheck="false" aria-label="XP or level operation"><div><button data-owner-action="xp"><span>XP</span><small data-owner-value>0 XP</small></button><button data-owner-action="levels"><span>Levels</span><small data-owner-value>Lv 1</small></button><button data-owner-action="job-levels"><span>Job levels</span><small data-owner-value>Job Lv 1</small></button></div></section>
         <section data-owner-group><b>Bonuses</b><input value="10" inputmode="text" autocomplete="off" spellcheck="false" aria-label="Bonus operation"><div><button data-owner-action="safe"><span>Protected</span><small data-owner-value>0 protected</small></button><button data-owner-action="lucky"><span>Lucky jumps</span><small data-owner-value>0 lucky</small></button></div></section>
+        <section data-owner-group><b>Cases</b><input value="10" inputmode="text" autocomplete="off" spellcheck="false" aria-label="Case inventory operation"><div><button data-owner-action="case-pond"><span>Pond cases</span><small data-owner-value>0 owned</small></button><button data-owner-action="case-neon"><span>Neon cases</span><small data-owner-value>0 owned</small></button><button data-owner-action="case-ultra"><span>Ultra cases</span><small data-owner-value>0 owned</small></button></div></section>
+        <section data-owner-group><b>Case luck</b><input value="1" inputmode="text" autocomplete="off" spellcheck="false" aria-label="Case luck operation"><div><button data-owner-action="case-luck"><span>Luck boost</span><small data-owner-value>1.00×</small></button><button data-owner-action="case-luck-reset"><span>Reset luck</span><small data-owner-value>Reset to 1×</small></button></div></section>
         <section data-owner-group><b>Job boosts</b><input value="1" inputmode="text" autocomplete="off" spellcheck="false" aria-label="Job boost operation"><div><button data-owner-action="job-money-boost"><span>Money boost</span><small data-owner-value>Off</small></button><button data-owner-action="job-xp-boost"><span>XP boost</span><small data-owner-value>Off</small></button><button data-owner-action="job-boost-reset"><span>Clear boosts</span><small data-owner-value>F 1× · XP 1×</small></button></div></section>
         <section data-owner-group><b>Piggy interest</b><div><button data-owner-action="piggy-plus"><span>+1% boost</span><small data-owner-value>+0% boost</small></button><button data-owner-action="piggy-reset"><span>Remove boost</span><small data-owner-value>0.3% / 0.2%</small></button></div></section>
         <section data-owner-group><b>Unlock content</b><div><button data-owner-action="unlock-frogs"><span>All frogs</span><small data-owner-value>0/0</small></button><button data-owner-action="unlock-lakes"><span>All lakes</span><small data-owner-value>0/0</small></button><button data-owner-action="unlock-vehicles"><span>All vehicles</span><small data-owner-value>0/0</small></button><button data-owner-action="unlock-games"><span>All games</span><small data-owner-value>0/0</small></button><button data-owner-action="unlock-everything"><span>Unlock everything</span><small data-owner-value>0/0</small></button></div></section>
-        <section data-owner-group><b>Extras</b><div><button data-owner-action="flights"><span>+100 all flights</span><small data-owner-value>0 total</small></button><button data-owner-action="debt"><span>Clear loan</span><small data-owner-value>0 F</small></button></div></section>
+        <section data-owner-group><b>Extras</b><div><button data-owner-action="flights"><span>+100 all flights</span><small data-owner-value>0 total</small></button><button data-owner-action="bank-limit"><span>Disable Bank limit</span><small data-owner-value>5B F</small></button><button data-owner-action="debt"><span>Clear loan</span><small data-owner-value>0 F</small></button></div></section>
       </div>
       <p class="owner-status" data-owner-status role="status" aria-live="polite">Ready.</p>`;
     els.modalBackdrop.append(ownerAccessModal,ownerPanelModal);
@@ -3245,7 +3313,7 @@
       const sell=e.target.closest('[data-collection-sell]');if(sell){const [kind,id]=sell.dataset.collectionSell.split('|');sellCollectionItem(kind,id);return;}
       const b=e.target.closest('[data-collection-action]');if(b)collectionAction(b.dataset.collectionAction);
     });
-    els.caseGrid.addEventListener('click',e=>{const button=e.target.closest('[data-case-open]');if(button)openCase(button.dataset.caseOpen);});
+    els.caseGrid.addEventListener('click',e=>{const buy=e.target.closest('[data-case-buy]');if(buy){buyCases(buy.dataset.caseBuy,buy.dataset.caseQty);return;}const button=e.target.closest('[data-case-open]');if(button)openCase(button.dataset.caseOpen);});
     els.caseReveal.addEventListener('click',e=>{const open=e.target.closest('[data-case-open]');if(open){openCase(open.dataset.caseOpen);return;}const view=e.target.closest('[data-case-view]');if(view)viewCaseFrog(view.dataset.caseView);});
     els.caseOpeningSkip.addEventListener('click',skipCaseOpening);els.caseOpeningClose.addEventListener('click',hideCaseOpening);
     els.caseOpeningResult.addEventListener('click',e=>{const equip=e.target.closest('[data-case-equip]');if(equip){equipCaseFrog(equip.dataset.caseEquip);return;}const view=e.target.closest('[data-case-view]');if(view){hideCaseOpening();viewCaseFrog(view.dataset.caseView);return;}const again=e.target.closest('[data-case-open-again]');if(again){const id=again.dataset.caseOpenAgain;hideCaseOpening();setTimeout(()=>openCase(id),80);}});
@@ -3294,9 +3362,9 @@
       if(CRASH_MIN_POINT!==1.01)throw new Error('Crash minimum point failed');
       if(document.querySelector('[data-screen="rewards"]')||document.getElementById('rewardsScreen')||document.getElementById('rewardModal')||document.getElementById('spinButton'))throw new Error('Rewards UI still present');
       if(ownerPanelModal.querySelector('[data-owner-action="spins"]')||ownerPanelModal.querySelector('[data-owner-action="unlimited"]'))throw new Error('Reward-wheel owner controls still present');
-      if(MAX_LOAN_PAYOUT!==5000000000)throw new Error('5B Bank cap constant failed');const paidFrogs=FROGS.filter(f=>f.cost>0);if(paidFrogs.find(f=>f.id==='meadow')?.cost!==1500||paidFrogs.find(f=>f.id==='gigachad')?.cost!==2250000000||paidFrogs.find(f=>f.id==='owner')?.cost!==6000000000)throw new Error('3x frog pricing failed');if(PLINKO_ROWS!==12||plinkoTable('medium').length!==13||Math.abs(plinkoRtp('medium')-PLINKO_TARGET_RTP)>.01)throw new Error('Plinko payout table failed');if(PLINKO_MAX_ACTIVE_EGGS!==48||typeof updatePlinkoEggPhysics!=='function'||typeof primePlinkoEggPhysics!=='function')throw new Error('v74 Plinko physics/spam engine failed');
+      if(MAX_LOAN_PAYOUT!==5000000000)throw new Error('5B Bank cap constant failed');state.bankLimitDisabled=true;if(effectiveBankLimit()!==MAX_SAFE_BALANCE)throw new Error('Bank limit disable failed');state.bankLimitDisabled=false;const paidFrogs=FROGS.filter(f=>f.cost>0);if(paidFrogs.find(f=>f.id==='meadow')?.cost!==1500||paidFrogs.find(f=>f.id==='gigachad')?.cost!==2250000000||paidFrogs.find(f=>f.id==='owner')?.cost!==6000000000)throw new Error('3x frog pricing failed');if(PLINKO_ROWS!==12||plinkoTable('medium').length!==13||Math.abs(plinkoRtp('medium')-PLINKO_TARGET_RTP)>.01)throw new Error('Plinko payout table failed');if(PLINKO_MAX_ACTIVE_EGGS!==48||typeof updatePlinkoEggPhysics!=='function'||typeof primePlinkoEggPhysics!=='function')throw new Error('v74 Plinko physics/spam engine failed');state=deepClone(DEFAULT_STATE);state.balance=100000;state.safeRunCredits=3;state.plinkoBet=100;for(let i=0;i<3;i++){const rolled=rollPlinkoPath('medium',{protectedRound:true});if(plinkoTable('medium')[rolled.slot]<=1)throw new Error('Plinko protected path failed');}state.caseInventory.ultra=5;if(caseInventoryCount('ultra')!==5)throw new Error('case inventory failed');const ownerBase=caseAdjustedDropRows(caseById('ultra')).find(r=>r.frog.id==='owner').probability;state.caseLuckMultiplier=10;const ownerLucky=caseAdjustedDropRows(caseById('ultra')).find(r=>r.frog.id==='owner').probability;if(!(ownerLucky>ownerBase))throw new Error('case luck weighting failed');
       const shopFrogs=frogShopItems();for(let i=1;i<shopFrogs.length;i++){if(shopFrogs[i].cost<shopFrogs[i-1].cost)throw new Error('frog shop price order failed');if((FROG_RARITY_RANK[shopFrogs[i].rarity]??99)<(FROG_RARITY_RANK[shopFrogs[i-1].rarity]??99))throw new Error('frog rarity progression failed');}const hill=FROGS.find(f=>f.id==='gigachad');if(!hill||hill.name!=='The Hill Frog'||hill.art!=='assets/the-hill-frog-game-v66.png'||hill.cardArt!=='assets/the-hill-frog-card-v64.webp')throw new Error('The Hill Frog art/name failed');const basicIds=['meadow','river','moss','sand','blue-dart','sunset'];if(!basicIds.every(id=>FROGS.some(f=>f.id===id)))throw new Error('v63 basic frog lineup missing');
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v74 physics-style multi-egg Plinko + one-tap spam drops + unchanged 12x50/50 odds + v73 every-frog price-tier perks + Ultra Case Hill/Owner jackpots + Owner rarest + v72 Piggy 0.3% open / 0.2% closed + loan-time deposits + v71 Frog Egg Plinko + 3x frog prices + 5B Bank cap + v70 natural case landings + variable reel travel + v68 CS-style case reel + delayed skip + rarity reveal + v67 Cases + six-slot mobile nav + v66 approved smiling The Hill Frog gameplay model + v64 polished The Hill Frog Collection portrait + v63 basic frog lineup + The Hill Frog rename, v62 rarity header rows + price/rarity order, v60 Rewards removal, v59 gameplay skin art, v55 early Crash risk, Piggy rates, trusted-time warning, restartable Shift Over dialog, and app-visible no-flight badge';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v75 case inventory + owner case grants/luck + Bank limit toggle + protected Plinko eggs + mobile input contrast + v74 physics-style multi-egg Plinko + one-tap spam drops + unchanged base 12x50/50 odds + v73 every-frog price-tier perks + Ultra Case Hill/Owner jackpots + Owner rarest + v72 Piggy 0.3% open / 0.2% closed + loan-time deposits + v71 Frog Egg Plinko + 3x frog prices + 5B Bank cap + v70 natural case landings + variable reel travel + v68 CS-style case reel + delayed skip + rarity reveal + v67 Cases + six-slot mobile nav + v66 approved smiling The Hill Frog gameplay model + v64 polished The Hill Frog Collection portrait + v63 basic frog lineup + The Hill Frog rename, v62 rarity header rows + price/rarity order, v60 Rewards removal, v59 gameplay skin art, v55 early Crash risk, Piggy rates, trusted-time warning, restartable Shift Over dialog, and app-visible no-flight badge';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 
@@ -3320,5 +3388,5 @@
   if(!state.tutorialSeen&&!TEST_MODE){state.tutorialSeen=true;saveState();setTimeout(()=>openModal(els.howToModal),600);}
   if(TEST_MODE)runSelfTest();
 
-  window.FroggyGame={version:BUILD_VERSION,selectedFrog,activeSkinPerks,skinJobMoneyMultiplier,skinJobXpMultiplier,skinJobStartBonusMs,skinLeapXp,skinCrashXp,skinPiggyRateBonus,jobPay,jobXpPerFry,jobXpNeeded,activateJobMoneyBoost,activateJobXpBoost,startJobShift,endJobShift,finishJobShiftRound,extendJobShiftTime,collectionResaleValue,sellCollectionItem,compactMoney,selectVehicle,buyVehicleFlights,getState:()=>deepClone(state),setGameMode,unlockGame,startCrash,crashCashOut,crashLose,setCrashBet,crashPayoutFor,startPlinko,setPlinkoBet,setPlinkoRisk,plinkoTable,plinkoRtp,selectBet,setBetAmount,adjustBet,applyCustomBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,creditBalance,takeLoan,repayDebt,completeDebtTurn,debtInstallment,debtLimit,availableCredit,maxSingleLoan,collateralBreakdown,collateralLoanLimit,allocateRoundStake,ownedWalletBalance,finishCompletedRound,earlyPayoffAmount,earlyPayoffCashRequired,earlyPayoffSavings,loanQuote,piggyLoanReserve,piggyTransferMaximum,transferPiggy,advancePiggyBankRound,selectedVehicle,vehicleCharges,pledgedVehicleFlights,availableVehicleFlights,vehicleOwned,collateralSelectionValue,completeVehicleFlight,vehicleCrashXp,advancePiggyTime,tickPiggyClock,trustedClosedElapsed,piggyOpenRate,piggyClosedRate,ensureCrashLevelUnlock,autoSelectCollateral,noUsableVehicleFlights,openVehicleShop,setBankPane,reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();refresh();}};
+  window.FroggyGame={version:BUILD_VERSION,selectedFrog,activeSkinPerks,skinJobMoneyMultiplier,skinJobXpMultiplier,skinJobStartBonusMs,skinLeapXp,skinCrashXp,skinPiggyRateBonus,jobPay,jobXpPerFry,jobXpNeeded,activateJobMoneyBoost,activateJobXpBoost,startJobShift,endJobShift,finishJobShiftRound,extendJobShiftTime,collectionResaleValue,sellCollectionItem,compactMoney,selectVehicle,buyVehicleFlights,getState:()=>deepClone(state),setGameMode,unlockGame,startCrash,crashCashOut,crashLose,setCrashBet,crashPayoutFor,startPlinko,setPlinkoBet,setPlinkoRisk,plinkoTable,plinkoRtp,rollPlinkoPath,buyCases,caseInventoryCount,caseAdjustedDropRows,selectBet,setBetAmount,adjustBet,applyCustomBet,startRound,jump,cashOut,forceSuccess:()=>forcedOutcome=true,forceFail:()=>forcedOutcome=false,creditBalance,takeLoan,repayDebt,completeDebtTurn,debtInstallment,debtLimit,availableCredit,maxSingleLoan,effectiveBankLimit,collateralBreakdown,collateralLoanLimit,allocateRoundStake,ownedWalletBalance,finishCompletedRound,earlyPayoffAmount,earlyPayoffCashRequired,earlyPayoffSavings,loanQuote,piggyLoanReserve,piggyTransferMaximum,transferPiggy,advancePiggyBankRound,selectedVehicle,vehicleCharges,pledgedVehicleFlights,availableVehicleFlights,vehicleOwned,collateralSelectionValue,completeVehicleFlight,vehicleCrashXp,advancePiggyTime,tickPiggyClock,trustedClosedElapsed,piggyOpenRate,piggyClosedRate,ensureCrashLevelUnlock,autoSelectCollateral,noUsableVehicleFlights,openVehicleShop,setBankPane,reset:()=>{state=deepClone(DEFAULT_STATE);scene.reset();refresh();}};
 })();

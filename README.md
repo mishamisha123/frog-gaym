@@ -1,8 +1,6 @@
-# Froggy Leap v74
+# Froggy Leap v75
 
-> **Current-behavior note:** The v74 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
-
-
+> **Current-behavior note:** The v75 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
 
 
 
@@ -15,6 +13,18 @@
 
 
 
+
+
+
+## v75 — Case inventory, owner controls, protected Plinko
+
+- Cases can now be bought in stacks of 1, 5, or 10 and stored without opening. Opening consumes one owned case and does not charge F again.
+- The private Owner Console can add/subtract/multiply/divide Pond, Neon, and Ultra case inventory.
+- Owner Console adds a Case Luck multiplier (1x–100x). Each rarity tier compounds the selected luck multiplier, so high-rarity frogs become meaningfully more likely; the Cases screen shows the adjusted odds before opening.
+- Owner Console adds **Disable Bank limit**. This removes the 5B hard cap while keeping loans collateral-backed.
+- Protected rounds now work with Frog Egg Plinko. Each protected egg consumes one protected credit and is guaranteed to land in a multiplier above 1.00x, using rejection sampling from the same 12 independent 50/50 path system.
+- Mobile number-entry fields and top status text use forced high-contrast colors so typed values and header labels stay visible on iOS/Safari.
+- Existing saves remain compatible. PWA asset URLs, service-worker cache, refresh helper, build label, and self-tests are bumped to **v75**.
 
 ## v74 — Physics-style Frog Egg Plinko
 

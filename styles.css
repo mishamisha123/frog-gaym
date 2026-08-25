@@ -4737,3 +4737,40 @@ button:focus-visible{outline:2px solid #74e6ff!important;outline-offset:2px!impo
 .plinko-slot.hit{animation:plinkoPocketHit .42s cubic-bezier(.2,.8,.2,1);position:relative;z-index:3}
 @keyframes plinkoPocketHit{0%{transform:translateY(0) scale(1);filter:brightness(1)}35%{transform:translateY(-5px) scale(1.14);filter:brightness(1.75)}100%{transform:translateY(0) scale(1);filter:brightness(1)}}
 .plinko-drop-button:not(:disabled):active{transform:translateY(4px) scale(.99)!important;box-shadow:0 4px 0 #1d6d27,0 8px 16px rgba(0,0,0,.24),inset 0 1px rgba(255,255,255,.28)!important}
+
+
+/* ==========================================================
+   v75 — case inventory/mod controls + mobile input visibility
+   ========================================================== */
+.case-stock-pill{position:relative;z-index:3;align-self:flex-end;display:flex;align-items:center;gap:6px;margin:7px 1px -5px;padding:5px 9px;border-radius:999px;color:#bdeaff;background:rgba(3,20,55,.78);border:1px solid rgba(86,194,255,.28);font-size:7px;font-weight:1000;letter-spacing:.08em}.case-stock-pill b{color:#fff;font-size:10px;letter-spacing:0}
+.case-buy-grid{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-top:8px}.case-buy-button{min-width:0;min-height:43px;display:grid;place-items:center;gap:1px;padding:5px 3px;border-radius:11px;color:#e8f6ff;background:linear-gradient(180deg,#174f91,#0a316d);border:1px solid rgba(91,194,255,.33);box-shadow:inset 0 1px rgba(255,255,255,.1),0 4px 0 rgba(1,16,48,.7);font-size:8px;font-weight:1000}.case-buy-button small{max-width:100%;overflow:hidden;text-overflow:ellipsis;color:#8fc8ed;font-size:5.5px;white-space:nowrap}.case-buy-button:disabled{opacity:.42;filter:grayscale(.35)}
+.case-luck-active{position:relative;z-index:2;margin:0 0 7px;padding:6px 8px;border-radius:10px;text-align:center;color:#143408;background:linear-gradient(180deg,#dcff7b,#8fd44a);border:1px solid #efffa7;font-size:6.5px;font-weight:1000;letter-spacing:.04em;box-shadow:0 0 14px rgba(179,255,91,.15)}
+.case-ultra .case-buy-button{border-color:rgba(255,218,78,.34);background:linear-gradient(180deg,#654395,#322263)}
+.case-ultra .case-buy-button small{color:#ead7ff}
+
+/* iOS/Safari can preserve stale text-fill colors after theme changes. Force readable values. */
+input:not([type="range"]),select,textarea{
+  opacity:1!important;
+  caret-color:#dff7ff!important;
+  -webkit-text-fill-color:currentColor!important;
+}
+.custom-bet-row input,.piggy-transfer-row input,.loan-exact-row input,.loan-builder-modal input,.plinko-bet-field input,.owner-panel-card input,.owner-access-card input{
+  color:#fff!important;
+  -webkit-text-fill-color:#fff!important;
+  caret-color:#8ff3ff!important;
+  background:#061d48!important;
+  border-color:rgba(93,196,255,.42)!important;
+  text-shadow:none!important;
+}
+.custom-bet-row input::placeholder,.piggy-transfer-row input::placeholder,.loan-exact-row input::placeholder,.loan-builder-modal input::placeholder,.plinko-bet-field input::placeholder,.owner-panel-card input::placeholder,.owner-access-card input::placeholder{color:#9fc9e8!important;opacity:1!important;-webkit-text-fill-color:#9fc9e8!important}
+input[type="range"]{opacity:1!important;filter:none!important}
+.piggy-slider,.loan-amount-slider{accent-color:#8fe65d!important;background:transparent!important}
+
+/* Keep the top status copy readable on phones instead of hiding it entirely. */
+.topbar .profile-copy{display:grid!important;line-height:1.05;min-width:0}
+.topbar .profile-copy b,#levelLabel,#balanceLabel{color:#fff!important;-webkit-text-fill-color:#fff!important;opacity:1!important}
+.topbar .profile-copy small,.topbar .profile-copy small span{color:#b9e7ff!important;-webkit-text-fill-color:#b9e7ff!important;opacity:1!important}
+.topbar .balance-pill{color:#fff!important}
+@media(max-width:430px){.topbar .profile-copy b{font-size:10px!important}.topbar .profile-copy small{font-size:5.5px!important;white-space:nowrap}.topbar .profile-chip{gap:5px!important;padding-right:5px!important}.topbar .profile-frog{width:36px!important;height:36px!important}.topbar .balance-pill{min-width:72px!important;max-width:86px!important}.topbar .balance-pill strong{font-size:10px!important}}
+@media(max-width:360px){.topbar .profile-copy small{display:none!important}.topbar .balance-pill{min-width:65px!important;max-width:76px!important}.topbar .icon-button{width:32px!important;height:32px!important}.topbar .top-actions{gap:3px!important}}
+@media(max-width:390px){.case-buy-grid{gap:4px}.case-buy-button{font-size:7px;min-height:40px}.case-buy-button small{font-size:5px}}
