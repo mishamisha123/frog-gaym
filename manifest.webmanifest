@@ -1,7 +1,7 @@
 {
   "name": "Froggy Leap",
   "short_name": "Froggy Leap",
-  "description": "Froggy Leap v78 with smoother high-volume Frog Egg Plinko, a 96-egg active cap, 1000x High-risk edge pockets, 15-second Plinko Bank rounds, case inventory, owner controls, and offline PWA support.",
+  "description": "Froggy Leap v81 with smooth analytic Frog Egg Plinko motion, instant multiplier landing, a 96-egg active cap, 1000x High-risk edge pockets, case inventory, owner controls, and offline PWA support.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

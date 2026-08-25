@@ -1,6 +1,17 @@
-# Froggy Leap v80
+# Froggy Leap v81
 
-> **Current-behavior note:** The v80 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+> **Current-behavior note:** The v81 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+
+
+## v81 — Plinko visual cleanup + rebuilt motion
+
+- Removes the decorative egg/drop guide above the Plinko peg field and removes the idle egg rendered when no drop is active.
+- Removes the remaining board-side/pocket-guide visuals so only the real colored multiplier row is shown below the pegs.
+- Replaces the v80 per-hop easing path with analytically solved constant-gravity ballistic arcs between the same pre-rolled peg decisions. Outcomes, 12/14/16-row path math, protected-round behavior, payout tables, and odds are unchanged.
+- Eggs now reach the multiplier boundary and pay immediately with no settle/hover phase.
+- Batches same-frame landing UI/effects to reduce stutter when many eggs land together.
+- Keeps the 96 active-egg cap, 1000x High edge pockets, 15-second Plinko Bank-round window, and reduced per-egg XP.
+- PWA/cache/build references are bumped to **v81**.
 
 ## v80 — Smooth Plinko motion + instant multiplier landing
 
