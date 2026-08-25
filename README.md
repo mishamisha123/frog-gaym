@@ -1450,3 +1450,12 @@ The promo changes affect future elapsed time. Already credited Piggy interest is
 - An overdue penalty now collects only the **current payment due**, never the entire remaining loan balance.
 - Piggy savings are used first. If Piggy cannot fully cover the installment, the cheapest eligible pledged permanent asset is liquidated for only the remaining amount. Any unused liquidation value returns to the wallet.
 - Once the overdue installment is covered, the next payment is scheduled five completed rounds later.
+
+## v92 — Froggy Accounts Auth v1
+
+- Added optional Google sign-in using Firebase Authentication project `froggyleap-f59a8`.
+- Added a Froggy Account panel to Profile with signed-out/signed-in states, Google avatar, private email display, shortened Firebase UID, sign-out, and connection status.
+- Authentication persistence is local to the browser so returning users stay signed in.
+- This build intentionally does **not** move game saves, wallet, Piggy, inventory, cases, loans, or game results to Firestore yet. Those remain local until server-authoritative cloud-save rules are designed and tested.
+- No Firebase Admin credentials, OAuth client secrets, or service-account secrets are present in the client build. The Firebase web configuration is public client configuration.
+- Added `firebase-account.js` and bumped PWA assets/cache to v92.

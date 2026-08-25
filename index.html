@@ -11,13 +11,14 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=90-plinko-one-screen" />
+  <link rel="stylesheet" href="styles.css?v=92-froggy-accounts" />
   <title>Froggy Leap</title>
 </head>
 <body>
   <div id="app" class="app" data-theme="forest">
     <header class="topbar glass">
       <button id="profileButton" class="profile-chip pressable" aria-label="Open profile">
+        <span id="accountStatusDot" class="account-status-dot" aria-label="Froggy account not connected"></span>
         <span class="profile-frog" id="profileFrog">🐸</span>
         <span class="profile-copy"><b id="levelLabel">Lv. 1</b><small><span id="xpLabel">0</span>/<span id="xpNextLabel">100</span> XP</small></span>
         <span class="xp-ring"><i id="xpRing"></i></span>
@@ -500,6 +501,41 @@
           <div id="bigProfileFrog" class="big-profile-frog" aria-label="Selected frog"></div>
           <div><small>CURRENT FROG</small><h2 id="currentFrogName">Classic Frog</h2><p>Every level awards a growing Froggy coin bonus.</p></div>
         </div>
+
+        <section class="froggy-account-panel glass" aria-labelledby="froggyAccountTitle">
+          <div class="froggy-account-head">
+            <div><small>FROGGY ACCOUNT · BETA</small><h2 id="froggyAccountTitle">Your identity</h2></div>
+            <span class="froggy-account-beta">AUTH v1</span>
+          </div>
+
+          <div id="froggyAccountSignedOut" class="froggy-account-state">
+            <div class="froggy-account-mark" aria-hidden="true">🐸</div>
+            <div class="froggy-account-copy">
+              <b>Connect a permanent Froggy account</b>
+              <p>Use Google to get a permanent Firebase account ID. Cloud saves and friends come next.</p>
+            </div>
+            <button id="froggyGoogleSignIn" class="froggy-google-button pressable" type="button">
+              <span class="google-g" aria-hidden="true">G</span>
+              <span><b>CONTINUE WITH GOOGLE</b><small>Create or reconnect your Froggy identity</small></span>
+            </button>
+          </div>
+
+          <div id="froggyAccountSignedIn" class="froggy-account-state froggy-account-signed-in hidden">
+            <div class="froggy-account-identity">
+              <div class="froggy-account-avatar-wrap"><img id="froggyAccountAvatar" class="froggy-account-avatar" alt="" /></div>
+              <div><small>GOOGLE ACCOUNT CONNECTED</small><h3 id="froggyAccountName">Froggy Player</h3><p id="froggyAccountEmail"></p></div>
+              <span class="froggy-account-connected">CONNECTED</span>
+            </div>
+            <div class="froggy-account-meta">
+              <div><small>FROGGY ACCOUNT ID</small><b id="froggyAccountUid">—</b></div>
+              <div><small>CLOUD SAVE</small><b>COMING NEXT</b></div>
+              <div><small>FRIENDS</small><b>COMING NEXT</b></div>
+            </div>
+            <button id="froggyAccountSignOut" class="froggy-account-signout pressable" type="button">SIGN OUT</button>
+          </div>
+          <p id="froggyAccountStatus" class="froggy-account-status" data-state="info" aria-live="polite">Loading Froggy Accounts…</p>
+          <p class="froggy-account-privacy">Your Google email is only shown to you here. Other players will eventually see a separate Froggy username, never your private email.</p>
+        </section>
         <div class="stats-grid">
           <div class="stat-card glass"><small>TOTAL JUMPS</small><b id="totalJumpsStat">0</b></div>
           <div class="stat-card glass"><small>BEST STREAK</small><b id="bestJumpStat">0</b></div>
@@ -694,6 +730,7 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script src="app.js?v=90-plinko-one-screen"></script>
+  <script type="module" src="firebase-account.js?v=92-froggy-accounts"></script>
+  <script src="app.js?v=92-froggy-accounts"></script>
 </body>
 </html>
