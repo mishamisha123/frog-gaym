@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=95-firestore-profile" />
+  <link rel="stylesheet" href="styles.css?v=96-friends-v1" />
   <title>Froggy Leap</title>
 </head>
 <body>
@@ -107,7 +107,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v95 · FROGGY LEAP</div>
+          <div class="build-version" aria-label="Installed game version">v96 · FROGGY LEAP</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -508,7 +508,7 @@
         <section class="froggy-account-panel glass" aria-labelledby="froggyAccountTitle">
           <div class="froggy-account-head">
             <div><small>FROGGY ACCOUNT · BETA</small><h2 id="froggyAccountTitle">Your identity</h2></div>
-            <span class="froggy-account-beta">PROFILE v1</span>
+            <span class="froggy-account-beta">PROFILE v2</span>
           </div>
 
           <div id="froggyAccountSignedOut" class="froggy-account-state">
@@ -561,6 +561,41 @@
           </div>
           <p id="froggyAccountStatus" class="froggy-account-status" data-state="info" aria-live="polite">Loading Froggy Accounts…</p>
           <p class="froggy-account-privacy">Your Google email is only shown to you here. Other players will see your Froggy username, never your private email.</p>
+        </section>
+
+        <section id="froggyFriendsPanel" class="froggy-friends-panel glass hidden" aria-labelledby="froggyFriendsTitle">
+          <div class="froggy-friends-head">
+            <div><small>FROGGY FRIENDS · BETA</small><h2 id="froggyFriendsTitle">Connect with players</h2><p>Search exact Froggy usernames. Google emails stay private.</p></div>
+            <span>FRIENDS v1</span>
+          </div>
+
+          <form id="froggyFriendSearchForm" class="froggy-friend-search">
+            <label for="froggyFriendSearchInput">FIND A PLAYER</label>
+            <div class="froggy-friend-search-row">
+              <span aria-hidden="true">@</span>
+              <input id="froggyFriendSearchInput" type="text" inputmode="text" autocomplete="off" autocapitalize="none" spellcheck="false" minlength="3" maxlength="16" placeholder="username" />
+              <button id="froggyFriendSearchButton" type="submit" class="pressable">SEARCH</button>
+            </div>
+          </form>
+
+          <div id="froggyFriendSearchResult" class="froggy-friend-search-result hidden" aria-live="polite"></div>
+
+          <div class="froggy-friends-columns">
+            <section class="froggy-friends-column">
+              <div class="froggy-friends-column-head"><div><small>INCOMING</small><h3>Friend requests</h3></div><b id="froggyIncomingCount">0</b></div>
+              <div id="froggyIncomingRequests" class="froggy-friends-list"></div>
+            </section>
+            <section class="froggy-friends-column">
+              <div class="froggy-friends-column-head"><div><small>FRIENDS</small><h3>Your connections</h3></div><b id="froggyFriendsCount">0</b></div>
+              <div id="froggyFriendsList" class="froggy-friends-list"></div>
+            </section>
+            <section class="froggy-friends-column">
+              <div class="froggy-friends-column-head"><div><small>SENT</small><h3>Pending requests</h3></div><b id="froggyOutgoingCount">0</b></div>
+              <div id="froggyOutgoingRequests" class="froggy-friends-list"></div>
+            </section>
+          </div>
+          <p id="froggyFriendsStatus" class="froggy-friends-status" data-state="info" aria-live="polite">Friends load after your public username is ready.</p>
+          <p class="froggy-friends-privacy">Friends v1 stores only Froggy usernames and Firebase account IDs needed to connect players. Your Google email is never written into friend requests or friendships.</p>
         </section>
         <div class="stats-grid">
           <div class="stat-card glass"><small>TOTAL JUMPS</small><b id="totalJumpsStat">0</b></div>
@@ -755,7 +790,7 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script type="module" src="firebase-account.js?v=95-firestore-profile"></script>
-  <script src="app.js?v=95-firestore-profile"></script>
+  <script type="module" src="firebase-account.js?v=96-friends-v1"></script>
+  <script src="app.js?v=96-friends-v1"></script>
 </body>
 </html>

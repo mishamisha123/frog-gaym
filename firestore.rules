@@ -27,18 +27,67 @@ service cloud.firestore {
         ).data.username == request.resource.data.username;
     }
 
+    function requestParticipant(data) {
+      return signedIn()
+        && (request.auth.uid == data.fromUid || request.auth.uid == data.toUid);
+    }
+
+    function validFriendRequestCreate(requestId) {
+      let data = request.resource.data;
+      return data.keys().hasOnly([
+          'fromUid', 'toUid', 'fromUsername', 'toUsername',
+          'status', 'createdAt', 'schemaVersion'
+        ])
+        && request.auth.uid == data.fromUid
+        && data.fromUid != data.toUid
+        && requestId == data.fromUid + '__' + data.toUid
+        && data.status == 'pending'
+        && data.schemaVersion == 1
+        && data.createdAt == request.time
+        && exists(/databases/$(database)/documents/profiles/$(data.fromUid))
+        && exists(/databases/$(database)/documents/profiles/$(data.toUid))
+        && data.fromUsername == get(/databases/$(database)/documents/profiles/$(data.fromUid)).data.username
+        && data.toUsername == get(/databases/$(database)/documents/profiles/$(data.toUid)).data.username
+        && !exists(/databases/$(database)/documents/friendRequests/$(data.toUid + '__' + data.fromUid))
+        && !exists(/databases/$(database)/documents/friendships/$(requestId))
+        && !exists(/databases/$(database)/documents/friendships/$(data.toUid + '__' + data.fromUid));
+    }
+
+    function validFriendshipCreate(friendshipId) {
+      let data = request.resource.data;
+      let friendRequest = getAfter(
+        /databases/$(database)/documents/friendRequests/$(friendshipId)
+      ).data;
+      return data.keys().hasOnly([
+          'requestId', 'members', 'fromUid', 'toUid', 'fromUsername',
+          'toUsername', 'createdAt', 'schemaVersion'
+        ])
+        && data.requestId == friendshipId
+        && data.members is list
+        && data.members.size() == 2
+        && data.members[0] == data.fromUid
+        && data.members[1] == data.toUid
+        && data.fromUid != data.toUid
+        && request.auth.uid in data.members
+        && data.schemaVersion == 1
+        && data.createdAt == request.time
+        && friendRequest.status == 'accepted'
+        && friendRequest.fromUid == data.fromUid
+        && friendRequest.toUid == data.toUid
+        && friendRequest.fromUsername == data.fromUsername
+        && friendRequest.toUsername == data.toUsername;
+    }
+
     match /profiles/{uid} {
-      // Signed-in players may view public Froggy profiles.
+      // Public Froggy profile data is visible only to signed-in players.
+      // Google email is never stored here.
       allow read: if signedIn();
 
-      // A player may create exactly one profile for their own Firebase UID.
-      // The matching username reservation must be created atomically with it.
       allow create: if signedIn()
         && request.auth.uid == uid
         && !exists(/databases/$(database)/documents/profiles/$(uid))
         && validProfile(uid);
 
-      // Username/profile editing will be added later with server-side moderation.
       allow update, delete: if false;
     }
 
@@ -46,8 +95,6 @@ service cloud.firestore {
       // Exact username lookups are available to signed-in players.
       allow read: if signedIn();
 
-      // The username document ID is the lowercase username. The player's
-      // profile must be created in the same atomic transaction.
       allow create: if signedIn()
         && !exists(/databases/$(database)/documents/usernames/$(handle))
         && request.resource.data.keys().hasOnly(['uid', 'username', 'createdAt'])
@@ -64,7 +111,48 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Everything else remains locked until a later Froggy backend phase.
+    match /friendRequests/{requestId} {
+      // Only the sender and recipient can see a request.
+      allow read: if requestParticipant(resource.data);
+
+      // Sender creates one request addressed to an existing public profile.
+      // A reverse request or existing friendship blocks a duplicate pair.
+      allow create: if signedIn() && validFriendRequestCreate(requestId);
+
+      // Only the recipient can accept. Acceptance must atomically create the
+      // matching friendship document in the same transaction.
+      allow update: if signedIn()
+        && request.auth.uid == resource.data.toUid
+        && resource.data.status == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'respondedAt'])
+        && request.resource.data.status == 'accepted'
+        && request.resource.data.respondedAt == request.time
+        && existsAfter(/databases/$(database)/documents/friendships/$(requestId));
+
+      // Pending requests may be declined/cancelled. Accepted requests may be
+      // removed only when the matching friendship is deleted atomically too.
+      allow delete: if requestParticipant(resource.data)
+        && !existsAfter(/databases/$(database)/documents/friendships/$(requestId));
+    }
+
+    match /friendships/{friendshipId} {
+      // Only the two connected players can read their friendship document.
+      allow read: if signedIn()
+        && resource.data.members is list
+        && request.auth.uid in resource.data.members;
+
+      // Friendship creation is valid only alongside an accepted request.
+      allow create: if signedIn() && validFriendshipCreate(friendshipId);
+
+      allow update: if false;
+
+      // Removing a friend deletes both friendship + accepted request together.
+      allow delete: if signedIn()
+        && request.auth.uid in resource.data.members
+        && !existsAfter(/databases/$(database)/documents/friendRequests/$(friendshipId));
+    }
+
+    // Everything else remains locked until the server-authoritative phase.
     match /{document=**} {
       allow read, write: if false;
     }

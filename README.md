@@ -1,6 +1,19 @@
-# Froggy Leap v95
+# Froggy Leap v96
 
-> **Current-behavior note:** The v95 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+> **Current-behavior note:** The v96 code and this latest release section are authoritative. Older entries below are retained as historical release notes and may describe mechanics that no longer apply.
+
+
+## v96 — Friends v1
+
+- Adds exact Froggy username search for signed-in players with completed public profiles.
+- Adds public player cards that expose Froggy usernames/profile creation date only; Google email remains private and is never written into friendship documents.
+- Adds send, incoming, outgoing, accept, decline, cancel, friends-list, public-profile view, and remove-friend flows.
+- Friend acceptance is atomic: the pending request becomes accepted in the same Firestore transaction that creates the friendship.
+- Removing a friend atomically deletes the friendship and its accepted request record so neither side can recreate the friendship without a new request.
+- Adds real-time Firestore listeners for incoming requests, sent requests, and the friends list.
+- Includes updated `firestore.rules`; they must be published in Firebase before Friends v1 can be used.
+- Wallet, frogs, cases, Bank, Piggy, XP, and game saves remain local in this phase.
+- PWA asset URLs and service-worker cache are bumped to v96.
 
 ## v95 — Firestore public profiles + unique usernames
 
