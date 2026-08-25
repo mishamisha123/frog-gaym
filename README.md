@@ -1,4 +1,4 @@
-# Froggy Leap v102 — Mobile Plinko multiplier resize
+# Froggy Leap v103 — Mobile Plinko rail alignment + instant payout hit
 
 Built on v100.
 
@@ -15,3 +15,10 @@ Built on v100.
 - Low rail ~91% width, Medium ~88%, High ~84%; narrower again on <=390px phones.
 - Smaller 23–25px payout pockets with centered spacing so Medium/High do not crowd the frame.
 - Preserves v101 Friends query fix, v100 cloud-restore fix, Firestore profiles/friends/cloud saves, and all game math.
+
+
+## v103 changes
+- Mobile payout cell centers remain aligned with physics landing slots; visible boxes shrink inside each cell.
+- Medium and High multiplier boxes are smaller without shifting their centers.
+- Final egg landing segment is shortened and ends at first visible contact with the payout rail, so winnings register immediately instead of after a hover delay.
+- Desktop Plinko, odds, payouts, Friends, Firebase, and Cloud Saves are unchanged.

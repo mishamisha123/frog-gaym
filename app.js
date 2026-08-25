@@ -3,7 +3,7 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v101';
+  const BUILD_VERSION = 'v103';
   console.info(`Froggy Leap ${BUILD_VERSION} loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
@@ -1157,8 +1157,8 @@
     const dx=toX-egg.x,dy=toY-egg.y,distance=Math.hypot(dx,dy),firstDrop=kind==='peg'&&egg.nextRow===0&&egg.row<0;
     // v81: each visible hop is a real constant-gravity ballistic arc. We solve the launch velocity
     // analytically so the egg reaches the pre-rolled next collision exactly, with no corrective snap.
-    const duration=kind==='landing'?clamp(.20+distance/900,.21,.32):firstDrop?clamp(.28+distance/1050,.29,.41):clamp(.20+distance/980,.22,.34);
-    const lift=firstDrop?0:kind==='landing'?.55:1.25;
+    const duration=kind==='landing'?clamp(.055+distance/1050,.07,.13):firstDrop?clamp(.28+distance/1050,.29,.41):clamp(.20+distance/980,.22,.34);
+    const lift=firstDrop?0:kind==='landing'?.18:1.25;
     const gravity=firstDrop?Math.max(260,L.rowGap*25):Math.max(360,2*(Math.max(1,dy)+L.rowGap*lift)/(duration*duration));
     egg.segmentDuration=duration;egg.segmentGravity=gravity;egg.segmentVx=dx/duration;egg.segmentVy=(dy-.5*gravity*duration*duration)/duration;
   }
@@ -1174,8 +1174,10 @@
     if(now-plinkoRuntime.lastPegSoundAt>fxGap){plinkoRuntime.lastPegSoundAt=now;audio.fryRim();if(activeEggs<=14)haptic(3);}
     if(egg.nextRow>=egg.rows){
       egg.landing=true;const slotX=L.cx+(egg.slot-egg.rows/2)*L.spacing;
-      // The final segment ends exactly at the canvas edge, directly against the real multiplier row.
-      beginPlinkoMotionSegment(egg,L,slotX,L.h-L.eggRadius*.42,'landing');return;
+      // Finish at first visible contact with the multiplier rail. The egg sprite is ~2.75r tall,
+      // so waiting for its center to reach the canvas edge creates a visible payout delay on mobile.
+      const contactY=Math.max(hit.y+L.eggRadius*.85,L.h-L.eggRadius*1.34);
+      beginPlinkoMotionSegment(egg,L,slotX,contactY,'landing');return;
     }
     const next=egg.targets?.[egg.nextRow]||plinkoImpactTarget(egg,egg.nextRow,L);beginPlinkoMotionSegment(egg,L,next.x,next.y,'peg');
   }

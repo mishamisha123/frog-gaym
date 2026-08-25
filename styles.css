@@ -6004,3 +6004,66 @@ input[type="range"]{opacity:1!important;filter:none!important}
     transform: scaleX(.68) !important;
   }
 }
+
+
+/* ================================================================
+   v103 — mobile Plinko aligned compact payout rail
+   Keep payout cell centers aligned to the physics slots, then shrink
+   each visible box inside its cell. Desktop is intentionally untouched.
+   ================================================================ */
+@media (max-width: 759px) {
+  #playScreen.plinko-mode .plinko-board {
+    --plinko-rail-zone: 38px !important;
+  }
+  #playScreen.plinko-mode .plinko-multipliers,
+  #playScreen.plinko-mode .plinko-multipliers[data-slots="15"],
+  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"] {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    width: var(--plinko-rail-width, 90%) !important;
+    bottom: 6px !important;
+    gap: 0 !important;
+    padding: 0 !important;
+  }
+  #playScreen.plinko-mode .plinko-slot {
+    justify-self: center !important;
+    width: 82% !important;
+    height: 22px !important;
+    min-height: 22px !important;
+    border-radius: 4px !important;
+    padding: 0 !important;
+  }
+  #playScreen.plinko-mode .plinko-slot b {
+    font-size: 7.2px !important;
+    line-height: 1 !important;
+    letter-spacing: -0.06em !important;
+    transform: none !important;
+  }
+  #playScreen.plinko-mode .plinko-multipliers[data-slots="15"] .plinko-slot {
+    width: 78% !important;
+    height: 21px !important;
+    min-height: 21px !important;
+  }
+  #playScreen.plinko-mode .plinko-multipliers[data-slots="15"] .plinko-slot b {
+    font-size: 6.8px !important;
+    transform: scaleX(.94) !important;
+  }
+  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"] .plinko-slot {
+    width: 73% !important;
+    height: 20px !important;
+    min-height: 20px !important;
+  }
+  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"] .plinko-slot b {
+    font-size: 6.35px !important;
+    letter-spacing: -0.08em !important;
+    transform: scaleX(.90) !important;
+  }
+}
+@media (max-width: 390px) {
+  #playScreen.plinko-mode .plinko-board { --plinko-rail-zone: 36px !important; }
+  #playScreen.plinko-mode .plinko-slot { width: 80% !important; height: 21px !important; min-height: 21px !important; }
+  #playScreen.plinko-mode .plinko-multipliers[data-slots="15"] .plinko-slot { width: 75% !important; }
+  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"] .plinko-slot { width: 69% !important; height: 19px !important; min-height: 19px !important; }
+  #playScreen.plinko-mode .plinko-multipliers[data-slots="17"] .plinko-slot b { font-size: 6px !important; }
+}
