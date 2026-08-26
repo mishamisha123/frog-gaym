@@ -96,7 +96,7 @@ const economyStatus = byId('froggyEconomyStatus');
 const GAME_STORAGE_KEY = 'froggy-leap-deluxe-v3';
 const CLOUD_DEVICE_KEY = 'froggy-cloud-device-v1';
 const CLOUD_META_PREFIX = 'froggy-cloud-meta-v1:';
-const CLOUD_BUILD_VERSION = 'v112.4';
+const CLOUD_BUILD_VERSION = 'v112.6';
 const CLOUD_AUTOSAVE_DELAY_MS = 12000;
 
 let auth;
@@ -1171,6 +1171,9 @@ function normalizeServerEconomySnapshot(snapshot) {
 
 function renderServerEconomySnapshot(snapshot) {
   snapshot = normalizeServerEconomySnapshot(snapshot);
+  const previousSnapshotJson = serverEconomySnapshot ? JSON.stringify(serverEconomySnapshot) : '';
+  const nextSnapshotJson = snapshot ? JSON.stringify(snapshot) : '';
+  if (previousSnapshotJson === nextSnapshotJson) return snapshot;
   serverEconomySnapshot = snapshot;
   if (!snapshot) {
     if (economyWallet) economyWallet.textContent = 'NOT MIGRATED';
@@ -1345,11 +1348,13 @@ function installServerEconomyBridge() {
     getSnapshot: async () => fetchServerEconomySnapshot(),
     check: async () => checkServerEconomy({quiet: true}),
     bootstrap: async () => callable('bootstrapEconomyFromCloud')({}).then(result => result.data),
-    buyCases: async (caseId, quantity = 1, requestId = serverEconomyRequestId('buy')) => callable('buyCasesAuthoritative')({caseId, quantity, requestId}).then(result => absorbServerEconomyResult(result.data)),
-    openCases: async (caseId, quantity = 1, requestId = serverEconomyRequestId('open')) => callable('openCasesAuthoritative')({caseId, quantity, requestId}).then(result => absorbServerEconomyResult(result.data)),
-    buyCollection: async (kind, itemId, requestId = serverEconomyRequestId('shop')) => callable('buyCollectionAuthoritative')({kind, itemId, requestId}).then(result => absorbServerEconomyResult(result.data)),
-    startJob: async (sessionId, frogId) => callable('startJobShiftAuthoritative')({sessionId, frogId}).then(result => absorbServerEconomyResult(result.data)),
-    jobAction: async (sessionId, action, requestId = serverEconomyRequestId('job')) => callable('jobActionAuthoritative')({sessionId, action, requestId}).then(result => absorbServerEconomyResult(result.data)),
+    // Hot gameplay calls return their committed result directly. The game applies it once,
+    // while the Firestore listener updates the Profile panel. This avoids duplicate full UI renders.
+    buyCases: async (caseId, quantity = 1, requestId = serverEconomyRequestId('buy')) => callable('buyCasesAuthoritative')({caseId, quantity, requestId}).then(result => result.data),
+    openCases: async (caseId, quantity = 1, requestId = serverEconomyRequestId('open')) => callable('openCasesAuthoritative')({caseId, quantity, requestId}).then(result => result.data),
+    buyCollection: async (kind, itemId, requestId = serverEconomyRequestId('shop')) => callable('buyCollectionAuthoritative')({kind, itemId, requestId}).then(result => result.data),
+    startJob: async (sessionId, frogId) => callable('startJobShiftAuthoritative')({sessionId, frogId}).then(result => result.data),
+    jobAction: async (sessionId, action, requestId = serverEconomyRequestId('job')) => callable('jobActionAuthoritative')({sessionId, action, requestId}).then(result => result.data),
     endJob: async (sessionId, reason, requestId = serverEconomyRequestId('jobend')) => callable('endJobShiftAuthoritative')({sessionId, reason, requestId}).then(result => result.data),
     adminStatus: async () => callable('adminStatus')({}).then(result => result.data),
     adminOperate: async (action, operation, requestId = serverEconomyRequestId('admin')) => callable('adminEconomyOperation')({action, operation, requestId}).then(result => absorbServerEconomyResult(result.data)),
@@ -1432,7 +1437,7 @@ try {
         return;
       }
       const opened = await opener({serverVerified: true});
-      if (!opened) setEconomyStatus('Owner role is valid, but the Owner Console frontend could not open. v112.5 restores the missing Owner runtime helpers.', 'error');
+      if (!opened) setEconomyStatus('Owner role is valid, but the Owner Console frontend could not open. v112.6 includes the Owner runtime fix.', 'error');
     } finally {
       ownerConsoleButton.disabled = false;
     }
