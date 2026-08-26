@@ -95,7 +95,7 @@ const economyStatus = byId('froggyEconomyStatus');
 const GAME_STORAGE_KEY = 'froggy-leap-deluxe-v3';
 const CLOUD_DEVICE_KEY = 'froggy-cloud-device-v1';
 const CLOUD_META_PREFIX = 'froggy-cloud-meta-v1:';
-const CLOUD_BUILD_VERSION = 'v112';
+const CLOUD_BUILD_VERSION = 'v112.1';
 const CLOUD_AUTOSAVE_DELAY_MS = 12000;
 
 let auth;

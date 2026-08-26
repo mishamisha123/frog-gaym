@@ -1,7 +1,7 @@
 {
   "name": "Froggy Leap",
   "short_name": "Froggy Leap",
-  "description": "Froggy Leap v112 with server-authoritative Cases, Frog/Lake purchases, Job rewards, protected Owner economy grants, Cloud Saves/Friends, exact Bank loans, and Plinko Focus mode.",
+  "description": "Froggy Leap v112.1 hotfix with server-authoritative Cases, Frog/Lake purchases, Job rewards, protected Owner economy grants, Cloud Saves/Friends, exact Bank loans, and Plinko Focus mode.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

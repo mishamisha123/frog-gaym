@@ -1,3 +1,7 @@
+# Froggy Leap v112.1 — Click/Input Hotfix
+
+Hotfix for v112. Restores the accidentally omitted Owner modal runtime declarations that caused modal/navigation click handlers to throw `ReferenceError: ownerAccessModal is not defined`. Backend Phase 3 logic is unchanged; no re-migration is required.
+
 # Froggy Leap v112 — Server Economy Phase 3
 
 Build v112 continues from the validated v111 server-authoritative Cases build. Existing local save key remains `froggy-leap-deluxe-v3`; existing Server Economy accounts are upgraded in place and must **not** be migrated again.
