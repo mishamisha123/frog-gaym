@@ -1432,7 +1432,7 @@ try {
         return;
       }
       const opened = await opener({serverVerified: true});
-      if (!opened) setEconomyStatus('Owner role is valid, but the Phase 3 economy is still connecting. Tap CHECK BACKEND, then try OWNER CONSOLE again.', 'error');
+      if (!opened) setEconomyStatus('Owner role is valid, but the Owner Console frontend could not open. v112.5 restores the missing Owner runtime helpers.', 'error');
     } finally {
       ownerConsoleButton.disabled = false;
     }

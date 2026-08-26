@@ -1,3 +1,9 @@
+# Froggy Leap v112.5 — Owner Console runtime fix
+
+GITHUB / WEBSITE ONLY. No Firebase backend or Firestore deployment is included.
+
+Fix: v112 introduced the Phase 3 Owner Console but accidentally dropped seven legacy Owner UI helper functions (`parseOwnerOperation`, `applyOwnerOperation`, `ownerOperationHelp`, `ownerOperationResult`, `ownerStatus`, `ownerButtonValue`, `ownerJobBoostSnapshot`). The Owner role check succeeded, then `refreshOwnerPanel()` threw before the modal could open. v112.5 restores those helpers and keeps the v112 Phase 3 backend/security model unchanged.
+
 # Froggy Leap v112.4 — Owner Console Phase 3 Sync Fix
 
 Website/PWA-only update on top of v112.1. No Firebase backend or Firestore redeploy is required.
