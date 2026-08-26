@@ -1,4 +1,4 @@
-# Froggy Leap v112.2 — Owner-Only Console Button
+# Froggy Leap v112.3 — Owner-Only Console Button
 
 Website/PWA-only update on top of v112.1. No Firebase backend or Firestore redeploy is required.
 
@@ -34,3 +34,7 @@ The backend performs a one-time Phase 3 upgrade of the existing authoritative ec
 ## Deployment
 
 Deploy the v112 Firestore rules and Cloud Functions first, then upload the complete web/PWA folder to GitHub Pages. Bump/cache references are already set to v112.
+
+
+## v112.3 frontend hotfix
+The Owner Console button now opens the game console through the direct FroggyGame bridge after server owner verification, and refreshes the Phase 3 snapshot if the game-side economy cache is stale. Firebase backend deployment is unchanged from v112.
