@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=111-server-cases" />
+  <link rel="stylesheet" href="styles.css?v=112-collection-job-admin" />
   <title>Froggy Leap</title>
 </head>
 <body>
@@ -107,7 +107,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v111 · FROGGY LEAP</div>
+          <div class="build-version" aria-label="Installed game version">v112 · FROGGY LEAP</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -233,6 +233,7 @@
       </section>
 
       <section id="jobScreen" class="screen job-screen" aria-label="Froggy Fry Job">
+        <div id="jobAuthorityStatus" class="economy-authority-status" data-state="waiting" aria-live="polite"><b>CONNECTING TO SERVER JOB…</b><span>Job rewards stay disabled until the authoritative account snapshot is loaded.</span></div>
         <section class="job-game-card glass">
           <div class="job-shift-hud">
             <span><small>SHIFT MONEY</small><b id="jobShiftMoney">0 F</b></span>
@@ -292,6 +293,7 @@
           <button class="segment" data-collection="lakes">Lakes</button>
           <button class="segment" data-collection="vehicles">Vehicles</button>
         </div>
+        <div id="collectionAuthorityStatus" class="economy-authority-status" data-state="waiting" aria-live="polite"><b>CONNECTING TO SERVER COLLECTION…</b><span>Frog and Lake purchases use the authoritative wallet in v112. Vehicles remain local until Crash migration.</span></div>
         <div id="collectionGrid" class="collection-grid"></div>
       </section>
 
@@ -597,12 +599,14 @@
 
         <section id="froggyEconomyPanel" class="froggy-economy-panel glass hidden" aria-labelledby="froggyEconomyTitle">
           <div class="froggy-economy-head">
-            <div><small>SERVER ECONOMY · PHASE 2</small><h2 id="froggyEconomyTitle">Server-authoritative Cases</h2><p>Case purchases, inventory, OPEN 1/2/3 outcomes and duplicate compensation are now committed by the private backend before the browser animates them.</p></div>
+            <div><small>SERVER ECONOMY · PHASE 3</small><h2 id="froggyEconomyTitle">Cases + Collection + Job</h2><p>Case transactions, Frog/Lake purchases, and Job rewards are now committed by the private backend. The browser displays results but cannot mint spendable server value.</p></div>
             <span id="froggyEconomyBadge" data-state="info">CHECKING</span>
           </div>
           <div class="froggy-economy-grid">
             <div><small>AUTHORITATIVE WALLET</small><b id="froggyEconomyWallet">NOT MIGRATED</b></div>
             <div><small>SERVER CASES</small><b id="froggyEconomyCases">—</b></div>
+            <div><small>SERVER JOB</small><b id="froggyEconomyJob">—</b></div>
+            <div><small>SERVER COLLECTION</small><b id="froggyEconomyCollection">—</b></div>
             <div><small>MIGRATION SOURCE</small><b id="froggyEconomyMigration">—</b></div>
             <div><small>PLAYER TRANSFERS</small><b id="froggyEconomyTransfer">LOCKED</b></div>
           </div>
@@ -610,8 +614,8 @@
             <button id="froggyEconomyCheckButton" class="froggy-economy-button secondary pressable" type="button">CHECK BACKEND</button>
             <button id="froggyEconomyMigrateButton" class="froggy-economy-button primary pressable hidden" type="button">MIGRATE CURRENT CLOUD SAVE</button>
           </div>
-          <p id="froggyEconomyStatus" class="froggy-economy-status" data-state="info" aria-live="polite">Sign in to check Server Economy Phase 2.</p>
-          <p class="froggy-economy-note"><b>Transfers stay locked.</b> v111 switches Cases live to the protected backend. Job, Lily Leap, Plinko, Crash, Bank, Piggy and ordinary Collection transactions remain local during staged migration.</p>
+          <p id="froggyEconomyStatus" class="froggy-economy-status" data-state="info" aria-live="polite">Sign in to check Server Economy Phase 3.</p>
+          <p class="froggy-economy-note"><b>Transfers stay locked.</b> v112 moves Cases, Frog/Lake purchases and Job rewards to the protected backend. Vehicles, selling, Lily Leap, Plinko, Crash, Bank and Piggy remain staged for later migration.</p>
         </section>
 
         <section id="froggyFriendsPanel" class="froggy-friends-panel glass" aria-labelledby="froggyFriendsTitle">
@@ -841,7 +845,7 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script type="module" src="firebase-account.js?v=111-server-cases"></script>
-  <script src="app.js?v=111-server-cases"></script>
+  <script type="module" src="firebase-account.js?v=112-collection-job-admin"></script>
+  <script src="app.js?v=112-collection-job-admin"></script>
 </body>
 </html>

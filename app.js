@@ -3,7 +3,7 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v111';
+  const BUILD_VERSION = 'v112';
   console.info(`Froggy Leap ${BUILD_VERSION} loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
@@ -41,12 +41,17 @@
   });
   const MAX_LOAN_PAYOUT = 5000000000;
   const MAX_CASE_LUCK_MULTIPLIER = 100;
-  // v111: Cases are the first live server-authoritative subsystem. The rest of the economy
-  // remains local during staged migration, so the Cases screen deliberately uses a distinct
-  // server wallet/inventory snapshot and mirrors only completed Case deltas back into local save.
+  // v112 Phase 3: Cases, Frog/Lake purchases, and Job rewards use the protected server economy.
+  // Older game modes still keep their local wallet during staged migration; transfer/trading remains locked.
   const serverCaseRuntime={ready:false,busy:false,snapshot:null,syncPromise:null,lastError:''};
   function serverCasesActive(){return Boolean(!TEST_MODE&&serverCaseRuntime.ready&&serverCaseRuntime.snapshot);}
+  function serverPhase3Active(){return Boolean(serverCasesActive()&&Number(serverCaseRuntime.snapshot?.economyPhase)>=3);}
+  function serverCollectionActive(){return serverPhase3Active();}
+  function serverJobActive(){return serverPhase3Active();}
   function serverCaseWalletBalance(){return Math.max(0,Math.floor(Number(serverCaseRuntime.snapshot?.wallet)||0));}
+  function serverPlayerLevel(){return Math.max(1,Math.floor(Number(serverCaseRuntime.snapshot?.level)||1));}
+  function serverJobLevel(){return Math.max(1,Math.floor(Number(serverCaseRuntime.snapshot?.jobLevel)||1));}
+  function serverJobXp(){return Math.max(0,Math.floor(Number(serverCaseRuntime.snapshot?.jobXp)||0));}
   function serverCaseInventoryCount(id){return Math.max(0,Math.floor(Number(serverCaseRuntime.snapshot?.caseInventory?.[id])||0));}
   function displayCaseInventoryCount(id){return serverCasesActive()?serverCaseInventoryCount(id):caseInventoryCount(id);}
   const BASE_UNSECURED_CREDIT = 5000;
@@ -2563,13 +2568,15 @@
     pointerId:null,fryX:0,fryY:0,fryVx:0,fryVy:0,fryRotation:0,frySpin:0,
     lastPointerX:0,lastPointerY:0,lastPointerTime:0,bombExpiresAt:0,
     queued:null,shiftRoundCounted:false,lastDebtResult:null,pendingMoneyBoosts:0,pendingXpBoosts:0,
-    shiftEndsAt:0,rimCooldownUntil:0,rewardTimer:0,spawnTimer:0
+    shiftEndsAt:0,rimCooldownUntil:0,rewardTimer:0,spawnTimer:0,
+    serverSessionId:'',serverNextType:'',serverBusy:false,serverExpiresAtMs:0
   };
   function jobXpNeeded(level=state.jobLevel){return 100+Math.max(0,level-1)*40;}
   function jobPay(){const level=Math.max(1,Number(state.jobLevel)||1);return 15+Math.floor(4*Math.sqrt(Math.max(0,level-1)));}
   function jobXpPerFry(){const level=Math.max(1,Number(state.jobLevel)||1);return 5+Math.floor(Math.log2(level)/2);}
   function renderJob(){
     if(!els.jobLevelLabel)return;
+    updateServerAuthorityUi();
     const needed=jobXpNeeded();
     els.jobLevelLabel.textContent=`Lv ${money(state.jobLevel)}`;
     els.jobPayLabel.textContent=`${money(jobPay())} F/fry`;
@@ -2631,6 +2638,7 @@
     els.jobQueuedFry.className='job-fry job-queued-fry hidden';
   }
   function prepareQueuedJobFry(){
+    if(serverJobActive()&&!TEST_MODE)return;
     if(!jobRuntime.active||jobRuntime.queued)return;
     const m=jobFieldMetrics();
     const queued={
@@ -2650,7 +2658,7 @@
     clearTimeout(jobRuntime.spawnTimer);
     if(!jobRuntime.active)return;
     const m=jobFieldMetrics(),queued=jobRuntime.queued;
-    jobRuntime.type=queued?.type||chooseFryType();
+    jobRuntime.type=jobRuntime.serverNextType||queued?.type||chooseFryType();jobRuntime.serverNextType='';
     jobRuntime.dragging=false;jobRuntime.falling=false;jobRuntime.resolving=false;
     jobRuntime.fryX=queued?.x??(m.fryWidth*.7+Math.random()*Math.max(1,m.width-m.fryWidth*1.4));
     jobRuntime.fryY=queued?.y??Math.max(m.fryHeight*.54,Math.min(m.lineY-m.fryHeight*.54,m.lineY*.48));
@@ -2663,20 +2671,33 @@
     els.jobFry.setAttribute('aria-label',jobRuntime.type==='red'?'Bomb fry: drag it above the line and drop it away from the bag':'Drag this fry above the line, then release it');
     positionJobFry();
   }
-  function startJobShift(){
+  async function startJobShift(){
+    if(jobRuntime.serverBusy)return;
     closeJobResult({restoreIdle:false});clearTimeout(jobRuntime.spawnTimer);clearTimeout(jobRuntime.rewardTimer);
+    let serverStart=null;
+    if(!TEST_MODE){
+      if(!serverJobActive()&&!await syncServerCases())return;
+      if(!serverJobActive()){setStatus('Server Job is not ready yet. Refresh Froggy Leap and try again.','lose');return;}
+      const bridge=window.FroggyServerEconomy;if(!bridge?.startJob){setStatus('Server Job bridge is not ready. Refresh Froggy Leap.','lose');return;}
+      jobRuntime.serverBusy=true;if(els.jobStartButton)els.jobStartButton.disabled=true;if(els.jobAgainButton)els.jobAgainButton.disabled=true;
+      const sessionId=bridge.requestId?.('jobshift')||`jobshift-${Date.now()}`;
+      setStatus('🔒 Starting authoritative Job shift…','info');
+      try{serverStart=await bridge.startJob(sessionId,state.selectedFrog);mergeServerCaseResult(serverStart);jobRuntime.serverSessionId=String(serverStart?.sessionId||sessionId);jobRuntime.serverNextType=String(serverStart?.currentFryType||'normal');jobRuntime.serverExpiresAtMs=Number(serverStart?.expiresAtMs)||Date.now()+15000;}
+      catch(error){setStatus(serverCaseFriendlyError(error),'lose');restoreJobIdleScreen();return;}
+      finally{jobRuntime.serverBusy=false;if(els.jobStartButton)els.jobStartButton.disabled=false;if(els.jobAgainButton)els.jobAgainButton.disabled=false;}
+    }
     jobRuntime.active=true;jobRuntime.dragging=false;jobRuntime.falling=false;jobRuntime.resolving=false;
-    jobRuntime.shiftMoney=0;jobRuntime.fries=0;jobRuntime.moneyBoostUntil=0;jobRuntime.xpBoostUntil=0;jobRuntime.moneyBoostMultiplier=1;jobRuntime.xpBoostMultiplier=1;jobRuntime.queued=null;jobRuntime.shiftRoundCounted=false;jobRuntime.lastDebtResult=null;jobRuntime.shiftEndsAt=performance.now()+15000+skinJobStartBonusMs();
+    jobRuntime.shiftMoney=0;jobRuntime.fries=0;jobRuntime.moneyBoostUntil=0;jobRuntime.xpBoostUntil=0;jobRuntime.moneyBoostMultiplier=1;jobRuntime.xpBoostMultiplier=1;jobRuntime.queued=null;jobRuntime.shiftRoundCounted=false;jobRuntime.lastDebtResult=null;
+    jobRuntime.shiftEndsAt=serverStart?performance.now()+Math.max(1000,jobRuntime.serverExpiresAtMs-Date.now()):performance.now()+15000+skinJobStartBonusMs();
     const m=jobFieldMetrics();
     jobRuntime.bagX=m.width*.5;jobRuntime.lastBagX=jobRuntime.bagX;jobRuntime.bagTarget=m.width*(.2+Math.random()*.6);
     els.jobIntro.classList.add('hidden');els.jobBag.classList.remove('hidden');els.jobExplosion.classList.add('hidden');hideQueuedJobFry();
-    const boostNow=performance.now();
-    for(let i=0;i<jobRuntime.pendingMoneyBoosts;i++)activateJobMoneyBoost(boostNow);
-    for(let i=0;i<jobRuntime.pendingXpBoosts;i++)activateJobXpBoost(boostNow);
+    if(!serverStart){const boostNow=performance.now();for(let i=0;i<jobRuntime.pendingMoneyBoosts;i++)activateJobMoneyBoost(boostNow);for(let i=0;i<jobRuntime.pendingXpBoosts;i++)activateJobXpBoost(boostNow);}
     jobRuntime.pendingMoneyBoosts=0;jobRuntime.pendingXpBoosts=0;
     audio.start();renderJob();positionJobBag();spawnJobFry();
     jobRuntime.lastFrame=performance.now();cancelAnimationFrame(jobRuntime.raf);jobRuntime.raf=requestAnimationFrame(jobLoop);
   }
+
   function jobPointerPosition(event){
     const r=els.jobPlayfield.getBoundingClientRect();
     return{x:event.clientX-r.left,y:event.clientY-r.top};
@@ -2849,14 +2870,32 @@
     void els.jobRewardBurst.offsetWidth;els.jobRewardBurst.classList.add('show');
     jobRuntime.rewardTimer=setTimeout(()=>els.jobRewardBurst.classList.add('hidden'),900);
   }
-  function bagJobFry(){
+  async function bagJobFry(){
     const now=performance.now(),type=jobRuntime.type;
-    if(type==='green'){
-      activateJobMoneyBoost(now);audio.boost();
+    if(serverJobActive()&&!TEST_MODE){
+      if(jobRuntime.serverBusy)return;
+      const bridge=window.FroggyServerEconomy;if(!bridge?.jobAction||!jobRuntime.serverSessionId){setStatus('Server Job session is missing. Start a new shift.','lose');endJobShift('server');return;}
+      jobRuntime.serverBusy=true;setStatus('🔒 Server validating fry…','info');
+      try{
+        const requestId=bridge.requestId?.('jobfry')||undefined,result=await bridge.jobAction(jobRuntime.serverSessionId,'bag',requestId);mergeServerCaseResult(result);
+        const earned=Math.max(0,Math.floor(Number(result?.earned)||0)),xp=Math.max(0,Math.floor(Number(result?.xpEarned)||0)),levelBonus=Math.max(0,Math.floor(Number(result?.levelBonus)||0));
+        creditBalance(earned+levelBonus);
+        if(Number.isFinite(Number(result?.jobLevel)))state.jobLevel=Math.max(1,Math.floor(Number(result.jobLevel)||1));
+        if(Number.isFinite(Number(result?.jobXp)))state.jobXp=Math.max(0,Math.floor(Number(result.jobXp)||0));
+        if(Number(result?.level)>=state.level){state.level=Math.max(1,Math.floor(Number(result.level)||1));state.xp=Math.max(0,Math.floor(Number(result.xp)||0));}
+        jobRuntime.moneyBoostMultiplier=Math.max(1,Number(result?.moneyMultiplier)||1);jobRuntime.xpBoostMultiplier=Math.max(1,Number(result?.xpMultiplier)||1);
+        const serverNow=Date.now(),perfNow=performance.now();jobRuntime.moneyBoostUntil=Number(result?.moneyBoostUntilMs)>serverNow?perfNow+(Number(result.moneyBoostUntilMs)-serverNow):0;jobRuntime.xpBoostUntil=Number(result?.xpBoostUntilMs)>serverNow?perfNow+(Number(result.xpBoostUntilMs)-serverNow):0;
+        jobRuntime.serverExpiresAtMs=Number(result?.expiresAtMs)||serverNow;jobRuntime.shiftEndsAt=perfNow+Math.max(0,jobRuntime.serverExpiresAtMs-serverNow);jobRuntime.serverNextType=String(result?.nextFryType||'normal');
+        jobRuntime.shiftMoney+=earned;jobRuntime.fries++;state.jobLifetimeFries++;state.jobLifetimeEarnings+=earned;session.net+=earned;
+        audio.fryBag();haptic(12);showJobReward(earned,xp);els.jobFry.classList.add('bagged');refresh();renderJob();saveState();
+        if(levelBonus)setStatus(`🔒 SERVER JOB · +${money(earned)} F · +${money(xp)} XP · +${money(levelBonus)} F level bonus.`,'win');else setStatus(`🔒 SERVER JOB · +${money(earned)} F · +${money(xp)} XP.`,'win');
+        jobRuntime.spawnTimer=setTimeout(()=>{els.jobFry.classList.remove('bagged');spawnJobFry();},60);
+      }catch(error){setStatus(serverCaseFriendlyError(error),'lose');void syncServerCases({quiet:true});endJobShift('server');}
+      finally{jobRuntime.serverBusy=false;}
+      return;
     }
-    if(type==='yellow'){
-      activateJobXpBoost(now);audio.boost();
-    }
+    if(type==='green'){activateJobMoneyBoost(now);audio.boost();}
+    if(type==='yellow'){activateJobXpBoost(now);audio.boost();}
     const moneyMultiplier=jobRuntime.moneyBoostUntil>now?jobRuntime.moneyBoostMultiplier:1;
     const xpMultiplier=jobRuntime.xpBoostUntil>now?jobRuntime.xpBoostMultiplier:1;
     const earned=Math.min(MAX_SAFE_BALANCE,Math.floor(jobPay()*moneyMultiplier*skinJobMoneyMultiplier())),xp=Math.min(MAX_SAFE_BALANCE,Math.floor(jobXpPerFry()*xpMultiplier*skinJobXpMultiplier()));
@@ -2865,11 +2904,21 @@
     audio.fryBag();haptic(12);showJobReward(earned,xp);els.jobFry.classList.add('bagged');refresh();renderJob();saveState();
     jobRuntime.spawnTimer=setTimeout(()=>{els.jobFry.classList.remove('bagged');spawnJobFry();},60);
   }
-  function discardJobBomb(){
+
+  async function discardJobBomb(){
+    if(serverJobActive()&&!TEST_MODE){
+      if(jobRuntime.serverBusy)return;const bridge=window.FroggyServerEconomy;if(!bridge?.jobAction||!jobRuntime.serverSessionId){endJobShift('server');return;}
+      jobRuntime.serverBusy=true;els.jobFry.classList.add('discarded');audio.bombDiscard();haptic(10);setStatus('🔒 Server validating bomb discard…','info');
+      try{const result=await bridge.jobAction(jobRuntime.serverSessionId,'discard',bridge.requestId?.('jobbomb'));mergeServerCaseResult(result);const serverNow=Date.now(),perfNow=performance.now();jobRuntime.serverExpiresAtMs=Number(result?.expiresAtMs)||serverNow;jobRuntime.shiftEndsAt=perfNow+Math.max(0,jobRuntime.serverExpiresAtMs-serverNow);jobRuntime.serverNextType=String(result?.nextFryType||'normal');setStatus('🔒 Bomb discarded. Server issued the next fry.','win');refresh();jobRuntime.spawnTimer=setTimeout(()=>spawnJobFry(),60);}
+      catch(error){setStatus(serverCaseFriendlyError(error),'lose');endJobShift('server');}
+      finally{jobRuntime.serverBusy=false;}
+      return;
+    }
     els.jobFry.classList.add('discarded');audio.bombDiscard();haptic(10);
     setStatus('Bomb discarded. Back to work.','win');refresh();
     jobRuntime.spawnTimer=setTimeout(()=>spawnJobFry(),60);
   }
+
   function explodeJobBomb(){
     jobRuntime.active=false;jobRuntime.dragging=false;jobRuntime.falling=false;
     cancelAnimationFrame(jobRuntime.raf);els.jobFry.classList.add('hidden');hideQueuedJobFry();
@@ -2880,16 +2929,17 @@
   }
   function endJobShift(reason='miss',alreadyStopped=false){
     if(!jobRuntime.active&&!alreadyStopped)return;
+    if(serverJobActive()&&!TEST_MODE&&jobRuntime.serverSessionId){const bridge=window.FroggyServerEconomy,sessionId=jobRuntime.serverSessionId;jobRuntime.serverSessionId='';jobRuntime.serverNextType='';if(bridge?.endJob)void bridge.endJob(sessionId,reason,bridge.requestId?.('jobend')).catch(()=>{});}
     jobRuntime.active=false;jobRuntime.dragging=false;jobRuntime.falling=false;jobRuntime.resolving=true;jobRuntime.shiftEndsAt=0;
     cancelAnimationFrame(jobRuntime.raf);clearTimeout(jobRuntime.spawnTimer);els.jobFry.classList.add('hidden');hideQueuedJobFry();
     finishJobShiftRound('loss');
     if(reason!=='bomb'){audio.jobFail();haptic([80,40,120]);}
-    const timedOut=reason==='timeout',quit=reason==='quit';
-    els.jobResultIcon.textContent=reason==='bomb'?'💥':timedOut?'⏰':quit?'🕒':'💔';
-    els.jobResultTitle.textContent=reason==='bomb'?'YOU CAUGHT A BOMB':timedOut?"TIME'S UP":quit?'SHIFT ENDED':'MISSED THE BAG';
+    const timedOut=reason==='timeout',quit=reason==='quit',serverError=reason==='server';
+    els.jobResultIcon.textContent=reason==='bomb'?'💥':timedOut?'⏰':quit?'🕒':serverError?'🔒':'💔';
+    els.jobResultTitle.textContent=reason==='bomb'?'YOU CAUGHT A BOMB':timedOut?"TIME'S UP":quit?'SHIFT ENDED':serverError?'SERVER SHIFT ENDED':'MISSED THE BAG';
     els.jobResultMoney.textContent=`${money(jobRuntime.shiftMoney)} F`;
     const frySummary=`You bagged ${money(jobRuntime.fries)} ${jobRuntime.fries===1?'fry':'fries'} and made ${money(jobRuntime.shiftMoney)} F.`;
-    const reasonText=reason==='bomb'?'A bomb landed in the bag.':timedOut?'The timer reached zero.':quit?'You left the shift.':'A fry missed the bag.';
+    const reasonText=reason==='bomb'?'A bomb landed in the bag.':timedOut?'The timer reached zero.':quit?'You left the shift.':serverError?'The protected Job session could not continue.':'A fry missed the bag.';
     els.jobResultText.textContent=`${reasonText} ${frySummary}${jobRuntime.lastDebtResult?` ${jobRuntime.lastDebtResult.message}`:''}`;
     setTimeout(()=>els.jobResult.classList.remove('hidden'),reason==='bomb'?220:0);
     refresh();renderJob();saveState();
@@ -2898,7 +2948,7 @@
     if(jobRuntime.active)return;
     cancelAnimationFrame(jobRuntime.raf);clearTimeout(jobRuntime.spawnTimer);clearTimeout(jobRuntime.rewardTimer);
     jobRuntime.dragging=false;jobRuntime.falling=false;jobRuntime.resolving=false;jobRuntime.queued=null;
-    jobRuntime.shiftMoney=0;jobRuntime.fries=0;jobRuntime.shiftEndsAt=0;jobRuntime.shiftRoundCounted=false;jobRuntime.lastDebtResult=null;
+    jobRuntime.shiftMoney=0;jobRuntime.fries=0;jobRuntime.shiftEndsAt=0;jobRuntime.shiftRoundCounted=false;jobRuntime.lastDebtResult=null;jobRuntime.serverSessionId='';jobRuntime.serverNextType='';jobRuntime.serverExpiresAtMs=0;jobRuntime.serverBusy=false;
     jobRuntime.moneyBoostUntil=0;jobRuntime.xpBoostUntil=0;jobRuntime.moneyBoostMultiplier=1;jobRuntime.xpBoostMultiplier=1;
     els.jobFry.classList.add('hidden');els.jobBag.classList.add('hidden');hideQueuedJobFry();
     els.jobIntro.classList.remove('hidden');renderJob();
@@ -2912,39 +2962,68 @@
 
   function serverCaseFriendlyError(error){
     const code=String(error?.code||'').toLowerCase(),message=String(error?.message||'').replace(/^FirebaseError:\s*/i,'');
-    if(code.includes('unauthenticated'))return 'Sign in to your Froggy account before using server Cases.';
-    if(code.includes('failed-precondition'))return message||'Server Cases are not ready for this account.';
-    if(code.includes('resource-exhausted'))return 'Too many Case actions. Wait a few seconds and try again.';
-    if(code.includes('unavailable')||code.includes('network'))return 'Server Cases could not reach Firebase. Check your connection and try again.';
-    return message||'Server Cases could not complete that action.';
+    if(code.includes('unauthenticated'))return 'Sign in to your Froggy account before using the server economy.';
+    if(code.includes('permission-denied'))return message||'The server rejected that protected action.';
+    if(code.includes('failed-precondition')||code.includes('deadline-exceeded'))return message||'The server economy is not ready for that action.';
+    if(code.includes('resource-exhausted'))return message||'Too many server actions. Wait a moment and try again.';
+    if(code.includes('unavailable')||code.includes('network'))return 'Could not reach the Froggy backend. Check your connection and try again.';
+    return message||'The server could not complete that action.';
+  }
+  function updateServerAuthorityUi(){
+    const jobNode=document.getElementById('jobAuthorityStatus'),collectionNode=document.getElementById('collectionAuthorityStatus'),live=serverPhase3Active();
+    if(jobNode){jobNode.dataset.state=live?'live':'waiting';jobNode.innerHTML=live?`<b>🔒 SERVER JOB LIVE</b><span>Fry types, rewards, Job XP/levels and wallet credits are calculated by Firebase. The old local mod wallet cannot mint Job money.</span>`:`<b>CONNECTING TO SERVER JOB…</b><span>Job rewards stay disabled until Server Economy Phase 3 is loaded.</span>`;}
+    if(collectionNode){collectionNode.dataset.state=live?'live':'waiting';collectionNode.innerHTML=live?`<b>🔒 SERVER COLLECTION LIVE</b><span>Frog and Lake ownership/purchases use the authoritative wallet. Vehicles and selling remain local/locked until their related migrations.</span>`:`<b>CONNECTING TO SERVER COLLECTION…</b><span>Frog and Lake purchases stay disabled until Server Economy Phase 3 is loaded.</span>`;}
   }
   function applyServerCaseSnapshot(snapshot,{persist=false}={}){
     if(TEST_MODE)return snapshot||null;
     if(!snapshot||typeof snapshot!=='object'){
       serverCaseRuntime.ready=false;serverCaseRuntime.snapshot=null;
+      updateServerAuthorityUi();
       if(els.screens?.cases?.classList.contains('active'))renderCases();
+      if(els.screens?.collection?.classList.contains('active'))renderCollection();
       return null;
     }
     serverCaseRuntime.ready=true;serverCaseRuntime.lastError='';serverCaseRuntime.snapshot=JSON.parse(JSON.stringify(snapshot));
     const inv=snapshot.caseInventory||{};
     state.caseInventory={...state.caseInventory,pond:Math.max(0,Math.floor(Number(inv.pond)||0)),neon:Math.max(0,Math.floor(Number(inv.neon)||0)),ultra:Math.max(0,Math.floor(Number(inv.ultra)||0))};
-    if(Array.isArray(snapshot.unlockedFrogs)){
+    if(Number(snapshot.economyPhase)>=3){
+      const serverFrogs=Array.isArray(snapshot.unlockedFrogs)?snapshot.unlockedFrogs.filter(id=>FROGS.some(f=>f.id===id)):['classic'];
+      const serverLakes=Array.isArray(snapshot.unlockedLakes)?snapshot.unlockedLakes.filter(id=>LAKES.some(l=>l.id===id)):['forest'];
+      state.unlockedFrogs=[...new Set(['classic',...serverFrogs])];
+      state.unlockedLakes=[...new Set(['forest',...serverLakes])];
+      if(!state.unlockedFrogs.includes(state.selectedFrog))state.selectedFrog='classic';
+      if(!state.unlockedLakes.includes(state.selectedLake))state.selectedLake='forest';
+      if(Number.isFinite(Number(snapshot.jobLevel)))state.jobLevel=Math.max(1,Math.floor(Number(snapshot.jobLevel)||1));
+      if(Number.isFinite(Number(snapshot.jobXp)))state.jobXp=Math.max(0,Math.floor(Number(snapshot.jobXp)||0));
+    }else if(Array.isArray(snapshot.unlockedFrogs)){
       const merged=new Set(state.unlockedFrogs||[]);snapshot.unlockedFrogs.forEach(id=>{if(FROGS.some(f=>f.id===id))merged.add(id);});state.unlockedFrogs=[...merged];
     }
     if(Number.isFinite(Number(snapshot.casesOpened)))state.casesOpened=Math.max(0,Math.floor(Number(snapshot.casesOpened)||0));
+    updateServerAuthorityUi();
     if(persist){saveState();refresh();}
     if(els.screens?.cases?.classList.contains('active'))renderCases();
+    if(els.screens?.collection?.classList.contains('active'))renderCollection();
+    if(els.screens?.job?.classList.contains('active'))renderJob();
     return serverCaseRuntime.snapshot;
   }
+
   function mergeServerCaseResult(result){
     const previous=serverCaseRuntime.snapshot||{};
     const next={...previous};
     if(Number.isFinite(Number(result?.wallet)))next.wallet=Math.max(0,Math.floor(Number(result.wallet)||0));
     if(result?.caseInventory&&typeof result.caseInventory==='object')next.caseInventory={...result.caseInventory};
     if(Array.isArray(result?.unlockedFrogs))next.unlockedFrogs=[...result.unlockedFrogs];
+    if(Array.isArray(result?.unlockedLakes))next.unlockedLakes=[...result.unlockedLakes];
     if(Number.isFinite(Number(result?.casesOpened)))next.casesOpened=Math.max(0,Math.floor(Number(result.casesOpened)||0));
+    if(Number.isFinite(Number(result?.level)))next.level=Math.max(1,Math.floor(Number(result.level)||1));
+    if(Number.isFinite(Number(result?.xp)))next.xp=Math.max(0,Math.floor(Number(result.xp)||0));
+    if(Number.isFinite(Number(result?.jobLevel)))next.jobLevel=Math.max(1,Math.floor(Number(result.jobLevel)||1));
+    if(Number.isFinite(Number(result?.jobXp)))next.jobXp=Math.max(0,Math.floor(Number(result.jobXp)||0));
+    if(Number.isFinite(Number(result?.caseLuckMultiplier)))next.caseLuckMultiplier=clamp(Number(result.caseLuckMultiplier)||1,1,MAX_CASE_LUCK_MULTIPLIER);
+    if(Number.isFinite(Number(result?.economyPhase)))next.economyPhase=Math.max(1,Math.floor(Number(result.economyPhase)||1));
     return applyServerCaseSnapshot(next);
   }
+
   async function syncServerCases({quiet=false}={}){
     if(TEST_MODE)return null;
     if(serverCaseRuntime.syncPromise)return serverCaseRuntime.syncPromise;
@@ -2977,10 +3056,10 @@
     const authorityNode=document.getElementById('caseAuthorityStatus');
     if(authorityNode){
       authorityNode.dataset.state=authoritative?'live':'waiting';
-      authorityNode.innerHTML=authoritative?`<b>🔒 SERVER AUTHORITATIVE</b><span>Wallet, inventory, purchases and OPEN 1/2/3 are verified by Firebase. Results are locked before the reels move. Other game earnings stay local until their migration phase.</span>`:`<b>CONNECTING TO SERVER CASES…</b><span>Case purchases/opening stay disabled until your migrated authoritative economy is loaded.</span>`;
+      authorityNode.innerHTML=authoritative?`<b>🔒 SERVER AUTHORITATIVE</b><span>Wallet, inventory, purchases and OPEN 1/2/3 are verified by Firebase. Job and Frog/Lake purchases now feed the same server wallet in v112.</span>`:`<b>CONNECTING TO SERVER CASES…</b><span>Case purchases/opening stay disabled until your migrated authoritative economy is loaded.</span>`;
     }
     els.caseGrid.innerHTML=CASES.map(item=>{
-      const locked=state.level<item.level,stock=authoritative?serverCaseInventoryCount(item.id):(TEST_MODE?caseInventoryCount(item.id):0),rows=caseAdjustedDropRows(item);
+      const authorityLevel=authoritative?serverPlayerLevel():state.level,locked=authorityLevel<item.level,stock=authoritative?serverCaseInventoryCount(item.id):(TEST_MODE?caseInventoryCount(item.id):0),rows=caseAdjustedDropRows(item);
       const drops=rows.map(({frog,probability})=>`<span><b>${frog.name}</b><i>${formatCaseOdds(probability)}</i></span>`).join('');
       const chanceFor=id=>rows.find(row=>row.frog.id===id)?.probability||0;
       const jackpots=item.id==='ultra'?`<div class="case-jackpots"><small>JACKPOTS${luck>1?` · ${luck.toFixed(2)}× SERVER LUCK`:''}</small><span><b>The Hill Frog</b><i>${formatCaseOdds(chanceFor('gigachad'))}</i></span><span class="owner-jackpot"><b>Owner Frog · RAREST</b><i>${formatCaseOdds(chanceFor('owner'))}</i></span></div>`:'';
@@ -2996,7 +3075,7 @@
   async function buyCases(id,quantity=1){
     if(anyRoundActive()||state.animating||caseOpeningRuntime.active||serverCaseRuntime.busy){setStatus('Finish the current game or Case transaction first.','lose');return false;}
     const item=caseById(id),qty=clamp(Math.floor(Number(quantity)||0),1,10);if(!item||![1,5,10].includes(qty))return false;
-    if(state.level<item.level){setStatus(`Reach level ${item.level} to buy the ${item.name}.`,'lose');return false;}
+    if((serverCasesActive()?serverPlayerLevel():state.level)<item.level){setStatus(`Reach authoritative level ${item.level} to buy the ${item.name}.`,'lose');return false;}
     if(TEST_MODE){const total=item.cost*qty;if(!Number.isSafeInteger(total)||total>ownedWalletBalance())return false;if(!spendOwnedFunds(total))return false;state.caseInventory[item.id]=caseInventoryCount(item.id)+qty;saveState();refresh();renderCases();return true;}
     if(!serverCasesActive()&&!await syncServerCases())return false;
     const total=item.cost*qty,available=serverCaseWalletBalance();if(!Number.isSafeInteger(total)||total>available){setStatus(`SERVER WALLET needs ${money(Math.max(0,total-available))} more Froggy.`,'lose');renderCases();return false;}
@@ -3203,7 +3282,7 @@
     const qty=clamp(Math.floor(Number(quantity)||1),1,3);lastCaseBatch=null;
     if(anyRoundActive()||state.animating||caseOpeningRuntime.active||serverCaseRuntime.busy){setStatus('Finish the current game or Case transaction first.','lose');return false;}
     const item=caseById(id);if(!item)return false;
-    if(state.level<item.level){setStatus(`Reach level ${item.level} to open the ${item.name}.`,'lose');return false;}
+    if((serverCasesActive()?serverPlayerLevel():state.level)<item.level){setStatus(`Reach authoritative level ${item.level} to open the ${item.name}.`,'lose');return false;}
     if(TEST_MODE){
       const stock=caseInventoryCount(item.id);if(stock<qty)return false;state.caseInventory[item.id]=stock-qty;const results=[];
       for(let i=0;i<qty;i++){const frog=rollCase(item),duplicate=state.unlockedFrogs.includes(frog.id);let duplicateCredit=0;if(duplicate)duplicateCredit=creditBalance(Math.floor(Math.max(0,frog.cost)*.5));else state.unlockedFrogs.push(frog.id);results.push({caseId:item.id,frogId:frog.id,frog,duplicate,duplicateCredit});}
@@ -3246,6 +3325,10 @@
   function sellCollectionItem(kind,id,{skipConfirm=false}={}){
     if(anyRoundActive()||state.animating)return false;
     const mode=kind==='vehicles'?'vehicles':kind==='lakes'?'lakes':'frogs';
+    if(serverCollectionActive()&&mode!=='vehicles'){
+      setStatus('🔒 Frog/Lake selling is locked until Bank + collateral migrate to the server.','lose');
+      return false;
+    }
     const items=mode==='vehicles'?VEHICLES:mode==='lakes'?LAKES:FROGS;
     const item=items.find(entry=>entry.id===id);
     if(!item)return false;
@@ -3275,6 +3358,11 @@
   }
 
   function renderCollection(){
+    updateServerAuthorityUi();
+    const serverShop=serverCollectionActive()&&collectionMode!=='vehicles';
+    const displayWallet=serverShop?serverCaseWalletBalance():ownedWalletBalance();
+    const exactDisplay=serverShop?`SERVER WALLET · ${money(displayWallet)} F`:`${money(displayWallet)} F`;
+    if(els.collectionBalance){els.collectionBalance.textContent=compactMoney(displayWallet);els.collectionBalance.title=exactDisplay;els.collectionBalance.setAttribute('aria-label',exactDisplay);}
     if(collectionMode==='vehicles'){
       els.collectionGrid.innerHTML=VEHICLES.map(item=>{
         const charges=vehicleCharges(item.id),owned=state.ownedVehicles.includes(item.id),selected=state.selectedVehicle===item.id,canLevel=state.level>=item.level,completed=Math.max(0,state.vehicleFlightCompletions[item.id]||0);
@@ -3301,17 +3389,20 @@
       }).join('');return;
     }
     const items=collectionMode==='frogs'?frogShopItems():LAKES,unlocked=collectionMode==='frogs'?state.unlockedFrogs:state.unlockedLakes,selected=collectionMode==='frogs'?state.selectedFrog:state.selectedLake;
+    const authorityLevel=serverShop?serverPlayerLevel():state.level;
     els.collectionGrid.innerHTML=items.map(item=>{
-      const owned=unlocked.includes(item.id),equipped=selected===item.id,canLevel=state.level>=item.level;
-      const action=equipped?'EQUIPPED':owned?'EQUIP':canLevel?`UNLOCK · ${money(item.cost)} F`:`LEVEL ${item.level} REQUIRED`;
-      const actionClass=!canLevel&&!owned?'shop-unavailable':owned?'shop-owned':'shop-purchase';
+      const owned=unlocked.includes(item.id),equipped=selected===item.id,canLevel=authorityLevel>=item.level;
+      const action=equipped?'EQUIPPED':owned?'EQUIP':!serverShop&&!TEST_MODE?'CONNECTING TO SERVER':canLevel?`UNLOCK · ${money(item.cost)} F`:`LEVEL ${item.level} REQUIRED`;
+      const actionClass=(!canLevel&&!owned)||(!serverShop&&!TEST_MODE)?'shop-unavailable':owned?'shop-owned':'shop-purchase';
       const pledged=state.debt>0&&(collectionMode==='frogs'?state.pledgedFrogs.includes(item.id):state.pledgedLakes.includes(item.id));
       const defaultItem=(collectionMode==='frogs'&&item.id==='classic')||(collectionMode==='lakes'&&item.id==='forest');
       const sellValue=collectionResaleValue(collectionMode,item);
-      const sellButton=owned?`<button class="collection-action collection-sell pressable" data-collection-sell="${collectionMode}|${item.id}" ${(pledged||defaultItem)?'disabled':''}>${pledged?'PLEDGED · CANNOT SELL':defaultItem?'DEFAULT · CANNOT SELL':`SELL · ${money(sellValue)} F`}</button>`:'';
-      const art=collectionMode==='frogs'?frogSvg(item,{collection:true}):`<span class="lake-preview lake-preview-${item.id}" role="img" aria-label="${item.name} environment preview"><img src="assets/lake-preview-${item.id}.webp" alt="" loading="lazy"><i class="lake-preview-glass"></i><i class="lake-preview-name">${item.emoji} ${item.name}</i></span>`,tier=String(item.rarity||'common').toLowerCase().replace(/[^a-z0-9]+/g,'-'),collateral=collectionMode==='frogs'&&item.id!=='classic'?`<span class="collateral-value">${pledged?'🔒 PLEDGED · ':''}BANK VALUE · ${money(skinCollateralValue(item))} F</span>`:collectionMode==='lakes'&&item.cost>0?`<span class="collateral-value">${pledged?'🔒 PLEDGED · ':''}BANK VALUE · ${money(lakeCollateralValue(item))} F</span>`:'',perkBox=collectionMode==='frogs'&&Array.isArray(item.perkLabels)&&item.perkLabels.length?`<div class="frog-perk-box"><b>${equipped?'ACTIVE PERKS':'PERKS · ACTIVE WHEN EQUIPPED'}</b>${item.perkLabels.map(label=>`<span>✦ ${label}</span>`).join('')}</div>`:'';
+      const sellLocked=serverShop&&!defaultItem;
+      const sellButton=owned?`<button class="collection-action collection-sell pressable" data-collection-sell="${collectionMode}|${item.id}" ${(pledged||defaultItem||sellLocked)?'disabled':''}>${defaultItem?'DEFAULT · CANNOT SELL':sellLocked?'🔒 SELLING · BANK MIGRATION NEXT':pledged?'PLEDGED · CANNOT SELL':`SELL · ${money(sellValue)} F`}</button>`:'';
+      const art=collectionMode==='frogs'?frogSvg(item,{collection:true}):`<span class="lake-preview lake-preview-${item.id}" role="img" aria-label="${item.name} environment preview"><img src="assets/lake-preview-${item.id}.webp" alt="" loading="lazy"><i class="lake-preview-glass"></i><i class="lake-preview-name">${item.emoji} ${item.name}</i></span>`,tier=String(item.rarity||'common').toLowerCase().replace(/[^a-z0-9]+/g,'-'),collateral=collectionMode==='frogs'&&item.id!=='classic'?`<span class="collateral-value">${serverShop?'🔒 SERVER OWNERSHIP · ':pledged?'🔒 PLEDGED · ':''}BANK VALUE · ${money(skinCollateralValue(item))} F</span>`:collectionMode==='lakes'&&item.cost>0?`<span class="collateral-value">${serverShop?'🔒 SERVER OWNERSHIP · ':pledged?'🔒 PLEDGED · ':''}BANK VALUE · ${money(lakeCollateralValue(item))} F</span>`:'',perkBox=collectionMode==='frogs'&&Array.isArray(item.perkLabels)&&item.perkLabels.length?`<div class="frog-perk-box"><b>${equipped?'ACTIVE PERKS':'PERKS · ACTIVE WHEN EQUIPPED'}</b>${item.perkLabels.map(label=>`<span>✦ ${label}</span>`).join('')}</div>`:'';
       const rarityMarkup=collectionMode==='frogs'?`<div class="frog-rarity-row"><span class="rarity">${item.rarity}</span></div>`:`<div class="lake-rarity-row"><span class="rarity">${item.rarity}</span></div>`;
-      return `<article class="collection-card ${collectionMode==='frogs'?'frog-card':'lake'} tier-${tier} ${equipped?'selected':''}" data-item="${item.id}" style="--card-a:${item.colors?item.colors[0]:item.a};--card-b:${item.colors?item.colors[1]:item.b}">${rarityMarkup}<div class="collection-art">${art}<i class="portrait-spark s1"></i><i class="portrait-spark s2"></i></div><h3>${item.name}</h3><p>${item.description}</p>${perkBox}${collateral}<div class="collection-card-actions"><button class="collection-action pressable ${actionClass}" data-collection-action="${item.id}" ${equipped||(!canLevel&&!owned)?'disabled':''}>${action}</button>${sellButton}</div></article>`;
+      const disabled=equipped||(!owned&&(!canLevel||(!serverShop&&!TEST_MODE)));
+      return `<article class="collection-card ${collectionMode==='frogs'?'frog-card':'lake'} tier-${tier} ${equipped?'selected':''}" data-item="${item.id}" style="--card-a:${item.colors?item.colors[0]:item.a};--card-b:${item.colors?item.colors[1]:item.b}">${rarityMarkup}<div class="collection-art">${art}<i class="portrait-spark s1"></i><i class="portrait-spark s2"></i></div><h3>${item.name}</h3><p>${item.description}</p>${perkBox}${collateral}<div class="collection-card-actions"><button class="collection-action pressable ${actionClass}" data-collection-action="${item.id}" ${disabled?'disabled':''}>${action}</button>${sellButton}</div></article>`;
     }).join('');
   }
 
@@ -3330,92 +3421,35 @@
     state.vehicleCharges[id]=current+item.charges;audio.reward();confettiBurst(28);setStatus(`${item.name}: purchased ${item.charges} flights for ${money(item.refillCost)} F.`,'win');refresh();renderCollection();return true;
   }
 
-  function collectionAction(id){
-    if(anyRoundActive())return;
+  async function collectionAction(id){
+    if(anyRoundActive())return false;
     if(collectionMode==='vehicles'){
-      const item=VEHICLES.find(v=>v.id===id);if(!item)return;
-      if(state.ownedVehicles.includes(id)){selectVehicle(id);return;}
-      if(state.level<item.level){setStatus(`Reach level ${item.level} first.`,'lose');return;}
-      if(!spendOwnedFunds(item.cost)){setStatus(`You need ${money(item.cost-ownedWalletBalance())} more Froggy.`,'lose');return;}
-      state.vehicleCharges[id]=vehicleCharges(id)+item.charges;state.ownedVehicles.push(id);state.selectedVehicle=id;audio.reward();confettiBurst(32);setStatus(`${item.name} purchased with ${item.charges} flights.`,'win');refresh();renderCollection();return;
+      const item=VEHICLES.find(v=>v.id===id);if(!item)return false;
+      if(state.ownedVehicles.includes(id)){selectVehicle(id);return true;}
+      if(state.level<item.level){setStatus(`Reach level ${item.level} first.`,'lose');return false;}
+      if(!spendOwnedFunds(item.cost)){setStatus(`You need ${money(item.cost-ownedWalletBalance())} more Froggy.`,'lose');return false;}
+      state.vehicleCharges[id]=vehicleCharges(id)+item.charges;state.ownedVehicles.push(id);state.selectedVehicle=id;audio.reward();confettiBurst(32);setStatus(`${item.name} purchased with ${item.charges} flights.`,'win');refresh();renderCollection();return true;
     }
-    const items=collectionMode==='frogs'?FROGS:LAKES,item=items.find(x=>x.id===id);if(!item)return;const unlockKey=collectionMode==='frogs'?'unlockedFrogs':'unlockedLakes',selectKey=collectionMode==='frogs'?'selectedFrog':'selectedLake';
-    if(state[unlockKey].includes(id)){state[selectKey]=id;audio.reward();setStatus(`${item.name} equipped!`,'win');}
-    else if(state.level<item.level){setStatus(`Reach level ${item.level} to unlock ${item.name}.`,'lose');}
-    else if(!spendOwnedFunds(item.cost)){setStatus(`You need ${money(item.cost-ownedWalletBalance())} more Froggy.`,'lose');}
-    else{state[unlockKey].push(id);state[selectKey]=id;audio.reward();confettiBurst(28);setStatus(`${item.name} unlocked!`,'win');}
-    refresh();renderCollection();scene.reset();
-  }
-
-
-
-  let ownerAccessModal=null;
-  let ownerPanelModal=null;
-  let ownerTapCount=0;
-  let ownerTapDeadline=0;
-
-  function parseOwnerOperation(raw){
-    const normalized=String(raw??'').trim().replace(/[,\s_]/g,'').toLowerCase().replace(/^×/,'x');
-    if(!normalized)return null;
-    let kind='add',valueText=normalized;
-    if(normalized.startsWith('x')||normalized.startsWith('*')){kind='multiply';valueText=normalized.slice(1);}
-    else if(normalized.startsWith('/')){kind='divide';valueText=normalized.slice(1);}
-    const value=Number(valueText);
-    if(!Number.isFinite(value))return null;
-    if(kind==='add'){
-      if(!Number.isSafeInteger(value))return null;
-      return {kind,value};
+    const items=collectionMode==='frogs'?FROGS:LAKES,item=items.find(x=>x.id===id);if(!item)return false;const unlockKey=collectionMode==='frogs'?'unlockedFrogs':'unlockedLakes',selectKey=collectionMode==='frogs'?'selectedFrog':'selectedLake';
+    if(state[unlockKey].includes(id)){state[selectKey]=id;audio.reward();setStatus(`${item.name} equipped!`,'win');refresh();renderCollection();scene.reset();saveState();return true;}
+    if(!TEST_MODE){
+      if(!serverCollectionActive()){setStatus('Server Collection is still connecting. Refresh Profile and try again.','lose');return false;}
+      if(serverPlayerLevel()<item.level){setStatus(`Reach authoritative level ${item.level} to unlock ${item.name}.`,'lose');return false;}
+      const wallet=serverCaseWalletBalance();if(wallet<item.cost){setStatus(`You need ${money(item.cost-wallet)} more authoritative Froggy.`,'lose');return false;}
+      const bridge=window.FroggyServerEconomy;if(!bridge?.buyCollection){setStatus('Server Collection bridge is unavailable. Refresh Froggy Leap.','lose');return false;}
+      setStatus(`🔒 Server is purchasing ${item.name}…`,'info');
+      try{
+        const kind=collectionMode==='frogs'?'frog':'lake',result=await bridge.buyCollection(kind,id,bridge.requestId?.('shop'));
+        mergeServerCaseResult(result);
+        state[selectKey]=id;
+        // Mirror only the spend into the legacy local wallet so staged local systems do not gain value from a server purchase.
+        state.balance=Math.max(0,Math.floor(Number(state.balance)||0)-Math.max(0,Math.floor(Number(item.cost)||0)));
+        audio.reward();confettiBurst(28);setStatus(`🔒 SERVER PURCHASE · ${item.name} unlocked for ${money(item.cost)} F.`,'win');refresh();renderCollection();scene.reset();saveState();return true;
+      }catch(error){setStatus(serverCaseFriendlyError(error),'lose');void syncServerCases({quiet:true});return false;}
     }
-    if(value<=0||value>MAX_SAFE_BALANCE)return null;
-    return {kind,value};
-  }
-
-  function applyOwnerOperation(current,raw,{minimum=0,maximum=MAX_SAFE_BALANCE}={}){
-    const operation=parseOwnerOperation(raw);
-    if(!operation)return null;
-    const before=clamp(Math.floor(Number(current)||0),minimum,maximum);
-    let calculated=before;
-    if(operation.kind==='add')calculated=before+operation.value;
-    else if(operation.kind==='multiply')calculated=before*operation.value;
-    else calculated=before/operation.value;
-    if(!Number.isFinite(calculated))calculated=maximum;
-    const target=clamp(Math.floor(calculated+Number.EPSILON),minimum,maximum);
-    return {operation,before,target,delta:target-before};
-  }
-
-  function ownerOperationHelp(){return 'Use 100 to add, -100 to subtract, x2 or *2 to multiply, and /2 to divide.';}
-
-  function ownerOperationResult(label,result,suffix=''){
-    const unit=suffix?` ${suffix}`:'';
-    if(result.target===result.before)return `${label} stayed at ${money(result.target)}${unit}.`;
-    const verb=result.target>result.before?'increased':'decreased';
-    return `${label} ${verb} from ${money(result.before)}${unit} to ${money(result.target)}${unit}.`;
-  }
-
-  function ownerStatus(message,kind='success'){
-    const node=ownerPanelModal?.querySelector('[data-owner-status]');
-    if(node){node.textContent=message;node.dataset.kind=kind;}
-    setStatus(message,kind==='error'?'lose':'win');
-  }
-
-  function ownerButtonValue(action,value,title=''){
-    const button=ownerPanelModal?.querySelector(`[data-owner-action="${action}"]`);
-    const node=button?.querySelector('[data-owner-value]');
-    if(node)node.textContent=value;
-    if(button&&title)button.title=title;
-  }
-
-  function ownerJobBoostSnapshot(kind){
-    const now=performance.now();
-    const multiplier=kind==='money'?jobRuntime.moneyBoostMultiplier:jobRuntime.xpBoostMultiplier;
-    const until=kind==='money'?jobRuntime.moneyBoostUntil:jobRuntime.xpBoostUntil;
-    const pending=kind==='money'?jobRuntime.pendingMoneyBoosts:jobRuntime.pendingXpBoosts;
-    if(jobRuntime.active&&until>now&&multiplier>1){
-      const count=Math.max(0,Math.round(Math.log2(multiplier)));
-      return {count,multiplier,label:`${money(count)} boost${count===1?'':'s'} · ${money(multiplier)}× active`};
-    }
-    if(pending>0)return {count:pending,multiplier:2**Math.min(20,pending),label:`${money(pending)} boost${pending===1?'':'s'} queued · ${money(2**Math.min(20,pending))}×`};
-    return {count:0,multiplier:1,label:'Off'};
+    if(state.level<item.level){setStatus(`Reach level ${item.level} to unlock ${item.name}.`,'lose');return false;}
+    if(!spendOwnedFunds(item.cost)){setStatus(`You need ${money(item.cost-ownedWalletBalance())} more Froggy.`,'lose');return false;}
+    state[unlockKey].push(id);state[selectKey]=id;audio.reward();confettiBurst(28);setStatus(`${item.name} unlocked!`,'win');refresh();renderCollection();return true;
   }
 
   function setOwnerJobBoost(kind,count){
@@ -3437,17 +3471,18 @@
   function refreshOwnerPanel(){
     if(!ownerPanelModal)return;
     const summary=ownerPanelModal.querySelector('[data-owner-summary]');
-    if(summary)summary.textContent=ownerOperationHelp();
-    const moneyBoost=ownerJobBoostSnapshot('money'),xpBoost=ownerJobBoostSnapshot('xp');
-    ownerButtonValue('wallet',`${compactMoney(state.balance)} F`,`Wallet: ${money(state.balance)} F`);
-    ownerButtonValue('piggy',`${compactMoney(state.piggyBalance)} F`,`Piggy: ${money(state.piggyBalance)} F`);
-    ownerButtonValue('xp',`${compactMoney(state.xp)} XP`,`Current XP: ${money(state.xp)}`);
-    ownerButtonValue('levels',`Lv ${compactMoney(state.level)}`,`Player Level ${money(state.level)}`);
-    ownerButtonValue('job-levels',`Job Lv ${compactMoney(state.jobLevel)}`,`Job Level ${money(state.jobLevel)} · ${money(jobPay())} F/fry`);
+    if(summary)summary.textContent=serverPhase3Active()?`${ownerOperationHelp()} Wallet, Cases, Case Luck, Player Level and Job Level require the Firestore Owner role and are ledgered server-side.`:ownerOperationHelp();
+    const moneyBoost=ownerJobBoostSnapshot('money'),xpBoost=ownerJobBoostSnapshot('xp'),serverAdmin=serverPhase3Active();
+    const ownerWallet=serverAdmin?serverCaseWalletBalance():state.balance,ownerLevel=serverAdmin?serverPlayerLevel():state.level,ownerJobLevelValue=serverAdmin?serverJobLevel():state.jobLevel;
+    ownerButtonValue('wallet',serverAdmin?`${compactMoney(ownerWallet)} SERVER`:`${compactMoney(ownerWallet)} F`,serverAdmin?`Authoritative wallet: ${money(ownerWallet)} F · requires Firestore Owner role`:`Wallet: ${money(ownerWallet)} F`);
+    ownerButtonValue('piggy',`${compactMoney(state.piggyBalance)} F`,`Piggy: ${money(state.piggyBalance)} F · local until Piggy migration`);
+    ownerButtonValue('xp',`${compactMoney(state.xp)} XP`,`Current local XP: ${money(state.xp)} · staged until all XP sources migrate`);
+    ownerButtonValue('levels',serverAdmin?`Lv ${compactMoney(ownerLevel)} SERVER`:`Lv ${compactMoney(ownerLevel)}`,serverAdmin?`Authoritative Player Level ${money(ownerLevel)} · requires Firestore Owner role`:`Player Level ${money(ownerLevel)}`);
+    ownerButtonValue('job-levels',serverAdmin?`Job Lv ${compactMoney(ownerJobLevelValue)} SERVER`:`Job Lv ${compactMoney(ownerJobLevelValue)}`,serverAdmin?`Authoritative Job Level ${money(ownerJobLevelValue)}`:`Job Level ${money(ownerJobLevelValue)} · ${money(jobPay())} F/fry`);
     ownerButtonValue('safe',`${compactMoney(state.safeRunCredits)} protected`,`Protected rounds: ${money(state.safeRunCredits)}`);
     ownerButtonValue('lucky',`${compactMoney(state.luckyCharges)} lucky`,`Lucky jumps: ${money(state.luckyCharges)}`);
-    CASES.forEach(item=>ownerButtonValue(`case-${item.id}`,serverCasesActive()?`${compactMoney(serverCaseInventoryCount(item.id))} SERVER`:`${compactMoney(caseInventoryCount(item.id))} owned`,serverCasesActive()?`${item.name}: ${money(serverCaseInventoryCount(item.id))} authoritative · local grants disabled`:`${item.name}: ${money(caseInventoryCount(item.id))} owned`));
-    ownerButtonValue('case-luck',serverCasesActive()?`${caseLuckMultiplier().toFixed(2)}× SERVER`:`${caseLuckMultiplier().toFixed(2)}×`,serverCasesActive()?`Server Case Luck: ${caseLuckMultiplier().toFixed(2)}× · local Owner changes disabled`:`Case luck multiplier: ${caseLuckMultiplier().toFixed(2)}×`);
+    CASES.forEach(item=>ownerButtonValue(`case-${item.id}`,serverCasesActive()?`${compactMoney(serverCaseInventoryCount(item.id))} SERVER`:`${compactMoney(caseInventoryCount(item.id))} owned`,serverCasesActive()?`${item.name}: ${money(serverCaseInventoryCount(item.id))} authoritative · server Owner role required for grants`:`${item.name}: ${money(caseInventoryCount(item.id))} owned`));
+    ownerButtonValue('case-luck',serverCasesActive()?`${caseLuckMultiplier().toFixed(2)}× SERVER`:`${caseLuckMultiplier().toFixed(2)}×`,serverCasesActive()?`Server Case Luck: ${caseLuckMultiplier().toFixed(2)}× · server Owner role required`:`Case luck multiplier: ${caseLuckMultiplier().toFixed(2)}×`);
     ownerButtonValue('case-luck-reset','Reset to 1×');
     ownerButtonValue('bank-limit',state.bankLimitDisabled?'DISABLED':'5B F',state.bankLimitDisabled?'Bank hard cap is disabled':'Bank hard cap is 5,000,000,000 F');
     const bankLimitButton=ownerPanelModal.querySelector('[data-owner-action="bank-limit"] span');if(bankLimitButton)bankLimitButton.textContent=state.bankLimitDisabled?'Restore Bank limit':'Disable Bank limit';
@@ -3466,6 +3501,10 @@
   }
 
   function unlockOwnerContent(kind='everything'){
+    if(serverCollectionActive()&&['frogs','lakes','everything'].includes(kind)){
+      ownerStatus('🔒 Frog/Lake ownership is server-authoritative. Phase 3 Owner tools grant wallet/cases; mass Collection unlock is intentionally disabled.','error');
+      return;
+    }
     if(kind==='frogs'||kind==='everything')state.unlockedFrogs=FROGS.map(item=>item.id);
     if(kind==='lakes'||kind==='everything')state.unlockedLakes=LAKES.map(item=>item.id);
     if(kind==='vehicles'||kind==='everything'){
@@ -3490,11 +3529,33 @@
     refresh();saveState();ownerStatus('Active loan and every collateral pledge cleared.');refreshOwnerPanel();
   }
 
-  function runOwnerAction(action,button){
+  async function runOwnerAction(action,button){
     const group=button.closest('[data-owner-group]');
     const input=group?.querySelector('input');
     const raw=input?.value??'';
     let message='';
+    const serverAdminActions=new Set(['wallet','levels','job-levels','case-pond','case-neon','case-ultra','case-luck','case-luck-reset']);
+    if(!TEST_MODE&&serverAdminActions.has(action)){
+      if(!serverPhase3Active())return ownerStatus('Server Economy Phase 3 is still connecting. Check Profile → Server Economy first.','error');
+      const bridge=window.FroggyServerEconomy;if(!bridge?.adminOperate)return ownerStatus('Secure Owner backend bridge is unavailable. Refresh Froggy Leap.','error');
+      button.disabled=true;ownerStatus('🔒 Sending protected Owner operation to Firebase…');
+      try{
+        const result=await bridge.adminOperate(action,raw,bridge.requestId?.('admin'));
+        mergeServerCaseResult(result);
+        const details=result?.details||{};
+        if(action==='wallet'&&Number.isFinite(Number(result?.wallet)))state.balance=Math.max(0,Math.floor(Number(result.wallet)||0));
+        if(action==='levels'&&Number.isFinite(Number(result?.level))){state.level=Math.max(1,Math.floor(Number(result.level)||1));state.xp=Math.max(0,Math.floor(Number(result?.xp)||0));}
+        if(action==='job-levels'&&Number.isFinite(Number(result?.jobLevel))){state.jobLevel=Math.max(1,Math.floor(Number(result.jobLevel)||1));state.jobXp=Math.max(0,Math.floor(Number(result?.jobXp)||0));}
+        if(action==='case-luck-reset')message='🔒 Server Case Luck reset to 1× and ledgered.';
+        else if(action==='case-luck')message=`🔒 Server Case Luck is now ${Number(result?.caseLuckMultiplier||1).toFixed(2)}× and ledgered.`;
+        else if(action.startsWith('case-')){const id=action.slice(5),item=caseById(id),count=Math.max(0,Math.floor(Number(result?.caseInventory?.[id])||0));message=`🔒 ${item?.name||'Case'} inventory is now ${money(count)} on the server.`;}
+        else if(action==='wallet')message=`🔒 Authoritative wallet changed from ${money(details.before||0)} F to ${money(details.target||result?.wallet||0)} F. Transaction ledger updated.`;
+        else if(action==='levels')message=`🔒 Authoritative Player Level is now ${money(result?.level||details.target||1)}. Server XP reset to 0.`;
+        else if(action==='job-levels')message=`🔒 Authoritative Job Level is now ${money(result?.jobLevel||details.target||1)}. Server Job XP reset to 0.`;
+        refresh();renderCollection();renderCases();renderJob();scene.reset();saveState();audio.reward();haptic([12,28,12]);ownerStatus(message);refreshOwnerPanel();return;
+      }catch(error){ownerStatus(serverCaseFriendlyError(error),'error');return;}
+      finally{button.disabled=false;}
+    }
     if(action==='wallet'){
       const result=applyOwnerOperation(state.balance,raw,{minimum:0,maximum:MAX_SAFE_BALANCE});
       if(!result)return ownerStatus(ownerOperationHelp(),'error');
@@ -3532,21 +3593,22 @@
       if(!result)return ownerStatus(ownerOperationHelp(),'error');
       state[key]=result.target;message=ownerOperationResult(label,result);
     }else if(action==='case-luck'){
-      if(serverCasesActive())return ownerStatus('Case Luck is server-authoritative in v111. Server admin roles/tools will be migrated separately.','error');
+      if(serverCasesActive())return ownerStatus('Case Luck is server-authoritative. Use the protected server Owner operation.','error');
       const result=applyOwnerOperation(caseLuckMultiplier(),raw,{minimum:1,maximum:MAX_CASE_LUCK_MULTIPLIER});
       if(!result)return ownerStatus(ownerOperationHelp(),'error');
       state.caseLuckMultiplier=Math.max(1,result.target);message=`Case luck is now ${state.caseLuckMultiplier.toFixed(2)}×. Each rarity tier compounds the luck multiplier, so high-rarity frogs become much more likely.`;
     }else if(action==='case-luck-reset'){
-      if(serverCasesActive())return ownerStatus('Case Luck is server-authoritative in v111. Local reset is disabled.','error');
+      if(serverCasesActive())return ownerStatus('Case Luck is server-authoritative. Use the protected server Owner reset.','error');
       state.caseLuckMultiplier=1;message='Case luck reset to 1×. Published base odds restored.';
     }else if(action==='case-pond'||action==='case-neon'||action==='case-ultra'){
-      if(serverCasesActive())return ownerStatus('Case inventory is server-authoritative in v111. Local Owner case grants are disabled until server admin roles are implemented.','error');
+      if(serverCasesActive())return ownerStatus('Case inventory is server-authoritative. Use the protected server Owner operation.','error');
       const id=action.slice(5),item=caseById(id),before=caseInventoryCount(id),result=applyOwnerOperation(before,raw,{minimum:0,maximum:Number.MAX_SAFE_INTEGER});
       if(!item||!result)return ownerStatus(ownerOperationHelp(),'error');
       state.caseInventory[id]=result.target;message=ownerOperationResult(`${item.name} inventory`,result);
     }else if(action==='bank-limit'){
       state.bankLimitDisabled=!state.bankLimitDisabled;message=state.bankLimitDisabled?'Bank 5B hard cap disabled. Loans remain limited by available collateral.':'Bank 5B hard cap restored.';
     }else if(action==='job-money-boost'||action==='job-xp-boost'){
+      if(serverJobActive()&&!TEST_MODE)return ownerStatus('🔒 Job boosts are server-authoritative in Phase 3. Local boost injection is disabled.','error');
       const kind=action==='job-money-boost'?'money':'xp';
       const before=ownerJobBoostSnapshot(kind);
       const result=applyOwnerOperation(before.count,raw,{minimum:0,maximum:20});
@@ -3554,6 +3616,7 @@
       const after=setOwnerJobBoost(kind,result.target);
       message=`Job ${kind==='money'?'money':'XP'} boost is now ${after.label}.`;
     }else if(action==='job-boost-reset'){
+      if(serverJobActive()&&!TEST_MODE)return ownerStatus('🔒 Server Job ignores local boost state. No server boost is active unless earned by a green/yellow fry.','error');
       jobRuntime.moneyBoostUntil=0;jobRuntime.xpBoostUntil=0;jobRuntime.moneyBoostMultiplier=1;jobRuntime.xpBoostMultiplier=1;jobRuntime.pendingMoneyBoosts=0;jobRuntime.pendingXpBoosts=0;message='Cleared every active and queued Job boost.';
     }else if(action==='piggy-plus'){
       tickPiggyClock();invalidateUntrustedClosedAccrual();state.piggyInterestRateBonus=Math.min(MAX_PIGGY_RATE_BONUS,Math.max(0,state.piggyInterestRateBonus)+PIGGY_OWNER_RATE_STEP);message=`Piggy boost increased by 1 percentage point. Rates are now ${formatPiggyRate(piggyOpenRate())} open and ${formatPiggyRate(piggyClosedRate())} closed.`;
@@ -3587,6 +3650,10 @@
     message.textContent='';
     refreshOwnerPanel();
     openModal(ownerPanelModal);
+    if(serverPhase3Active()&&!TEST_MODE&&window.FroggyServerEconomy?.adminStatus){
+      ownerStatus('Checking protected Firestore Owner role…');
+      window.FroggyServerEconomy.adminStatus().then(result=>ownerStatus(result?.enabled?'🔒 Server Owner role ACTIVE · protected wallet/case/progression operations are enabled.':'Server Owner role is not configured yet. Create adminRoles/{your Firebase UID} with role=owner and enabled=true in Firestore Console.',result?.enabled?'success':'error')).catch(error=>ownerStatus(serverCaseFriendlyError(error),'error'));
+    }
     setTimeout(()=>ownerPanelModal.querySelector('input')?.focus(),30);
   }
 
@@ -3713,7 +3780,7 @@
       if(ownerPanelModal.querySelector('[data-owner-action="spins"]')||ownerPanelModal.querySelector('[data-owner-action="unlimited"]'))throw new Error('Reward-wheel owner controls still present');
       if(PLINKO_BANK_ROUND_MS!==15000)throw new Error('15-second Plinko Bank round failed');const oldRounds=state.rounds,oldCompleted=state.completedRounds;plinkoBankRoundRuntime.active=true;plinkoBankRoundRuntime.remainingMs=1;plinkoBankRoundRuntime.lastTick=performance.now()-20;tickPlinkoBankRound();if(state.rounds!==oldRounds+1||state.completedRounds!==oldCompleted+1||plinkoBankRoundRuntime.active)throw new Error('Plinko Bank round completion failed');if(MAX_LOAN_PAYOUT!==5000000000)throw new Error('5B Bank cap constant failed');state.bankLimitDisabled=true;if(effectiveBankLimit()!==MAX_SAFE_BALANCE)throw new Error('Bank limit disable failed');state.bankLimitDisabled=false;const paidFrogs=FROGS.filter(f=>f.cost>0);if(paidFrogs.find(f=>f.id==='meadow')?.cost!==1500||paidFrogs.find(f=>f.id==='gigachad')?.cost!==2250000000||paidFrogs.find(f=>f.id==='owner')?.cost!==6000000000)throw new Error('3x frog pricing failed');if(plinkoRows('low')!==12||plinkoRows('medium')!==14||plinkoRows('high')!==16||plinkoTable('low').length!==13||plinkoTable('medium').length!==15||plinkoTable('high').length!==17)throw new Error('v76 Plinko board scaling failed');if(Math.abs(plinkoRtp('low')-.9720361328125)>.00001||Math.abs(plinkoRtp('medium')-.9669140625)>.00001||Math.abs(plinkoRtp('high')-.989764404296875)>.00001)throw new Error('v82 Plinko RTP table check failed');if(JSON.stringify(plinkoTable('high'))!==JSON.stringify([1000,130,26,9,4,2,.2,.2,.2,.2,.2,2,4,9,26,130,1000]))throw new Error('v82 exact 16-row High payout strip failed');if(els.plinkoMultipliers?.parentElement!==els.plinkoBoard)throw new Error('v85 multiplier rail must live inside Plinko board');if(PLINKO_MAX_ACTIVE_EGGS!==96||typeof updatePlinkoEggPhysics!=='function'||typeof primePlinkoEggPhysics!=='function'||typeof plinkoImpactTarget!=='function'||typeof getPlinkoBoardCache!=='function'||typeof getPlinkoEggSprite!=='function')throw new Error('v81 Plinko motion engine failed');state=deepClone(DEFAULT_STATE);state.balance=100000;state.safeRunCredits=3;state.plinkoBet=100;for(let i=0;i<3;i++){const rolled=rollPlinkoPath('medium',{protectedRound:true});if(plinkoTable('medium')[rolled.slot]<=1)throw new Error('Plinko protected path failed');}state.caseInventory.ultra=5;if(caseInventoryCount('ultra')!==5)throw new Error('case inventory failed');state.level=100;state.caseInventory.pond=6;renderCases();if(!els.caseGrid.querySelector('[data-case-open-qty="2"]')||!els.caseGrid.querySelector('[data-case-open-qty="3"]')||els.caseGrid.querySelector('[data-case-open-qty="5"]')||els.caseGrid.querySelector('[data-case-open-qty="10"]'))throw new Error('v107 max-3 multi-case buttons failed');if(typeof beginMultiCaseOpening!=='function'||typeof animateMultiCaseOpeningReels!=='function'||typeof finishMultiCaseOpeningReveal!=='function')throw new Error('v107 simultaneous multi-reel animation functions missing');lastCaseBatch=null;const ownerBase=caseAdjustedDropRows(caseById('ultra')).find(r=>r.frog.id==='owner').probability;state.caseLuckMultiplier=10;const ownerLucky=caseAdjustedDropRows(caseById('ultra')).find(r=>r.frog.id==='owner').probability;if(!(ownerLucky>ownerBase))throw new Error('case luck weighting failed');
       const shopFrogs=frogShopItems();for(let i=1;i<shopFrogs.length;i++){if(shopFrogs[i].cost<shopFrogs[i-1].cost)throw new Error('frog shop price order failed');if((FROG_RARITY_RANK[shopFrogs[i].rarity]??99)<(FROG_RARITY_RANK[shopFrogs[i-1].rarity]??99))throw new Error('frog rarity progression failed');}const hill=FROGS.find(f=>f.id==='gigachad');if(!hill||hill.name!=='The Hill Frog'||hill.art!=='assets/the-hill-frog-game-v66.png'||hill.cardArt!=='assets/the-hill-frog-card-v64.webp')throw new Error('The Hill Frog art/name failed');if(FROGS.find(f=>f.id==='robot')?.art!=='assets/robo-frog-v108.png'||FROGS.find(f=>f.id==='owner')?.art!=='assets/owner-frog-v109.png')throw new Error('v109 Owner preview refresh / Robo preservation failed');const basicIds=['meadow','river','moss','sand','blue-dart','sunset'];if(!basicIds.every(id=>FROGS.some(f=>f.id===id)))throw new Error('v63 basic frog lineup missing');collectionMode='lakes';renderCollection();if(els.collectionGrid.querySelectorAll('.collection-card.lake .lake-rarity-row > .rarity').length!==LAKES.length)throw new Error('v106 lake rarity header rows failed');collectionMode='frogs';renderCollection();
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v111 live server-authoritative Case buy/open bridge + server-locked 1/2/3 outcomes + v109 Owner Frog reference-photo royal preview + Robo Frog unchanged + v107 simultaneous animated OPEN 2/3 case reels + lake rarity header rows + exact loan principal disbursement + v98 cloud-save bridge + v90 one-screen mobile Plinko controls + board fit/no Plinko scrolling + v89 real mobile Plinko frame expansion/no flex compression + v88 pure mobile Plinko frame-height fix + v87 larger Plinko multiplier text + deeper mobile Medium/High payout rail + v86 extended mobile Plinko bottom frame + larger multiplier labels + v85 multiplier rail structurally inside Plinko board + visible mobile payout strip + v83 controls-before-board layout + high-contrast active-loan actions + fully dark loan builder/warning sheets + v82 exact classic 16-row High payout strip + v81 no idle/top egg + no fake pocket guides + analytic ballistic Plinko motion + instant multiplier landing + v78 performance cache + 96-egg cap + v77 15-second Plinko Bank rounds + 5x lower Plinko XP + Ultra Case 3% Hill / 0.1% Owner + v75 case inventory + owner case grants/luck + Bank limit toggle + protected Plinko eggs + v73 every-frog price-tier perks + v72 Piggy 0.3% open / 0.2% closed + loan-time deposits + v71 3x frog prices + 5B Bank cap + v68 CS-style case reel + v67 six-slot mobile nav + v66 approved The Hill Frog gameplay model';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v112 server-authoritative Cases + Frog/Lake purchases + Job rewards + protected Owner grants + server-locked 1/2/3 outcomes + v109 Owner Frog reference-photo royal preview + Robo Frog unchanged + v107 simultaneous animated OPEN 2/3 case reels + lake rarity header rows + exact loan principal disbursement + v98 cloud-save bridge + v90 one-screen mobile Plinko controls + board fit/no Plinko scrolling + v89 real mobile Plinko frame expansion/no flex compression + v88 pure mobile Plinko frame-height fix + v87 larger Plinko multiplier text + deeper mobile Medium/High payout rail + v86 extended mobile Plinko bottom frame + larger multiplier labels + v85 multiplier rail structurally inside Plinko board + visible mobile payout strip + v83 controls-before-board layout + high-contrast active-loan actions + fully dark loan builder/warning sheets + v82 exact classic 16-row High payout strip + v81 no idle/top egg + no fake pocket guides + analytic ballistic Plinko motion + instant multiplier landing + v78 performance cache + 96-egg cap + v77 15-second Plinko Bank rounds + 5x lower Plinko XP + Ultra Case 3% Hill / 0.1% Owner + v75 case inventory + owner case grants/luck + Bank limit toggle + protected Plinko eggs + v73 every-frog price-tier perks + v72 Piggy 0.3% open / 0.2% closed + loan-time deposits + v71 3x frog prices + 5B Bank cap + v68 CS-style case reel + v67 six-slot mobile nav + v66 approved The Hill Frog gameplay model';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 

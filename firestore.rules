@@ -171,7 +171,7 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // v110 Server Economy Phase 1. These documents are readable by their owner,
+    // Server Economy authoritative documents. These are readable by their owner,
     // but the browser can never create/update/delete them. Only trusted Admin SDK
     // code (Cloud Functions) mutates authoritative economy state and its ledger.
     match /economies/{uid} {
@@ -182,6 +182,18 @@ service cloud.firestore {
     match /economyLedger/{uid}/entries/{entryId} {
       allow read: if signedIn() && request.auth.uid == uid;
       allow create, update, delete: if false;
+    }
+
+    // v112 server-side Owner/Admin roles. The signed-in account may inspect only its own
+    // role document, but no browser client can create or change admin authorization.
+    match /adminRoles/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create, update, delete: if false;
+    }
+
+    // Job sessions are private backend implementation state. They are never client-readable/writable.
+    match /jobSessions/{uid} {
+      allow read, write: if false;
     }
 
     match /{document=**} {
