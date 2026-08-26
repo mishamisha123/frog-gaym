@@ -95,7 +95,7 @@ const economyStatus = byId('froggyEconomyStatus');
 const GAME_STORAGE_KEY = 'froggy-leap-deluxe-v3';
 const CLOUD_DEVICE_KEY = 'froggy-cloud-device-v1';
 const CLOUD_META_PREFIX = 'froggy-cloud-meta-v1:';
-const CLOUD_BUILD_VERSION = 'v110';
+const CLOUD_BUILD_VERSION = 'v111';
 const CLOUD_AUTOSAVE_DELAY_MS = 12000;
 
 let auth;
@@ -123,7 +123,8 @@ let cloudBusy = false;
 
 let serverEconomySnapshot = null;
 let serverEconomyBusy = false;
-const SERVER_ECONOMY_VERSION = 'v110-phase1';
+let serverEconomyUnsub = null;
+const SERVER_ECONOMY_VERSION = 'v111-cases-live';
 
 function setStatus(message, type = 'info') {
   if (!status) return;
@@ -1016,7 +1017,7 @@ async function uploadLocalToCloud({ force = false, automatic = false } = {}) {
       renderCloudConflict('Another device updated the cloud before this upload finished. Nothing was overwritten. Choose which save should win.');
     } else if (String(error?.code || '').includes('permission-denied')) {
       setCloudBadge('BLOCKED', 'error');
-      setCloudStatus('Firestore is blocking Cloud Save. Confirm the current v110 Firestore rules are published.', 'error');
+      setCloudStatus('Firestore is blocking Cloud Save. Confirm the current v111 Firestore rules are published.', 'error');
       toggleCloudButton(cloudSyncButton, true);
     } else {
       setCloudBadge('OFFLINE', 'error');
@@ -1091,7 +1092,7 @@ async function startCloudSave(user) {
       console.error('Cloud save listener failed', error);
       if (String(error?.code || '').includes('permission-denied')) {
         setCloudBadge('BLOCKED', 'error');
-        setCloudStatus('Firestore is blocking Cloud Save. Confirm the current v110 Firestore rules are published.', 'error');
+        setCloudStatus('Firestore is blocking Cloud Save. Confirm the current v111 Firestore rules are published.', 'error');
       }
     });
   } catch (error) {
@@ -1099,7 +1100,7 @@ async function startCloudSave(user) {
     cloudInitialized = false;
     setCloudBadge('ERROR', 'error');
     if (String(error?.code || '').includes('permission-denied')) {
-      setCloudStatus('Firestore is blocking Cloud Save. Confirm the current v110 Firestore rules are published.', 'error');
+      setCloudStatus('Firestore is blocking Cloud Save. Confirm the current v111 Firestore rules are published.', 'error');
     } else {
       setCloudStatus('Could not reach Froggy Cloud. Your local game still works normally.', 'error');
     }
@@ -1126,13 +1127,35 @@ function compactEconomyMoney(value) {
   return `${amount.toLocaleString()} F`;
 }
 
+function normalizeServerEconomySnapshot(snapshot) {
+  if (!snapshot || typeof snapshot !== 'object') return null;
+  const inv = snapshot.caseInventory && typeof snapshot.caseInventory === 'object' ? snapshot.caseInventory : {};
+  return {
+    schemaVersion: Math.max(1, Math.floor(Number(snapshot.schemaVersion) || 1)),
+    backendVersion: String(snapshot.backendVersion || SERVER_ECONOMY_VERSION),
+    wallet: Math.max(0, Math.floor(Number(snapshot.wallet) || 0)),
+    piggyBalance: Math.max(0, Math.floor(Number(snapshot.piggyBalance) || 0)),
+    level: Math.max(1, Math.floor(Number(snapshot.level) || 1)),
+    xp: Math.max(0, Math.floor(Number(snapshot.xp) || 0)),
+    caseInventory: { pond: Math.max(0, Math.floor(Number(inv.pond) || 0)), neon: Math.max(0, Math.floor(Number(inv.neon) || 0)), ultra: Math.max(0, Math.floor(Number(inv.ultra) || 0)) },
+    unlockedFrogs: Array.isArray(snapshot.unlockedFrogs) ? snapshot.unlockedFrogs.map(String) : ['classic'],
+    casesOpened: Math.max(0, Math.floor(Number(snapshot.casesOpened) || 0)),
+    caseLuckMultiplier: Math.max(1, Math.min(100, Number(snapshot.caseLuckMultiplier) || 1)),
+    transferState: String(snapshot.transferState || 'LOCKED_PHASE_2'),
+    migrationSourceRevision: Math.max(0, Math.floor(Number(snapshot.migrationSourceRevision) || 0)),
+    migrationSourceGameVersion: String(snapshot.migrationSourceGameVersion || '').slice(0, 32)
+  };
+}
+
 function renderServerEconomySnapshot(snapshot) {
-  serverEconomySnapshot = snapshot || null;
+  snapshot = normalizeServerEconomySnapshot(snapshot);
+  serverEconomySnapshot = snapshot;
   if (!snapshot) {
     if (economyWallet) economyWallet.textContent = 'NOT MIGRATED';
     if (economyCases) economyCases.textContent = '—';
     if (economyMigration) economyMigration.textContent = '—';
     if (economyTransfer) economyTransfer.textContent = 'LOCKED';
+    window.dispatchEvent(new CustomEvent('froggy-server-economy-snapshot', { detail: null }));
     return;
   }
   if (economyWallet) economyWallet.textContent = compactEconomyMoney(snapshot.wallet);
@@ -1141,7 +1164,8 @@ function renderServerEconomySnapshot(snapshot) {
     economyCases.textContent = `P ${Number(inv.pond)||0} · N ${Number(inv.neon)||0} · U ${Number(inv.ultra)||0}`;
   }
   if (economyMigration) economyMigration.textContent = `CLOUD r${Number(snapshot.migrationSourceRevision)||0}`;
-  if (economyTransfer) economyTransfer.textContent = 'LOCKED · PHASE 1';
+  if (economyTransfer) economyTransfer.textContent = 'LOCKED · PHASE 2';
+  window.dispatchEvent(new CustomEvent('froggy-server-economy-snapshot', { detail: snapshot }));
 }
 
 function serverEconomyRequestId(prefix = 'op') {
@@ -1157,7 +1181,7 @@ function callable(name) {
 function economyErrorMessage(error) {
   const code = String(error?.code || '');
   const message = String(error?.message || '');
-  if (code.includes('not-found') || code.includes('internal')) return 'Server Economy functions are not deployed yet. Deploy the v110 functions package first.';
+  if (code.includes('not-found') || code.includes('internal')) return 'Server Economy functions are not deployed yet. Deploy the v111 functions package first.';
   if (code.includes('unauthenticated')) return 'Sign in to your Froggy account first.';
   if (code.includes('failed-precondition')) return message.replace(/^FirebaseError:\s*/i, '') || 'Server Economy is not ready for this account yet.';
   if (code.includes('resource-exhausted')) return 'Too many economy actions. Wait a few seconds and try again.';
@@ -1171,6 +1195,31 @@ async function fetchServerEconomySnapshot() {
   return snapshot;
 }
 
+function startServerEconomyLiveListener(uid) {
+  if (serverEconomyUnsub) { try { serverEconomyUnsub(); } catch {} serverEconomyUnsub = null; }
+  if (!uid || !db) return;
+  const ref = doc(db, 'economies', uid);
+  serverEconomyUnsub = onSnapshot(ref, (snap) => {
+    if (auth.currentUser?.uid !== uid) return;
+    if (snap.exists()) renderServerEconomySnapshot(snap.data());
+  }, (error) => {
+    console.warn('Server Economy live listener failed', error);
+  });
+}
+
+function absorbServerEconomyResult(data) {
+  if (!data || typeof data !== 'object') return data;
+  const next = {...(serverEconomySnapshot || {})};
+  if (Number.isFinite(Number(data.wallet))) next.wallet = Math.max(0, Math.floor(Number(data.wallet) || 0));
+  if (data.caseInventory && typeof data.caseInventory === 'object') next.caseInventory = {...data.caseInventory};
+  if (Array.isArray(data.unlockedFrogs)) next.unlockedFrogs = [...data.unlockedFrogs];
+  if (Number.isFinite(Number(data.casesOpened))) next.casesOpened = Math.max(0, Math.floor(Number(data.casesOpened) || 0));
+  next.backendVersion = SERVER_ECONOMY_VERSION;
+  next.transferState = 'LOCKED_PHASE_2';
+  renderServerEconomySnapshot(next);
+  return data;
+}
+
 async function checkServerEconomy({quiet = false} = {}) {
   const user = auth?.currentUser;
   if (!user) return null;
@@ -1180,14 +1229,15 @@ async function checkServerEconomy({quiet = false} = {}) {
     const data = result?.data || {};
     if (data.migrated) {
       const snapshot = await fetchServerEconomySnapshot();
-      setEconomyBadge('PHASE 1 READY', 'success');
-      setEconomyStatus('Authoritative economy document found. Transfers remain locked while gameplay migration continues.', 'success');
+      startServerEconomyLiveListener(user.uid);
+      setEconomyBadge('CASES LIVE', 'success');
+      setEconomyStatus('Server-authoritative Cases are live. Case purchases and OPEN 1/2/3 are now verified by the private backend; transfers remain locked.', 'success');
       economyMigrateButton?.classList.add('hidden');
       return snapshot;
     }
     renderServerEconomySnapshot(null);
     setEconomyBadge('READY TO MIGRATE', 'warning');
-    setEconomyStatus('Backend is online. Create the one-time Phase 1 snapshot from your current Froggy Cloud Save when ready.', 'warning');
+    setEconomyStatus('Backend is online. Create the one-time authoritative snapshot from your current Froggy Cloud Save when ready.', 'warning');
     economyMigrateButton?.classList.remove('hidden');
     return null;
   } catch (error) {
@@ -1202,7 +1252,7 @@ async function checkServerEconomy({quiet = false} = {}) {
 
 async function migrateServerEconomy() {
   if (!auth?.currentUser || serverEconomyBusy) return;
-  if (!confirm('Create the Phase 1 authoritative economy snapshot from your CURRENT CLOUD SAVE? This is a one-time migration. Transfers and trading will remain locked.')) return;
+  if (!confirm('Create the authoritative economy snapshot from your CURRENT CLOUD SAVE? This is a one-time migration. Cases will be server-authoritative; transfers and trading remain locked.')) return;
   serverEconomyBusy = true;
   if (economyMigrateButton) economyMigrateButton.disabled = true;
   if (economyCheckButton) economyCheckButton.disabled = true;
@@ -1213,8 +1263,8 @@ async function migrateServerEconomy() {
     const snapshot = result?.data?.economy || null;
     renderServerEconomySnapshot(snapshot);
     economyMigrateButton?.classList.add('hidden');
-    setEconomyBadge('PHASE 1 READY', 'success');
-    setEconomyStatus(result?.data?.created ? 'Server Economy Phase 1 created. Live gameplay is not switched over yet; transfers remain locked.' : 'This account was already migrated. Transfers remain locked.', 'success');
+    setEconomyBadge('CASES LIVE', 'success');
+    setEconomyStatus(result?.data?.created ? 'Server Economy created. Cases are server-authoritative in v111; transfers remain locked.' : 'This account was already migrated. Cases are server-authoritative; transfers remain locked.', 'success');
   } catch (error) {
     console.error('Server Economy migration failed', error);
     setEconomyBadge('MIGRATION BLOCKED', 'error');
@@ -1227,12 +1277,13 @@ async function migrateServerEconomy() {
 }
 
 function stopServerEconomy() {
+  if (serverEconomyUnsub) { try { serverEconomyUnsub(); } catch {} serverEconomyUnsub = null; }
   serverEconomySnapshot = null;
   economyPanel?.classList.add('hidden');
   economyMigrateButton?.classList.add('hidden');
   renderServerEconomySnapshot(null);
   setEconomyBadge('SIGNED OUT', 'info');
-  setEconomyStatus('Sign in to check Server Economy Phase 1.', 'info');
+  setEconomyStatus('Sign in to check Server Economy Phase 2.', 'info');
 }
 
 async function startServerEconomy() {
@@ -1243,13 +1294,15 @@ async function startServerEconomy() {
 function installServerEconomyBridge() {
   window.FroggyServerEconomy = Object.freeze({
     backendVersion: SERVER_ECONOMY_VERSION,
+    getCachedSnapshot: () => serverEconomySnapshot ? JSON.parse(JSON.stringify(serverEconomySnapshot)) : null,
     getSnapshot: async () => fetchServerEconomySnapshot(),
     check: async () => checkServerEconomy({quiet: true}),
     bootstrap: async () => callable('bootstrapEconomyFromCloud')({}).then(result => result.data),
-    buyCases: async (caseId, quantity = 1, requestId = serverEconomyRequestId('buy')) => callable('buyCasesAuthoritative')({caseId, quantity, requestId}).then(result => result.data),
-    openCases: async (caseId, quantity = 1, requestId = serverEconomyRequestId('open')) => callable('openCasesAuthoritative')({caseId, quantity, requestId}).then(result => result.data),
+    buyCases: async (caseId, quantity = 1, requestId = serverEconomyRequestId('buy')) => callable('buyCasesAuthoritative')({caseId, quantity, requestId}).then(result => absorbServerEconomyResult(result.data)),
+    openCases: async (caseId, quantity = 1, requestId = serverEconomyRequestId('open')) => callable('openCasesAuthoritative')({caseId, quantity, requestId}).then(result => absorbServerEconomyResult(result.data)),
     requestId: serverEconomyRequestId
   });
+  window.dispatchEvent(new CustomEvent('froggy-server-economy-bridge-ready'));
 }
 
 function handleLocalSaveEvent() {

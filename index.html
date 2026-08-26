@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=110-economy-foundation" />
+  <link rel="stylesheet" href="styles.css?v=111-server-cases" />
   <title>Froggy Leap</title>
 </head>
 <body>
@@ -107,7 +107,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v110 · FROGGY LEAP</div>
+          <div class="build-version" aria-label="Installed game version">v111 · FROGGY LEAP</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -456,12 +456,14 @@
           <span class="mini-balance"><span class="coin-icon">F</span><b id="caseBalance">1,000</b></span>
         </div>
 
+        <div id="caseAuthorityStatus" class="case-authority-status" data-state="waiting" aria-live="polite"><b>CONNECTING TO SERVER CASES…</b><span>Purchases and opening stay disabled until the authoritative account snapshot is loaded.</span></div>
+
         <section class="case-intro glass">
           <div class="case-intro-icon" aria-hidden="true">📦</div>
           <div>
             <small>RANDOM FROG DROPS</small>
             <h2>Open a case. Pull a frog.</h2>
-            <p>Buy cases into your inventory, then open 1, 2, or 3 at once. Multi-open runs up to three visible reels together. Every adjusted drop rate is shown before opening. Duplicate frogs automatically return 50% of that frog's Bank Value in F.</p>
+            <p>Your server wallet buys cases into authoritative inventory, then the backend locks 1, 2, or 3 outcomes before the reels move. Multi-open keeps up to three visible reels together. Duplicate frogs return 50% of Bank Value to the authoritative server wallet.</p>
           </div>
           <div class="case-total"><small>CASES OPENED</small><b id="casesOpenedLabel">0</b></div>
         </section>
@@ -595,7 +597,7 @@
 
         <section id="froggyEconomyPanel" class="froggy-economy-panel glass hidden" aria-labelledby="froggyEconomyTitle">
           <div class="froggy-economy-head">
-            <div><small>SERVER ECONOMY · PHASE 1</small><h2 id="froggyEconomyTitle">Build the trusted economy</h2><p>The new backend keeps authoritative wallet/case state outside the public browser code and records atomic case transactions.</p></div>
+            <div><small>SERVER ECONOMY · PHASE 2</small><h2 id="froggyEconomyTitle">Server-authoritative Cases</h2><p>Case purchases, inventory, OPEN 1/2/3 outcomes and duplicate compensation are now committed by the private backend before the browser animates them.</p></div>
             <span id="froggyEconomyBadge" data-state="info">CHECKING</span>
           </div>
           <div class="froggy-economy-grid">
@@ -608,8 +610,8 @@
             <button id="froggyEconomyCheckButton" class="froggy-economy-button secondary pressable" type="button">CHECK BACKEND</button>
             <button id="froggyEconomyMigrateButton" class="froggy-economy-button primary pressable hidden" type="button">MIGRATE CURRENT CLOUD SAVE</button>
           </div>
-          <p id="froggyEconomyStatus" class="froggy-economy-status" data-state="info" aria-live="polite">Sign in to check Server Economy Phase 1.</p>
-          <p class="froggy-economy-note"><b>Transfers stay locked.</b> v110 creates the protected backend foundation and server-side Case purchase/opening functions, but the live game still uses the existing local economy until the staged migration is tested and explicitly switched on.</p>
+          <p id="froggyEconomyStatus" class="froggy-economy-status" data-state="info" aria-live="polite">Sign in to check Server Economy Phase 2.</p>
+          <p class="froggy-economy-note"><b>Transfers stay locked.</b> v111 switches Cases live to the protected backend. Job, Lily Leap, Plinko, Crash, Bank, Piggy and ordinary Collection transactions remain local during staged migration.</p>
         </section>
 
         <section id="froggyFriendsPanel" class="froggy-friends-panel glass" aria-labelledby="froggyFriendsTitle">
@@ -839,7 +841,7 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script type="module" src="firebase-account.js?v=110-economy-foundation"></script>
-  <script src="app.js?v=110-economy-foundation"></script>
+  <script type="module" src="firebase-account.js?v=111-server-cases"></script>
+  <script src="app.js?v=111-server-cases"></script>
 </body>
 </html>
