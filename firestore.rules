@@ -170,6 +170,19 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // v110 Server Economy Phase 1. These documents are readable by their owner,
+    // but the browser can never create/update/delete them. Only trusted Admin SDK
+    // code (Cloud Functions) mutates authoritative economy state and its ledger.
+    match /economies/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create, update, delete: if false;
+    }
+
+    match /economyLedger/{uid}/entries/{entryId} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create, update, delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

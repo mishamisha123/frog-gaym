@@ -1,14 +1,5 @@
-# Froggy Leap v109 — Owner Frog Preview Refresh
+# Froggy Leap v110 — Web/PWA files
 
-Continuation of the v108 build. Existing saves remain compatible.
+Upload these files to the GitHub Pages game repository only **after** the matching v110 Firebase backend/functions and Firestore rules have been deployed.
 
-## v109 change
-
-- Robo Frog is unchanged from v108.
-- Owner Frog shop/Collection art is replaced with the new royal reference-photo version: squinting expression, short dark hair, stubble, forehead mark, crown, fur-trimmed cape, gold F chain, scepter, and frog body.
-- Gameplay stats, rarity, price, level requirement, perks, saves, Bank fixes, lake rarity fixes, Friends, Cloud Save, Plinko Focus Mode, and animated OPEN 1 / OPEN 2 / OPEN 3 case opening are unchanged.
-- PWA/cache/version references are bumped to v109.
-
-Preview assets:
-- `assets/robo-frog-v108.png`
-- `assets/owner-frog-v109.png`
+The Profile screen contains the Server Economy Phase 1 status/migration panel. Live gameplay remains on the current local economy in this phase, and transfers/trading remain locked.

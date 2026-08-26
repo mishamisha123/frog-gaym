@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=107-triple-case-reels" />
+  <link rel="stylesheet" href="styles.css?v=110-economy-foundation" />
   <title>Froggy Leap</title>
 </head>
 <body>
@@ -107,7 +107,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v109 · FROGGY LEAP</div>
+          <div class="build-version" aria-label="Installed game version">v110 · FROGGY LEAP</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -593,6 +593,25 @@
           <p class="froggy-cloud-note">Cloud Save v1 is for backup and cross-device progress. The browser still calculates the economy, so trading/transfers will stay disabled until the server-authoritative phase.</p>
         </section>
 
+        <section id="froggyEconomyPanel" class="froggy-economy-panel glass hidden" aria-labelledby="froggyEconomyTitle">
+          <div class="froggy-economy-head">
+            <div><small>SERVER ECONOMY · PHASE 1</small><h2 id="froggyEconomyTitle">Build the trusted economy</h2><p>The new backend keeps authoritative wallet/case state outside the public browser code and records atomic case transactions.</p></div>
+            <span id="froggyEconomyBadge" data-state="info">CHECKING</span>
+          </div>
+          <div class="froggy-economy-grid">
+            <div><small>AUTHORITATIVE WALLET</small><b id="froggyEconomyWallet">NOT MIGRATED</b></div>
+            <div><small>SERVER CASES</small><b id="froggyEconomyCases">—</b></div>
+            <div><small>MIGRATION SOURCE</small><b id="froggyEconomyMigration">—</b></div>
+            <div><small>PLAYER TRANSFERS</small><b id="froggyEconomyTransfer">LOCKED</b></div>
+          </div>
+          <div class="froggy-economy-actions">
+            <button id="froggyEconomyCheckButton" class="froggy-economy-button secondary pressable" type="button">CHECK BACKEND</button>
+            <button id="froggyEconomyMigrateButton" class="froggy-economy-button primary pressable hidden" type="button">MIGRATE CURRENT CLOUD SAVE</button>
+          </div>
+          <p id="froggyEconomyStatus" class="froggy-economy-status" data-state="info" aria-live="polite">Sign in to check Server Economy Phase 1.</p>
+          <p class="froggy-economy-note"><b>Transfers stay locked.</b> v110 creates the protected backend foundation and server-side Case purchase/opening functions, but the live game still uses the existing local economy until the staged migration is tested and explicitly switched on.</p>
+        </section>
+
         <section id="froggyFriendsPanel" class="froggy-friends-panel glass" aria-labelledby="froggyFriendsTitle">
           <div class="froggy-friends-head">
             <div><small>FROGGY FRIENDS · BETA</small><h2 id="froggyFriendsTitle">Connect with players</h2><p>Search exact Froggy usernames. Google emails stay private.</p></div>
@@ -820,7 +839,7 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script type="module" src="firebase-account.js?v=107-triple-case-reels"></script>
-  <script src="app.js?v=107-triple-case-reels"></script>
+  <script type="module" src="firebase-account.js?v=110-economy-foundation"></script>
+  <script src="app.js?v=110-economy-foundation"></script>
 </body>
 </html>
