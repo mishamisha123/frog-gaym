@@ -3,7 +3,7 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v112.1';
+  const BUILD_VERSION = 'v112.2';
   console.info(`Froggy Leap ${BUILD_VERSION} loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
@@ -3694,6 +3694,7 @@
   }
 
   function recordOwnerBankTap(){
+    if(serverPhase3Active()&&!TEST_MODE)return false;
     const now=Date.now();
     if(now>ownerTapDeadline)ownerTapCount=0;
     ownerTapCount+=1;ownerTapDeadline=now+OWNER_TAP_TIMEOUT_MS;
@@ -3701,6 +3702,23 @@
     ownerTapCount=0;ownerTapDeadline=0;
     openModal(ownerAccessModal);setTimeout(()=>ownerAccessModal.querySelector('input')?.focus(),30);
     return true;
+  }
+
+  async function openProtectedOwnerConsole(){
+    if(TEST_MODE){refreshOwnerPanel();openModal(ownerPanelModal);return true;}
+    const bridge=window.FroggyServerEconomy;
+    if(!serverPhase3Active()||!bridge?.adminStatus)return false;
+    try{
+      const result=await bridge.adminStatus();
+      if(!result?.enabled)return false;
+      refreshOwnerPanel();
+      openModal(ownerPanelModal);
+      ownerStatus('🔒 Server Owner role ACTIVE · protected server operations are enabled.','success');
+      return true;
+    }catch(error){
+      ownerStatus(serverCaseFriendlyError(error),'error');
+      return false;
+    }
   }
 
   function toggleSound(){state.sound=!state.sound;audio.enabled=state.sound;if(state.sound)audio.tap();refresh();}
@@ -3737,6 +3755,7 @@
     els.caseOpeningResult.addEventListener('click',e=>{const equip=e.target.closest('[data-case-equip]');if(equip){equipCaseFrog(equip.dataset.caseEquip);return;}const view=e.target.closest('[data-case-view]');if(view){hideCaseOpening();viewCaseFrog(view.dataset.caseView);return;}const again=e.target.closest('[data-case-open-again]');if(again){const id=again.dataset.caseOpenAgain,qty=clamp(Math.floor(Number(again.dataset.caseOpenAgainQty)||1),1,3);hideCaseOpening();setTimeout(()=>openCases(id,qty),80);}});
     els.installButton.addEventListener('click',installGame);
     document.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('click',closeModal));els.modalBackdrop.addEventListener('click',e=>{if(e.target===els.modalBackdrop)closeModal();});
+    window.addEventListener('froggy:open-owner-console',()=>{void openProtectedOwnerConsole();});
     window.addEventListener('keydown',e=>{if(e.code==='Space'){if(caseOpeningRuntime.active)return;e.preventDefault();if(state.selectedGame==='crash'){state.crashActive?crashCashOut():startCrash();}else if(state.selectedGame==='plinko'){startPlinko();}else{state.roundActive?jump():startRound();}}if(e.code==='Escape'){if(plinkoFocusRuntime.active){exitPlinkoFocusMode();return;}if(caseOpeningRuntime.active){if(caseOpeningRuntime.phase==='reveal')hideCaseOpening();else skipCaseOpening();return;}if(!els.jobResult.classList.contains('hidden'))closeJobResult();else if(state.crashActive)crashCashOut();else state.roundActive?cashOut():closeModal();}});
     document.addEventListener('fullscreenchange',()=>{if(plinkoFocusRuntime.active&&plinkoFocusRuntime.enteredFullscreen&&!document.fullscreenElement)exitPlinkoFocusMode({skipFullscreenExit:true});else syncPlinkoFocusLayout();});window.addEventListener('orientationchange',()=>setTimeout(syncPlinkoFocusLayout,120));
     document.addEventListener('visibilitychange',()=>{if(plinkoBankRoundRuntime.active)plinkoBankRoundRuntime.lastTick=performance.now();});
@@ -3785,7 +3804,7 @@
       if(ownerPanelModal.querySelector('[data-owner-action="spins"]')||ownerPanelModal.querySelector('[data-owner-action="unlimited"]'))throw new Error('Reward-wheel owner controls still present');
       if(PLINKO_BANK_ROUND_MS!==15000)throw new Error('15-second Plinko Bank round failed');const oldRounds=state.rounds,oldCompleted=state.completedRounds;plinkoBankRoundRuntime.active=true;plinkoBankRoundRuntime.remainingMs=1;plinkoBankRoundRuntime.lastTick=performance.now()-20;tickPlinkoBankRound();if(state.rounds!==oldRounds+1||state.completedRounds!==oldCompleted+1||plinkoBankRoundRuntime.active)throw new Error('Plinko Bank round completion failed');if(MAX_LOAN_PAYOUT!==5000000000)throw new Error('5B Bank cap constant failed');state.bankLimitDisabled=true;if(effectiveBankLimit()!==MAX_SAFE_BALANCE)throw new Error('Bank limit disable failed');state.bankLimitDisabled=false;const paidFrogs=FROGS.filter(f=>f.cost>0);if(paidFrogs.find(f=>f.id==='meadow')?.cost!==1500||paidFrogs.find(f=>f.id==='gigachad')?.cost!==2250000000||paidFrogs.find(f=>f.id==='owner')?.cost!==6000000000)throw new Error('3x frog pricing failed');if(plinkoRows('low')!==12||plinkoRows('medium')!==14||plinkoRows('high')!==16||plinkoTable('low').length!==13||plinkoTable('medium').length!==15||plinkoTable('high').length!==17)throw new Error('v76 Plinko board scaling failed');if(Math.abs(plinkoRtp('low')-.9720361328125)>.00001||Math.abs(plinkoRtp('medium')-.9669140625)>.00001||Math.abs(plinkoRtp('high')-.989764404296875)>.00001)throw new Error('v82 Plinko RTP table check failed');if(JSON.stringify(plinkoTable('high'))!==JSON.stringify([1000,130,26,9,4,2,.2,.2,.2,.2,.2,2,4,9,26,130,1000]))throw new Error('v82 exact 16-row High payout strip failed');if(els.plinkoMultipliers?.parentElement!==els.plinkoBoard)throw new Error('v85 multiplier rail must live inside Plinko board');if(PLINKO_MAX_ACTIVE_EGGS!==96||typeof updatePlinkoEggPhysics!=='function'||typeof primePlinkoEggPhysics!=='function'||typeof plinkoImpactTarget!=='function'||typeof getPlinkoBoardCache!=='function'||typeof getPlinkoEggSprite!=='function')throw new Error('v81 Plinko motion engine failed');state=deepClone(DEFAULT_STATE);state.balance=100000;state.safeRunCredits=3;state.plinkoBet=100;for(let i=0;i<3;i++){const rolled=rollPlinkoPath('medium',{protectedRound:true});if(plinkoTable('medium')[rolled.slot]<=1)throw new Error('Plinko protected path failed');}state.caseInventory.ultra=5;if(caseInventoryCount('ultra')!==5)throw new Error('case inventory failed');state.level=100;state.caseInventory.pond=6;renderCases();if(!els.caseGrid.querySelector('[data-case-open-qty="2"]')||!els.caseGrid.querySelector('[data-case-open-qty="3"]')||els.caseGrid.querySelector('[data-case-open-qty="5"]')||els.caseGrid.querySelector('[data-case-open-qty="10"]'))throw new Error('v107 max-3 multi-case buttons failed');if(typeof beginMultiCaseOpening!=='function'||typeof animateMultiCaseOpeningReels!=='function'||typeof finishMultiCaseOpeningReveal!=='function')throw new Error('v107 simultaneous multi-reel animation functions missing');lastCaseBatch=null;const ownerBase=caseAdjustedDropRows(caseById('ultra')).find(r=>r.frog.id==='owner').probability;state.caseLuckMultiplier=10;const ownerLucky=caseAdjustedDropRows(caseById('ultra')).find(r=>r.frog.id==='owner').probability;if(!(ownerLucky>ownerBase))throw new Error('case luck weighting failed');
       const shopFrogs=frogShopItems();for(let i=1;i<shopFrogs.length;i++){if(shopFrogs[i].cost<shopFrogs[i-1].cost)throw new Error('frog shop price order failed');if((FROG_RARITY_RANK[shopFrogs[i].rarity]??99)<(FROG_RARITY_RANK[shopFrogs[i-1].rarity]??99))throw new Error('frog rarity progression failed');}const hill=FROGS.find(f=>f.id==='gigachad');if(!hill||hill.name!=='The Hill Frog'||hill.art!=='assets/the-hill-frog-game-v66.png'||hill.cardArt!=='assets/the-hill-frog-card-v64.webp')throw new Error('The Hill Frog art/name failed');if(FROGS.find(f=>f.id==='robot')?.art!=='assets/robo-frog-v108.png'||FROGS.find(f=>f.id==='owner')?.art!=='assets/owner-frog-v109.png')throw new Error('v109 Owner preview refresh / Robo preservation failed');const basicIds=['meadow','river','moss','sand','blue-dart','sunset'];if(!basicIds.every(id=>FROGS.some(f=>f.id===id)))throw new Error('v63 basic frog lineup missing');collectionMode='lakes';renderCollection();if(els.collectionGrid.querySelectorAll('.collection-card.lake .lake-rarity-row > .rarity').length!==LAKES.length)throw new Error('v106 lake rarity header rows failed');collectionMode='frogs';renderCollection();
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v112.1 hotfix + server-authoritative Cases + Frog/Lake purchases + Job rewards + protected Owner grants + server-locked 1/2/3 outcomes + v109 Owner Frog reference-photo royal preview + Robo Frog unchanged + v107 simultaneous animated OPEN 2/3 case reels + lake rarity header rows + exact loan principal disbursement + v98 cloud-save bridge + v90 one-screen mobile Plinko controls + board fit/no Plinko scrolling + v89 real mobile Plinko frame expansion/no flex compression + v88 pure mobile Plinko frame-height fix + v87 larger Plinko multiplier text + deeper mobile Medium/High payout rail + v86 extended mobile Plinko bottom frame + larger multiplier labels + v85 multiplier rail structurally inside Plinko board + visible mobile payout strip + v83 controls-before-board layout + high-contrast active-loan actions + fully dark loan builder/warning sheets + v82 exact classic 16-row High payout strip + v81 no idle/top egg + no fake pocket guides + analytic ballistic Plinko motion + instant multiplier landing + v78 performance cache + 96-egg cap + v77 15-second Plinko Bank rounds + 5x lower Plinko XP + Ultra Case 3% Hill / 0.1% Owner + v75 case inventory + owner case grants/luck + Bank limit toggle + protected Plinko eggs + v73 every-frog price-tier perks + v72 Piggy 0.3% open / 0.2% closed + loan-time deposits + v71 3x frog prices + 5B Bank cap + v68 CS-style case reel + v67 six-slot mobile nav + v66 approved The Hill Frog gameplay model';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v112.2 owner-only console button + v112.1 click hotfix + server-authoritative Cases + Frog/Lake purchases + Job rewards + protected Owner grants + server-locked 1/2/3 outcomes + v109 Owner Frog reference-photo royal preview + Robo Frog unchanged + v107 simultaneous animated OPEN 2/3 case reels + lake rarity header rows + exact loan principal disbursement + v98 cloud-save bridge + v90 one-screen mobile Plinko controls + board fit/no Plinko scrolling + v89 real mobile Plinko frame expansion/no flex compression + v88 pure mobile Plinko frame-height fix + v87 larger Plinko multiplier text + deeper mobile Medium/High payout rail + v86 extended mobile Plinko bottom frame + larger multiplier labels + v85 multiplier rail structurally inside Plinko board + visible mobile payout strip + v83 controls-before-board layout + high-contrast active-loan actions + fully dark loan builder/warning sheets + v82 exact classic 16-row High payout strip + v81 no idle/top egg + no fake pocket guides + analytic ballistic Plinko motion + instant multiplier landing + v78 performance cache + 96-egg cap + v77 15-second Plinko Bank rounds + 5x lower Plinko XP + Ultra Case 3% Hill / 0.1% Owner + v75 case inventory + owner case grants/luck + Bank limit toggle + protected Plinko eggs + v73 every-frog price-tier perks + v72 Piggy 0.3% open / 0.2% closed + loan-time deposits + v71 3x frog prices + 5B Bank cap + v68 CS-style case reel + v67 six-slot mobile nav + v66 approved The Hill Frog gameplay model';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 

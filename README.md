@@ -1,3 +1,13 @@
+# Froggy Leap v112.2 — Owner-Only Console Button
+
+Website/PWA-only update on top of v112.1. No Firebase backend or Firestore redeploy is required.
+
+- Adds an OWNER CONSOLE button inside Profile → Server Economy.
+- The button is hidden by default and only appears after the deployed backend confirms `adminRoles/{uid}` is enabled for the signed-in account.
+- Clicking the button re-checks the protected server Owner role before opening the console.
+- The legacy 20-Bank-tap access path is retired in live Phase 3; it remains available only in self-test mode.
+- Server-side Owner operations remain protected by the backend regardless of client UI changes.
+
 # Froggy Leap v112.1 — Click/Input Hotfix
 
 Hotfix for v112. Restores the accidentally omitted Owner modal runtime declarations that caused modal/navigation click handlers to throw `ReferenceError: ownerAccessModal is not defined`. Backend Phase 3 logic is unchanged; no re-migration is required.

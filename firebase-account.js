@@ -90,12 +90,13 @@ const economyMigration = byId('froggyEconomyMigration');
 const economyTransfer = byId('froggyEconomyTransfer');
 const economyCheckButton = byId('froggyEconomyCheckButton');
 const economyMigrateButton = byId('froggyEconomyMigrateButton');
+const ownerConsoleButton = byId('froggyOwnerConsoleButton');
 const economyStatus = byId('froggyEconomyStatus');
 
 const GAME_STORAGE_KEY = 'froggy-leap-deluxe-v3';
 const CLOUD_DEVICE_KEY = 'froggy-cloud-device-v1';
 const CLOUD_META_PREFIX = 'froggy-cloud-meta-v1:';
-const CLOUD_BUILD_VERSION = 'v112.1';
+const CLOUD_BUILD_VERSION = 'v112.2';
 const CLOUD_AUTOSAVE_DELAY_MS = 12000;
 
 let auth;
@@ -1113,6 +1114,22 @@ function setEconomyStatus(message, state = 'info') {
   economyStatus.dataset.state = state;
 }
 
+async function refreshOwnerConsoleAccess({ migrated = Boolean(serverEconomySnapshot) } = {}) {
+  ownerConsoleButton?.classList.add('hidden');
+  document.documentElement.dataset.serverOwner = 'false';
+  if (!auth?.currentUser || !migrated) return false;
+  try {
+    const result = await callable('adminStatus')({});
+    const enabled = result?.data?.enabled === true;
+    ownerConsoleButton?.classList.toggle('hidden', !enabled);
+    document.documentElement.dataset.serverOwner = enabled ? 'true' : 'false';
+    return enabled;
+  } catch (error) {
+    console.warn('Server Owner status check failed', error);
+    return false;
+  }
+}
+
 function setEconomyBadge(label, state = 'info') {
   if (!economyBadge) return;
   economyBadge.textContent = label || '';
@@ -1257,12 +1274,14 @@ async function checkServerEconomy({quiet = false} = {}) {
       setEconomyBadge('PHASE 3 LIVE', 'success');
       setEconomyStatus('Server-authoritative Cases, Frog/Lake purchases, and Job rewards are live. Transfers remain locked while Bank, Piggy, Plinko and Crash are migrated next.', 'success');
       economyMigrateButton?.classList.add('hidden');
+      await refreshOwnerConsoleAccess({ migrated: true });
       return snapshot;
     }
     renderServerEconomySnapshot(null);
     setEconomyBadge('READY TO MIGRATE', 'warning');
     setEconomyStatus('Backend is online. Create the one-time authoritative snapshot from your current Froggy Cloud Save when ready.', 'warning');
     economyMigrateButton?.classList.remove('hidden');
+    await refreshOwnerConsoleAccess({ migrated: false });
     return null;
   } catch (error) {
     console.warn('Server Economy check failed', error);
@@ -1270,6 +1289,7 @@ async function checkServerEconomy({quiet = false} = {}) {
     setEconomyBadge('BACKEND OFFLINE', 'error');
     setEconomyStatus(economyErrorMessage(error), 'error');
     economyMigrateButton?.classList.add('hidden');
+    await refreshOwnerConsoleAccess({ migrated: false });
     return null;
   }
 }
@@ -1289,6 +1309,7 @@ async function migrateServerEconomy() {
     economyMigrateButton?.classList.add('hidden');
     setEconomyBadge('PHASE 3 LIVE', 'success');
     setEconomyStatus(result?.data?.created ? 'Server Economy created. Cases, Frog/Lake purchases and Job rewards are server-authoritative in v112; transfers remain locked.' : 'This account was already migrated. Phase 3 authorities are active; transfers remain locked.', 'success');
+    await refreshOwnerConsoleAccess({ migrated: true });
   } catch (error) {
     console.error('Server Economy migration failed', error);
     setEconomyBadge('MIGRATION BLOCKED', 'error');
@@ -1305,6 +1326,8 @@ function stopServerEconomy() {
   serverEconomySnapshot = null;
   economyPanel?.classList.add('hidden');
   economyMigrateButton?.classList.add('hidden');
+  ownerConsoleButton?.classList.add('hidden');
+  document.documentElement.dataset.serverOwner = 'false';
   renderServerEconomySnapshot(null);
   setEconomyBadge('SIGNED OUT', 'info');
   setEconomyStatus('Sign in to check Server Economy Phase 3.', 'info');
@@ -1394,6 +1417,20 @@ try {
   cloudSyncButton?.addEventListener('click', () => { void uploadLocalToCloud({ force: false }); });
   economyCheckButton?.addEventListener('click', () => { void checkServerEconomy({ quiet: false }); });
   economyMigrateButton?.addEventListener('click', () => { void migrateServerEconomy(); });
+  ownerConsoleButton?.addEventListener('click', async () => {
+    if (ownerConsoleButton.disabled) return;
+    ownerConsoleButton.disabled = true;
+    try {
+      const allowed = await refreshOwnerConsoleAccess({ migrated: Boolean(serverEconomySnapshot) });
+      if (!allowed) {
+        setEconomyStatus('This account is not enabled as the protected Server Owner.', 'error');
+        return;
+      }
+      window.dispatchEvent(new CustomEvent('froggy:open-owner-console'));
+    } finally {
+      ownerConsoleButton.disabled = false;
+    }
+  });
   window.addEventListener('froggy:save', handleLocalSaveEvent);
 
   signInButton?.addEventListener('click', async () => {
