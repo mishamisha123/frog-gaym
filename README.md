@@ -1,14 +1,13 @@
-# Froggy Leap v114.0 — GITHUB / WEBSITE UPLOAD ONLY
+# Froggy Leap v114.1 — GITHUB / WEBSITE HOTFIX
 
-**Do not deploy this ZIP to Firebase.**
+Upload this package only AFTER the matching v114.1 Firebase Functions hotfix reports `Deploy complete!`.
 
-Deploy the matching v114.0 Firebase Functions package first. Wait until Firebase CLI says **Deploy complete!**. Then upload the contents of this package to the GitHub Pages repository.
+Fixes:
+- Settings > Reset progress now resets the signed-in authoritative Server Economy plus local browser progress.
+- The fresh reset save is force-synced to Froggy Cloud when possible.
+- Froggy account identity, username and friends are preserved.
+- Cloud Save device/cloud summaries no longer display local/browser money beside the authoritative wallet.
+- The Server Economy wallet remains the only protected-money amount shown in Profile.
+- Stale Bank copy now refers to the 15-minute server timer.
 
-## v114.0 authority
-- Existing server wallet, Cases, Frog/Lake Collection purchases and Job rewards remain authoritative.
-- Piggy deposits, withdrawals and interest are server-authoritative.
-- Bank loans, collateral, repayments and the 15-minute repayment schedule are server-authoritative.
-- Plinko bets, 50/50 paths, slots, multipliers and payouts are server-committed; the browser only animates the committed result.
-- Vehicles, Crash, selling, gifting and trading remain outside this migration.
-
-The website fails closed for Bank/Piggy/Plinko if the Phase 4 backend is unavailable.
+GitHub Pages only. Do not deploy this ZIP with Firebase CLI.

@@ -25,7 +25,7 @@
     <h1>Updating Froggy Leap</h1>
     <p>Removing the old offline cache and loading the consolidated game.</p>
     <div class="bar"><i></i></div>
-    <small id="status">Preparing v114.0…</small>
+    <small id="status">Preparing v114.1…</small>
   </main>
   <script>
     (async () => {
@@ -41,19 +41,19 @@
           const names = await caches.keys();
           await Promise.all(names.map(name => caches.delete(name)));
         }
-        status.textContent = 'Checking that v114.0 is uploaded…';
-        const verifyUrl = './index.html?verify=v1140-' + Date.now();
+        status.textContent = 'Checking that v114.1 is uploaded…';
+        const verifyUrl = './index.html?verify=v1141-' + Date.now();
         const response = await fetch(verifyUrl, { cache: 'no-store' });
         const html = await response.text();
-        if (!response.ok || !html.includes('v114.0 · FROGGY LEAP') || !html.includes('FROGGY FRIENDS · BETA') || !html.includes('FROGGY CLOUD SAVE · BETA') || !html.includes('SERVER ECONOMY · PHASE 4')) {
-          status.textContent = 'v114.0 is NOT on GitHub Pages yet — upload the full v114.0 GitHub package contents first.';
+        if (!response.ok || !html.includes('v114.1 · FROGGY LEAP') || !html.includes('FROGGY FRIENDS · BETA') || !html.includes('FROGGY CLOUD SAVE · BETA') || !html.includes('SERVER ECONOMY · PHASE 4')) {
+          status.textContent = 'v114.1 is NOT on GitHub Pages yet — upload the full v114.1 GitHub package contents first.';
           return;
         }
-        status.textContent = 'v114.0 verified — loading pipelined Server Job + immediate Case lock UI + authoritative economy + Owner Console + Friends + Cloud Saves…';
-        setTimeout(() => location.replace('./?build=v1140-' + Date.now()), 650);
+        status.textContent = 'v114.1 verified — loading pipelined Server Job + immediate Case lock UI + authoritative economy + Owner Console + Friends + Cloud Saves…';
+        setTimeout(() => location.replace('./?build=v1141-' + Date.now()), 650);
       } catch (error) {
         console.warn('Refresh helper:', error);
-        status.textContent = 'Could not verify v114.0. Check the upload, then try again.';
+        status.textContent = 'Could not verify v114.1. Check the upload, then try again.';
       }
     })();
   </script>

@@ -107,7 +107,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v114.0 · FROGGY LEAP</div>
+          <div class="build-version" aria-label="Installed game version">v114.1 · FROGGY LEAP</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -387,7 +387,7 @@
             </div>
             <div class="debt-actions loan-payment-dock-actions">
               <button id="repayInstallmentButton" type="button" class="debt-action pressable">
-                <span>PAY NEXT PAYMENT EARLY</span><small>Resets the five-round countdown</small>
+                <span>PAY NEXT PAYMENT EARLY</span><small>Restarts the 15-minute server timer</small>
               </button>
               <button id="repayAllButton" type="button" class="debt-action secondary pressable">
                 <span>PAY OFF EARLY</span><small>Save future interest</small>
@@ -574,12 +574,12 @@
 
         <section id="froggyCloudPanel" class="froggy-cloud-panel glass hidden" aria-labelledby="froggyCloudTitle">
           <div class="froggy-cloud-head">
-            <div><small>FROGGY CLOUD SAVE · BETA</small><h2 id="froggyCloudTitle">Your progress, on every device</h2><p>Private to this Froggy account. Cloud Save v1 backs up the existing browser save.</p></div>
+            <div><small>FROGGY CLOUD SAVE · BETA</small><h2 id="froggyCloudTitle">Your progress, on every device</h2><p>Private to this Froggy account. Cloud Save backs up browser progress; protected money is shown only in Server Economy below.</p></div>
             <span id="froggyCloudBadge">CHECKING</span>
           </div>
           <div class="froggy-cloud-grid">
-            <div><small>THIS DEVICE</small><b id="froggyCloudLocalSummary">Checking local save…</b></div>
-            <div><small>CLOUD</small><b id="froggyCloudRemoteSummary">Checking Firestore…</b></div>
+            <div><small>THIS DEVICE · PROGRESS</small><b id="froggyCloudLocalSummary">Checking local save…</b></div>
+            <div><small>CLOUD · PROGRESS</small><b id="froggyCloudRemoteSummary">Checking Firestore…</b></div>
             <div><small>REVISION</small><b id="froggyCloudRevision">—</b></div>
             <div><small>LAST CLOUD UPDATE</small><b id="froggyCloudUpdated">—</b></div>
           </div>
@@ -594,7 +594,7 @@
             <button id="froggyCloudSyncButton" class="froggy-cloud-button primary pressable hidden" type="button">SYNC NOW</button>
           </div>
           <p id="froggyCloudStatus" class="froggy-cloud-status" data-state="info" aria-live="polite">Sign in to connect Cloud Save.</p>
-          <p class="froggy-cloud-note">Cloud Save v1 is for backup and cross-device progress. The browser still calculates the economy, so trading/transfers will stay disabled until the server-authoritative phase.</p>
+          <p class="froggy-cloud-note">Cloud Save is a backup of browser progress. It does not define protected money. The authoritative wallet shown below is the only server money balance.</p>
         </section>
 
         <section id="froggyEconomyPanel" class="froggy-economy-panel glass hidden" aria-labelledby="froggyEconomyTitle">
@@ -616,7 +616,7 @@
             <button id="froggyEconomyMigrateButton" class="froggy-economy-button primary pressable hidden" type="button">MIGRATE CURRENT CLOUD SAVE</button>
           </div>
           <p id="froggyEconomyStatus" class="froggy-economy-status" data-state="info" aria-live="polite">Sign in to check Server Economy Phase 3.</p>
-          <p class="froggy-economy-note"><b>Transfers stay locked.</b> v112 moves Cases, Frog/Lake purchases and Job rewards to the protected backend. Vehicles, selling, Lily Leap, Plinko, Crash, Bank and Piggy remain staged for later migration.</p>
+          <p class="froggy-economy-note"><b>Transfers stay locked.</b> Cases, Frog/Lake purchases, Job, Bank, Piggy and Plinko are protected by the server in v114.1. Lily Leap, Crash, vehicles and selling remain staged for the next migration.</p>
         </section>
 
         <section id="froggyFriendsPanel" class="froggy-friends-panel glass" aria-labelledby="froggyFriendsTitle">

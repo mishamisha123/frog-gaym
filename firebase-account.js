@@ -96,7 +96,7 @@ const economyStatus = byId('froggyEconomyStatus');
 const GAME_STORAGE_KEY = 'froggy-leap-deluxe-v3';
 const CLOUD_DEVICE_KEY = 'froggy-cloud-device-v1';
 const CLOUD_META_PREFIX = 'froggy-cloud-meta-v1:';
-const CLOUD_BUILD_VERSION = 'v114.0';
+const CLOUD_BUILD_VERSION = 'v114.1';
 const CLOUD_AUTOSAVE_DELAY_MS = 12000;
 
 let auth;
@@ -125,7 +125,7 @@ let cloudBusy = false;
 let serverEconomySnapshot = null;
 let serverEconomyBusy = false;
 let serverEconomyUnsub = null;
-const SERVER_ECONOMY_VERSION = 'v114-bank-piggy-plinko';
+const SERVER_ECONOMY_VERSION = 'v114.1-reset-hotfix';
 
 function setStatus(message, type = 'info') {
   if (!status) return;
@@ -820,12 +820,11 @@ function compactCloudMoney(value) {
 function summarizeSave(save) {
   if (!save) return 'No save found';
   const level = Math.max(1, Math.floor(Number(save.level) || 1));
-  const wallet = compactCloudMoney(save.balance);
   const frogs = Array.isArray(save.unlockedFrogs) ? save.unlockedFrogs.length : 1;
   const cases = save.caseInventory && typeof save.caseInventory === 'object'
     ? Object.values(save.caseInventory).reduce((sum, value) => sum + Math.max(0, Math.floor(Number(value) || 0)), 0)
     : 0;
-  return `Lv. ${level} · ${wallet} F · ${frogs} frogs · ${cases} cases`;
+  return `Lv. ${level} · ${frogs} frogs · ${cases} cases`;
 }
 
 function formatCloudUpdated(value) {
@@ -1403,6 +1402,9 @@ function installServerEconomyBridge() {
     takeBankLoan: async (amount, collateral, requestId = serverEconomyRequestId('loan')) => callable('bankTakeLoanAuthoritative')({amount, collateral, requestId}).then(result => absorbServerEconomyResult(result.data)),
     repayBankLoan: async (mode, requestId = serverEconomyRequestId('repay')) => callable('bankRepayLoanAuthoritative')({mode, requestId}).then(result => absorbServerEconomyResult(result.data)),
     dropPlinko: async (bet, risk, requestId = serverEconomyRequestId('plinko')) => callable('dropPlinkoAuthoritative')({bet, risk, requestId}).then(result => absorbServerEconomyResult(result.data)),
+    resetProgress: async (requestId = serverEconomyRequestId('reset')) => callable('resetEconomyAuthoritative')({requestId}).then(result => absorbServerEconomyResult(result.data)),
+    isSignedIn: () => Boolean(auth?.currentUser),
+    forceCloudSync: async () => uploadLocalToCloud({ force: true, automatic: false }),
     adminStatus: async () => callable('adminStatus')({}).then(result => result.data),
     adminOperate: async (action, operation, requestId = serverEconomyRequestId('admin')) => callable('adminEconomyOperation')({action, operation, requestId}).then(result => absorbServerEconomyResult(result.data)),
     requestId: serverEconomyRequestId

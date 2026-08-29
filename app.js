@@ -3,7 +3,7 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v114.0';
+  const BUILD_VERSION = 'v114.1';
   console.info(`Froggy Leap ${BUILD_VERSION} loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
@@ -4043,7 +4043,46 @@
   }
 
   function toggleSound(){state.sound=!state.sound;audio.enabled=state.sound;if(state.sound)audio.tap();refresh();}
-  function resetProgress(){if(!confirm('Reset all Froggy, skins, lakes, and stats?'))return;state=deepClone(DEFAULT_STATE);localStorage.removeItem(STORAGE_KEY);scene.reset();refresh();renderCollection();setStatus('Fresh pond, fresh start.');navigate('play');}
+  async function resetProgress(){
+    if(anyRoundActive()||state.animating||caseOpeningRuntime.active){setStatus('Finish the current game or Case opening before resetting progress.','lose');return false;}
+    const bridge=window.FroggyServerEconomy,signedIn=Boolean(bridge?.isSignedIn?.());
+    const warning=signedIn
+      ? 'Reset ALL Froggy Leap progress? This resets your protected server wallet, Cases, Frogs/Lakes, Job, Bank, Piggy and Plinko, plus this device\'s local Leap/Crash progress. Your Froggy account, username and friends stay connected. This cannot be undone.'
+      : 'Reset this device\'s Froggy Leap progress? You are not signed in, so only the local browser save will be reset. This cannot be undone.';
+    if(!confirm(warning))return false;
+    const button=$('resetButton');if(button)button.disabled=true;
+    try{
+      if(signedIn){
+        if(!bridge?.resetProgress)throw new Error('Server reset is not available yet. Deploy the matching v114.1 Firebase hotfix first.');
+        setStatus('Resetting protected server progress…','info');
+        const requestId=bridge.requestId?.('reset')||undefined;
+        const result=await bridge.resetProgress(requestId);
+        if(result?.economy)applyServerCaseSnapshot(result.economy);
+      }
+      state=deepClone(DEFAULT_STATE);
+      localStorage.removeItem(STORAGE_KEY);
+      scene.reset();
+      refresh();renderCollection();renderCases();renderJob();saveState();navigate('play');
+      if(signedIn){
+        setStatus('Server reset complete. Updating Cloud Save…','info');
+        const cloudSynced=await bridge.forceCloudSync?.();
+        if(!cloudSynced){
+          setStatus('Progress reset is complete, but Cloud Save did not update yet. Open Profile and press SYNC NOW before restoring from another device.','lose');
+          return true;
+        }
+      }
+      setStatus('Fresh pond, fresh start. Progress reset complete.','win');
+      setTimeout(()=>location.reload(),450);
+      return true;
+    }catch(error){
+      console.error('Progress reset failed',error);
+      const message=String(error?.message||'');
+      setStatus(message.includes('v114.1')?message:'Reset was stopped because the protected server progress could not be reset. Nothing local was erased.','lose');
+      return false;
+    }finally{
+      if(button)button.disabled=false;
+    }
+  }
 
   function installGame(){
     if(installPrompt){installPrompt.prompt();installPrompt.userChoice.finally(()=>{installPrompt=null;els.installButton.classList.add('hidden');});}
@@ -4059,7 +4098,7 @@
     els.sound.addEventListener('click',toggleSound);els.settingsSound.addEventListener('click',toggleSound);els.settingsMotion.addEventListener('click',()=>{state.effects=!state.effects;refresh();});els.settingsReminders.addEventListener('click',()=>{state.playReminders=!state.playReminders;session.reminded=false;refresh();});els.goalGrid.addEventListener('click',e=>{const button=e.target.closest('[data-goal-claim]');if(button)claimGoal(button.dataset.goalClaim);});
     els.bankShortcut.addEventListener('click',()=>{recordOwnerBankTap();setBankPane('loans');navigate('bank');});els.bankLoansTab.addEventListener('click',()=>setBankPane('loans'));els.bankPiggyTab.addEventListener('click',()=>setBankPane('piggy'));    els.openLoanBuilderButton.addEventListener('click',openLoanBuilder);els.loanAmountSlider.addEventListener('input',()=>refreshLoanBuilder(els.loanAmountSlider.value));els.loanAmountInput.addEventListener('input',()=>refreshLoanBuilder(els.loanAmountInput.value,{exact:true}));els.loanMaximumButton.addEventListener('click',()=>refreshLoanBuilder(maxSingleLoan(),{exact:true}));els.loanCollateralAutoButton.addEventListener('click',()=>{pendingCollateralMode='auto';autoSelectCollateral(pendingLoanAmount);renderLoanCollateralPicker();});els.loanCollateralClearButton.addEventListener('click',clearPendingCollateral);els.loanCollateralList.addEventListener('click',e=>{const button=e.target.closest('[data-pledge-asset]');if(!button)return;const [type,id]=button.dataset.pledgeAsset.split('|');togglePendingCollateralAsset(type,id);});els.loanCollateralList.addEventListener('input',e=>{if(e.target.matches('[data-pledge-piggy]')){pendingCollateralMode='manual';pendingCollateral.piggy=clamp(Math.floor(Number(e.target.value)||0),0,state.piggyBalance);renderLoanCollateralPicker();}});els.loanReviewButton.addEventListener('click',reviewLoanWarning);els.loanWarningCancelButton.addEventListener('click',closeModal);els.loanRedeemButton.addEventListener('click',redeemPendingLoan);els.repayInstallmentButton.addEventListener('click',()=>repayDebt('installment'));els.repayAllButton.addEventListener('click',()=>repayDebt('all'));
     document.querySelectorAll('[data-piggy-mode]').forEach(button=>button.addEventListener('click',()=>setPiggyTransferMode(button.dataset.piggyMode)));document.querySelectorAll('[data-piggy-share]').forEach(button=>button.addEventListener('click',()=>setPiggyTransferAmount(Math.floor(piggyTransferMaximum()*Number(button.dataset.piggyShare)/100))));els.piggyTransferSlider.addEventListener('input',()=>setPiggyTransferAmount(els.piggyTransferSlider.value));els.piggyTransferSlider.addEventListener('change',()=>setPiggyTransferAmount(els.piggyTransferSlider.value));els.piggyTransferInput.addEventListener('input',()=>setPiggyTransferAmount(els.piggyTransferInput.value,{fromInput:true}));els.piggyTransferInput.addEventListener('change',()=>setPiggyTransferAmount(els.piggyTransferInput.value));els.piggyTransferButton.addEventListener('click',transferPiggy);els.debtBadge.addEventListener('click',()=>{setBankPane('loans');navigate('bank');});
-    $('howToButton').addEventListener('click',()=>openModal(els.howToModal));$('resetButton').addEventListener('click',resetProgress);$('profileTopButton').addEventListener('click',()=>navigate('stats'));
+    $('howToButton').addEventListener('click',()=>openModal(els.howToModal));$('resetButton').addEventListener('click',()=>{void resetProgress();});$('profileTopButton').addEventListener('click',()=>navigate('stats'));
     document.querySelectorAll('.nav-button').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.screen)));
     els.crashStatus.addEventListener('click',()=>{if(els.crashStatus.dataset.action==='vehicles')openVehicleShop();});
     els.crashStatus.addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&els.crashStatus.dataset.action==='vehicles'){event.preventDefault();openVehicleShop();}});
