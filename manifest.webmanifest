@@ -1,7 +1,7 @@
 {
   "name": "Froggy Leap",
   "short_name": "Froggy Leap",
-  "description": "Froggy Leap v112.6 with lower-latency Phase 3 economy UI, an owner-account-only Console button, server-authoritative Cases, Frog/Lake purchases and Job rewards, protected Owner economy grants, Cloud Saves/Friends, exact Bank loans, and Plinko Focus mode.",
+  "description": "Froggy Leap v113.0 with pipelined Server Job gameplay and immediate Case server-lock UI, an owner-account-only Console button, server-authoritative Cases, Frog/Lake purchases and Job rewards, protected Owner economy grants, Cloud Saves/Friends, exact Bank loans, and Plinko Focus mode.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

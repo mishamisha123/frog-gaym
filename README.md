@@ -1,7 +1,13 @@
-# Froggy Leap v112.6 — Phase 3 economy latency fix
+# Froggy Leap v113.0 — Server Latency Pipeline
 
-GITHUB / WEBSITE ONLY. Do not deploy this ZIP with Firebase.
+## GITHUB / WEBSITE package
+Upload these files to the Froggy Leap GitHub Pages site.
 
-This build keeps the v112 backend and Firestore rules unchanged. It reduces the visible lag around server-authoritative money actions by removing duplicate economy result rendering, deduplicating Firestore snapshot redraws, replacing full-game refreshes with a lightweight economy HUD refresh on hot paths, and giving Job catches immediate visual feedback while Firebase confirms the reward.
+This build pairs with the v113 Firebase backend. Deploy the backend first.
 
-Security is unchanged: wallet/case/collection/Job outcomes are still committed by the server before authoritative state changes are accepted.
+Changes:
+- Job no longer waits for a Firebase round trip after every fry. The backend pre-issues a short server fry queue and the browser pipelines authoritative reward commits in order.
+- Job wallet/shift feedback is optimistic for responsiveness, then reconciled to the authoritative server result. Protected purchases still use the confirmed server wallet.
+- Case opening shows the server-lock animation immediately instead of looking frozen while Firebase commits the outcome.
+- Hot economy calls are designed to pair with the v113 backend transaction-latency reduction.
+- Owner Console, server Cases, Frog/Lake purchases and server Job remain Phase 3; transfers/trading remain locked.

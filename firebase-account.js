@@ -96,7 +96,7 @@ const economyStatus = byId('froggyEconomyStatus');
 const GAME_STORAGE_KEY = 'froggy-leap-deluxe-v3';
 const CLOUD_DEVICE_KEY = 'froggy-cloud-device-v1';
 const CLOUD_META_PREFIX = 'froggy-cloud-meta-v1:';
-const CLOUD_BUILD_VERSION = 'v112.6';
+const CLOUD_BUILD_VERSION = 'v113.0';
 const CLOUD_AUTOSAVE_DELAY_MS = 12000;
 
 let auth;
@@ -125,7 +125,7 @@ let cloudBusy = false;
 let serverEconomySnapshot = null;
 let serverEconomyBusy = false;
 let serverEconomyUnsub = null;
-const SERVER_ECONOMY_VERSION = 'v112-collection-job-admin';
+const SERVER_ECONOMY_VERSION = 'v113-latency-pipeline';
 
 function setStatus(message, type = 'info') {
   if (!status) return;
@@ -1214,7 +1214,7 @@ function callable(name) {
 function economyErrorMessage(error) {
   const code = String(error?.code || '');
   const message = String(error?.message || '');
-  if (code.includes('not-found') || code.includes('internal')) return 'Server Economy functions are not deployed yet. Deploy the v112 functions package first.';
+  if (code.includes('not-found') || code.includes('internal')) return 'Server Economy functions are not deployed yet. Deploy the v113 Firebase backend package first.';
   if (code.includes('unauthenticated')) return 'Sign in to your Froggy account first.';
   if (code.includes('failed-precondition')) return message.replace(/^FirebaseError:\s*/i, '') || 'Server Economy is not ready for this account yet.';
   if (code.includes('resource-exhausted')) return 'Too many economy actions. Wait a few seconds and try again.';
@@ -1437,7 +1437,7 @@ try {
         return;
       }
       const opened = await opener({serverVerified: true});
-      if (!opened) setEconomyStatus('Owner role is valid, but the Owner Console frontend could not open. v112.6 includes the Owner runtime fix.', 'error');
+      if (!opened) setEconomyStatus('Owner role is valid, but the Owner Console frontend could not open. v113 includes the Owner runtime fix.', 'error');
     } finally {
       ownerConsoleButton.disabled = false;
     }
