@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=1130-server-pipeline" />
+  <link rel="stylesheet" href="styles.css?v=1140-bank-piggy-plinko-dev" />
   <title>Froggy Leap</title>
 </head>
 <body>
@@ -107,7 +107,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v113.0 · FROGGY LEAP</div>
+          <div class="build-version" aria-label="Installed game version">v114.0 · FROGGY LEAP</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -375,7 +375,7 @@
             <div class="simple-loan-rules">
               <span>8% total interest</span>
               <span>10 fixed payments</span>
-              <span>Due every 5 rounds</span>
+              <span>Due every 15 min · server time</span>
               <span>Only pledged assets can be seized</span><span>5B F principal cap</span>
             </div>
           </section>
@@ -599,7 +599,7 @@
 
         <section id="froggyEconomyPanel" class="froggy-economy-panel glass hidden" aria-labelledby="froggyEconomyTitle">
           <div class="froggy-economy-head">
-            <div><small>SERVER ECONOMY · PHASE 3</small><h2 id="froggyEconomyTitle">Cases + Collection + Job</h2><p>Case transactions, Frog/Lake purchases, and Job rewards are now committed by the private backend. The browser displays results but cannot mint spendable server value.</p></div>
+            <div><small>SERVER ECONOMY · PHASE 4</small><h2 id="froggyEconomyTitle">Cases + Collection + Job + Bank + Piggy + Plinko</h2><p>v114 requires Bank, Piggy and Plinko value changes to join the existing authoritative Cases, Collection and Job economy. The browser displays and animates committed results but cannot mint server value.</p></div>
             <span id="froggyEconomyBadge" data-state="info">CHECKING</span>
           </div>
           <div class="froggy-economy-grid">
@@ -766,8 +766,8 @@
             <div><small>TOTAL RATE</small><b id="loanQuoteRateLabel">8.0%</b></div>
             <div><small>INTEREST COST</small><b id="loanQuoteInterestLabel">40 F</b></div>
             <div><small>TOTAL TO REPAY</small><b id="loanQuoteTotalLabel">540 F</b></div>
-            <div><small>AMOUNT DUE</small><b id="loanQuotePaymentLabel">54 F every 5 rounds</b></div>
-            <div><small>FULL DURATION</small><b>50 completed rounds</b></div>
+            <div><small>AMOUNT DUE</small><b id="loanQuotePaymentLabel">54 F every 15 min</b></div>
+            <div><small>FULL DURATION</small><b>150 minutes · 10 payments</b></div>
             <div><small>PAY OFF TODAY</small><b id="loanQuotePayoffLabel">500 F</b></div>
             <div><small>COLLATERAL REQUIRED</small><b id="loanQuoteLeverageLabel">0 F</b></div>
             <div><small>PLEDGED VALUE</small><b id="loanQuotePledgedLabel">0 F</b></div>
@@ -846,7 +846,7 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script type="module" src="firebase-account.js?v=1130-server-pipeline"></script>
-  <script src="app.js?v=1130-server-pipeline"></script>
+  <script type="module" src="firebase-account.js?v=1140-bank-piggy-plinko-dev"></script>
+  <script src="app.js?v=1140-bank-piggy-plinko-dev"></script>
 </body>
 </html>

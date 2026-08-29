@@ -96,7 +96,7 @@ const economyStatus = byId('froggyEconomyStatus');
 const GAME_STORAGE_KEY = 'froggy-leap-deluxe-v3';
 const CLOUD_DEVICE_KEY = 'froggy-cloud-device-v1';
 const CLOUD_META_PREFIX = 'froggy-cloud-meta-v1:';
-const CLOUD_BUILD_VERSION = 'v113.0';
+const CLOUD_BUILD_VERSION = 'v114.0';
 const CLOUD_AUTOSAVE_DELAY_MS = 12000;
 
 let auth;
@@ -125,7 +125,7 @@ let cloudBusy = false;
 let serverEconomySnapshot = null;
 let serverEconomyBusy = false;
 let serverEconomyUnsub = null;
-const SERVER_ECONOMY_VERSION = 'v113-latency-pipeline';
+const SERVER_ECONOMY_VERSION = 'v114-bank-piggy-plinko';
 
 function setStatus(message, type = 'info') {
   if (!status) return;
@@ -1162,7 +1162,42 @@ function normalizeServerEconomySnapshot(snapshot) {
     unlockedLakes: Array.isArray(snapshot.unlockedLakes) ? snapshot.unlockedLakes.map(String) : ['forest'],
     casesOpened: Math.max(0, Math.floor(Number(snapshot.casesOpened) || 0)),
     caseLuckMultiplier: Math.max(1, Math.min(100, Number(snapshot.caseLuckMultiplier) || 1)),
-    transferState: String(snapshot.transferState || 'LOCKED_PHASE_3'),
+    piggyCycleElapsedMs: Math.max(0, Math.floor(Number(snapshot.piggyCycleElapsedMs) || 0)),
+    piggyCycleInterest: Math.max(0, Number(snapshot.piggyCycleInterest) || 0),
+    piggyLifetimeInterest: Math.max(0, Math.floor(Number(snapshot.piggyLifetimeInterest) || 0)),
+    piggyCycles: Math.max(0, Math.floor(Number(snapshot.piggyCycles) || 0)),
+    piggyInterestRateBonus: Math.max(0, Number(snapshot.piggyInterestRateBonus) || 0),
+    piggyOpenRate: Math.max(0, Number(snapshot.piggyOpenRate) || 0.003),
+    piggyClosedRate: Math.max(0, Number(snapshot.piggyClosedRate) || 0.002),
+    debt: Math.max(0, Math.floor(Number(snapshot.debt) || 0)),
+    debtTurns: Math.max(0, Math.floor(Number(snapshot.debtTurns) || 0)),
+    debtDue: snapshot.debtDue === true,
+    debtDueAmount: Math.max(0, Math.floor(Number(snapshot.debtDueAmount) || 0)),
+    loanPrincipalOriginal: Math.max(0, Math.floor(Number(snapshot.loanPrincipalOriginal) || 0)),
+    loanPrincipalRemaining: Math.max(0, Math.floor(Number(snapshot.loanPrincipalRemaining) || 0)),
+    loanInterestTotal: Math.max(0, Math.floor(Number(snapshot.loanInterestTotal) || 0)),
+    loanInterestPaid: Math.max(0, Math.floor(Number(snapshot.loanInterestPaid) || 0)),
+    loanInstallment: Math.max(0, Math.floor(Number(snapshot.loanInstallment) || 0)),
+    loanInstallmentsPaid: Math.max(0, Math.floor(Number(snapshot.loanInstallmentsPaid) || 0)),
+    loanRate: Math.max(0, Number(snapshot.loanRate) || 0.08),
+    pledgedPiggy: Math.max(0, Math.floor(Number(snapshot.pledgedPiggy) || 0)),
+    pledgedFrogs: Array.isArray(snapshot.pledgedFrogs) ? snapshot.pledgedFrogs.map(String) : [],
+    pledgedLakes: Array.isArray(snapshot.pledgedLakes) ? snapshot.pledgedLakes.map(String) : [],
+    loanCollateralAtOrigination: Math.max(0, Math.floor(Number(snapshot.loanCollateralAtOrigination) || 0)),
+    debtPayments: Math.max(0, Math.floor(Number(snapshot.debtPayments) || 0)),
+    onTimeRepaid: Math.max(0, Math.floor(Number(snapshot.onTimeRepaid) || 0)),
+    missedDebtDeadlines: Math.max(0, Math.floor(Number(snapshot.missedDebtDeadlines) || 0)),
+    debtCycleMissed: snapshot.debtCycleMissed === true,
+    plinkoDrops: Math.max(0, Math.floor(Number(snapshot.plinkoDrops) || 0)),
+    plinkoWins: Math.max(0, Math.floor(Number(snapshot.plinkoWins) || 0)),
+    plinkoLastMultiplier: Math.max(0, Number(snapshot.plinkoLastMultiplier) || 0),
+    bestPlinkoMultiplier: Math.max(0, Number(snapshot.bestPlinkoMultiplier) || 0),
+    bankInstallmentAmount: Math.max(0, Math.floor(Number(snapshot.bankInstallmentAmount) || 0)),
+    bankPayoffAmount: Math.max(0, Math.floor(Number(snapshot.bankPayoffAmount) || 0)),
+    bankPayoffSavings: Math.max(0, Math.floor(Number(snapshot.bankPayoffSavings) || 0)),
+    loanDueInMs: Math.max(0, Math.floor(Number(snapshot.loanDueInMs) || 0)),
+    bankRoundsRemaining: Math.max(0, Math.floor(Number(snapshot.bankRoundsRemaining) || 0)),
+    transferState: String(snapshot.transferState || (Number(snapshot.economyPhase) >= 4 ? 'LOCKED_PHASE_4' : 'LOCKED_PHASE_3')),
     migrationSourceRevision: Math.max(0, Math.floor(Number(snapshot.migrationSourceRevision) || 0)),
     migrationSourceGameVersion: String(snapshot.migrationSourceGameVersion || '').slice(0, 32),
     phase3ImportedRevision: Math.max(0, Math.floor(Number(snapshot.phase3ImportedRevision) || 0))
@@ -1193,7 +1228,7 @@ function renderServerEconomySnapshot(snapshot) {
     economyCases.textContent = `P ${Number(inv.pond)||0} · N ${Number(inv.neon)||0} · U ${Number(inv.ultra)||0}`;
   }
   if (economyMigration) economyMigration.textContent = `CLOUD r${Number(snapshot.migrationSourceRevision)||0}`;
-  if (economyTransfer) economyTransfer.textContent = 'LOCKED · PHASE 3';
+  if (economyTransfer) economyTransfer.textContent = `LOCKED · PHASE ${snapshot.economyPhase >= 4 ? '4' : '3'}`;
   const economyJob = byId('froggyEconomyJob');
   const economyCollection = byId('froggyEconomyCollection');
   if (economyJob) economyJob.textContent = `JOB Lv ${Number(snapshot.jobLevel)||1} · SERVER`;
@@ -1214,7 +1249,7 @@ function callable(name) {
 function economyErrorMessage(error) {
   const code = String(error?.code || '');
   const message = String(error?.message || '');
-  if (code.includes('not-found') || code.includes('internal')) return 'Server Economy functions are not deployed yet. Deploy the v113 Firebase backend package first.';
+  if (code.includes('not-found') || code.includes('internal')) return 'Required Server Economy functions are not deployed yet. Deploy the matching Firebase backend package before this website build.';
   if (code.includes('unauthenticated')) return 'Sign in to your Froggy account first.';
   if (code.includes('failed-precondition')) return message.replace(/^FirebaseError:\s*/i, '') || 'Server Economy is not ready for this account yet.';
   if (code.includes('resource-exhausted')) return 'Too many economy actions. Wait a few seconds and try again.';
@@ -1257,9 +1292,15 @@ function absorbServerEconomyResult(data) {
   if (Number.isFinite(Number(data.jobLevel))) next.jobLevel = Math.max(1, Math.floor(Number(data.jobLevel) || 1));
   if (Number.isFinite(Number(data.jobXp))) next.jobXp = Math.max(0, Math.floor(Number(data.jobXp) || 0));
   if (Number.isFinite(Number(data.caseLuckMultiplier))) next.caseLuckMultiplier = Math.max(1, Math.min(100, Number(data.caseLuckMultiplier) || 1));
+  const phase4NumberFields = ['piggyBalance','piggyCycleElapsedMs','piggyCycleInterest','piggyLifetimeInterest','piggyCycles','piggyInterestRateBonus','piggyOpenRate','piggyClosedRate','debt','debtTurns','debtDueAmount','loanPrincipalOriginal','loanPrincipalRemaining','loanInterestTotal','loanInterestPaid','loanInstallment','loanInstallmentsPaid','loanRate','pledgedPiggy','loanCollateralAtOrigination','debtPayments','onTimeRepaid','missedDebtDeadlines','plinkoDrops','plinkoWins','plinkoLastMultiplier','bestPlinkoMultiplier','bankInstallmentAmount','bankPayoffAmount','bankPayoffSavings','loanDueInMs','bankRoundsRemaining'];
+  for (const key of phase4NumberFields) if (Number.isFinite(Number(data[key]))) next[key] = Number(data[key]);
+  if ('debtDue' in data) next.debtDue = data.debtDue === true;
+  if ('debtCycleMissed' in data) next.debtCycleMissed = data.debtCycleMissed === true;
+  if (Array.isArray(data.pledgedFrogs)) next.pledgedFrogs = [...data.pledgedFrogs];
+  if (Array.isArray(data.pledgedLakes)) next.pledgedLakes = [...data.pledgedLakes];
   next.economyPhase = Math.max(3, Number(data.economyPhase) || Number(next.economyPhase) || 3);
   next.backendVersion = SERVER_ECONOMY_VERSION;
-  next.transferState = 'LOCKED_PHASE_3';
+  next.transferState = next.economyPhase >= 4 ? 'LOCKED_PHASE_4' : 'LOCKED_PHASE_3';
   renderServerEconomySnapshot(next);
   return data;
 }
@@ -1274,8 +1315,9 @@ async function checkServerEconomy({quiet = false} = {}) {
     if (data.migrated) {
       const snapshot = await fetchServerEconomySnapshot();
       startServerEconomyLiveListener(user.uid);
-      setEconomyBadge('PHASE 3 LIVE', 'success');
-      setEconomyStatus('Server-authoritative Cases, Frog/Lake purchases, and Job rewards are live. Transfers remain locked while Bank, Piggy, Plinko and Crash are migrated next.', 'success');
+      const phase4 = Number(snapshot?.economyPhase) >= 4;
+      setEconomyBadge(phase4 ? 'PHASE 4 LIVE' : 'PHASE 3 LIVE', 'success');
+      setEconomyStatus(phase4 ? 'Server-authoritative Cases, Frog/Lake purchases, Job, Bank, Piggy and Plinko are live. Crash, vehicles, selling and transfers remain locked for later migration.' : 'Server-authoritative Cases, Frog/Lake purchases, and Job rewards are live. v114 Bank, Piggy and Plinko remain disabled until the Phase 4 backend is deployed.', phase4 ? 'success' : 'warning');
       economyMigrateButton?.classList.add('hidden');
       await refreshOwnerConsoleAccess({ migrated: true });
       return snapshot;
@@ -1310,8 +1352,9 @@ async function migrateServerEconomy() {
     const snapshot = result?.data?.economy || null;
     renderServerEconomySnapshot(snapshot);
     economyMigrateButton?.classList.add('hidden');
-    setEconomyBadge('PHASE 3 LIVE', 'success');
-    setEconomyStatus(result?.data?.created ? 'Server Economy created. Cases, Frog/Lake purchases and Job rewards are server-authoritative in v112; transfers remain locked.' : 'This account was already migrated. Phase 3 authorities are active; transfers remain locked.', 'success');
+    const phase4 = Number(snapshot?.economyPhase) >= 4;
+    setEconomyBadge(phase4 ? 'PHASE 4 LIVE' : 'PHASE 3 LIVE', phase4 ? 'success' : 'warning');
+    setEconomyStatus(phase4 ? 'Server Economy is ready for v114 Phase 4. Bank, Piggy and Plinko may use authoritative state; transfers remain locked.' : 'Base Server Economy migration completed, but v114 Bank, Piggy and Plinko stay disabled until the backend upgrades this account to Phase 4.', phase4 ? 'success' : 'warning');
     await refreshOwnerConsoleAccess({ migrated: true });
   } catch (error) {
     console.error('Server Economy migration failed', error);
@@ -1356,6 +1399,10 @@ function installServerEconomyBridge() {
     startJob: async (sessionId, frogId) => callable('startJobShiftAuthoritative')({sessionId, frogId}).then(result => result.data),
     jobAction: async (sessionId, action, requestId = serverEconomyRequestId('job')) => callable('jobActionAuthoritative')({sessionId, action, requestId}).then(result => result.data),
     endJob: async (sessionId, reason, requestId = serverEconomyRequestId('jobend')) => callable('endJobShiftAuthoritative')({sessionId, reason, requestId}).then(result => result.data),
+    piggyTransfer: async (mode, amount, requestId = serverEconomyRequestId('piggy')) => callable('piggyTransferAuthoritative')({mode, amount, requestId}).then(result => absorbServerEconomyResult(result.data)),
+    takeBankLoan: async (amount, collateral, requestId = serverEconomyRequestId('loan')) => callable('bankTakeLoanAuthoritative')({amount, collateral, requestId}).then(result => absorbServerEconomyResult(result.data)),
+    repayBankLoan: async (mode, requestId = serverEconomyRequestId('repay')) => callable('bankRepayLoanAuthoritative')({mode, requestId}).then(result => absorbServerEconomyResult(result.data)),
+    dropPlinko: async (bet, risk, requestId = serverEconomyRequestId('plinko')) => callable('dropPlinkoAuthoritative')({bet, risk, requestId}).then(result => absorbServerEconomyResult(result.data)),
     adminStatus: async () => callable('adminStatus')({}).then(result => result.data),
     adminOperate: async (action, operation, requestId = serverEconomyRequestId('admin')) => callable('adminEconomyOperation')({action, operation, requestId}).then(result => absorbServerEconomyResult(result.data)),
     requestId: serverEconomyRequestId

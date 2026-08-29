@@ -1,13 +1,14 @@
-# Froggy Leap v113.0 — Server Latency Pipeline
+# Froggy Leap v114.0 — GITHUB / WEBSITE UPLOAD ONLY
 
-## GITHUB / WEBSITE package
-Upload these files to the Froggy Leap GitHub Pages site.
+**Do not deploy this ZIP to Firebase.**
 
-This build pairs with the v113 Firebase backend. Deploy the backend first.
+Deploy the matching v114.0 Firebase Functions package first. Wait until Firebase CLI says **Deploy complete!**. Then upload the contents of this package to the GitHub Pages repository.
 
-Changes:
-- Job no longer waits for a Firebase round trip after every fry. The backend pre-issues a short server fry queue and the browser pipelines authoritative reward commits in order.
-- Job wallet/shift feedback is optimistic for responsiveness, then reconciled to the authoritative server result. Protected purchases still use the confirmed server wallet.
-- Case opening shows the server-lock animation immediately instead of looking frozen while Firebase commits the outcome.
-- Hot economy calls are designed to pair with the v113 backend transaction-latency reduction.
-- Owner Console, server Cases, Frog/Lake purchases and server Job remain Phase 3; transfers/trading remain locked.
+## v114.0 authority
+- Existing server wallet, Cases, Frog/Lake Collection purchases and Job rewards remain authoritative.
+- Piggy deposits, withdrawals and interest are server-authoritative.
+- Bank loans, collateral, repayments and the 15-minute repayment schedule are server-authoritative.
+- Plinko bets, 50/50 paths, slots, multipliers and payouts are server-committed; the browser only animates the committed result.
+- Vehicles, Crash, selling, gifting and trading remain outside this migration.
+
+The website fails closed for Bank/Piggy/Plinko if the Phase 4 backend is unavailable.

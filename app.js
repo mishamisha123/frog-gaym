@@ -3,7 +3,7 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v113.0';
+  const BUILD_VERSION = 'v114.0';
   console.info(`Froggy Leap ${BUILD_VERSION} loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
@@ -41,14 +41,21 @@
   });
   const MAX_LOAN_PAYOUT = 5000000000;
   const MAX_CASE_LUCK_MULTIPLIER = 100;
-  // v112 Phase 3: Cases, Frog/Lake purchases, and Job rewards use the protected server economy.
-  // Older game modes still keep their local wallet during staged migration; transfer/trading remains locked.
-  const serverCaseRuntime={ready:false,busy:false,snapshot:null,syncPromise:null,lastError:''};
+  // v114 Phase 4: Phase 3 stays authoritative for Cases, Frog/Lake purchases, and Job.
+  // Phase 4 additionally requires Bank, Piggy, and Plinko to use the protected server economy.
+  // Leap, Crash, vehicles, selling, transfers, and trading remain outside this migration.
+  const serverCaseRuntime={ready:false,busy:false,snapshot:null,syncPromise:null,lastError:'',receivedAt:0};
   function serverCasesActive(){return Boolean(!TEST_MODE&&serverCaseRuntime.ready&&serverCaseRuntime.snapshot);}
   function serverPhase3Active(){return Boolean(serverCasesActive()&&Number(serverCaseRuntime.snapshot?.economyPhase)>=3);}
+  function serverPhase4Active(){return Boolean(serverCasesActive()&&Number(serverCaseRuntime.snapshot?.economyPhase)>=4);}
   function serverCollectionActive(){return serverPhase3Active();}
   function serverJobActive(){return serverPhase3Active();}
+  function serverBankActive(){return serverPhase4Active();}
+  function serverPiggyActive(){return serverPhase4Active();}
+  function serverPlinkoActive(){return serverPhase4Active();}
   function serverCaseWalletBalance(){return Math.max(0,Math.floor(Number(serverCaseRuntime.snapshot?.wallet)||0));}
+  function serverPhase4WalletBalance(){return serverPhase4Active()?serverCaseWalletBalance():0;}
+  const serverV114Runtime={bankBusy:false,piggyBusy:false,plinkoPending:0};
   function serverPlayerLevel(){return Math.max(1,Math.floor(Number(serverCaseRuntime.snapshot?.level)||1));}
   function serverJobLevel(){return Math.max(1,Math.floor(Number(serverCaseRuntime.snapshot?.jobLevel)||1));}
   function serverJobXp(){return Math.max(0,Math.floor(Number(serverCaseRuntime.snapshot?.jobXp)||0));}
@@ -384,6 +391,8 @@
   const plinkoBankRoundRuntime={active:false,remainingMs:0,lastTick:0,timer:0};
   function anyRoundActive(){ return Boolean(state.roundActive||state.crashActive||state.plinkoActive||plinkoBankRoundRuntime.active); }
   function ownedWalletBalance(){ return Math.max(0,Math.floor(state.balance)); }
+  function bankWalletBalance(){ return serverBankActive()?serverPhase4WalletBalance():ownedWalletBalance(); }
+  function plinkoWalletBalance(){ return serverPlinkoActive()?serverPhase4WalletBalance():ownedWalletBalance(); }
   function gameUnlocked(id){ return state.unlockedGames.includes(id); }
   function vehicleCharges(id=state.selectedVehicle){ return Math.max(0,Math.floor(state.vehicleCharges[id]||0)); }
   function pledgedVehicleFlights(){return 0;}
@@ -1088,7 +1097,7 @@
     clearInterval(plinkoBankRoundRuntime.timer);plinkoBankRoundRuntime.timer=0;plinkoBankRoundRuntime.active=false;plinkoBankRoundRuntime.remainingMs=0;plinkoBankRoundRuntime.lastTick=0;
     state.rounds++;state.completedRounds++;session.rounds++;
     const hadDebt=state.debt>0,debtResult=completeDebtTurn();
-    const text=debtResult?`15s Plinko round complete · ${debtResult.message}`:hadDebt?'15s Plinko round complete · Bank countdown advanced by 1 round.':'15s Plinko round complete.';
+    const text=debtResult?`15s Plinko round complete · ${debtResult.message}`:hadDebt&&serverBankActive()&&!TEST_MODE?'15s Plinko round complete · Bank repayment uses the separate server-time timer.':hadDebt?'15s Plinko round complete · Bank countdown advanced by 1 round.':'15s Plinko round complete.';
     setPlinkoStatus(text,debtResult?.due||debtResult?.assetLost||debtResult?.levelLost?'lose':'win');
     refresh();return debtResult;
   }
@@ -1112,8 +1121,8 @@
   }
   function setPlinkoBet(raw){
     if(state.plinkoActive)return false;
-    let value;if(raw==='min')value=MIN_BET;else if(raw==='half')value=Math.max(MIN_BET,Math.floor(state.plinkoBet/2));else if(raw==='double')value=Math.min(ownedWalletBalance(),Math.max(MIN_BET,Math.floor(state.plinkoBet*2)));else if(raw==='max')value=ownedWalletBalance();else value=Math.floor(Number(raw)||0);
-    if(value<MIN_BET||value>ownedWalletBalance()){setPlinkoStatus(`Choose ${money(MIN_BET)}–${money(ownedWalletBalance())} F.`,'lose');return false;}
+    let value;if(raw==='min')value=MIN_BET;else if(raw==='half')value=Math.max(MIN_BET,Math.floor(state.plinkoBet/2));else if(raw==='double')value=Math.min(plinkoWalletBalance(),Math.max(MIN_BET,Math.floor(state.plinkoBet*2)));else if(raw==='max')value=plinkoWalletBalance();else value=Math.floor(Number(raw)||0);
+    if(value<MIN_BET||value>plinkoWalletBalance()){setPlinkoStatus(`Choose ${money(MIN_BET)}–${money(plinkoWalletBalance())} F.`,'lose');return false;}
     state.plinkoBet=value;refreshPlinkoHud();saveState();return true;
   }
   function setPlinkoRisk(risk){if(state.plinkoActive||!['low','medium','high'].includes(risk))return false;state.plinkoRisk=risk;refreshPlinkoHud();saveState();return true;}
@@ -1121,7 +1130,7 @@
     if(!els.plinkoGamePane)return;
     const risk=state.plinkoRisk,rows=plinkoRows(risk),table=plinkoTable(risk),activeCount=plinkoRuntime.eggs.length,atCap=activeCount>=PLINKO_MAX_ACTIVE_EGGS;
     els.plinkoBetInput.value=String(state.plinkoBet);
-    els.plinkoDropButton.disabled=atCap||ownedWalletBalance()<Math.max(MIN_BET,state.plinkoBet);
+    els.plinkoDropButton.disabled=atCap||(!TEST_MODE&&!serverPlinkoActive())||serverV114Runtime.plinkoPending+activeCount>=PLINKO_MAX_ACTIVE_EGGS||plinkoWalletBalance()<Math.max(MIN_BET,state.plinkoBet);
     els.plinkoDropButton.querySelector('span').textContent=activeCount?'DROP ANOTHER EGG':'DROP FROG EGG';
     els.plinkoDropButton.querySelector('small').textContent=atCap?`${activeCount} eggs falling · wait for one to land`:plinkoBankRoundRuntime.active?`Round ${plinkoRoundTimeText()} · ${activeCount} egg${activeCount===1?'':'s'} falling · tap to spam`:activeCount?`${activeCount} egg${activeCount===1?'':'s'} falling · tap to spam`: `Bet ${money(state.plinkoBet)} F · ${plinkoRiskLabel()} · ${rows} rows`;
     if(els.plinkoRoundLabel)els.plinkoRoundLabel.textContent=plinkoRoundTimeText();
@@ -1246,8 +1255,8 @@
     const el=els.plinkoMultipliers?.querySelector(`.slot-${slot}`);if(!el)return;el.classList.add('hit');clearTimeout(el._plinkoHitTimer);el._plinkoHitTimer=setTimeout(()=>el.classList.remove('hit'),420);
   }
   function finishPlinkoEgg(egg,{quiet=false}={}){
-    const bet=egg.bet,multiplier=egg.multiplier,payout=creditBalance(egg.payout);state.plinkoLastMultiplier=multiplier;state.bestPlinkoMultiplier=Math.max(state.bestPlinkoMultiplier,multiplier);state.biggestWin=Math.max(state.biggestWin,payout);session.net+=payout;
-    const profitable=payout>bet,returned=payout>=bet;if(returned){state.plinkoWins++;session.wins++;session.lossStreak=0;}else{session.losses++;session.lossStreak++;}
+    const bet=egg.bet,multiplier=egg.multiplier,payout=serverPlinkoActive()&&!TEST_MODE?Math.max(0,Math.floor(Number(egg.payout)||0)):creditBalance(egg.payout);state.plinkoLastMultiplier=multiplier;state.bestPlinkoMultiplier=Math.max(state.bestPlinkoMultiplier,multiplier);state.biggestWin=Math.max(state.biggestWin,payout);session.net+=payout;
+    const profitable=payout>bet,returned=payout>=bet;if(returned){if(!serverPlinkoActive()||TEST_MODE)state.plinkoWins++;session.wins++;session.lossStreak=0;}else{session.losses++;session.lossStreak++;}
     state.roundBetForXp=bet;const plinkoXp=Math.max(1,Math.floor((8+wagerXpBonus())/5));addXp(plinkoXp);recordXpWager();const profit=payout-bet;
     if(!quiet){setPlinkoStatus(`${multiplier.toFixed(2)}× · ${profit>=0?'+':''}${money(profit)} F · +${plinkoXp} XP`,profitable?'win':returned?'':'lose');flashPlinkoSlot(egg.slot);}
     const activeEggs=plinkoRuntime.eggs.length,now=performance.now(),crowded=activeEggs>18;if(!quiet){if(multiplier>=5){audio.reward();if(!crowded)haptic([12,30,20]);if((!crowded||multiplier>=50)&&now-plinkoRuntime.lastCelebrationAt>220){plinkoRuntime.lastCelebrationAt=now;confettiBurst(Math.min(crowded?42:90,24+Math.floor(multiplier)));}}else if(returned){audio.cash();if(!crowded)haptic(12);}else{audio.croak();if(!crowded)haptic(14);}}
@@ -1270,12 +1279,38 @@
     const winningSlots=table.map((m,i)=>m>1?i:-1).filter(i=>i>=0),slot=winningSlots[Math.floor(Math.random()*winningSlots.length)];
     const path=Array(rows).fill(0);for(let i=0;i<slot;i++)path[i]=1;return {path,slot};
   }
-  function startPlinko(){
-    audio.unlock();if(state.roundActive||state.crashActive)return false;if(plinkoRuntime.eggs.length>=PLINKO_MAX_ACTIVE_EGGS){setPlinkoStatus(`Let one of the ${PLINKO_MAX_ACTIVE_EGGS} eggs land before dropping another.`,'lose');return false;}
-    const bet=Math.floor(Number(state.plinkoBet)||0),risk=state.plinkoRisk;if(bet<MIN_BET||bet>ownedWalletBalance()){setPlinkoStatus(`You need ${money(Math.max(MIN_BET,bet))} F in your wallet.`,'lose');refreshPlinkoHud();return false;}if(!spendOwnedFunds(bet))return false;
-    const protectedRound=state.safeRunCredits>0;if(protectedRound)state.safeRunCredits=Math.max(0,state.safeRunCredits-1);
-    if(!plinkoRuntime.layout||plinkoRuntime.layout.risk!==risk)resizePlinkoCanvas();const rows=plinkoRows(risk),{path,slot}=rollPlinkoPath(risk,{protectedRound}),multiplier=plinkoTable(risk)[slot],payout=Math.floor(bet*multiplier),egg={id:plinkoRuntime.nextId++,bet,risk,rows,path,slot,multiplier,payout,protected:protectedRound};primePlinkoEggPhysics(egg,plinkoRuntime.layout||plinkoLayout(risk));plinkoRuntime.eggs.push(egg);state.plinkoActive=true;state.plinkoDrops++;session.net-=bet;if(!plinkoBankRoundRuntime.active)startPlinkoBankRound();setPlinkoStatus(`${protectedRound?'🛡️ Protected · ':''}${plinkoRuntime.eggs.length} egg${plinkoRuntime.eggs.length===1?'':'s'} in flight · Plinko round ends in ${plinkoRoundTimeText()}.`,protectedRound?'win':'');if(plinkoRuntime.eggs.length<=12||plinkoRuntime.eggs.length%4===0)audio.start();if(plinkoRuntime.eggs.length<=12)haptic(protectedRound?[9,20,9]:9);if(!plinkoRuntime.raf){plinkoRuntime.lastFrame=0;plinkoRuntime.raf=requestAnimationFrame(animatePlinko);}schedulePlinkoUiRefresh(120);return true;
+  function launchCommittedPlinkoEgg({bet,risk,path,slot,multiplier,payout,protectedRound=false}){
+    if(!plinkoRuntime.layout||plinkoRuntime.layout.risk!==risk)resizePlinkoCanvas();
+    const rows=plinkoRows(risk),egg={id:plinkoRuntime.nextId++,bet,risk,rows,path,slot,multiplier,payout,protected:protectedRound};
+    primePlinkoEggPhysics(egg,plinkoRuntime.layout||plinkoLayout(risk));plinkoRuntime.eggs.push(egg);state.plinkoActive=true;if(!serverPlinkoActive()||TEST_MODE)state.plinkoDrops++;session.net-=bet;
+    if(!plinkoBankRoundRuntime.active)startPlinkoBankRound();setPlinkoStatus(`${protectedRound?'🛡️ Protected · ':''}${plinkoRuntime.eggs.length} egg${plinkoRuntime.eggs.length===1?'':'s'} in flight · server result locked.`,protectedRound?'win':'');
+    if(plinkoRuntime.eggs.length<=12||plinkoRuntime.eggs.length%4===0)audio.start();if(plinkoRuntime.eggs.length<=12)haptic(protectedRound?[9,20,9]:9);
+    if(!plinkoRuntime.raf){plinkoRuntime.lastFrame=0;plinkoRuntime.raf=requestAnimationFrame(animatePlinko);}schedulePlinkoUiRefresh(120);return true;
   }
+  function startPlinko(){
+    audio.unlock();if(state.roundActive||state.crashActive)return false;
+    const activeTotal=plinkoRuntime.eggs.length+serverV114Runtime.plinkoPending;if(activeTotal>=PLINKO_MAX_ACTIVE_EGGS){setPlinkoStatus(`Let one of the ${PLINKO_MAX_ACTIVE_EGGS} eggs land before dropping another.`,'lose');return false;}
+    const bet=Math.floor(Number(state.plinkoBet)||0),risk=state.plinkoRisk,wallet=plinkoWalletBalance();if(bet<MIN_BET||bet>wallet){setPlinkoStatus(`You need ${money(Math.max(MIN_BET,bet))} F in your wallet.`,'lose');refreshPlinkoHud();return false;}
+    if(!TEST_MODE){
+      if(!serverPlinkoActive()){setPlinkoStatus('Server Economy Phase 4 is required for Plinko in v114.','lose');return false;}
+      const bridge=window.FroggyServerEconomy;if(!bridge?.dropPlinko){setPlinkoStatus('The v114 Plinko backend bridge is unavailable.','lose');return false;}
+      serverV114Runtime.plinkoPending++;refreshPlinkoHud();setPlinkoStatus(`🔒 Server is locking a ${money(bet)} F ${risk.toUpperCase()} result…`);
+      void bridge.dropPlinko(bet,risk,bridge.requestId?.('plinko')).then(result=>{
+        const outcome=result?.outcome||result?.plinko||result;
+        const path=Array.isArray(outcome?.path)?outcome.path.map(v=>v?1:0):null,rows=plinkoRows(risk),slot=Math.floor(Number(outcome?.slot));
+        const multiplier=Number(outcome?.multiplier),payout=Math.max(0,Math.floor(Number(outcome?.payout)||0));
+        if(!path||path.length!==rows||!Number.isInteger(slot)||slot<0||slot>=plinkoTable(risk).length||!Number.isFinite(multiplier))throw new Error('Server returned an invalid Plinko outcome.');
+        if(result?.economy)applyServerCaseSnapshot(result.economy);else{const cached=bridge.getCachedSnapshot?.();if(cached)applyServerCaseSnapshot(cached);}
+        launchCommittedPlinkoEgg({bet,risk,path,slot,multiplier,payout,protectedRound:false});
+      }).catch(error=>{setPlinkoStatus(serverCaseFriendlyError(error),'lose');void syncServerCases({quiet:true});}).finally(()=>{serverV114Runtime.plinkoPending=Math.max(0,serverV114Runtime.plinkoPending-1);refreshPlinkoHud();});
+      return true;
+    }
+    if(!spendOwnedFunds(bet))return false;
+    const protectedRound=state.safeRunCredits>0;if(protectedRound)state.safeRunCredits=Math.max(0,state.safeRunCredits-1);
+    const rows=plinkoRows(risk),{path,slot}=rollPlinkoPath(risk,{protectedRound}),multiplier=plinkoTable(risk)[slot],payout=Math.floor(bet*multiplier);
+    return launchCommittedPlinkoEgg({bet,risk,path,slot,multiplier,payout,protectedRound});
+  }
+
 
   const plinkoFocusRuntime={active:false,enteredFullscreen:false};
   function syncPlinkoFocusLayout(){
@@ -1560,8 +1595,10 @@
     const normalized=emptyCollateralSelection();
     normalized.frogs=Array.from(new Set(Array.isArray(raw.frogs)?raw.frogs:[])).filter(id=>id!=='classic'&&state.unlockedFrogs.includes(id)&&FROGS.some(f=>f.id===id&&f.cost>0));
     normalized.lakes=Array.from(new Set(Array.isArray(raw.lakes)?raw.lakes:[])).filter(id=>state.unlockedLakes.includes(id)&&LAKES.some(l=>l.id===id&&l.cost>0));
-    normalized.vehicles=Array.from(new Set(Array.isArray(raw.vehicles)?raw.vehicles:[])).filter(id=>vehicleOwned(id)&&VEHICLES.some(v=>v.id===id));
-    normalized.licenses=Array.from(new Set(Array.isArray(raw.licenses)?raw.licenses:[])).filter(id=>gameUnlocked(id)&&GAME_LICENSES.some(g=>g.id===id&&g.cost>0));
+    // v114 Phase 4 only accepts collateral already owned by the server economy.
+    // Vehicles/licenses stay local until their later migration, so they cannot secure a server loan yet.
+    normalized.vehicles=serverBankActive()?[]:Array.from(new Set(Array.isArray(raw.vehicles)?raw.vehicles:[])).filter(id=>vehicleOwned(id)&&VEHICLES.some(v=>v.id===id));
+    normalized.licenses=serverBankActive()?[]:Array.from(new Set(Array.isArray(raw.licenses)?raw.licenses:[])).filter(id=>gameUnlocked(id)&&GAME_LICENSES.some(g=>g.id===id&&g.cost>0));
     normalized.piggy=clamp(Math.floor(Number(raw.piggy)||0),0,state.piggyBalance);
     return normalized;
   }
@@ -1585,15 +1622,15 @@
   function collateralBreakdown(){
     const skins=FROGS.filter(f=>state.unlockedFrogs.includes(f.id)).reduce((sum,f)=>sum+skinCollateralValue(f),0);
     const lakes=LAKES.filter(l=>state.unlockedLakes.includes(l.id)).reduce((sum,l)=>sum+lakeCollateralValue(l),0);
-    const vehicles=VEHICLES.reduce((sum,v)=>sum+vehicleCollateralValue(v),0);
-    const licenses=GAME_LICENSES.reduce((sum,g)=>sum+licenseCollateralValue(g),0);
+    const vehicles=serverBankActive()?0:VEHICLES.reduce((sum,v)=>sum+vehicleCollateralValue(v),0);
+    const licenses=serverBankActive()?0:GAME_LICENSES.reduce((sum,g)=>sum+licenseCollateralValue(g),0);
     const piggy=Math.floor(state.piggyBalance);
     const total=Math.min(MAX_SAFE_BALANCE,skins+lakes+vehicles+licenses+piggy);
     return {skins,lakes,vehicles,licenses,piggy,total};
   }
   function pledgedCollateralValue(){return state.debt>0?collateralSelectionValue(currentPledgeSelection()):0;}
   function availableCollateralValue(){return Math.max(0,collateralBreakdown().total-pledgedCollateralValue());}
-  function effectiveBankLimit(){return state.bankLimitDisabled?MAX_SAFE_BALANCE:MAX_LOAN_PAYOUT;}
+  function effectiveBankLimit(){return serverBankActive()?MAX_LOAN_PAYOUT:(state.bankLimitDisabled?MAX_SAFE_BALANCE:MAX_LOAN_PAYOUT);}
   function collateralLoanLimit(){const total=collateralBreakdown().total;return Math.min(effectiveBankLimit(),Math.max(MIN_LOAN_AMOUNT,BASE_UNSECURED_CREDIT+total));}
   function tierCeiling(){return effectiveBankLimit();}
   function debtLimit(){return collateralLoanLimit();}
@@ -1621,10 +1658,10 @@
     let remaining=required;
     if(remaining>0&&state.piggyBalance>0){selection.piggy=Math.min(state.piggyBalance,remaining);remaining-=selection.piggy;}
     const unique=[
-      ...VEHICLES.filter(v=>vehicleOwned(v.id)).map(v=>({type:'vehicles',id:v.id,value:vehicleCollateralValue(v)})),
+      ...(serverBankActive()?[]:VEHICLES.filter(v=>vehicleOwned(v.id)).map(v=>({type:'vehicles',id:v.id,value:vehicleCollateralValue(v)}))),
       ...LAKES.filter(l=>l.cost>0&&state.unlockedLakes.includes(l.id)).map(l=>({type:'lakes',id:l.id,value:lakeCollateralValue(l)})),
       ...FROGS.filter(f=>f.id!=='classic'&&f.cost>0&&state.unlockedFrogs.includes(f.id)).map(f=>({type:'frogs',id:f.id,value:skinCollateralValue(f)})),
-      ...GAME_LICENSES.filter(g=>g.cost>0&&gameUnlocked(g.id)).map(g=>({type:'licenses',id:g.id,value:licenseCollateralValue(g)}))
+      ...(serverBankActive()?[]:GAME_LICENSES.filter(g=>g.cost>0&&gameUnlocked(g.id)).map(g=>({type:'licenses',id:g.id,value:licenseCollateralValue(g)})))
     ].sort((a,b)=>a.value-b.value);
     for(const asset of unique){if(remaining<=0)break;selection[asset.type].push(asset.id);remaining-=asset.value;}
     pendingCollateral=normalizeCollateralSelection(selection);
@@ -1649,10 +1686,10 @@
     const rows=[];
     if(state.piggyBalance>0)rows.push(`<label class="collateral-quantity-row"><span><b>🐷 Piggy savings</b><small>1 F Bank Value per 1 F pledged</small></span><input type="number" min="0" max="${state.piggyBalance}" step="1" value="${pendingCollateral.piggy}" data-pledge-piggy aria-label="Piggy savings to pledge" /></label>`);
     const staticAssets=[
-      ...VEHICLES.filter(v=>vehicleOwned(v.id)).map(v=>({type:'vehicles',id:v.id,name:`${v.emoji} ${v.name} model`,value:vehicleCollateralValue(v)})),
+      ...(serverBankActive()?[]:VEHICLES.filter(v=>vehicleOwned(v.id)).map(v=>({type:'vehicles',id:v.id,name:`${v.emoji} ${v.name} model`,value:vehicleCollateralValue(v)}))),
       ...LAKES.filter(l=>l.cost>0&&state.unlockedLakes.includes(l.id)).map(l=>({type:'lakes',id:l.id,name:`${l.emoji} ${l.name}`,value:lakeCollateralValue(l)})),
       ...FROGS.filter(f=>f.id!=='classic'&&f.cost>0&&state.unlockedFrogs.includes(f.id)).map(f=>({type:'frogs',id:f.id,name:`🐸 ${f.name}`,value:skinCollateralValue(f)})),
-      ...GAME_LICENSES.filter(g=>g.cost>0&&gameUnlocked(g.id)).map(g=>({type:'licenses',id:g.id,name:`🎟️ ${g.name} license`,value:licenseCollateralValue(g)}))
+      ...(serverBankActive()?[]:GAME_LICENSES.filter(g=>g.cost>0&&gameUnlocked(g.id)).map(g=>({type:'licenses',id:g.id,name:`🎟️ ${g.name} license`,value:licenseCollateralValue(g)})))
     ];
     staticAssets.forEach(asset=>{const selectedAsset=pendingCollateral[asset.type].includes(asset.id);rows.push(`<button type="button" class="collateral-choice pressable ${selectedAsset?'selected':''}" data-pledge-asset="${asset.type}|${asset.id}"><span><b>${asset.name}</b><small>Full Bank Value</small></span><strong>${money(asset.value)} F</strong><i>${selectedAsset?'✓':'+'}</i></button>`);});
     els.loanCollateralList.innerHTML=rows.length?rows.join(''):'<p class="no-collateral-assets">No paid collateral assets yet. The unsecured starter limit is 5,000 F.</p>';
@@ -1679,7 +1716,7 @@
   }
 
   function piggyTransferMaximum(){
-    if(piggyTransferMode==='deposit')return Math.max(0,ownedWalletBalance());
+    if(piggyTransferMode==='deposit')return Math.max(0,serverPiggyActive()?serverPhase4WalletBalance():ownedWalletBalance());
     return Math.max(0,state.piggyBalance-(state.debt>0?state.pledgedPiggy:0));
   }
 
@@ -1763,6 +1800,25 @@
       return false;
     }
 
+    if(!TEST_MODE){
+      if(!serverPiggyActive()){
+        setPiggyMessage('Server Economy Phase 4 is required for Piggy transfers in v114.','error');
+        return false;
+      }
+      if(serverV114Runtime.piggyBusy)return false;
+      const bridge=window.FroggyServerEconomy;
+      if(!bridge?.piggyTransfer){setPiggyMessage('The v114 Piggy backend bridge is unavailable.','error');return false;}
+      serverV114Runtime.piggyBusy=true;updatePiggyTransferControls();
+      setPiggyMessage(`Server is ${piggyTransferMode==='deposit'?'depositing':'withdrawing'} ${money(amount)} F…`);
+      const mode=piggyTransferMode;
+      void bridge.piggyTransfer(mode,amount,bridge.requestId?.('piggy')).then(result=>{
+        if(result?.economy)applyServerCaseSnapshot(result.economy);else{const cached=bridge.getCachedSnapshot?.();if(cached)applyServerCaseSnapshot(cached);}
+        piggyTransferAmount=0;setPiggyTransferAmount(0);audio.coin();haptic(16);
+        setPiggyMessage(mode==='deposit'?`Deposited ${money(amount)} F into authoritative Piggy savings.`:`Withdrew ${money(amount)} F to the authoritative wallet.`,'success');refresh();
+      }).catch(error=>{setPiggyMessage(serverCaseFriendlyError(error),'error');void syncServerCases({quiet:true});}).finally(()=>{serverV114Runtime.piggyBusy=false;updatePiggyTransferControls();});
+      return true;
+    }
+
     if(piggyTransferMode==='deposit'){
       invalidateUntrustedClosedAccrual();
       const wasEmpty=state.piggyBalance<=0;
@@ -1773,20 +1829,12 @@
     }else{
       const room=Math.max(0,MAX_SAFE_BALANCE-state.balance);
       const moved=Math.min(amount,room,state.piggyBalance);
-      if(moved<=0){
-        setPiggyMessage('Your wallet cannot safely hold more Froggy.','error');
-        return false;
-      }
-      invalidateUntrustedClosedAccrual();
-      state.piggyBalance-=moved;
-      state.balance+=moved;
+      if(moved<=0){setPiggyMessage('Your wallet cannot safely hold more Froggy.','error');return false;}
+      invalidateUntrustedClosedAccrual();state.piggyBalance-=moved;state.balance+=moved;
       if(state.piggyBalance<=0){state.piggyCycleElapsedMs=0;state.piggyCycleInterest=0;state.piggyLastTimestamp=Date.now();}
       setPiggyMessage(`Withdrew ${money(moved)} F to your wallet.`,'success');
     }
-
-    piggyTransferAmount=0;
-    audio.coin();haptic(16);refresh();
-    return true;
+    piggyTransferAmount=0;audio.coin();haptic(16);refresh();return true;
   }
 
   function formatPiggyTime(milliseconds){
@@ -1795,15 +1843,23 @@
     return `${minutes}:${String(remaining).padStart(2,'0')}`;
   }
 
+  function piggyDisplayElapsedMs(){
+    if(serverPiggyActive()&&!TEST_MODE){
+      const base=clamp(Math.floor(Number(serverCaseRuntime.snapshot?.piggyCycleElapsedMs)||0),0,PIGGY_CYCLE_MS-1);
+      const since=Math.max(0,performance.now()-(serverCaseRuntime.receivedAt||performance.now()));
+      return state.piggyBalance>0?(base+since)%PIGGY_CYCLE_MS:0;
+    }
+    return state.piggyCycleElapsedMs;
+  }
   function piggyTimeRemaining(){
-    return state.piggyBalance>0?Math.max(0,PIGGY_CYCLE_MS-state.piggyCycleElapsedMs):PIGGY_CYCLE_MS;
+    return state.piggyBalance>0?Math.max(0,PIGGY_CYCLE_MS-piggyDisplayElapsedMs()):PIGGY_CYCLE_MS;
   }
 
   function formatPiggyRate(rate){
     return `${(Math.max(0,Number(rate)||0)*100).toFixed(1).replace(/\.0$/,'')}%`;
   }
-  function piggyOpenRate(){return PIGGY_OPEN_RATE+state.piggyInterestRateBonus+skinPiggyRateBonus();}
-  function piggyClosedRate(){return PIGGY_CLOSED_RATE+state.piggyInterestRateBonus+skinPiggyRateBonus();}
+  function piggyOpenRate(){return serverPiggyActive()?Math.max(0,Number(serverCaseRuntime.snapshot?.piggyOpenRate)||PIGGY_OPEN_RATE):PIGGY_OPEN_RATE+state.piggyInterestRateBonus+skinPiggyRateBonus();}
+  function piggyClosedRate(){return serverPiggyActive()?Math.max(0,Number(serverCaseRuntime.snapshot?.piggyClosedRate)||PIGGY_CLOSED_RATE):PIGGY_CLOSED_RATE+state.piggyInterestRateBonus+skinPiggyRateBonus();}
 
   function estimatedPiggyCycleInterest(){
     if(state.piggyBalance<=0)return Math.floor(state.piggyCycleInterest);
@@ -1925,6 +1981,7 @@
   }
 
   function tickPiggyClock(now=performance.now()){
+    if(serverPiggyActive()&&!TEST_MODE)return {interest:0,cycles:0,message:''};
     const current=Math.max(0,Number(now)||performance.now());
     const elapsed=Math.max(0,Math.floor(current-piggyLastPerformance));
     piggyLastPerformance=current;
@@ -1991,6 +2048,8 @@
   }
 
   function loanAvailabilityReason(){
+    if(!TEST_MODE&&!serverBankActive())return 'Server Economy Phase 4 is required for Bank loans in v114.';
+    if(serverV114Runtime.bankBusy)return 'The Bank is finishing another server transaction.';
     if(anyRoundActive()||state.animating)return 'Finish the current round first.';
     if(state.debt>0)return 'Only one loan may be active. Pay off the current loan first.';
     if(maxSingleLoan()<MIN_LOAN_AMOUNT)return 'You do not have enough appraised assets for the minimum loan.';
@@ -2042,10 +2101,8 @@
     const amount=pendingLoanAmount;
     if(takeLoan(amount,{skipConfirm:true,pledge:pendingCollateral})){
       closeModal();
-      setDebtMessage(
-        `Loan redeemed: ${money(amount)} F received. First fixed payment is due after five completed rounds.`,
-        'success'
-      );
+      if(TEST_MODE)setDebtMessage(`Loan redeemed: ${money(amount)} F received. First fixed payment is due after five completed rounds.`,'success');
+      else setDebtMessage(`Sending ${money(amount)} F loan request to the authoritative Bank…`);
       navigate('bank');
       return true;
     }
@@ -2088,6 +2145,7 @@
   }
 
   function earlyPayoffAmount(){
+    if(serverBankActive()&&!TEST_MODE)return Math.max(0,Math.floor(Number(serverCaseRuntime.snapshot?.bankPayoffAmount)||0));
     if(state.debt<=0)return 0;
     const accruedUnpaidInterest=Math.max(0,loanEarnedInterest()-state.loanInterestPaid);
     const prepaidUnearnedInterest=Math.max(0,state.loanInterestPaid-loanEarnedInterest());
@@ -2099,6 +2157,7 @@
   }
 
   function earlyPayoffSavings(){
+    if(serverBankActive()&&!TEST_MODE)return Math.max(0,Math.floor(Number(serverCaseRuntime.snapshot?.bankPayoffSavings)||0));
     return Math.max(0,state.debt-earlyPayoffAmount());
   }
 
@@ -2109,20 +2168,48 @@
   }
 
   function debtInstallment(){
+    if(serverBankActive()&&!TEST_MODE)return Math.min(state.debt,Math.max(0,Math.floor(Number(serverCaseRuntime.snapshot?.bankInstallmentAmount)||0)));
     if(state.debt<=0)return 0;
     return Math.min(state.debt,Math.max(1,state.loanInstallment));
   }
 
   function debtRoundsRemaining(){
+    if(serverBankActive()&&!TEST_MODE)return 0;
     if(state.debt<=0)return DEBT_ROUND_INTERVAL;
     if(state.debtDue)return 0;
     return Math.max(1,DEBT_ROUND_INTERVAL-state.debtTurns);
+  }
+  function serverBankDueInMs(){
+    if(!serverBankActive()||TEST_MODE||state.debt<=0)return 0;
+    const base=Math.max(0,Math.floor(Number(serverCaseRuntime.snapshot?.loanDueInMs)||0));
+    const elapsed=Math.max(0,performance.now()-(Number(serverCaseRuntime.receivedAt)||performance.now()));
+    return Math.max(0,base-elapsed);
+  }
+  function serverBankDueText(){
+    if(!serverBankActive()||TEST_MODE)return '';
+    if(state.debtDue)return 'DUE NOW';
+    const ms=serverBankDueInMs();
+    if(ms<=0)return 'SERVER CHECK';
+    const total=Math.max(1,Math.ceil(ms/1000)),minutes=Math.floor(total/60),seconds=total%60;
+    return `${minutes}:${String(seconds).padStart(2,'0')}`;
   }
 
   function setDebtMessage(text,kind=''){
     els.debtMessage.textContent=text;
     els.debtMessage.classList.remove('success','error');
     if(kind)els.debtMessage.classList.add(kind);
+  }
+
+  async function takeLoanOnServer(amount,selected){
+    const bridge=window.FroggyServerEconomy;
+    if(!bridge?.takeBankLoan){setDebtMessage('The v114 Bank backend bridge is unavailable.','error');return false;}
+    serverV114Runtime.bankBusy=true;refresh();setDebtMessage(`Server is validating ${money(amount)} F and its collateral…`);
+    try{
+      const result=await bridge.takeBankLoan(amount,selected,bridge.requestId?.('loan'));
+      if(result?.economy)applyServerCaseSnapshot(result.economy);else{const cached=bridge.getCachedSnapshot?.();if(cached)applyServerCaseSnapshot(cached);}
+      setDebtMessage(`Authoritative loan received: ${money(amount)} F. The server owns the debt, collateral, interest, and repayment state.`,'success');setStatus(`Server Bank loan received: +${money(amount)} F.`,'win');audio.coin();haptic([12,30,12]);refresh();return true;
+    }catch(error){setDebtMessage(serverCaseFriendlyError(error),'error');void syncServerCases({quiet:true});return false;}
+    finally{serverV114Runtime.bankBusy=false;refresh();}
   }
 
   function takeLoan(rawAmount,{skipConfirm=false,pledge=pendingCollateral}={}){
@@ -2133,6 +2220,7 @@
     const quote=loanQuote(amount),selected=normalizeCollateralSelection(pledge),pledgedValue=collateralSelectionValue(selected),shortfall=Math.max(0,quote.collateralRequired-pledgedValue);
     if(shortfall>0){setDebtMessage(`Select ${money(shortfall)} F more collateral for this loan.`,'error');return false;}
     const pledgeNames=collateralPledgeNames(selected);if(!skipConfirm&&!window.confirm(`Borrow ${money(amount)} Froggy at 8% total interest?\n\nPledged collateral:\n${pledgeNames.length?pledgeNames.join('\n'):'No collateral required.'}`))return false;
+    if(!TEST_MODE){void takeLoanOnServer(amount,selected);return true;}
     // Froggy is whole-unit currency. Normalize the wallet before disbursement and require the
     // principal to land exactly so a loan can never arrive one F short because of stale/fractional state.
     const walletBefore=ownedWalletBalance();state.balance=walletBefore;
@@ -2153,7 +2241,17 @@
     if(state.debt<=0){setDebtMessage('You have no outstanding loan.','success');return false;}
     if(anyRoundActive()||state.animating){setDebtMessage('Finish the current round before making a payment.','error');return false;}
     const all=mode==='all',early=!all&&!state.debtDue,requested=all?earlyPayoffAmount():debtInstallment();
-    if(state.balance<requested){setDebtMessage(`Wallet funds needed: ${money(requested)} F.`, 'error');haptic([18,45,18]);return false;}
+    if((serverBankActive()?serverPhase4WalletBalance():state.balance)<requested){setDebtMessage(`Wallet funds needed: ${money(requested)} F.`, 'error');haptic([18,45,18]);return false;}
+    if(!TEST_MODE){
+      if(!serverBankActive()||serverV114Runtime.bankBusy){setDebtMessage('Authoritative Bank is not ready for this payment.','error');return false;}
+      const bridge=window.FroggyServerEconomy;if(!bridge?.repayBankLoan){setDebtMessage('The v114 Bank repayment bridge is unavailable.','error');return false;}
+      serverV114Runtime.bankBusy=true;refresh();setDebtMessage(`Server is processing ${all?'full payoff':'the next payment'}…`);
+      void bridge.repayBankLoan(all?'all':'installment',bridge.requestId?.('repay')).then(result=>{
+        if(result?.economy)applyServerCaseSnapshot(result.economy);else{const cached=bridge.getCachedSnapshot?.();if(cached)applyServerCaseSnapshot(cached);}
+        setDebtMessage(all?'Authoritative loan payoff completed and collateral released.':'Authoritative installment paid.','success');audio.cash();haptic(18);refresh();
+      }).catch(error=>{setDebtMessage(serverCaseFriendlyError(error),'error');void syncServerCases({quiet:true});}).finally(()=>{serverV114Runtime.bankBusy=false;refresh();});
+      return true;
+    }
     const savings=all?earlyPayoffSavings():0,qualified=!state.debtCycleMissed&&(all?state.completedRounds>state.debtCycleStartRound:true),history=registerOnTimeRepayment(requested,qualified);state.balance-=requested;state.debtPayments++;
     if(all){state.loanInterestPaid=loanEarnedInterest();state.loanPrincipalRemaining=0;state.debt=0;}else{const next=Math.min(LOAN_INSTALLMENTS,state.loanInstallmentsPaid+1),targetInterest=scheduledInterestThrough(next),interestPart=Math.min(requested,Math.max(0,targetInterest-state.loanInterestPaid),Math.max(0,state.loanInterestTotal-state.loanInterestPaid)),principalPart=Math.max(0,requested-interestPart);state.loanInterestPaid=Math.min(state.loanInterestTotal,state.loanInterestPaid+interestPart);state.loanPrincipalRemaining=Math.max(0,state.loanPrincipalRemaining-principalPart);state.loanInstallmentsPaid=next;state.debt=state.loanPrincipalRemaining+Math.max(0,state.loanInterestTotal-state.loanInterestPaid);clearDebtDue();recalculateLoanInstallment();if(state.loanInstallmentsPaid>=LOAN_INSTALLMENTS)state.debt=0;}
     const historyNote=history.credited?` ${money(history.amount)} F recorded as on-time repayment history.`:` No on-time history credit.`;
@@ -2302,6 +2400,7 @@
   }
 
   function completeDebtTurn(){
+    if(serverBankActive()&&!TEST_MODE)return null;
     if(state.debt<=0)return null;
     if(state.debtDue)return collectDueInstallment();
     state.debtTurns++;
@@ -2338,7 +2437,7 @@
 
   function refresh(){
     ensureCrashLevelUnlock();
-    const payout=currentPayout(), risk=effectiveRisk(), xpNeeded=nextXp(), frog=selectedFrog(), lake=selectedLake(), own=ownedWalletBalance();
+    const payout=currentPayout(), risk=effectiveRisk(), xpNeeded=nextXp(), frog=selectedFrog(), lake=selectedLake(), own=serverBankActive()?serverPhase4WalletBalance():ownedWalletBalance();
     const exactWallet=`${money(state.balance)} F`,exactOwned=`${money(own)} F`;
     els.balance.textContent=compactMoney(state.balance);els.balance.title=exactWallet;els.balance.setAttribute('aria-label',exactWallet);
     els.collectionBalance.textContent=compactMoney(own);els.collectionBalance.title=exactOwned;els.collectionBalance.setAttribute('aria-label',exactOwned);
@@ -2350,17 +2449,18 @@
     els.quickBets.querySelectorAll('button').forEach(b=>{b.disabled=anyRoundActive();b.classList.toggle('selected',Number(b.dataset.bet)===state.bet);});els.betAdjusters.querySelectorAll('button').forEach(b=>b.disabled=anyRoundActive());els.customBetInput.disabled=anyRoundActive();
     els.sound.textContent=state.sound?'🔊':'🔇';audio.enabled=state.sound;els.settingsSound.querySelector('b').textContent=state.sound?'On':'Off';els.settingsMotion.querySelector('b').textContent=state.effects?'On':'Reduced';
     els.luckyBadge.classList.toggle('hidden',state.luckyCharges<=0);els.luckyCount.textContent=state.luckyCharges;
-    els.debtBadge.classList.toggle('hidden',state.debt<=0);els.debtBadge.classList.toggle('due',state.debtDue);els.debtBadgeAmount.textContent=`${money(state.debt)} F`;els.debtBadgeTurns.textContent=state.debt>0?debtRoundsRemaining():'—';els.debtBadgeStatus.innerHTML=state.debtDue?'! <b>PAYMENT DUE</b>':`due in <b>${debtRoundsRemaining()}</b>`;els.debtDueDot.classList.toggle('hidden',!state.debtDue);els.debtDueFlag.classList.toggle('hidden',!state.debtDue);
+    const bankDueText=serverBankActive()&&!TEST_MODE?serverBankDueText():String(debtRoundsRemaining());
+    els.debtBadge.classList.toggle('hidden',state.debt<=0);els.debtBadge.classList.toggle('due',state.debtDue);els.debtBadgeAmount.textContent=`${money(state.debt)} F`;els.debtBadgeTurns.textContent=state.debt>0?bankDueText:'—';els.debtBadgeStatus.innerHTML=state.debtDue?'! <b>PAYMENT DUE</b>':serverBankActive()&&!TEST_MODE?`server due in <b>${bankDueText}</b>`:`due in <b>${bankDueText}</b>`;els.debtDueDot.classList.toggle('hidden',!state.debtDue);els.debtDueFlag.classList.toggle('hidden',!state.debtDue);
     els.profileFrog.innerHTML=frogSvg(frog);els.bigProfileFrog.innerHTML=frogSvg(frog);els.currentFrogName.textContent=frog.name;els.app.dataset.theme=lake.id;
     els.totalJumpsStat.textContent=money(state.totalJumps);els.bestJumpStat.textContent=state.bestJump;els.biggestWinStat.textContent=`${money(state.biggestWin)} F`;els.roundsStat.textContent=money(state.rounds);els.nextLevelBonusStat.textContent=`${money(levelBonusFor(state.level+1))} F`;
     const assets=collateralBreakdown(),creditMaxLoan=maxSingleLoan();
     els.debtAmountLabel.textContent=`${money(state.debt)} F`;
     els.debtInstallmentLabel.textContent=`${money(debtInstallment())} F`;
-    els.debtTurnsLabel.textContent=state.debtDue?'! DUE NOW':state.debt>0?`Due in ${debtRoundsRemaining()} round${debtRoundsRemaining()===1?'':'s'}`:'No active loan';
+    els.debtTurnsLabel.textContent=state.debtDue?'! DUE NOW':state.debt>0?(serverBankActive()&&!TEST_MODE?`Server due in ${serverBankDueText()}`:`Due in ${debtRoundsRemaining()} round${debtRoundsRemaining()===1?'':'s'}`):'No active loan';
     els.debtPayoffLabel.textContent=`${money(earlyPayoffCashRequired())} F`;
     els.debtInterestSavedLabel.textContent=`${money(earlyPayoffSavings())} F`;
     const pledgedValue=pledgedCollateralValue(),availableCollateral=availableCollateralValue(),availableLoan=maxSingleLoan();
-    els.debtLimitLabel.textContent=`${money(availableLoan)} F`;els.creditTierCeilingLabel.textContent='Characters, lakes, permanent models, licenses and Piggy';els.creditScoreLabel.textContent=`${money(availableCollateral)} F`;els.creditScoreGradeLabel.textContent=state.debt>0?'Unpledged assets remain yours':'Full direct Bank Value';els.creditLimitFactorLabel.textContent=state.bankLimitDisabled?'Bank hard cap disabled':'5B F hard cap';
+    els.debtLimitLabel.textContent=`${money(availableLoan)} F`;els.creditTierCeilingLabel.textContent=serverBankActive()?'Server-owned Frogs, Lakes and Piggy only':'Characters, lakes, permanent models, licenses and Piggy';els.creditScoreLabel.textContent=`${money(availableCollateral)} F`;els.creditScoreGradeLabel.textContent=state.debt>0?'Unpledged assets remain yours':'Full direct Bank Value';els.creditLimitFactorLabel.textContent=state.bankLimitDisabled?'Bank hard cap disabled':'5B F hard cap';
     els.creditTierLabel.textContent=`${money(assets.total)} F`;
     els.creditTierProgressFill.style.width=state.bankLimitDisabled?'100%':`${Math.min(100,(state.debt>0?state.loanPrincipalOriginal:availableLoan)/MAX_LOAN_PAYOUT*100)}%`;
     els.creditHistoryLabel.textContent=`${money(BASE_UNSECURED_CREDIT)} F starter credit`;
@@ -2373,13 +2473,13 @@
     els.screens.bank.classList.toggle('loan-dock-active',hasActiveLoan);
     els.loanPaymentDockStatus.textContent=state.debtDue
       ? `${money(debtInstallment())} F due now`
-      : `${money(debtInstallment())} F next · ${debtRoundsRemaining()} round${debtRoundsRemaining()===1?'':'s'}`;
+      : serverBankActive()&&!TEST_MODE?`${money(debtInstallment())} F next · ${serverBankDueText()} server timer`:`${money(debtInstallment())} F next · ${debtRoundsRemaining()} round${debtRoundsRemaining()===1?'':'s'}`;
     els.repayInstallmentButton.disabled=state.debt<=0||own<debtInstallment()||anyRoundActive();
     els.repayAllButton.disabled=state.debt<=0||own<earlyPayoffCashRequired()||anyRoundActive();
     els.repayInstallmentButton.querySelector('span').textContent=state.debtDue?'PAY AMOUNT DUE':'PAY NEXT PAYMENT EARLY';
     els.repayInstallmentButton.querySelector('small').textContent=state.debtDue
       ? `Pay ${money(debtInstallment())} F now`
-      : state.debt>0?`Pay ${money(debtInstallment())} F · reset countdown`:'No active loan';
+      : state.debt>0?`Pay ${money(debtInstallment())} F · ${serverBankActive()&&!TEST_MODE?'restart 15 min server timer':'reset countdown'}`:'No active loan';
     els.repayAllButton.querySelector('small').textContent=state.debt>0?`Pay ${money(earlyPayoffCashRequired())} F · release collateral`:'No active loan';
     const borrowingLocked=Boolean(loanAvailabilityReason());
     els.openLoanBuilderButton.disabled=borrowingLocked;
@@ -2388,8 +2488,8 @@
       : `Up to ${money(creditMaxLoan)} F available`;
     els.loanEntrySubtext.textContent=state.debt>0
       ? `${money(state.debt)} F remaining · ${money(debtInstallment())} F due amount`
-      : '8% total interest · permanent assets only · flights never count · 5B F cap';
-    els.bankTotalWealthLabel.textContent=`${money(Math.min(MAX_SAFE_BALANCE,state.balance+state.piggyBalance))} F`;
+      : serverBankActive()?'8% total interest · server-owned Frogs/Lakes/Piggy collateral · 5B F cap':'8% total interest · permanent assets only · flights never count · 5B F cap';
+    els.bankTotalWealthLabel.textContent=`${money(Math.min(MAX_SAFE_BALANCE,(serverBankActive()?serverPhase4WalletBalance():state.balance)+state.piggyBalance))} F`;
     els.piggyBalanceLabel.textContent=`${money(state.piggyBalance)} F`;
     els.piggyWalletLabel.textContent=`${money(own)} F wallet`;
     els.piggyNextInterestLabel.textContent=`${money(estimatedPiggyCycleInterest())} F`;
@@ -2399,7 +2499,7 @@
       const clockLabel=piggyTrustedClockStatus==='trusted'?'TRUSTED CLOCK':piggyTrustedClockStatus==='checking'?'CHECKING TIME':'CLOSED PAUSED';
       els.piggyRateSummary.textContent=`+${formatPiggyRate(piggyOpenRate())} OPEN · +${formatPiggyRate(piggyClosedRate())} CLOSED · ${clockLabel}`;
     }
-    els.piggyProgressFill.style.width=`${state.piggyBalance>0?(state.piggyCycleElapsedMs/PIGGY_CYCLE_MS)*100:0}%`;
+    els.piggyProgressFill.style.width=`${state.piggyBalance>0?(piggyDisplayElapsedMs()/PIGGY_CYCLE_MS)*100:0}%`;
     updatePiggyTransferControls();
     const crashUnlocked=gameUnlocked('crash'),crashFree=crashUnlockIsFree();els.crashLicenseCard.classList.toggle('hidden',crashUnlocked);els.crashGameContent.classList.toggle('hidden',!crashUnlocked);els.crashTabStatus.textContent=crashUnlocked?'UNLOCKED':`${compactMoney(CRASH_LICENSE_COST)} / LV${CRASH_UNLOCK_LEVEL}`;els.unlockCrashButton.textContent=crashFree?`UNLOCK FREE AT LEVEL ${CRASH_UNLOCK_LEVEL}`:`PAY ${money(CRASH_LICENSE_COST)} F TO UNLOCK`;els.unlockCrashButton.disabled=anyRoundActive()||(!crashFree&&own<CRASH_LICENSE_COST);
     const leapMode=state.selectedGame==='leap',crashMode=state.selectedGame==='crash',plinkoMode=state.selectedGame==='plinko';els.leapGamePane.classList.toggle('hidden',!leapMode);els.crashGamePane.classList.toggle('hidden',!crashMode);els.plinkoGamePane.classList.toggle('hidden',!plinkoMode);els.leapGameTab.classList.toggle('active',leapMode);els.crashGameTab.classList.toggle('active',crashMode);els.plinkoGameTab.classList.toggle('active',plinkoMode);els.screens.play.classList.toggle('crash-mode',crashMode);els.screens.play.classList.toggle('plinko-mode',plinkoMode);
@@ -3060,8 +3160,12 @@
       Number(snapshot.wallet)||0,Number(snapshot.level)||1,Number(snapshot.xp)||0,
       Number(snapshot.jobLevel)||1,Number(snapshot.jobXp)||0,Number(snapshot.casesOpened)||0,
       Number(snapshot.caseLuckMultiplier)||1,Number(snapshot.economyPhase)||0,
+      Number(snapshot.piggyBalance)||0,Number(snapshot.piggyCycleElapsedMs)||0,Number(snapshot.piggyCycleInterest)||0,Number(snapshot.piggyCycles)||0,Number(snapshot.piggyOpenRate)||0,Number(snapshot.piggyClosedRate)||0,
+      Number(snapshot.debt)||0,Number(snapshot.debtTurns)||0,snapshot.debtDue?1:0,Number(snapshot.debtDueAmount)||0,
+      Number(snapshot.loanPrincipalRemaining)||0,Number(snapshot.loanInterestTotal)||0,Number(snapshot.loanInterestPaid)||0,Number(snapshot.bankInstallmentAmount)||0,Number(snapshot.bankPayoffAmount)||0,Number(snapshot.bankPayoffSavings)||0,Number(snapshot.loanDueInMs)||0,Number(snapshot.bankRoundsRemaining)||0,
+      Number(snapshot.plinkoDrops)||0,Number(snapshot.plinkoWins)||0,Number(snapshot.plinkoLastMultiplier)||0,Number(snapshot.bestPlinkoMultiplier)||0,
       Number(inv.pond)||0,Number(inv.neon)||0,Number(inv.ultra)||0,
-      (snapshot.unlockedFrogs||[]).join(','),(snapshot.unlockedLakes||[]).join(',')
+      (snapshot.unlockedFrogs||[]).join(','),(snapshot.unlockedLakes||[]).join(','),(snapshot.pledgedFrogs||[]).join(','),(snapshot.pledgedLakes||[]).join(',')
     ].join('|');
   }
   function applyServerCaseSnapshot(snapshot,{persist=false}={}){
@@ -3079,7 +3183,7 @@
       updateServerAuthorityUi();
       return serverCaseRuntime.snapshot;
     }
-    serverCaseRuntime.ready=true;serverCaseRuntime.lastError='';serverCaseRuntime.snapshot=incoming;
+    serverCaseRuntime.ready=true;serverCaseRuntime.lastError='';serverCaseRuntime.snapshot=incoming;serverCaseRuntime.receivedAt=performance.now();
     const inv=snapshot.caseInventory||{};
     state.caseInventory={...state.caseInventory,pond:Math.max(0,Math.floor(Number(inv.pond)||0)),neon:Math.max(0,Math.floor(Number(inv.neon)||0)),ultra:Math.max(0,Math.floor(Number(inv.ultra)||0))};
     if(Number(snapshot.economyPhase)>=3){
@@ -3091,6 +3195,20 @@
       if(!state.unlockedLakes.includes(state.selectedLake))state.selectedLake='forest';
       if(Number.isFinite(Number(snapshot.jobLevel)))state.jobLevel=Math.max(1,Math.floor(Number(snapshot.jobLevel)||1));
       if(Number.isFinite(Number(snapshot.jobXp)))state.jobXp=Math.max(0,Math.floor(Number(snapshot.jobXp)||0));
+      if(Number(snapshot.economyPhase)>=4){
+        const integerFields=['piggyBalance','piggyLifetimeInterest','piggyCycles','debt','debtTurns','debtDueAmount','loanPrincipalOriginal','loanPrincipalRemaining','loanInterestTotal','loanInterestPaid','loanInstallment','loanInstallmentsPaid','pledgedPiggy','loanCollateralAtOrigination','debtPayments','onTimeRepaid','missedDebtDeadlines','plinkoDrops','plinkoWins','bankInstallmentAmount','bankPayoffAmount','bankPayoffSavings','bankRoundsRemaining'];
+        integerFields.forEach(key=>{if(Number.isFinite(Number(snapshot[key])))state[key]=Math.max(0,Math.floor(Number(snapshot[key])||0));});
+        if(Number.isFinite(Number(snapshot.piggyCycleElapsedMs)))state.piggyCycleElapsedMs=clamp(Math.floor(Number(snapshot.piggyCycleElapsedMs)||0),0,PIGGY_CYCLE_MS-1);
+        if(Number.isFinite(Number(snapshot.piggyCycleInterest)))state.piggyCycleInterest=Math.max(0,Number(snapshot.piggyCycleInterest)||0);
+        if(Number.isFinite(Number(snapshot.piggyInterestRateBonus)))state.piggyInterestRateBonus=Math.max(0,Number(snapshot.piggyInterestRateBonus)||0);
+        if(Number.isFinite(Number(snapshot.loanRate)))state.loanRate=Math.max(0,Number(snapshot.loanRate)||LOAN_TOTAL_INTEREST_RATE);
+        if(Number.isFinite(Number(snapshot.plinkoLastMultiplier)))state.plinkoLastMultiplier=Math.max(0,Number(snapshot.plinkoLastMultiplier)||0);
+        if(Number.isFinite(Number(snapshot.bestPlinkoMultiplier)))state.bestPlinkoMultiplier=Math.max(0,Number(snapshot.bestPlinkoMultiplier)||0);
+        state.debtDue=snapshot.debtDue===true;state.debtCycleMissed=snapshot.debtCycleMissed===true;
+        state.pledgedFrogs=Array.isArray(snapshot.pledgedFrogs)?snapshot.pledgedFrogs.filter(id=>FROGS.some(f=>f.id===id)):[];
+        state.pledgedLakes=Array.isArray(snapshot.pledgedLakes)?snapshot.pledgedLakes.filter(id=>LAKES.some(l=>l.id===id)):[];
+        state.pledgedVehicles=[];state.pledgedLicenses=[];
+      }
     }else if(Array.isArray(snapshot.unlockedFrogs)){
       const merged=new Set(state.unlockedFrogs||[]);snapshot.unlockedFrogs.forEach(id=>{if(FROGS.some(f=>f.id===id))merged.add(id);});state.unlockedFrogs=[...merged];
     }
@@ -3648,11 +3766,11 @@
   function refreshOwnerPanel(){
     if(!ownerPanelModal)return;
     const summary=ownerPanelModal.querySelector('[data-owner-summary]');
-    if(summary)summary.textContent=serverPhase3Active()?`${ownerOperationHelp()} Wallet, Cases, Case Luck, Player Level and Job Level require the Firestore Owner role and are ledgered server-side.`:ownerOperationHelp();
+    if(summary)summary.textContent=serverPhase4Active()?`${ownerOperationHelp()} Wallet, Piggy, Bank debt, Cases, Case Luck, Player Level and Job Level require the Firestore Owner role and are ledgered server-side.`:serverPhase3Active()?`${ownerOperationHelp()} Wallet, Cases, Case Luck, Player Level and Job Level require the Firestore Owner role and are ledgered server-side.`:ownerOperationHelp();
     const moneyBoost=ownerJobBoostSnapshot('money'),xpBoost=ownerJobBoostSnapshot('xp'),serverAdmin=serverPhase3Active();
     const ownerWallet=serverAdmin?serverCaseWalletBalance():state.balance,ownerLevel=serverAdmin?serverPlayerLevel():state.level,ownerJobLevelValue=serverAdmin?serverJobLevel():state.jobLevel;
     ownerButtonValue('wallet',serverAdmin?`${compactMoney(ownerWallet)} SERVER`:`${compactMoney(ownerWallet)} F`,serverAdmin?`Authoritative wallet: ${money(ownerWallet)} F · requires Firestore Owner role`:`Wallet: ${money(ownerWallet)} F`);
-    ownerButtonValue('piggy',`${compactMoney(state.piggyBalance)} F`,`Piggy: ${money(state.piggyBalance)} F · local until Piggy migration`);
+    ownerButtonValue('piggy',serverPiggyActive()?`${compactMoney(state.piggyBalance)} SERVER`:`${compactMoney(state.piggyBalance)} F`,serverPiggyActive()?`Authoritative Piggy: ${money(state.piggyBalance)} F · server Owner role required`:`Piggy: ${money(state.piggyBalance)} F · local until Phase 4`);
     ownerButtonValue('xp',`${compactMoney(state.xp)} XP`,`Current local XP: ${money(state.xp)} · staged until all XP sources migrate`);
     ownerButtonValue('levels',serverAdmin?`Lv ${compactMoney(ownerLevel)} SERVER`:`Lv ${compactMoney(ownerLevel)}`,serverAdmin?`Authoritative Player Level ${money(ownerLevel)} · requires Firestore Owner role`:`Player Level ${money(ownerLevel)}`);
     ownerButtonValue('job-levels',serverAdmin?`Job Lv ${compactMoney(ownerJobLevelValue)} SERVER`:`Job Lv ${compactMoney(ownerJobLevelValue)}`,serverAdmin?`Authoritative Job Level ${money(ownerJobLevelValue)}`:`Job Level ${money(ownerJobLevelValue)} · ${money(jobPay())} F/fry`);
@@ -3661,8 +3779,8 @@
     CASES.forEach(item=>ownerButtonValue(`case-${item.id}`,serverCasesActive()?`${compactMoney(serverCaseInventoryCount(item.id))} SERVER`:`${compactMoney(caseInventoryCount(item.id))} owned`,serverCasesActive()?`${item.name}: ${money(serverCaseInventoryCount(item.id))} authoritative · server Owner role required for grants`:`${item.name}: ${money(caseInventoryCount(item.id))} owned`));
     ownerButtonValue('case-luck',serverCasesActive()?`${caseLuckMultiplier().toFixed(2)}× SERVER`:`${caseLuckMultiplier().toFixed(2)}×`,serverCasesActive()?`Server Case Luck: ${caseLuckMultiplier().toFixed(2)}× · server Owner role required`:`Case luck multiplier: ${caseLuckMultiplier().toFixed(2)}×`);
     ownerButtonValue('case-luck-reset','Reset to 1×');
-    ownerButtonValue('bank-limit',state.bankLimitDisabled?'DISABLED':'5B F',state.bankLimitDisabled?'Bank hard cap is disabled':'Bank hard cap is 5,000,000,000 F');
-    const bankLimitButton=ownerPanelModal.querySelector('[data-owner-action="bank-limit"] span');if(bankLimitButton)bankLimitButton.textContent=state.bankLimitDisabled?'Restore Bank limit':'Disable Bank limit';
+    ownerButtonValue('bank-limit',serverBankActive()?'5B SERVER':state.bankLimitDisabled?'DISABLED':'5B F',serverBankActive()?'Phase 4 enforces the 5B hard cap on the server':state.bankLimitDisabled?'Bank hard cap is disabled':'Bank hard cap is 5,000,000,000 F');
+    const bankLimitAction=ownerPanelModal.querySelector('[data-owner-action="bank-limit"]');const bankLimitButton=bankLimitAction?.querySelector('span');if(bankLimitButton)bankLimitButton.textContent=serverBankActive()?'5B server cap':state.bankLimitDisabled?'Restore Bank limit':'Disable Bank limit';if(bankLimitAction)bankLimitAction.disabled=serverBankActive()&&!TEST_MODE;
     ownerButtonValue('job-money-boost',moneyBoost.label,`Job money boost: ${moneyBoost.label}`);
     ownerButtonValue('job-xp-boost',xpBoost.label,`Job XP boost: ${xpBoost.label}`);
     ownerButtonValue('job-boost-reset',`F ${moneyBoost.multiplier}× · XP ${xpBoost.multiplier}×`);
@@ -3711,12 +3829,14 @@
     const input=group?.querySelector('input');
     const raw=input?.value??'';
     let message='';
-    const serverAdminActions=new Set(['wallet','levels','job-levels','case-pond','case-neon','case-ultra','case-luck','case-luck-reset']);
+    const phase4AdminActions=new Set(['piggy','piggy-plus','piggy-reset','debt']);
+    const serverAdminActions=new Set(['wallet','levels','job-levels','case-pond','case-neon','case-ultra','case-luck','case-luck-reset',...phase4AdminActions]);
     if(!TEST_MODE&&serverAdminActions.has(action)){
-      if(!serverPhase3Active()){
-        ownerStatus('Syncing Server Economy Phase 3…');
+      const requiredPhase=phase4AdminActions.has(action)?4:3;
+      if((requiredPhase===4&&!serverPhase4Active())||(requiredPhase===3&&!serverPhase3Active())){
+        ownerStatus(`Syncing Server Economy Phase ${requiredPhase}…`);
         const synced=await syncServerCases({quiet:true});
-        if(!synced||Number(synced.economyPhase)<3)return ownerStatus('Could not load the Phase 3 economy snapshot. CHECK BACKEND in Profile, then try this protected action again.','error');
+        if(!synced||Number(synced.economyPhase)<requiredPhase)return ownerStatus(`Could not load the Phase ${requiredPhase} economy snapshot. CHECK BACKEND in Profile, then try this protected action again.`,'error');
       }
       const bridge=window.FroggyServerEconomy;if(!bridge?.adminOperate)return ownerStatus('Secure Owner backend bridge is unavailable. Refresh Froggy Leap.','error');
       button.disabled=true;ownerStatus('🔒 Sending protected Owner operation to Firebase…');
@@ -3733,6 +3853,10 @@
         else if(action==='wallet')message=`🔒 Authoritative wallet changed from ${money(details.before||0)} F to ${money(details.target||result?.wallet||0)} F. Transaction ledger updated.`;
         else if(action==='levels')message=`🔒 Authoritative Player Level is now ${money(result?.level||details.target||1)}. Server XP reset to 0.`;
         else if(action==='job-levels')message=`🔒 Authoritative Job Level is now ${money(result?.jobLevel||details.target||1)}. Server Job XP reset to 0.`;
+        else if(action==='piggy')message=`🔒 Authoritative Piggy balance is now ${money(result?.piggyBalance??result?.economy?.piggyBalance??state.piggyBalance)} F. Ledger updated.`;
+        else if(action==='piggy-plus')message=`🔒 Server Piggy interest boost updated. Rates are ${formatPiggyRate(result?.economy?.piggyOpenRate??piggyOpenRate())} open and ${formatPiggyRate(result?.economy?.piggyClosedRate??piggyClosedRate())} closed.`;
+        else if(action==='piggy-reset')message='🔒 Server Piggy interest boost reset.';
+        else if(action==='debt')message='🔒 Authoritative Bank loan/debt state cleared and collateral released by the Owner operation.';
         refresh();renderCollection();renderCases();renderJob();scene.reset();saveState();audio.reward();haptic([12,28,12]);ownerStatus(message);refreshOwnerPanel();return;
       }catch(error){ownerStatus(serverCaseFriendlyError(error),'error');return;}
       finally{button.disabled=false;}
@@ -3787,6 +3911,7 @@
       if(!item||!result)return ownerStatus(ownerOperationHelp(),'error');
       state.caseInventory[id]=result.target;message=ownerOperationResult(`${item.name} inventory`,result);
     }else if(action==='bank-limit'){
+      if(serverBankActive()&&!TEST_MODE)return ownerStatus('The Phase 4 Bank hard cap is enforced server-side and cannot be disabled from the browser.','error');
       state.bankLimitDisabled=!state.bankLimitDisabled;message=state.bankLimitDisabled?'Bank 5B hard cap disabled. Loans remain limited by available collateral.':'Bank 5B hard cap restored.';
     }else if(action==='job-money-boost'||action==='job-xp-boost'){
       if(serverJobActive()&&!TEST_MODE)return ownerStatus('🔒 Job boosts are server-authoritative in Phase 3. Local boost injection is disabled.','error');
@@ -4000,7 +4125,7 @@
       if(ownerPanelModal.querySelector('[data-owner-action="spins"]')||ownerPanelModal.querySelector('[data-owner-action="unlimited"]'))throw new Error('Reward-wheel owner controls still present');
       if(PLINKO_BANK_ROUND_MS!==15000)throw new Error('15-second Plinko Bank round failed');const oldRounds=state.rounds,oldCompleted=state.completedRounds;plinkoBankRoundRuntime.active=true;plinkoBankRoundRuntime.remainingMs=1;plinkoBankRoundRuntime.lastTick=performance.now()-20;tickPlinkoBankRound();if(state.rounds!==oldRounds+1||state.completedRounds!==oldCompleted+1||plinkoBankRoundRuntime.active)throw new Error('Plinko Bank round completion failed');if(MAX_LOAN_PAYOUT!==5000000000)throw new Error('5B Bank cap constant failed');state.bankLimitDisabled=true;if(effectiveBankLimit()!==MAX_SAFE_BALANCE)throw new Error('Bank limit disable failed');state.bankLimitDisabled=false;const paidFrogs=FROGS.filter(f=>f.cost>0);if(paidFrogs.find(f=>f.id==='meadow')?.cost!==1500||paidFrogs.find(f=>f.id==='gigachad')?.cost!==2250000000||paidFrogs.find(f=>f.id==='owner')?.cost!==6000000000)throw new Error('3x frog pricing failed');if(plinkoRows('low')!==12||plinkoRows('medium')!==14||plinkoRows('high')!==16||plinkoTable('low').length!==13||plinkoTable('medium').length!==15||plinkoTable('high').length!==17)throw new Error('v76 Plinko board scaling failed');if(Math.abs(plinkoRtp('low')-.9720361328125)>.00001||Math.abs(plinkoRtp('medium')-.9669140625)>.00001||Math.abs(plinkoRtp('high')-.989764404296875)>.00001)throw new Error('v82 Plinko RTP table check failed');if(JSON.stringify(plinkoTable('high'))!==JSON.stringify([1000,130,26,9,4,2,.2,.2,.2,.2,.2,2,4,9,26,130,1000]))throw new Error('v82 exact 16-row High payout strip failed');if(els.plinkoMultipliers?.parentElement!==els.plinkoBoard)throw new Error('v85 multiplier rail must live inside Plinko board');if(PLINKO_MAX_ACTIVE_EGGS!==96||typeof updatePlinkoEggPhysics!=='function'||typeof primePlinkoEggPhysics!=='function'||typeof plinkoImpactTarget!=='function'||typeof getPlinkoBoardCache!=='function'||typeof getPlinkoEggSprite!=='function')throw new Error('v81 Plinko motion engine failed');state=deepClone(DEFAULT_STATE);state.balance=100000;state.safeRunCredits=3;state.plinkoBet=100;for(let i=0;i<3;i++){const rolled=rollPlinkoPath('medium',{protectedRound:true});if(plinkoTable('medium')[rolled.slot]<=1)throw new Error('Plinko protected path failed');}state.caseInventory.ultra=5;if(caseInventoryCount('ultra')!==5)throw new Error('case inventory failed');state.level=100;state.caseInventory.pond=6;renderCases();if(!els.caseGrid.querySelector('[data-case-open-qty="2"]')||!els.caseGrid.querySelector('[data-case-open-qty="3"]')||els.caseGrid.querySelector('[data-case-open-qty="5"]')||els.caseGrid.querySelector('[data-case-open-qty="10"]'))throw new Error('v107 max-3 multi-case buttons failed');if(typeof beginMultiCaseOpening!=='function'||typeof animateMultiCaseOpeningReels!=='function'||typeof finishMultiCaseOpeningReveal!=='function')throw new Error('v107 simultaneous multi-reel animation functions missing');lastCaseBatch=null;const ownerBase=caseAdjustedDropRows(caseById('ultra')).find(r=>r.frog.id==='owner').probability;state.caseLuckMultiplier=10;const ownerLucky=caseAdjustedDropRows(caseById('ultra')).find(r=>r.frog.id==='owner').probability;if(!(ownerLucky>ownerBase))throw new Error('case luck weighting failed');
       const shopFrogs=frogShopItems();for(let i=1;i<shopFrogs.length;i++){if(shopFrogs[i].cost<shopFrogs[i-1].cost)throw new Error('frog shop price order failed');if((FROG_RARITY_RANK[shopFrogs[i].rarity]??99)<(FROG_RARITY_RANK[shopFrogs[i-1].rarity]??99))throw new Error('frog rarity progression failed');}const hill=FROGS.find(f=>f.id==='gigachad');if(!hill||hill.name!=='The Hill Frog'||hill.art!=='assets/the-hill-frog-game-v66.png'||hill.cardArt!=='assets/the-hill-frog-card-v64.webp')throw new Error('The Hill Frog art/name failed');if(FROGS.find(f=>f.id==='robot')?.art!=='assets/robo-frog-v108.png'||FROGS.find(f=>f.id==='owner')?.art!=='assets/owner-frog-v109.png')throw new Error('v109 Owner preview refresh / Robo preservation failed');const basicIds=['meadow','river','moss','sand','blue-dart','sunset'];if(!basicIds.every(id=>FROGS.some(f=>f.id===id)))throw new Error('v63 basic frog lineup missing');collectionMode='lakes';renderCollection();if(els.collectionGrid.querySelectorAll('.collection-card.lake .lake-rarity-row > .rarity').length!==LAKES.length)throw new Error('v106 lake rarity header rows failed');collectionMode='frogs';renderCollection();
-      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v113.0 pipelined Server Job + immediate Case lock UI + hot-path backend latency cut + v112.5 restored Owner Console runtime helpers + v112.4 owner-console Phase 3 sync fix + owner-only console button + v112.1 click hotfix + server-authoritative Cases + Frog/Lake purchases + Job rewards + protected Owner grants + server-locked 1/2/3 outcomes + v109 Owner Frog reference-photo royal preview + Robo Frog unchanged + v107 simultaneous animated OPEN 2/3 case reels + lake rarity header rows + exact loan principal disbursement + v98 cloud-save bridge + v90 one-screen mobile Plinko controls + board fit/no Plinko scrolling + v89 real mobile Plinko frame expansion/no flex compression + v88 pure mobile Plinko frame-height fix + v87 larger Plinko multiplier text + deeper mobile Medium/High payout rail + v86 extended mobile Plinko bottom frame + larger multiplier labels + v85 multiplier rail structurally inside Plinko board + visible mobile payout strip + v83 controls-before-board layout + high-contrast active-loan actions + fully dark loan builder/warning sheets + v82 exact classic 16-row High payout strip + v81 no idle/top egg + no fake pocket guides + analytic ballistic Plinko motion + instant multiplier landing + v78 performance cache + 96-egg cap + v77 15-second Plinko Bank rounds + 5x lower Plinko XP + Ultra Case 3% Hill / 0.1% Owner + v75 case inventory + owner case grants/luck + Bank limit toggle + protected Plinko eggs + v73 every-frog price-tier perks + v72 Piggy 0.3% open / 0.2% closed + loan-time deposits + v71 3x frog prices + 5B Bank cap + v68 CS-style case reel + v67 six-slot mobile nav + v66 approved The Hill Frog gameplay model';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
+      els.selfTest.hidden=false;els.selfTest.textContent='PASS: v114.0 Bank + Piggy + Plinko Phase 4 + v113.0 pipelined Server Job + immediate Case lock UI + hot-path backend latency cut + v112.5 restored Owner Console runtime helpers + v112.4 owner-console Phase 3 sync fix + owner-only console button + v112.1 click hotfix + server-authoritative Cases + Frog/Lake purchases + Job rewards + protected Owner grants + server-locked 1/2/3 outcomes + v109 Owner Frog reference-photo royal preview + Robo Frog unchanged + v107 simultaneous animated OPEN 2/3 case reels + lake rarity header rows + exact loan principal disbursement + v98 cloud-save bridge + v90 one-screen mobile Plinko controls + board fit/no Plinko scrolling + v89 real mobile Plinko frame expansion/no flex compression + v88 pure mobile Plinko frame-height fix + v87 larger Plinko multiplier text + deeper mobile Medium/High payout rail + v86 extended mobile Plinko bottom frame + larger multiplier labels + v85 multiplier rail structurally inside Plinko board + visible mobile payout strip + v83 controls-before-board layout + high-contrast active-loan actions + fully dark loan builder/warning sheets + v82 exact classic 16-row High payout strip + v81 no idle/top egg + no fake pocket guides + analytic ballistic Plinko motion + instant multiplier landing + v78 performance cache + 96-egg cap + v77 15-second Plinko Bank rounds + 5x lower Plinko XP + Ultra Case 3% Hill / 0.1% Owner + v75 case inventory + owner case grants/luck + Bank limit toggle + protected Plinko eggs + v73 every-frog price-tier perks + v72 Piggy 0.3% open / 0.2% closed + loan-time deposits + v71 3x frog prices + 5B Bank cap + v68 CS-style case reel + v67 six-slot mobile nav + v66 approved The Hill Frog gameplay model';document.documentElement.dataset.selftest='pass';console.log(els.selfTest.textContent);
     }catch(error){els.selfTest.hidden=false;els.selfTest.textContent='FAIL: '+error.message;document.documentElement.dataset.selftest='fail';console.error(error);}
   }
 
@@ -4011,7 +4136,7 @@
     const result=tickPiggyClock();
     els.piggyNextInterestLabel.textContent=`${money(estimatedPiggyCycleInterest())} F`;
     els.piggyRoundsLabel.textContent=formatPiggyTime(piggyTimeRemaining());
-    els.piggyProgressFill.style.width=`${state.piggyBalance>0?(state.piggyCycleElapsedMs/PIGGY_CYCLE_MS)*100:0}%`;
+    els.piggyProgressFill.style.width=`${state.piggyBalance>0?(piggyDisplayElapsedMs()/PIGGY_CYCLE_MS)*100:0}%`;
     if(result.interest>0){setPiggyMessage(result.message,'success');setStatus(result.message,'win');}
   },1000);
   setInterval(()=>{tickPiggyClock();saveState();},5000);
