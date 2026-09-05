@@ -3,7 +3,7 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v114.1';
+  const BUILD_VERSION = 'v114.2';
   console.info(`Froggy Leap ${BUILD_VERSION} loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
@@ -55,8 +55,14 @@
   function serverPlinkoActive(){return serverPhase4Active();}
   function serverCaseWalletBalance(){return Math.max(0,Math.floor(Number(serverCaseRuntime.snapshot?.wallet)||0));}
   function serverPhase4WalletBalance(){return serverPhase4Active()?serverCaseWalletBalance():0;}
+  function displayWalletBalance(){return serverCasesActive()?serverCaseWalletBalance():Math.max(0,Math.floor(Number(state?.balance)||0));}
   const serverV114Runtime={bankBusy:false,piggyBusy:false,plinkoPending:0};
   function serverPlayerLevel(){return Math.max(1,Math.floor(Number(serverCaseRuntime.snapshot?.level)||1));}
+  function serverPlayerXp(){return Math.max(0,Math.floor(Number(serverCaseRuntime.snapshot?.xp)||0));}
+  function displayPlayerLevel(){return serverPhase3Active()?serverPlayerLevel():Math.max(1,Math.floor(Number(state?.level)||1));}
+  function displayPlayerXp(){return serverPhase3Active()?serverPlayerXp():Math.max(0,Math.floor(Number(state?.xp)||0));}
+  function xpNeededForLevel(level){return 100+(Math.max(1,Math.floor(Number(level)||1))-1)*50;}
+  function displayPlayerXpNeeded(){return xpNeededForLevel(displayPlayerLevel());}
   function serverJobLevel(){return Math.max(1,Math.floor(Number(serverCaseRuntime.snapshot?.jobLevel)||1));}
   function serverJobXp(){return Math.max(0,Math.floor(Number(serverCaseRuntime.snapshot?.jobXp)||0));}
   function serverCaseInventoryCount(id){return Math.max(0,Math.floor(Number(serverCaseRuntime.snapshot?.caseInventory?.[id])||0));}
@@ -1066,11 +1072,11 @@
   function binomialCoefficient(n,k){let value=1;for(let i=1;i<=k;i++)value=value*(n-k+i)/i;return value;}
   function setPlinkoStatus(text,kind=''){if(!els.plinkoStatus)return;els.plinkoStatus.textContent=text;els.plinkoStatus.className=`plinko-status ${kind}`.trim();}
   function refreshPlinkoLiveUi(){
-    const own=ownedWalletBalance(),exactWallet=`${money(state.balance)} F`,exactOwned=`${money(own)} F`,xpNeeded=nextXp();
-    els.balance.textContent=compactMoney(state.balance);els.balance.title=exactWallet;els.balance.setAttribute('aria-label',exactWallet);
-    els.collectionBalance.textContent=compactMoney(own);els.collectionBalance.title=exactOwned;els.collectionBalance.setAttribute('aria-label',exactOwned);
-    if(els.caseBalance){els.caseBalance.textContent=compactMoney(own);els.caseBalance.title=exactOwned;els.caseBalance.setAttribute('aria-label',exactOwned);}
-    els.level.textContent=`Lv. ${state.level}`;els.xp.textContent=state.xp;els.xpNext.textContent=xpNeeded;els.xpRing.style.setProperty('--xp',`${clamp(state.xp/xpNeeded*100,0,100)}%`);
+    const wallet=displayWalletBalance(),own=serverCasesActive()?serverCaseWalletBalance():ownedWalletBalance(),level=displayPlayerLevel(),xp=displayPlayerXp(),xpNeeded=displayPlayerXpNeeded(),exactWallet=`${money(wallet)} F`,exactOwned=`${money(own)} F`;
+    els.balance.textContent=compactMoney(wallet);els.balance.title=serverCasesActive()?`SERVER WALLET · ${exactWallet}`:exactWallet;els.balance.setAttribute('aria-label',serverCasesActive()?`Server wallet ${exactWallet}`:exactWallet);
+    els.collectionBalance.textContent=compactMoney(own);els.collectionBalance.title=serverCasesActive()?`SERVER WALLET · ${exactOwned}`:exactOwned;els.collectionBalance.setAttribute('aria-label',exactOwned);
+    if(els.caseBalance){els.caseBalance.textContent=compactMoney(own);els.caseBalance.title=serverCasesActive()?`SERVER WALLET · ${exactOwned}`:exactOwned;els.caseBalance.setAttribute('aria-label',exactOwned);}
+    els.level.textContent=`Lv. ${level}`;els.xp.textContent=xp;els.xpNext.textContent=xpNeeded;els.xpRing.style.setProperty('--xp',`${clamp(xp/xpNeeded*100,0,100)}%`);
     if(els.biggestWinStat)els.biggestWinStat.textContent=`${money(state.biggestWin)} F`;refreshPlinkoHud();saveState();
   }
   function schedulePlinkoUiRefresh(delay=120){
@@ -2424,25 +2430,25 @@
   }
 
   function refreshEconomyHud(){
-    const own=ownedWalletBalance(),xpNeeded=nextXp();
-    const exactWallet=`${money(state.balance)} F`,exactOwned=`${money(own)} F`;
-    if(els.balance){els.balance.textContent=compactMoney(state.balance);els.balance.title=exactWallet;els.balance.setAttribute('aria-label',exactWallet);}
-    if(els.collectionBalance){els.collectionBalance.textContent=compactMoney(own);els.collectionBalance.title=exactOwned;els.collectionBalance.setAttribute('aria-label',exactOwned);}
-    if(els.level)els.level.textContent=`Lv. ${state.level}`;
-    if(els.xp)els.xp.textContent=state.xp;
+    const wallet=displayWalletBalance(),own=serverCasesActive()?serverCaseWalletBalance():ownedWalletBalance(),level=displayPlayerLevel(),xp=displayPlayerXp(),xpNeeded=displayPlayerXpNeeded();
+    const exactWallet=`${money(wallet)} F`,exactOwned=`${money(own)} F`;
+    if(els.balance){els.balance.textContent=compactMoney(wallet);els.balance.title=serverCasesActive()?`SERVER WALLET · ${exactWallet}`:exactWallet;els.balance.setAttribute('aria-label',serverCasesActive()?`Server wallet ${exactWallet}`:exactWallet);}
+    if(els.collectionBalance){els.collectionBalance.textContent=compactMoney(own);els.collectionBalance.title=serverCasesActive()?`SERVER WALLET · ${exactOwned}`:exactOwned;els.collectionBalance.setAttribute('aria-label',exactOwned);}
+    if(els.level)els.level.textContent=`Lv. ${level}`;
+    if(els.xp)els.xp.textContent=xp;
     if(els.xpNext)els.xpNext.textContent=xpNeeded;
-    if(els.xpRing)els.xpRing.style.setProperty('--xp',`${clamp(state.xp/xpNeeded*100,0,100)}%`);
-    if(els.nextLevelBonusStat)els.nextLevelBonusStat.textContent=`${money(levelBonusFor(state.level+1))} F`;
+    if(els.xpRing)els.xpRing.style.setProperty('--xp',`${clamp(xp/xpNeeded*100,0,100)}%`);
+    if(els.nextLevelBonusStat)els.nextLevelBonusStat.textContent=`${money(levelBonusFor(level+1))} F`;
   }
 
   function refresh(){
     ensureCrashLevelUnlock();
-    const payout=currentPayout(), risk=effectiveRisk(), xpNeeded=nextXp(), frog=selectedFrog(), lake=selectedLake(), own=serverBankActive()?serverPhase4WalletBalance():ownedWalletBalance();
-    const exactWallet=`${money(state.balance)} F`,exactOwned=`${money(own)} F`;
-    els.balance.textContent=compactMoney(state.balance);els.balance.title=exactWallet;els.balance.setAttribute('aria-label',exactWallet);
-    els.collectionBalance.textContent=compactMoney(own);els.collectionBalance.title=exactOwned;els.collectionBalance.setAttribute('aria-label',exactOwned);
-    if(els.caseBalance){els.caseBalance.textContent=compactMoney(own);els.caseBalance.title=exactOwned;els.caseBalance.setAttribute('aria-label',exactOwned);}if(els.casesOpenedLabel)els.casesOpenedLabel.textContent=money(state.casesOpened||0);
-    els.level.textContent=`Lv. ${state.level}`; els.xp.textContent=state.xp; els.xpNext.textContent=xpNeeded; els.xpRing.style.setProperty('--xp',`${clamp(state.xp/xpNeeded*100,0,100)}%`);
+    const payout=currentPayout(), risk=effectiveRisk(), wallet=displayWalletBalance(), level=displayPlayerLevel(), xp=displayPlayerXp(), xpNeeded=displayPlayerXpNeeded(), frog=selectedFrog(), lake=selectedLake(), own=serverCasesActive()?serverCaseWalletBalance():ownedWalletBalance();
+    const exactWallet=`${money(wallet)} F`,exactOwned=`${money(own)} F`;
+    els.balance.textContent=compactMoney(wallet);els.balance.title=serverCasesActive()?`SERVER WALLET · ${exactWallet}`:exactWallet;els.balance.setAttribute('aria-label',serverCasesActive()?`Server wallet ${exactWallet}`:exactWallet);
+    els.collectionBalance.textContent=compactMoney(own);els.collectionBalance.title=serverCasesActive()?`SERVER WALLET · ${exactOwned}`:exactOwned;els.collectionBalance.setAttribute('aria-label',exactOwned);
+    if(els.caseBalance){els.caseBalance.textContent=compactMoney(own);els.caseBalance.title=serverCasesActive()?`SERVER WALLET · ${exactOwned}`:exactOwned;els.caseBalance.setAttribute('aria-label',exactOwned);}if(els.casesOpenedLabel)els.casesOpenedLabel.textContent=money(serverCasesActive()?Number(serverCaseRuntime.snapshot?.casesOpened)||0:state.casesOpened||0);
+    els.level.textContent=`Lv. ${level}`; els.xp.textContent=xp; els.xpNext.textContent=xpNeeded; els.xpRing.style.setProperty('--xp',`${clamp(xp/xpNeeded*100,0,100)}%`);
     els.jump.textContent=`${state.jump} / ${RISKS.length}`; els.multiplier.textContent=`${MULTIPLIERS[state.jump].toFixed(2)}×`; els.risk.textContent=state.jump>=RISKS.length?'—':`${risk}%`; els.payout.textContent=`${money(payout)} F`; els.cashValue.textContent=`${money(payout)} F`;
     els.betDisplay.textContent=money(state.bet); els.start.querySelector('small').textContent=`Median ${money(xpMedianBet())} F · +${money(wagerXpBonus())} XP/landing`; els.danger.textContent=state.jump>=RISKS.length?'Legendary leap':dangerName(risk); els.riskFill.style.width=`${risk}%`;els.riskMarker.style.left=`${risk}%`;els.riskMarker.style.background=risk<30?'#52c95a':risk<60?'#f3c442':'#eb506b';
     els.screens.play.classList.toggle('round-live',anyRoundActive());els.screens.play.classList.toggle('can-cash',state.roundActive&&state.jump>0);els.start.classList.toggle('hidden',state.roundActive); els.jumpButton.classList.toggle('hidden',!state.roundActive); els.cash.classList.toggle('hidden',!state.roundActive||state.jump===0); els.jumpButton.disabled=state.animating;els.cash.disabled=state.animating;
@@ -2452,7 +2458,7 @@
     const bankDueText=serverBankActive()&&!TEST_MODE?serverBankDueText():String(debtRoundsRemaining());
     els.debtBadge.classList.toggle('hidden',state.debt<=0);els.debtBadge.classList.toggle('due',state.debtDue);els.debtBadgeAmount.textContent=`${money(state.debt)} F`;els.debtBadgeTurns.textContent=state.debt>0?bankDueText:'—';els.debtBadgeStatus.innerHTML=state.debtDue?'! <b>PAYMENT DUE</b>':serverBankActive()&&!TEST_MODE?`server due in <b>${bankDueText}</b>`:`due in <b>${bankDueText}</b>`;els.debtDueDot.classList.toggle('hidden',!state.debtDue);els.debtDueFlag.classList.toggle('hidden',!state.debtDue);
     els.profileFrog.innerHTML=frogSvg(frog);els.bigProfileFrog.innerHTML=frogSvg(frog);els.currentFrogName.textContent=frog.name;els.app.dataset.theme=lake.id;
-    els.totalJumpsStat.textContent=money(state.totalJumps);els.bestJumpStat.textContent=state.bestJump;els.biggestWinStat.textContent=`${money(state.biggestWin)} F`;els.roundsStat.textContent=money(state.rounds);els.nextLevelBonusStat.textContent=`${money(levelBonusFor(state.level+1))} F`;
+    els.totalJumpsStat.textContent=money(state.totalJumps);els.bestJumpStat.textContent=state.bestJump;els.biggestWinStat.textContent=`${money(state.biggestWin)} F`;els.roundsStat.textContent=money(state.rounds);els.nextLevelBonusStat.textContent=`${money(levelBonusFor(displayPlayerLevel()+1))} F`;
     const assets=collateralBreakdown(),creditMaxLoan=maxSingleLoan();
     els.debtAmountLabel.textContent=`${money(state.debt)} F`;
     els.debtInstallmentLabel.textContent=`${money(debtInstallment())} F`;
@@ -3181,6 +3187,7 @@
     if(serverCaseRuntime.ready&&serverGameplaySnapshotKey(serverCaseRuntime.snapshot)===serverGameplaySnapshotKey(incoming)){
       serverCaseRuntime.snapshot=incoming;
       updateServerAuthorityUi();
+      refreshEconomyHud();
       return serverCaseRuntime.snapshot;
     }
     serverCaseRuntime.ready=true;serverCaseRuntime.lastError='';serverCaseRuntime.snapshot=incoming;serverCaseRuntime.receivedAt=performance.now();
@@ -3214,6 +3221,8 @@
     }
     if(Number.isFinite(Number(snapshot.casesOpened)))state.casesOpened=Math.max(0,Math.floor(Number(snapshot.casesOpened)||0));
     updateServerAuthorityUi();
+    // Authenticated wallet + Player Level/XP must repaint immediately from Firebase.
+    refreshEconomyHud();
     if(persist){saveState();refresh();}
     if(els.screens?.cases?.classList.contains('active'))renderCases();
     if(els.screens?.collection?.classList.contains('active'))renderCollection();
@@ -4064,15 +4073,19 @@
       scene.reset();
       refresh();renderCollection();renderCases();renderJob();saveState();navigate('play');
       if(signedIn){
-        setStatus('Server reset complete. Updating Cloud Save…','info');
+        setStatus('Server reset complete. Verifying authenticated wallet and levels…','info');
+        const verified=await bridge.getSnapshot?.();
+        if(verified)applyServerCaseSnapshot(verified);
+        refreshEconomyHud();
+        setStatus('Reset verified. Creating a fresh Cloud Save…','info');
         const cloudSynced=await bridge.forceCloudSync?.();
         if(!cloudSynced){
-          setStatus('Progress reset is complete, but Cloud Save did not update yet. Open Profile and press SYNC NOW before restoring from another device.','lose');
+          setStatus('Protected wallet and levels are reset. The old Cloud Save was removed, but the fresh backup could not be written yet. Use SYNC NOW when your connection is stable.','lose');
           return true;
         }
       }
-      setStatus('Fresh pond, fresh start. Progress reset complete.','win');
-      setTimeout(()=>location.reload(),450);
+      setStatus('Fresh pond, fresh start. Wallet and levels reset.','win');
+      setTimeout(()=>location.reload(),650);
       return true;
     }catch(error){
       console.error('Progress reset failed',error);
