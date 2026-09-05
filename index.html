@@ -107,7 +107,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v114.3 · FROGGY LEAP</div>
+          <div class="build-version" aria-label="Installed game version">v114.4 · FROGGY LEAP</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -616,7 +616,7 @@
             <button id="froggyEconomyMigrateButton" class="froggy-economy-button primary pressable hidden" type="button">MIGRATE CURRENT CLOUD SAVE</button>
           </div>
           <p id="froggyEconomyStatus" class="froggy-economy-status" data-state="info" aria-live="polite">Sign in to check Server Economy Phase 3.</p>
-          <p class="froggy-economy-note"><b>Transfers stay locked.</b> Cases, Frog/Lake purchases, Job, Bank, Piggy and Plinko are protected by the server in v114.3. Lily Leap, Crash, vehicles and selling remain staged for the next migration.</p>
+          <p class="froggy-economy-note"><b>Transfers stay locked.</b> Cases, Frog/Lake purchases, Job, Bank, Piggy and Plinko are protected by the server in v114.4. Lily Leap, Crash, vehicles and selling remain staged for the next migration.</p>
         </section>
 
         <section id="froggyFriendsPanel" class="froggy-friends-panel glass" aria-labelledby="froggyFriendsTitle">
@@ -841,12 +841,21 @@
 
     </div>
 
+
+    <div id="transactionPendingToast" class="transaction-pending-toast hidden" role="status" aria-live="polite" aria-atomic="true">
+      <span id="transactionPendingSpinner" class="transaction-pending-spinner" aria-hidden="true"></span>
+      <div>
+        <b id="transactionPendingTitle">TRANSACTION PENDING</b>
+        <small id="transactionPendingDetail">Waiting for Firebase confirmation…</small>
+      </div>
+    </div>
+
     <div id="confettiLayer" class="confetti-layer" aria-hidden="true"></div>
     <div id="flashLayer" class="flash-layer" aria-hidden="true"></div>
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script type="module" src="firebase-account.js?v=1140-bank-piggy-plinko-dev"></script>
-  <script src="app.js?v=1140-bank-piggy-plinko-dev"></script>
+  <script type="module" src="firebase-account.js?v=1144-transaction-latency"></script>
+  <script src="app.js?v=1144-transaction-latency"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v114.3';
+  const BUILD_VERSION = 'v114.4';
   console.info(`Froggy Leap ${BUILD_VERSION} loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
@@ -349,6 +349,7 @@
     levelToast: $('levelToast'), levelToastTitle: $('levelToastTitle'), levelToastBonus: $('levelToastBonus'), loanReminderToast: $('loanReminderToast'), loanReminderTitle: $('loanReminderTitle'), loanReminderAmount: $('loanReminderAmount'),
     milestoneTrack: $('milestoneTrack'), milestoneFill: $('milestoneFill'), goalGrid: $('goalGrid'), goalSummary: $('goalSummary'),
     sessionRoundsStat: $('sessionRoundsStat'), sessionWinsStat: $('sessionWinsStat'), sessionNetStat: $('sessionNetStat'), sessionTimeStat: $('sessionTimeStat'), pondRankLabel: $('pondRankLabel'), achievementGrid: $('achievementGrid'), settingsReminders: $('settingsReminders'),
+    transactionToast:$('transactionPendingToast'), transactionSpinner:$('transactionPendingSpinner'), transactionTitle:$('transactionPendingTitle'), transactionDetail:$('transactionPendingDetail'),
     confetti: $('confettiLayer'), flash: $('flashLayer'), jobPlayfield:$('jobPlayfield'), jobFry:$('jobFry'), jobQueuedFry:$('jobQueuedFry'), jobBag:$('jobBag'), jobIntro:$('jobIntro'), jobStartButton:$('jobStartButton'), jobShiftMoney:$('jobShiftMoney'), jobFriesBagged:$('jobFriesBagged'), jobTimerHud:$('jobTimerHud'), jobTimerLabel:$('jobTimerLabel'), jobBoostLabel:$('jobBoostLabel'), jobLevelLabel:$('jobLevelLabel'), jobPayLabel:$('jobPayLabel'), jobXpFill:$('jobXpFill'), jobXpLabel:$('jobXpLabel'), jobRewardBurst:$('jobRewardBurst'), jobExplosion:$('jobExplosion'), jobResult:$('jobResult'), jobResultClose:$('jobResultClose'), jobResultIcon:$('jobResultIcon'), jobResultTitle:$('jobResultTitle'), jobResultMoney:$('jobResultMoney'), jobResultText:$('jobResultText'), jobAgainButton:$('jobAgainButton'),
     selfTest: $('selfTestResult')
   };
@@ -358,6 +359,36 @@
   function lerp(a,b,t){ return a+(b-a)*t; }
   function easeOutBack(t){ const c1=1.70158,c3=c1+1; return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2); }
   function money(n){ return Math.floor(Number(n)||0).toLocaleString('en-US'); }
+
+  const transactionUiRuntime={token:0,hideTimer:0};
+  function beginTransactionPending(detail='Waiting for Firebase confirmation…',{minimumMs=520}={}){
+    if(!els.transactionToast)return {confirm(){},fail(){}};
+    clearTimeout(transactionUiRuntime.hideTimer);
+    const token=++transactionUiRuntime.token,started=performance.now();
+    els.transactionToast.classList.remove('hidden','confirmed','error');
+    els.transactionTitle.textContent='TRANSACTION PENDING';
+    els.transactionDetail.textContent=detail;
+    const finish=(kind,message)=>{
+      const wait=Math.max(0,minimumMs-(performance.now()-started));
+      setTimeout(()=>{
+        if(token!==transactionUiRuntime.token)return;
+        els.transactionToast.classList.remove('confirmed','error');
+        els.transactionToast.classList.add(kind);
+        els.transactionTitle.textContent=kind==='confirmed'?'TRANSACTION CONFIRMED':'TRANSACTION FAILED';
+        els.transactionDetail.textContent=message;
+        transactionUiRuntime.hideTimer=setTimeout(()=>{if(token===transactionUiRuntime.token)els.transactionToast.classList.add('hidden');},kind==='confirmed'?620:1800);
+      },wait);
+    };
+    return{confirm(message='Firebase confirmed the authoritative transaction.'){finish('confirmed',message);},fail(message='Firebase could not confirm the transaction.'){finish('error',message);}};
+  }
+  function trackTransactionPromise(promise,detail,confirmed='Firebase confirmed the authoritative transaction.',options={}){
+    const ticket=beginTransactionPending(detail,options);
+    return Promise.resolve(promise).then(value=>{ticket.confirm(confirmed);return value;},error=>{ticket.fail(serverCaseFriendlyError(error));throw error;});
+  }
+  function showPostActionTransaction(promise,detail,confirmed){
+    return trackTransactionPromise(promise||Promise.resolve(),detail,confirmed,{minimumMs:520});
+  }
+
 
   function compactMoney(n){
     const value=Math.floor(Number(n)||0),absolute=Math.abs(value);
@@ -1265,6 +1296,7 @@
     const profitable=payout>bet,returned=payout>=bet;if(returned){if(!serverPlinkoActive()||TEST_MODE)state.plinkoWins++;session.wins++;session.lossStreak=0;}else{session.losses++;session.lossStreak++;}
     state.roundBetForXp=bet;const plinkoXp=Math.max(1,Math.floor((8+wagerXpBonus())/5));addXp(plinkoXp);recordXpWager();const profit=payout-bet;
     if(!quiet){setPlinkoStatus(`${multiplier.toFixed(2)}× · ${profit>=0?'+':''}${money(profit)} F · +${plinkoXp} XP`,profitable?'win':returned?'':'lose');flashPlinkoSlot(egg.slot);}
+    if(!TEST_MODE&&serverPlinkoActive()&&plinkoRuntime.eggs.length===0&&serverV114Runtime.plinkoPending===0)void showPostActionTransaction(egg.transactionPromise,'Plinko round finished · checking the authoritative payout…','Plinko bet and payout are confirmed.').catch(()=>{});
     const activeEggs=plinkoRuntime.eggs.length,now=performance.now(),crowded=activeEggs>18;if(!quiet){if(multiplier>=5){audio.reward();if(!crowded)haptic([12,30,20]);if((!crowded||multiplier>=50)&&now-plinkoRuntime.lastCelebrationAt>220){plinkoRuntime.lastCelebrationAt=now;confettiBurst(Math.min(crowded?42:90,24+Math.floor(multiplier)));}}else if(returned){audio.cash();if(!crowded)haptic(12);}else{audio.croak();if(!crowded)haptic(14);}}
   }
   function animatePlinko(now){
@@ -1285,9 +1317,9 @@
     const winningSlots=table.map((m,i)=>m>1?i:-1).filter(i=>i>=0),slot=winningSlots[Math.floor(Math.random()*winningSlots.length)];
     const path=Array(rows).fill(0);for(let i=0;i<slot;i++)path[i]=1;return {path,slot};
   }
-  function launchCommittedPlinkoEgg({bet,risk,path,slot,multiplier,payout,protectedRound=false}){
+  function launchCommittedPlinkoEgg({bet,risk,path,slot,multiplier,payout,protectedRound=false,transactionPromise=Promise.resolve()}){
     if(!plinkoRuntime.layout||plinkoRuntime.layout.risk!==risk)resizePlinkoCanvas();
-    const rows=plinkoRows(risk),egg={id:plinkoRuntime.nextId++,bet,risk,rows,path,slot,multiplier,payout,protected:protectedRound};
+    const rows=plinkoRows(risk),egg={id:plinkoRuntime.nextId++,bet,risk,rows,path,slot,multiplier,payout,protected:protectedRound,transactionPromise};
     primePlinkoEggPhysics(egg,plinkoRuntime.layout||plinkoLayout(risk));plinkoRuntime.eggs.push(egg);state.plinkoActive=true;if(!serverPlinkoActive()||TEST_MODE)state.plinkoDrops++;session.net-=bet;
     if(!plinkoBankRoundRuntime.active)startPlinkoBankRound();setPlinkoStatus(`${protectedRound?'🛡️ Protected · ':''}${plinkoRuntime.eggs.length} egg${plinkoRuntime.eggs.length===1?'':'s'} in flight · server result locked.`,protectedRound?'win':'');
     if(plinkoRuntime.eggs.length<=12||plinkoRuntime.eggs.length%4===0)audio.start();if(plinkoRuntime.eggs.length<=12)haptic(protectedRound?[9,20,9]:9);
@@ -1301,13 +1333,14 @@
       if(!serverPlinkoActive()){setPlinkoStatus('Server Economy Phase 4 is required for Plinko in v114.','lose');return false;}
       const bridge=window.FroggyServerEconomy;if(!bridge?.dropPlinko){setPlinkoStatus('The v114 Plinko backend bridge is unavailable.','lose');return false;}
       serverV114Runtime.plinkoPending++;refreshPlinkoHud();setPlinkoStatus(`🔒 Server is locking a ${money(bet)} F ${risk.toUpperCase()} result…`);
-      void bridge.dropPlinko(bet,risk,bridge.requestId?.('plinko')).then(result=>{
+      const plinkoCommitPromise=bridge.dropPlinko(bet,risk,bridge.requestId?.('plinko'));
+      void plinkoCommitPromise.then(result=>{
         const outcome=result?.outcome||result?.plinko||result;
         const path=Array.isArray(outcome?.path)?outcome.path.map(v=>v?1:0):null,rows=plinkoRows(risk),slot=Math.floor(Number(outcome?.slot));
         const multiplier=Number(outcome?.multiplier),payout=Math.max(0,Math.floor(Number(outcome?.payout)||0));
         if(!path||path.length!==rows||!Number.isInteger(slot)||slot<0||slot>=plinkoTable(risk).length||!Number.isFinite(multiplier))throw new Error('Server returned an invalid Plinko outcome.');
         if(result?.economy)applyServerCaseSnapshot(result.economy);else{const cached=bridge.getCachedSnapshot?.();if(cached)applyServerCaseSnapshot(cached);}
-        launchCommittedPlinkoEgg({bet,risk,path,slot,multiplier,payout,protectedRound:false});
+        launchCommittedPlinkoEgg({bet,risk,path,slot,multiplier,payout,protectedRound:false,transactionPromise:plinkoCommitPromise});
       }).catch(error=>{setPlinkoStatus(serverCaseFriendlyError(error),'lose');void syncServerCases({quiet:true});}).finally(()=>{serverV114Runtime.plinkoPending=Math.max(0,serverV114Runtime.plinkoPending-1);refreshPlinkoHud();});
       return true;
     }
@@ -1817,7 +1850,8 @@
       serverV114Runtime.piggyBusy=true;updatePiggyTransferControls();
       setPiggyMessage(`Server is ${piggyTransferMode==='deposit'?'depositing':'withdrawing'} ${money(amount)} F…`);
       const mode=piggyTransferMode;
-      void bridge.piggyTransfer(mode,amount,bridge.requestId?.('piggy')).then(result=>{
+      const piggyPromise=trackTransactionPromise(bridge.piggyTransfer(mode,amount,bridge.requestId?.('piggy')),`${mode==='deposit'?'Depositing to':'Withdrawing from'} authoritative Piggy…`,'Piggy transaction confirmed.');
+      void piggyPromise.then(result=>{
         if(result?.economy)applyServerCaseSnapshot(result.economy);else{const cached=bridge.getCachedSnapshot?.();if(cached)applyServerCaseSnapshot(cached);}
         piggyTransferAmount=0;setPiggyTransferAmount(0);audio.coin();haptic(16);
         setPiggyMessage(mode==='deposit'?`Deposited ${money(amount)} F into authoritative Piggy savings.`:`Withdrew ${money(amount)} F to the authoritative wallet.`,'success');refresh();
@@ -2211,7 +2245,7 @@
     if(!bridge?.takeBankLoan){setDebtMessage('The v114 Bank backend bridge is unavailable.','error');return false;}
     serverV114Runtime.bankBusy=true;refresh();setDebtMessage(`Server is validating ${money(amount)} F and its collateral…`);
     try{
-      const result=await bridge.takeBankLoan(amount,selected,bridge.requestId?.('loan'));
+      const result=await trackTransactionPromise(bridge.takeBankLoan(amount,selected,bridge.requestId?.('loan')),'Validating collateral and committing the authoritative Bank loan…','Bank loan transaction confirmed.');
       if(result?.economy)applyServerCaseSnapshot(result.economy);else{const cached=bridge.getCachedSnapshot?.();if(cached)applyServerCaseSnapshot(cached);}
       setDebtMessage(`Authoritative loan received: ${money(amount)} F. The server owns the debt, collateral, interest, and repayment state.`,'success');setStatus(`Server Bank loan received: +${money(amount)} F.`,'win');audio.coin();haptic([12,30,12]);refresh();return true;
     }catch(error){setDebtMessage(serverCaseFriendlyError(error),'error');void syncServerCases({quiet:true});return false;}
@@ -2252,7 +2286,8 @@
       if(!serverBankActive()||serverV114Runtime.bankBusy){setDebtMessage('Authoritative Bank is not ready for this payment.','error');return false;}
       const bridge=window.FroggyServerEconomy;if(!bridge?.repayBankLoan){setDebtMessage('The v114 Bank repayment bridge is unavailable.','error');return false;}
       serverV114Runtime.bankBusy=true;refresh();setDebtMessage(`Server is processing ${all?'full payoff':'the next payment'}…`);
-      void bridge.repayBankLoan(all?'all':'installment',bridge.requestId?.('repay')).then(result=>{
+      const repaymentPromise=trackTransactionPromise(bridge.repayBankLoan(all?'all':'installment',bridge.requestId?.('repay')),all?'Committing authoritative Bank payoff…':'Committing authoritative Bank payment…',all?'Bank payoff confirmed.':'Bank payment confirmed.');
+      void repaymentPromise.then(result=>{
         if(result?.economy)applyServerCaseSnapshot(result.economy);else{const cached=bridge.getCachedSnapshot?.();if(cached)applyServerCaseSnapshot(cached);}
         setDebtMessage(all?'Authoritative loan payoff completed and collateral released.':'Authoritative installment paid.','success');audio.cash();haptic(18);refresh();
       }).catch(error=>{setDebtMessage(serverCaseFriendlyError(error),'error');void syncServerCases({quiet:true});}).finally(()=>{serverV114Runtime.bankBusy=false;refresh();});
@@ -2688,7 +2723,7 @@
     queued:null,shiftRoundCounted:false,lastDebtResult:null,pendingMoneyBoosts:0,pendingXpBoosts:0,
     shiftEndsAt:0,rimCooldownUntil:0,rewardTimer:0,spawnTimer:0,
     serverSessionId:'',serverNextType:'',serverBusy:false,serverExpiresAtMs:0,
-    serverFryQueue:[],serverActionChain:Promise.resolve(),serverPendingActions:0,serverPendingBags:0,serverPendingRewards:[],serverActionFailed:false
+    serverFryQueue:[],serverActionChain:Promise.resolve(),serverSettlementPromise:Promise.resolve(),serverPendingActions:0,serverPendingBags:0,serverPendingRewards:[],serverActionFailed:false
   };
   function jobXpNeeded(level=state.jobLevel){return 100+Math.max(0,level-1)*40;}
   function jobPay(){const level=Math.max(1,Number(state.jobLevel)||1);return 15+Math.floor(4*Math.sqrt(Math.max(0,level-1)));}
@@ -3114,7 +3149,8 @@
   }
   function endJobShift(reason='miss',alreadyStopped=false){
     if(!jobRuntime.active&&!alreadyStopped)return;
-    if(serverJobActive()&&!TEST_MODE&&jobRuntime.serverSessionId){const bridge=window.FroggyServerEconomy,sessionId=jobRuntime.serverSessionId,chain=jobRuntime.serverActionChain;jobRuntime.serverSessionId='';jobRuntime.serverNextType='';jobRuntime.serverFryQueue=[];if(bridge?.endJob)void Promise.resolve(chain).catch(()=>{}).then(()=>bridge.endJob(sessionId,reason,bridge.requestId?.('jobend'))).catch(()=>{});}
+    let jobSettlementPromise=Promise.resolve();
+    if(serverJobActive()&&!TEST_MODE&&jobRuntime.serverSessionId){const bridge=window.FroggyServerEconomy,sessionId=jobRuntime.serverSessionId,chain=jobRuntime.serverActionChain;jobRuntime.serverSessionId='';jobRuntime.serverNextType='';jobRuntime.serverFryQueue=[];if(bridge?.endJob){jobSettlementPromise=Promise.resolve(chain).then(()=>bridge.endJob(sessionId,reason,bridge.requestId?.('jobend')));jobRuntime.serverSettlementPromise=jobSettlementPromise;}}
     jobRuntime.active=false;jobRuntime.dragging=false;jobRuntime.falling=false;jobRuntime.resolving=true;jobRuntime.shiftEndsAt=0;
     cancelAnimationFrame(jobRuntime.raf);clearTimeout(jobRuntime.spawnTimer);els.jobFry.classList.add('hidden');hideQueuedJobFry();
     finishJobShiftRound('loss');
@@ -3126,14 +3162,15 @@
     const frySummary=`You bagged ${money(jobRuntime.fries)} ${jobRuntime.fries===1?'fry':'fries'} and made ${money(jobRuntime.shiftMoney)} F.`;
     const reasonText=reason==='bomb'?'A bomb landed in the bag.':timedOut?'The timer reached zero.':quit?'You left the shift.':serverError?'The protected Job session could not continue.':'A fry missed the bag.';
     els.jobResultText.textContent=`${reasonText} ${frySummary}${jobRuntime.lastDebtResult?` ${jobRuntime.lastDebtResult.message}`:''}`;
-    setTimeout(()=>els.jobResult.classList.remove('hidden'),reason==='bomb'?220:0);
+    const resultDelay=reason==='bomb'?220:0;
+    setTimeout(()=>{els.jobResult.classList.remove('hidden');if(serverJobActive()&&!TEST_MODE)void showPostActionTransaction(jobSettlementPromise,'Job shift finished · finalizing queued rewards and the authoritative shift…','Job rewards and shift settlement are confirmed.').catch(error=>{jobRuntime.serverActionFailed=true;setStatus(serverCaseFriendlyError(error),'lose');void syncServerCases({quiet:true});});},resultDelay);
     refresh();renderJob();saveState();
   }
   function restoreJobIdleScreen(){
     if(jobRuntime.active)return;
     cancelAnimationFrame(jobRuntime.raf);clearTimeout(jobRuntime.spawnTimer);clearTimeout(jobRuntime.rewardTimer);
     jobRuntime.dragging=false;jobRuntime.falling=false;jobRuntime.resolving=false;jobRuntime.queued=null;
-    jobRuntime.shiftMoney=0;jobRuntime.fries=0;jobRuntime.shiftEndsAt=0;jobRuntime.shiftRoundCounted=false;jobRuntime.lastDebtResult=null;jobRuntime.serverSessionId='';jobRuntime.serverNextType='';jobRuntime.serverExpiresAtMs=0;jobRuntime.serverBusy=false;jobRuntime.serverFryQueue=[];jobRuntime.serverActionChain=Promise.resolve();jobRuntime.serverPendingActions=0;jobRuntime.serverPendingBags=0;jobRuntime.serverPendingRewards=[];jobRuntime.serverActionFailed=false;
+    jobRuntime.shiftMoney=0;jobRuntime.fries=0;jobRuntime.shiftEndsAt=0;jobRuntime.shiftRoundCounted=false;jobRuntime.lastDebtResult=null;jobRuntime.serverSessionId='';jobRuntime.serverNextType='';jobRuntime.serverExpiresAtMs=0;jobRuntime.serverBusy=false;jobRuntime.serverFryQueue=[];jobRuntime.serverActionChain=Promise.resolve();jobRuntime.serverSettlementPromise=Promise.resolve();jobRuntime.serverPendingActions=0;jobRuntime.serverPendingBags=0;jobRuntime.serverPendingRewards=[];jobRuntime.serverActionFailed=false;
     jobRuntime.moneyBoostUntil=0;jobRuntime.xpBoostUntil=0;jobRuntime.moneyBoostMultiplier=1;jobRuntime.xpBoostMultiplier=1;
     els.jobFry.classList.add('hidden');els.jobBag.classList.add('hidden');hideQueuedJobFry();
     els.jobIntro.classList.remove('hidden');renderJob();
@@ -3305,7 +3342,7 @@
     const bridge=window.FroggyServerEconomy;if(!bridge?.buyCases){setStatus('Server Cases bridge is not ready. Refresh Froggy Leap and try again.','lose');return false;}
     serverCaseRuntime.busy=true;renderCases();setStatus(`Server is buying ${qty} ${item.name}${qty===1?'':'s'}…`,'info');
     try{
-      const requestId=bridge.requestId?.('buy')||undefined,result=await bridge.buyCases(item.id,qty,requestId);
+      const requestId=bridge.requestId?.('buy')||undefined,result=await trackTransactionPromise(bridge.buyCases(item.id,qty,requestId),`Purchasing ${qty} ${item.name}${qty===1?'':'s'} on the authoritative wallet…`,'Case purchase confirmed.');
       mergeServerCaseResult(result);mirrorLocalCaseSpend(total);refreshEconomyHud();saveState();renderCases();audio.cash();haptic(10);
       setStatus(`🔒 SERVER PURCHASE · Bought ${qty} ${item.name}${qty===1?'':'s'} · ${money(serverCaseInventoryCount(item.id))} authoritative owned.`,'win');return true;
     }catch(error){serverCaseRuntime.lastError=serverCaseFriendlyError(error);if(caseOpeningRuntime.phase==='server-lock')hideCaseOpening();setStatus(serverCaseRuntime.lastError,'lose');void syncServerCases({quiet:true});return false;}
@@ -3334,7 +3371,7 @@
     els.caseHistoryList.innerHTML=history.map(entry=>{const frog=FROGS.find(f=>f.id===entry.frogId),item=caseById(entry.caseId);if(!frog||!item)return'';return `<div class="case-history-row"><span>${item.emoji}</span><div><b>${frog.name}</b><small>${item.name} · ${frog.rarity}</small></div><strong>${entry.duplicate?`+${money(entry.duplicateCredit)} F`:'NEW'}</strong></div>`;}).join('');
   }
 
-  const caseOpeningRuntime={active:false,phase:'idle',raf:0,timers:[],item:null,frog:null,results:null,quantity:1,duplicate:false,duplicateCredit:0,winnerIndex:0,landingFraction:.5,startFraction:.5,spinDuration:0,easingPower:4.25,lastTickIndex:-1,lastTickAt:0,lastHapticAt:0};
+  const caseOpeningRuntime={active:false,phase:'idle',raf:0,timers:[],item:null,frog:null,results:null,quantity:1,duplicate:false,duplicateCredit:0,winnerIndex:0,landingFraction:.5,startFraction:.5,spinDuration:0,easingPower:4.25,lastTickIndex:-1,lastTickAt:0,lastHapticAt:0,serverCommitPromise:Promise.resolve()};
   function caseRarityClass(rarity){return String(rarity||'COMMON').toLowerCase().replace(/[^a-z0-9]+/g,'-');}
   function clearCaseOpeningWork(){
     if(caseOpeningRuntime.raf)cancelAnimationFrame(caseOpeningRuntime.raf);caseOpeningRuntime.raf=0;
@@ -3365,7 +3402,7 @@
     els.caseOpeningReel.innerHTML=laneMarkup;
   }
   function hideCaseOpening(){
-    clearCaseOpeningWork();caseOpeningRuntime.active=false;caseOpeningRuntime.phase='idle';caseOpeningRuntime.results=null;caseOpeningRuntime.quantity=1;state.animating=false;
+    clearCaseOpeningWork();caseOpeningRuntime.active=false;caseOpeningRuntime.phase='idle';caseOpeningRuntime.results=null;caseOpeningRuntime.quantity=1;caseOpeningRuntime.serverCommitPromise=Promise.resolve();state.animating=false;
     els.caseOpeningOverlay.classList.add('hidden');els.caseOpeningOverlay.className='case-opening-overlay hidden';
     els.caseOpeningClose.classList.add('hidden');els.caseOpeningSkip.classList.add('hidden');
     els.caseOpeningChest.querySelector('b').textContent='UNLOCKING';
@@ -3394,6 +3431,7 @@
     audio.caseReveal(frog.rarity);haptic(rank>=5?[35,45,70,55,110]:rank>=4?[25,35,55]:[18,25,35]);
     if(state.effects){confettiBurst(rank>=5?100:rank>=4?70:rank>=3?48:28);screenFeedback('win');}
     refresh();renderCases();saveState();
+    if(!TEST_MODE)void showPostActionTransaction(caseOpeningRuntime.serverCommitPromise,'Case opening finished · checking the authoritative ledger…','Case result and wallet are confirmed.').catch(()=>{});
   }
   function finishMultiCaseOpeningReveal(){
     if(!caseOpeningRuntime.active||caseOpeningRuntime.phase==='reveal')return;
@@ -3413,6 +3451,7 @@
     if(best){audio.caseReveal(best.frog.rarity);haptic(bestRank>=5?[35,45,70,55,110]:bestRank>=4?[25,35,55]:[18,25,35]);}
     if(state.effects){confettiBurst(bestRank>=5?110:bestRank>=4?78:52);screenFeedback('win');}
     refresh();renderCases();saveState();
+    if(!TEST_MODE)void showPostActionTransaction(caseOpeningRuntime.serverCommitPromise,`${results.length} Case openings finished · checking the authoritative ledger…`,'All Case results and wallet changes are confirmed.').catch(()=>{});
   }
   function skipCaseOpening(){if(caseOpeningRuntime.active&&caseOpeningRuntime.phase!=='reveal'){if(caseOpeningRuntime.quantity>1)finishMultiCaseOpeningReveal();else finishCaseOpeningReveal();}}
   function animateCaseOpeningReel(){
@@ -3528,7 +3567,7 @@
     const bridge=window.FroggyServerEconomy;if(!bridge?.openCases){setStatus('Server Cases bridge is not ready. Refresh Froggy Leap and try again.','lose');return false;}
     serverCaseRuntime.busy=true;renderCases();beginServerCaseLock(item,qty);setStatus(`🔒 Server is locking ${qty===1?'the result':`${qty} results`}…`,'info');
     try{
-      const requestId=bridge.requestId?.('open')||undefined,result=await bridge.openCases(item.id,qty,requestId),rawResults=Array.isArray(result?.results)?result.results:[];
+      const requestId=bridge.requestId?.('open')||undefined;caseOpeningRuntime.serverCommitPromise=bridge.openCases(item.id,qty,requestId);const result=await caseOpeningRuntime.serverCommitPromise,rawResults=Array.isArray(result?.results)?result.results:[];
       if(rawResults.length!==qty)throw new Error('Server returned an incomplete Case result. No local reroll was performed.');
       mergeServerCaseResult(result);mirrorLocalCaseCredit(result?.duplicateTotal||0);
       const results=rawResults.map(entry=>{const frog=FROGS.find(f=>f.id===entry.frogId);if(!frog)throw new Error('Server returned an unknown frog.');return {caseId:item.id,frogId:frog.id,frog,duplicate:Boolean(entry.duplicate),duplicateCredit:Math.max(0,Math.floor(Number(entry.duplicateCredit)||0))};});
@@ -3674,7 +3713,7 @@
       const bridge=window.FroggyServerEconomy;if(!bridge?.buyCollection){setStatus('Server Collection bridge is unavailable. Refresh Froggy Leap.','lose');return false;}
       setStatus(`🔒 Server is purchasing ${item.name}…`,'info');
       try{
-        const kind=collectionMode==='frogs'?'frog':'lake',result=await bridge.buyCollection(kind,id,bridge.requestId?.('shop'));
+        const kind=collectionMode==='frogs'?'frog':'lake',result=await trackTransactionPromise(bridge.buyCollection(kind,id,bridge.requestId?.('shop')),`Purchasing ${item.name} on the authoritative wallet…`,`${item.name} purchase confirmed.`);
         mergeServerCaseResult(result);
         state[selectKey]=id;
         // Mirror only the spend into the legacy local wallet so staged local systems do not gain value from a server purchase.
