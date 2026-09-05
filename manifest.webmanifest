@@ -1,7 +1,7 @@
 {
   "name": "Froggy Leap",
   "short_name": "Froggy Leap",
-  "description": "Froggy Leap v114.2 with server-authoritative Bank, Piggy and Plinko while preserving the v113 authoritative Cases, Collection and Job pipeline.",
+  "description": "Froggy Leap v114.3 with server-authoritative Bank, Piggy and Plinko while preserving the v113 authoritative Cases, Collection and Job pipeline.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

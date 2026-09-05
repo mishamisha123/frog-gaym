@@ -96,7 +96,7 @@ const economyStatus = byId('froggyEconomyStatus');
 const GAME_STORAGE_KEY = 'froggy-leap-deluxe-v3';
 const CLOUD_DEVICE_KEY = 'froggy-cloud-device-v1';
 const CLOUD_META_PREFIX = 'froggy-cloud-meta-v1:';
-const CLOUD_BUILD_VERSION = 'v114.2';
+const CLOUD_BUILD_VERSION = 'v114.3';
 const CLOUD_AUTOSAVE_DELAY_MS = 12000;
 
 let auth;
@@ -125,7 +125,7 @@ let cloudBusy = false;
 let serverEconomySnapshot = null;
 let serverEconomyBusy = false;
 let serverEconomyUnsub = null;
-const SERVER_ECONOMY_VERSION = 'v114.2-hud-reset-fix';
+const SERVER_ECONOMY_VERSION = 'v114.3-true-authoritative-reset';
 
 function setStatus(message, type = 'info') {
   if (!status) return;

@@ -3,7 +3,7 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v114.2';
+  const BUILD_VERSION = 'v114.3';
   console.info(`Froggy Leap ${BUILD_VERSION} loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
@@ -4054,49 +4054,46 @@
   function toggleSound(){state.sound=!state.sound;audio.enabled=state.sound;if(state.sound)audio.tap();refresh();}
   async function resetProgress(){
     if(anyRoundActive()||state.animating||caseOpeningRuntime.active){setStatus('Finish the current game or Case opening before resetting progress.','lose');return false;}
-    const bridge=window.FroggyServerEconomy,signedIn=Boolean(bridge?.isSignedIn?.());
-    const warning=signedIn
-      ? 'Reset ALL Froggy Leap progress? This resets your protected server wallet, Cases, Frogs/Lakes, Job, Bank, Piggy and Plinko, plus this device\'s local Leap/Crash progress. Your Froggy account, username and friends stay connected. This cannot be undone.'
-      : 'Reset this device\'s Froggy Leap progress? You are not signed in, so only the local browser save will be reset. This cannot be undone.';
+    const bridge=window.FroggyServerEconomy;
+    const cached=bridge?.getCachedSnapshot?.();
+    const protectedEconomy=Boolean(cached||serverCaseRuntime.ready||serverPhase3Active());
+    const warning=protectedEconomy
+      ? 'Reset ALL Froggy Leap progress? Firebase authoritative wallet, Player Level/XP, Job Level/XP, Cases, Frogs/Lakes, Bank, Piggy and Plinko will be reset FIRST. Local progress is cleared only after Firebase confirms the reset. Your account, username, friends and Owner role stay connected. This cannot be undone.'
+      : "Reset this device's local Froggy Leap progress? No authoritative Server Economy is currently connected. This cannot be undone.";
     if(!confirm(warning))return false;
     const button=$('resetButton');if(button)button.disabled=true;
     try{
-      if(signedIn){
-        if(!bridge?.resetProgress)throw new Error('Server reset is not available yet. Deploy the matching v114.1 Firebase hotfix first.');
-        setStatus('Resetting protected server progress…','info');
+      if(protectedEconomy){
+        if(!bridge?.resetProgress||!bridge?.getSnapshot)throw new Error('v114.3 server reset bridge is unavailable. Local progress was NOT erased.');
+        setStatus('Resetting Firebase authoritative wallet and levels…','info');
         const requestId=bridge.requestId?.('reset')||undefined;
-        const result=await bridge.resetProgress(requestId);
-        if(result?.economy)applyServerCaseSnapshot(result.economy);
+        const resetResult=await bridge.resetProgress(requestId);
+        const verified=await bridge.getSnapshot();
+        const verifiedWallet=Math.max(0,Math.floor(Number(verified?.wallet)||0));
+        const verifiedLevel=Math.max(1,Math.floor(Number(verified?.level)||1));
+        const verifiedXp=Math.max(0,Math.floor(Number(verified?.xp)||0));
+        const verifiedJobLevel=Math.max(1,Math.floor(Number(verified?.jobLevel)||1));
+        const verifiedJobXp=Math.max(0,Math.floor(Number(verified?.jobXp)||0));
+        const verifiedPiggy=Math.max(0,Math.floor(Number(verified?.piggyBalance)||0));
+        const verifiedDebt=Math.max(0,Math.floor(Number(verified?.debt)||0));
+        const confirmed=resetResult?.verifiedAuthoritativeReset===true&&verifiedWallet===1000&&verifiedLevel===1&&verifiedXp===0&&verifiedJobLevel===1&&verifiedJobXp===0&&verifiedPiggy===0&&verifiedDebt===0;
+        if(!confirmed){if(verified)applyServerCaseSnapshot(verified);refreshEconomyHud();throw new Error(`AUTHORITATIVE RESET NOT CONFIRMED · Firebase still reports ${money(verifiedWallet)} F · Player Lv ${verifiedLevel} · Job Lv ${verifiedJobLevel}. Local progress was NOT erased.`);}
+        applyServerCaseSnapshot(verified);refreshEconomyHud();setStatus('Firebase confirmed: 1,000 F · Player Lv 1 · Job Lv 1. Resetting local progress…','win');
       }
-      state=deepClone(DEFAULT_STATE);
-      localStorage.removeItem(STORAGE_KEY);
-      scene.reset();
-      refresh();renderCollection();renderCases();renderJob();saveState();navigate('play');
-      if(signedIn){
-        setStatus('Server reset complete. Verifying authenticated wallet and levels…','info');
-        const verified=await bridge.getSnapshot?.();
-        if(verified)applyServerCaseSnapshot(verified);
-        refreshEconomyHud();
-        setStatus('Reset verified. Creating a fresh Cloud Save…','info');
+      state=deepClone(DEFAULT_STATE);localStorage.removeItem(STORAGE_KEY);scene.reset();refresh();renderCollection();renderCases();renderJob();saveState();navigate('play');
+      if(protectedEconomy){
         const cloudSynced=await bridge.forceCloudSync?.();
-        if(!cloudSynced){
-          setStatus('Protected wallet and levels are reset. The old Cloud Save was removed, but the fresh backup could not be written yet. Use SYNC NOW when your connection is stable.','lose');
-          return true;
-        }
+        if(!cloudSynced){setStatus('Authoritative reset is complete, but the fresh Cloud Save backup could not be written yet. Use SYNC NOW later.','lose');return true;}
+        const finalSnapshot=await bridge.getSnapshot();
+        const finalWallet=Math.max(0,Math.floor(Number(finalSnapshot?.wallet)||0));
+        const finalLevel=Math.max(1,Math.floor(Number(finalSnapshot?.level)||1));
+        const finalJobLevel=Math.max(1,Math.floor(Number(finalSnapshot?.jobLevel)||1));
+        if(finalWallet!==1000||finalLevel!==1||finalJobLevel!==1){if(finalSnapshot)applyServerCaseSnapshot(finalSnapshot);refreshEconomyHud();throw new Error(`FINAL RESET CHECK FAILED · Firebase reports ${money(finalWallet)} F · Player Lv ${finalLevel} · Job Lv ${finalJobLevel}.`);}
+        if(finalSnapshot)applyServerCaseSnapshot(finalSnapshot);refreshEconomyHud();
       }
-      setStatus('Fresh pond, fresh start. Wallet and levels reset.','win');
-      setTimeout(()=>location.reload(),650);
-      return true;
-    }catch(error){
-      console.error('Progress reset failed',error);
-      const message=String(error?.message||'');
-      setStatus(message.includes('v114.1')?message:'Reset was stopped because the protected server progress could not be reset. Nothing local was erased.','lose');
-      return false;
-    }finally{
-      if(button)button.disabled=false;
-    }
+      setStatus('Reset complete · authoritative wallet 1,000 F · Player Lv 1 · Job Lv 1.','win');setTimeout(()=>location.reload(),650);return true;
+    }catch(error){console.error('Progress reset failed',error);setStatus(String(error?.message||'Reset failed.'),'lose');return false;}finally{if(button)button.disabled=false;}
   }
-
   function installGame(){
     if(installPrompt){installPrompt.prompt();installPrompt.userChoice.finally(()=>{installPrompt=null;els.installButton.classList.add('hidden');});}
     else openModal(els.installModal);
