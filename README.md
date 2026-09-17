@@ -1,22 +1,25 @@
-# Froggy Leap v114.7 — RECOVERY WEBSITE
+# Froggy Leap v114.8 — FULL RECOVERY WEBSITE
 
-Website-only recovery built from the last user-confirmed working v114.3 frontend.
+This is paired with the v114.8 Firebase recovery backend.
 
-This intentionally removes the v114.4/v114.5/v114.6 latency/gateway/transaction-status frontend experiments. It restores the proven dedicated Firebase callable paths for Cases, Plinko, Job, Collection, Bank and Piggy, plus the working authoritative Reset/HUD behavior from v114.3.
+It uses the last known-working v114.3 gameplay/client integration and a fresh cache version.
+The transaction-delay/shared-gateway experiment is removed.
 
-NO FIREBASE DEPLOYMENT IS REQUIRED if a v114.x backend is already live.
+DEPLOY ORDER:
+1. Deploy the v114.8 Firebase recovery package first.
+2. Wait for `Deploy complete!`.
+3. Extract this ZIP.
+4. Upload all extracted files/folders to the GitHub Pages repository root.
+5. Replace the existing website files.
+6. Commit.
+7. Open refresh.html and refresh/clear the installed PWA/browser cache.
 
-GitHub deployment:
-1. Extract this ZIP.
-2. Upload ALL extracted files/folders to the GitHub Pages repository root.
-3. Replace the current website files.
-4. Commit.
-5. Open refresh.html.
-6. Hard-refresh/reopen the game.
+Test in this order:
+- authoritative wallet/level loads
+- open one Case
+- make one small Plinko bet
+- Job
+- Piggy
+- Bank
 
-Standard Firebase commands for any future backend release:
-cd functions
-npm install
-cd ..
-firebase.cmd use froggyleap-f59a8
-firebase.cmd deploy --only functions
+Do not re-run Cloud Save migration and do not change adminRoles.
