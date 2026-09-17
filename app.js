@@ -3,7 +3,7 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v114.4';
+  const BUILD_VERSION = 'v114.5';
   console.info(`Froggy Leap ${BUILD_VERSION} loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
@@ -361,22 +361,24 @@
   function money(n){ return Math.floor(Number(n)||0).toLocaleString('en-US'); }
 
   const transactionUiRuntime={token:0,hideTimer:0};
-  function beginTransactionPending(detail='Waiting for Firebase confirmation…',{minimumMs=520}={}){
+  function beginTransactionPending(detail='Waiting for Firebase confirmation…',{minimumMs=420}={}){
     if(!els.transactionToast)return {confirm(){},fail(){}};
     clearTimeout(transactionUiRuntime.hideTimer);
     const token=++transactionUiRuntime.token,started=performance.now();
     els.transactionToast.classList.remove('hidden','confirmed','error');
-    els.transactionTitle.textContent='TRANSACTION PENDING';
-    els.transactionDetail.textContent=detail;
+    els.transactionTitle.textContent='Transaction pending…';
+    if(els.transactionDetail)els.transactionDetail.textContent=detail;
+    els.transactionToast.title=detail;
     const finish=(kind,message)=>{
       const wait=Math.max(0,minimumMs-(performance.now()-started));
       setTimeout(()=>{
         if(token!==transactionUiRuntime.token)return;
         els.transactionToast.classList.remove('confirmed','error');
         els.transactionToast.classList.add(kind);
-        els.transactionTitle.textContent=kind==='confirmed'?'TRANSACTION CONFIRMED':'TRANSACTION FAILED';
-        els.transactionDetail.textContent=message;
-        transactionUiRuntime.hideTimer=setTimeout(()=>{if(token===transactionUiRuntime.token)els.transactionToast.classList.add('hidden');},kind==='confirmed'?620:1800);
+        els.transactionTitle.textContent=kind==='confirmed'?'Transaction saved':'Transaction failed';
+        if(els.transactionDetail)els.transactionDetail.textContent=message;
+        els.transactionToast.title=message;
+        transactionUiRuntime.hideTimer=setTimeout(()=>{if(token===transactionUiRuntime.token)els.transactionToast.classList.add('hidden');},kind==='confirmed'?480:1500);
       },wait);
     };
     return{confirm(message='Firebase confirmed the authoritative transaction.'){finish('confirmed',message);},fail(message='Firebase could not confirm the transaction.'){finish('error',message);}};
@@ -1332,7 +1334,7 @@
     if(!TEST_MODE){
       if(!serverPlinkoActive()){setPlinkoStatus('Server Economy Phase 4 is required for Plinko in v114.','lose');return false;}
       const bridge=window.FroggyServerEconomy;if(!bridge?.dropPlinko){setPlinkoStatus('The v114 Plinko backend bridge is unavailable.','lose');return false;}
-      serverV114Runtime.plinkoPending++;refreshPlinkoHud();setPlinkoStatus(`🔒 Server is locking a ${money(bet)} F ${risk.toUpperCase()} result…`);
+      serverV114Runtime.plinkoPending++;refreshPlinkoHud();setPlinkoStatus(`Preparing ${money(bet)} F ${risk.toUpperCase()} drop…`);
       const plinkoCommitPromise=bridge.dropPlinko(bet,risk,bridge.requestId?.('plinko'));
       void plinkoCommitPromise.then(result=>{
         const outcome=result?.outcome||result?.plinko||result;
@@ -3545,10 +3547,10 @@
     state.animating=true;
     els.caseOpeningOverlay.className=`case-opening-overlay phase-intro ${qty>1?'case-opening-multi-active ':''}case-opening-case-${item.accent}`;
     els.caseOpeningClose.classList.add('hidden');els.caseOpeningSkip.classList.add('hidden');
-    els.caseOpeningChest.classList.remove('hidden','case-opening-chest-open');els.caseOpeningChest.querySelector('b').textContent=qty===1?'LOCKING RESULT':`LOCKING ${qty} RESULTS`;
+    els.caseOpeningChest.classList.remove('hidden','case-opening-chest-open');els.caseOpeningChest.querySelector('b').textContent=qty===1?'OPENING':'OPENING CASES';
     els.caseOpeningReelWrap.classList.add('hidden');els.caseOpeningResult.className='case-opening-result hidden';els.caseOpeningResult.innerHTML='';
-    els.caseOpeningKicker.textContent='🔒 SERVER CASE';els.caseOpeningTitle.textContent=qty===1?item.name:`${item.name} × ${qty}`;
-    els.caseOpeningSubtitle.textContent='Firebase is committing the outcome. The reel starts as soon as the authoritative result is locked.';els.caseOpeningChestEmoji.textContent=item.emoji;
+    els.caseOpeningKicker.textContent='FROGGY CASE OPENING';els.caseOpeningTitle.textContent=qty===1?item.name:`${item.name} × ${qty}`;
+    els.caseOpeningSubtitle.textContent='Getting the reel ready…';els.caseOpeningChestEmoji.textContent=item.emoji;
     audio.start();haptic(10);
   }
 
@@ -3565,7 +3567,7 @@
     if(!serverCasesActive()&&!await syncServerCases())return false;
     const stock=serverCaseInventoryCount(item.id);if(stock<qty){setStatus(`SERVER INVENTORY needs ${money(qty-stock)} more ${item.name}${qty-stock===1?'':'s'} for OPEN ${qty}.`,'lose');renderCases();return false;}
     const bridge=window.FroggyServerEconomy;if(!bridge?.openCases){setStatus('Server Cases bridge is not ready. Refresh Froggy Leap and try again.','lose');return false;}
-    serverCaseRuntime.busy=true;renderCases();beginServerCaseLock(item,qty);setStatus(`🔒 Server is locking ${qty===1?'the result':`${qty} results`}…`,'info');
+    serverCaseRuntime.busy=true;renderCases();beginServerCaseLock(item,qty);setStatus(`Opening ${qty} ${item.name}${qty===1?'':'s'}…`,'info');
     try{
       const requestId=bridge.requestId?.('open')||undefined;caseOpeningRuntime.serverCommitPromise=bridge.openCases(item.id,qty,requestId);const result=await caseOpeningRuntime.serverCommitPromise,rawResults=Array.isArray(result?.results)?result.results:[];
       if(rawResults.length!==qty)throw new Error('Server returned an incomplete Case result. No local reroll was performed.');

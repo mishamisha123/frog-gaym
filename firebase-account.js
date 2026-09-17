@@ -96,7 +96,7 @@ const economyStatus = byId('froggyEconomyStatus');
 const GAME_STORAGE_KEY = 'froggy-leap-deluxe-v3';
 const CLOUD_DEVICE_KEY = 'froggy-cloud-device-v1';
 const CLOUD_META_PREFIX = 'froggy-cloud-meta-v1:';
-const CLOUD_BUILD_VERSION = 'v114.4';
+const CLOUD_BUILD_VERSION = 'v114.5';
 const CLOUD_AUTOSAVE_DELAY_MS = 12000;
 
 let auth;
@@ -125,7 +125,7 @@ let cloudBusy = false;
 let serverEconomySnapshot = null;
 let serverEconomyBusy = false;
 let serverEconomyUnsub = null;
-const SERVER_ECONOMY_VERSION = 'v114.4-transaction-latency';
+const SERVER_ECONOMY_VERSION = 'v114.5-no-reserved-instance';
 
 function setStatus(message, type = 'info') {
   if (!status) return;
@@ -1245,6 +1245,11 @@ function callable(name) {
   return httpsCallable(functionsApi, name);
 }
 
+async function fastEconomyCall(action, payload = {}) {
+  const result = await callable('economyFastAction')({action, payload});
+  return result.data;
+}
+
 function economyErrorMessage(error) {
   const code = String(error?.code || '');
   const message = String(error?.message || '');
@@ -1256,8 +1261,8 @@ function economyErrorMessage(error) {
 }
 
 async function fetchServerEconomySnapshot() {
-  const result = await callable('getEconomySnapshot')({});
-  const snapshot = result?.data?.economy || null;
+  const data = await fastEconomyCall('snapshot', {});
+  const snapshot = data?.economy || null;
   renderServerEconomySnapshot(snapshot);
   return snapshot;
 }
@@ -1392,16 +1397,16 @@ function installServerEconomyBridge() {
     bootstrap: async () => callable('bootstrapEconomyFromCloud')({}).then(result => result.data),
     // Hot gameplay calls return their committed result directly. The game applies it once,
     // while the Firestore listener updates the Profile panel. This avoids duplicate full UI renders.
-    buyCases: async (caseId, quantity = 1, requestId = serverEconomyRequestId('buy')) => callable('buyCasesAuthoritative')({caseId, quantity, requestId}).then(result => result.data),
-    openCases: async (caseId, quantity = 1, requestId = serverEconomyRequestId('open')) => callable('openCasesAuthoritative')({caseId, quantity, requestId}).then(result => result.data),
-    buyCollection: async (kind, itemId, requestId = serverEconomyRequestId('shop')) => callable('buyCollectionAuthoritative')({kind, itemId, requestId}).then(result => result.data),
-    startJob: async (sessionId, frogId) => callable('startJobShiftAuthoritative')({sessionId, frogId}).then(result => result.data),
-    jobAction: async (sessionId, action, requestId = serverEconomyRequestId('job')) => callable('jobActionAuthoritative')({sessionId, action, requestId}).then(result => result.data),
-    endJob: async (sessionId, reason, requestId = serverEconomyRequestId('jobend')) => callable('endJobShiftAuthoritative')({sessionId, reason, requestId}).then(result => result.data),
-    piggyTransfer: async (mode, amount, requestId = serverEconomyRequestId('piggy')) => callable('piggyTransferAuthoritative')({mode, amount, requestId}).then(result => absorbServerEconomyResult(result.data)),
-    takeBankLoan: async (amount, collateral, requestId = serverEconomyRequestId('loan')) => callable('bankTakeLoanAuthoritative')({amount, collateral, requestId}).then(result => absorbServerEconomyResult(result.data)),
-    repayBankLoan: async (mode, requestId = serverEconomyRequestId('repay')) => callable('bankRepayLoanAuthoritative')({mode, requestId}).then(result => absorbServerEconomyResult(result.data)),
-    dropPlinko: async (bet, risk, requestId = serverEconomyRequestId('plinko')) => callable('dropPlinkoAuthoritative')({bet, risk, requestId}).then(result => absorbServerEconomyResult(result.data)),
+    buyCases: async (caseId, quantity = 1, requestId = serverEconomyRequestId('buy')) => fastEconomyCall('buyCases', {caseId, quantity, requestId}),
+    openCases: async (caseId, quantity = 1, requestId = serverEconomyRequestId('open')) => fastEconomyCall('openCases', {caseId, quantity, requestId}),
+    buyCollection: async (kind, itemId, requestId = serverEconomyRequestId('shop')) => fastEconomyCall('buyCollection', {kind, itemId, requestId}),
+    startJob: async (sessionId, frogId) => fastEconomyCall('startJob', {sessionId, frogId}),
+    jobAction: async (sessionId, action, requestId = serverEconomyRequestId('job')) => fastEconomyCall('jobAction', {sessionId, action, requestId}),
+    endJob: async (sessionId, reason, requestId = serverEconomyRequestId('jobend')) => fastEconomyCall('endJob', {sessionId, reason, requestId}),
+    piggyTransfer: async (mode, amount, requestId = serverEconomyRequestId('piggy')) => absorbServerEconomyResult(await fastEconomyCall('piggyTransfer', {mode, amount, requestId})),
+    takeBankLoan: async (amount, collateral, requestId = serverEconomyRequestId('loan')) => absorbServerEconomyResult(await fastEconomyCall('bankTakeLoan', {amount, collateral, requestId})),
+    repayBankLoan: async (mode, requestId = serverEconomyRequestId('repay')) => absorbServerEconomyResult(await fastEconomyCall('bankRepayLoan', {mode, requestId})),
+    dropPlinko: async (bet, risk, requestId = serverEconomyRequestId('plinko')) => absorbServerEconomyResult(await fastEconomyCall('dropPlinko', {bet, risk, requestId})),
     resetProgress: async (requestId = serverEconomyRequestId('reset')) => callable('resetEconomyAuthoritative')({requestId}).then(result => absorbServerEconomyResult(result.data)),
     isSignedIn: () => Boolean(auth?.currentUser),
     forceCloudSync: async () => uploadLocalToCloud({ force: true, automatic: false }),
@@ -1434,6 +1439,9 @@ try {
     renderUser(user);
     document.documentElement.dataset.froggyAccount = user ? 'signed-in' : 'signed-out';
     if (user) {
+      // Fire-and-forget warm-up: v114.5 keeps one gateway instance warm, and this
+      // also establishes the connection before the first gameplay transaction.
+      void fastEconomyCall('ping', {}).catch(() => {});
       await loadPublicProfile(user);
       await startCloudSave(user);
       await startServerEconomy(user);

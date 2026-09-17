@@ -1,21 +1,34 @@
-# Froggy Leap v114.4 — TRANSACTION DELAY CLEANUP + PENDING POPUP
+# Froggy Leap v114.5 — WARM TRANSACTION GATEWAY + MICRO STATUS
 
 GITHUB / WEBSITE ONLY.
-Deploy the matching v114.4 Firebase Functions package FIRST and wait for `Deploy complete!`.
+Deploy the matching v114.5 Firebase Functions package FIRST and wait for `Deploy complete!`.
 
-Popup behavior:
-- Bank / Piggy / Case purchases / Frog+Lake purchases: shows while the server transaction is in flight.
-- Job: waits until the visible shift ends, then shows while queued rewards + shift-end settle.
-- Case opening: waits until the reel/reveal is finished, then shows pending -> confirmed.
-- Plinko: waits until the final visible egg lands, then shows pending -> confirmed.
-It is a small non-blocking toast with a spinning circle; it does not freeze gameplay.
+## Latency change
+Normal player transactions now use ONE shared Firebase callable:
+`economyFastAction`.
 
-Latency changes:
-- redundant Phase-4 preflight transactions removed from hot backend calls
-- independent Firestore reads parallelized
-- authoritative server calculations, atomic writes, unique request IDs, ledger and replay protection remain unchanged
+The website uses one shared transaction gateway and sends a non-blocking ping after sign-in.
+The gateway is allowed to scale to zero; there is NO reserved minimum instance. The original individual Functions stay deployed for compatibility.
 
-Lily Leap and Crash are not server-authoritative yet, so v114.4 does not pretend they have a Firebase transaction.
-Their real round-end settlement popup will be connected when they migrate in v115.
+This targets callable cold-start/service switching, which v114.4 did not eliminate.
 
-Upload extracted files to the GitHub Pages repository root, replace v114.3 files, then use refresh.html.
+## Transaction status UI
+The old large floating notification is removed.
+
+The new status is a tiny GTA-style line DIRECTLY BELOW THE TOP BALANCE BOX:
+- small spinner + `Transaction pending…`
+- brief `Transaction saved`
+- small failure line only if the server rejects the action
+
+It is deliberately subtle and does not cover gameplay.
+
+Timing remains:
+- Job: after the visible shift is finished
+- Case opening: after the reveal is finished
+- Plinko: after the visible egg/round finishes
+- Bank/Piggy/purchases: while the direct transaction is actually waiting
+
+Lily Leap and Crash are not authoritative yet; their real round-end transaction status comes with v115.
+
+Upload extracted files to the GitHub Pages repository root, replacing v114.4.
+Then open refresh.html to clear the old browser/PWA cache.
