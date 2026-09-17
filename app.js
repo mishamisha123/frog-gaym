@@ -3,7 +3,7 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v114.8';
+  const BUILD_VERSION = 'v114.9';
   console.info(`Froggy Leap ${BUILD_VERSION} loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
@@ -349,6 +349,7 @@
     levelToast: $('levelToast'), levelToastTitle: $('levelToastTitle'), levelToastBonus: $('levelToastBonus'), loanReminderToast: $('loanReminderToast'), loanReminderTitle: $('loanReminderTitle'), loanReminderAmount: $('loanReminderAmount'),
     milestoneTrack: $('milestoneTrack'), milestoneFill: $('milestoneFill'), goalGrid: $('goalGrid'), goalSummary: $('goalSummary'),
     sessionRoundsStat: $('sessionRoundsStat'), sessionWinsStat: $('sessionWinsStat'), sessionNetStat: $('sessionNetStat'), sessionTimeStat: $('sessionTimeStat'), pondRankLabel: $('pondRankLabel'), achievementGrid: $('achievementGrid'), settingsReminders: $('settingsReminders'),
+    transactionToast:$('transactionPendingToast'), transactionTitle:$('transactionPendingTitle'), plinkoServerStage:$('plinkoServerStage'),
     confetti: $('confettiLayer'), flash: $('flashLayer'), jobPlayfield:$('jobPlayfield'), jobFry:$('jobFry'), jobQueuedFry:$('jobQueuedFry'), jobBag:$('jobBag'), jobIntro:$('jobIntro'), jobStartButton:$('jobStartButton'), jobShiftMoney:$('jobShiftMoney'), jobFriesBagged:$('jobFriesBagged'), jobTimerHud:$('jobTimerHud'), jobTimerLabel:$('jobTimerLabel'), jobBoostLabel:$('jobBoostLabel'), jobLevelLabel:$('jobLevelLabel'), jobPayLabel:$('jobPayLabel'), jobXpFill:$('jobXpFill'), jobXpLabel:$('jobXpLabel'), jobRewardBurst:$('jobRewardBurst'), jobExplosion:$('jobExplosion'), jobResult:$('jobResult'), jobResultClose:$('jobResultClose'), jobResultIcon:$('jobResultIcon'), jobResultTitle:$('jobResultTitle'), jobResultMoney:$('jobResultMoney'), jobResultText:$('jobResultText'), jobAgainButton:$('jobAgainButton'),
     selfTest: $('selfTestResult')
   };
@@ -358,6 +359,40 @@
   function lerp(a,b,t){ return a+(b-a)*t; }
   function easeOutBack(t){ const c1=1.70158,c3=c1+1; return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2); }
   function money(n){ return Math.floor(Number(n)||0).toLocaleString('en-US'); }
+
+  const transactionUiRuntime={token:0,hideTimer:0};
+  function transactionPending(text='Transaction pending…'){
+    if(!els.transactionToast)return 0;
+    clearTimeout(transactionUiRuntime.hideTimer);
+    const token=++transactionUiRuntime.token;
+    els.transactionToast.classList.remove('hidden','saved','failed');
+    els.transactionTitle.textContent=text;
+    return token;
+  }
+  function transactionSaved(token=transactionUiRuntime.token,text='Transaction saved'){
+    if(!els.transactionToast||token!==transactionUiRuntime.token)return;
+    els.transactionToast.classList.remove('failed');els.transactionToast.classList.add('saved');
+    els.transactionTitle.textContent=text;
+    clearTimeout(transactionUiRuntime.hideTimer);
+    transactionUiRuntime.hideTimer=setTimeout(()=>{if(token===transactionUiRuntime.token)els.transactionToast.classList.add('hidden');},650);
+  }
+  function transactionFailed(token=transactionUiRuntime.token,text='Transaction failed'){
+    if(!els.transactionToast||token!==transactionUiRuntime.token)return;
+    els.transactionToast.classList.remove('saved');els.transactionToast.classList.add('failed');
+    els.transactionTitle.textContent=text;
+    clearTimeout(transactionUiRuntime.hideTimer);
+    transactionUiRuntime.hideTimer=setTimeout(()=>{if(token===transactionUiRuntime.token)els.transactionToast.classList.add('hidden');},1700);
+  }
+  function postActionTransactionSaved(text='Transaction saved'){
+    const token=transactionPending('Transaction pending…');
+    setTimeout(()=>transactionSaved(token,text),380);
+  }
+  async function waitWithTransaction(promise,pending='Transaction pending…',saved='Transaction saved'){
+    const token=transactionPending(pending);
+    try{const value=await promise;transactionSaved(token,saved);return value;}
+    catch(error){transactionFailed(token,'Transaction failed');throw error;}
+  }
+
 
   function compactMoney(n){
     const value=Math.floor(Number(n)||0),absolute=Math.abs(value);
@@ -1264,7 +1299,7 @@
     const bet=egg.bet,multiplier=egg.multiplier,payout=serverPlinkoActive()&&!TEST_MODE?Math.max(0,Math.floor(Number(egg.payout)||0)):creditBalance(egg.payout);state.plinkoLastMultiplier=multiplier;state.bestPlinkoMultiplier=Math.max(state.bestPlinkoMultiplier,multiplier);state.biggestWin=Math.max(state.biggestWin,payout);session.net+=payout;
     const profitable=payout>bet,returned=payout>=bet;if(returned){if(!serverPlinkoActive()||TEST_MODE)state.plinkoWins++;session.wins++;session.lossStreak=0;}else{session.losses++;session.lossStreak++;}
     state.roundBetForXp=bet;const plinkoXp=Math.max(1,Math.floor((8+wagerXpBonus())/5));addXp(plinkoXp);recordXpWager();const profit=payout-bet;
-    if(!quiet){setPlinkoStatus(`${multiplier.toFixed(2)}× · ${profit>=0?'+':''}${money(profit)} F · +${plinkoXp} XP`,profitable?'win':returned?'':'lose');flashPlinkoSlot(egg.slot);}
+    if(!quiet){setPlinkoStatus(`${multiplier.toFixed(2)}× · ${profit>=0?'+':''}${money(profit)} F · +${plinkoXp} XP`,profitable?'win':returned?'':'lose');flashPlinkoSlot(egg.slot);if(serverPlinkoActive()&&!TEST_MODE)postActionTransactionSaved('Plinko saved');}
     const activeEggs=plinkoRuntime.eggs.length,now=performance.now(),crowded=activeEggs>18;if(!quiet){if(multiplier>=5){audio.reward();if(!crowded)haptic([12,30,20]);if((!crowded||multiplier>=50)&&now-plinkoRuntime.lastCelebrationAt>220){plinkoRuntime.lastCelebrationAt=now;confettiBurst(Math.min(crowded?42:90,24+Math.floor(multiplier)));}}else if(returned){audio.cash();if(!crowded)haptic(12);}else{audio.croak();if(!crowded)haptic(14);}}
   }
   function animatePlinko(now){
@@ -1300,15 +1335,17 @@
     if(!TEST_MODE){
       if(!serverPlinkoActive()){setPlinkoStatus('Server Economy Phase 4 is required for Plinko in v114.','lose');return false;}
       const bridge=window.FroggyServerEconomy;if(!bridge?.dropPlinko){setPlinkoStatus('The v114 Plinko backend bridge is unavailable.','lose');return false;}
-      serverV114Runtime.plinkoPending++;refreshPlinkoHud();setPlinkoStatus(`🔒 Server is locking a ${money(bet)} F ${risk.toUpperCase()} result…`);
+      serverV114Runtime.plinkoPending++;refreshPlinkoHud();
+      els.plinkoServerStage?.classList.remove('hidden');
+      setPlinkoStatus(`Preparing ${money(bet)} F ${risk.toUpperCase()} drop…`);
       void bridge.dropPlinko(bet,risk,bridge.requestId?.('plinko')).then(result=>{
         const outcome=result?.outcome||result?.plinko||result;
         const path=Array.isArray(outcome?.path)?outcome.path.map(v=>v?1:0):null,rows=plinkoRows(risk),slot=Math.floor(Number(outcome?.slot));
         const multiplier=Number(outcome?.multiplier),payout=Math.max(0,Math.floor(Number(outcome?.payout)||0));
         if(!path||path.length!==rows||!Number.isInteger(slot)||slot<0||slot>=plinkoTable(risk).length||!Number.isFinite(multiplier))throw new Error('Server returned an invalid Plinko outcome.');
         if(result?.economy)applyServerCaseSnapshot(result.economy);else{const cached=bridge.getCachedSnapshot?.();if(cached)applyServerCaseSnapshot(cached);}
-        launchCommittedPlinkoEgg({bet,risk,path,slot,multiplier,payout,protectedRound:false});
-      }).catch(error=>{setPlinkoStatus(serverCaseFriendlyError(error),'lose');void syncServerCases({quiet:true});}).finally(()=>{serverV114Runtime.plinkoPending=Math.max(0,serverV114Runtime.plinkoPending-1);refreshPlinkoHud();});
+        els.plinkoServerStage?.classList.add('hidden');launchCommittedPlinkoEgg({bet,risk,path,slot,multiplier,payout,protectedRound:false});
+      }).catch(error=>{els.plinkoServerStage?.classList.add('hidden');setPlinkoStatus(serverCaseFriendlyError(error),'lose');void syncServerCases({quiet:true});}).finally(()=>{els.plinkoServerStage?.classList.add('hidden');serverV114Runtime.plinkoPending=Math.max(0,serverV114Runtime.plinkoPending-1);refreshPlinkoHud();});
       return true;
     }
     if(!spendOwnedFunds(bet))return false;
@@ -1817,7 +1854,7 @@
       serverV114Runtime.piggyBusy=true;updatePiggyTransferControls();
       setPiggyMessage(`Server is ${piggyTransferMode==='deposit'?'depositing':'withdrawing'} ${money(amount)} F…`);
       const mode=piggyTransferMode;
-      void bridge.piggyTransfer(mode,amount,bridge.requestId?.('piggy')).then(result=>{
+      void waitWithTransaction(bridge.piggyTransfer(mode,amount,bridge.requestId?.('piggy')),'Transaction pending…','Piggy saved').then(result=>{
         if(result?.economy)applyServerCaseSnapshot(result.economy);else{const cached=bridge.getCachedSnapshot?.();if(cached)applyServerCaseSnapshot(cached);}
         piggyTransferAmount=0;setPiggyTransferAmount(0);audio.coin();haptic(16);
         setPiggyMessage(mode==='deposit'?`Deposited ${money(amount)} F into authoritative Piggy savings.`:`Withdrew ${money(amount)} F to the authoritative wallet.`,'success');refresh();
@@ -2211,7 +2248,7 @@
     if(!bridge?.takeBankLoan){setDebtMessage('The v114 Bank backend bridge is unavailable.','error');return false;}
     serverV114Runtime.bankBusy=true;refresh();setDebtMessage(`Server is validating ${money(amount)} F and its collateral…`);
     try{
-      const result=await bridge.takeBankLoan(amount,selected,bridge.requestId?.('loan'));
+      const result=await waitWithTransaction(bridge.takeBankLoan(amount,selected,bridge.requestId?.('loan')),'Transaction pending…','Bank saved');
       if(result?.economy)applyServerCaseSnapshot(result.economy);else{const cached=bridge.getCachedSnapshot?.();if(cached)applyServerCaseSnapshot(cached);}
       setDebtMessage(`Authoritative loan received: ${money(amount)} F. The server owns the debt, collateral, interest, and repayment state.`,'success');setStatus(`Server Bank loan received: +${money(amount)} F.`,'win');audio.coin();haptic([12,30,12]);refresh();return true;
     }catch(error){setDebtMessage(serverCaseFriendlyError(error),'error');void syncServerCases({quiet:true});return false;}
@@ -2252,7 +2289,7 @@
       if(!serverBankActive()||serverV114Runtime.bankBusy){setDebtMessage('Authoritative Bank is not ready for this payment.','error');return false;}
       const bridge=window.FroggyServerEconomy;if(!bridge?.repayBankLoan){setDebtMessage('The v114 Bank repayment bridge is unavailable.','error');return false;}
       serverV114Runtime.bankBusy=true;refresh();setDebtMessage(`Server is processing ${all?'full payoff':'the next payment'}…`);
-      void bridge.repayBankLoan(all?'all':'installment',bridge.requestId?.('repay')).then(result=>{
+      void waitWithTransaction(bridge.repayBankLoan(all?'all':'installment',bridge.requestId?.('repay')),'Transaction pending…','Bank saved').then(result=>{
         if(result?.economy)applyServerCaseSnapshot(result.economy);else{const cached=bridge.getCachedSnapshot?.();if(cached)applyServerCaseSnapshot(cached);}
         setDebtMessage(all?'Authoritative loan payoff completed and collateral released.':'Authoritative installment paid.','success');audio.cash();haptic(18);refresh();
       }).catch(error=>{setDebtMessage(serverCaseFriendlyError(error),'error');void syncServerCases({quiet:true});}).finally(()=>{serverV114Runtime.bankBusy=false;refresh();});
@@ -3114,7 +3151,8 @@
   }
   function endJobShift(reason='miss',alreadyStopped=false){
     if(!jobRuntime.active&&!alreadyStopped)return;
-    if(serverJobActive()&&!TEST_MODE&&jobRuntime.serverSessionId){const bridge=window.FroggyServerEconomy,sessionId=jobRuntime.serverSessionId,chain=jobRuntime.serverActionChain;jobRuntime.serverSessionId='';jobRuntime.serverNextType='';jobRuntime.serverFryQueue=[];if(bridge?.endJob)void Promise.resolve(chain).catch(()=>{}).then(()=>bridge.endJob(sessionId,reason,bridge.requestId?.('jobend'))).catch(()=>{});}
+    let jobSettlementPromise=Promise.resolve();
+    if(serverJobActive()&&!TEST_MODE&&jobRuntime.serverSessionId){const bridge=window.FroggyServerEconomy,sessionId=jobRuntime.serverSessionId,chain=jobRuntime.serverActionChain;jobRuntime.serverSessionId='';jobRuntime.serverNextType='';jobRuntime.serverFryQueue=[];if(bridge?.endJob)jobSettlementPromise=Promise.resolve(chain).catch(()=>{}).then(()=>bridge.endJob(sessionId,reason,bridge.requestId?.('jobend')));}
     jobRuntime.active=false;jobRuntime.dragging=false;jobRuntime.falling=false;jobRuntime.resolving=true;jobRuntime.shiftEndsAt=0;
     cancelAnimationFrame(jobRuntime.raf);clearTimeout(jobRuntime.spawnTimer);els.jobFry.classList.add('hidden');hideQueuedJobFry();
     finishJobShiftRound('loss');
@@ -3126,7 +3164,13 @@
     const frySummary=`You bagged ${money(jobRuntime.fries)} ${jobRuntime.fries===1?'fry':'fries'} and made ${money(jobRuntime.shiftMoney)} F.`;
     const reasonText=reason==='bomb'?'A bomb landed in the bag.':timedOut?'The timer reached zero.':quit?'You left the shift.':serverError?'The protected Job session could not continue.':'A fry missed the bag.';
     els.jobResultText.textContent=`${reasonText} ${frySummary}${jobRuntime.lastDebtResult?` ${jobRuntime.lastDebtResult.message}`:''}`;
-    setTimeout(()=>els.jobResult.classList.remove('hidden'),reason==='bomb'?220:0);
+    setTimeout(()=>{
+      els.jobResult.classList.remove('hidden');
+      if(serverJobActive()&&!TEST_MODE){
+        const token=transactionPending('Transaction pending…');
+        Promise.resolve(jobSettlementPromise).then(()=>transactionSaved(token,'Job saved')).catch(()=>transactionFailed(token,'Job save failed'));
+      }
+    },reason==='bomb'?220:0);
     refresh();renderJob();saveState();
   }
   function restoreJobIdleScreen(){
@@ -3305,7 +3349,7 @@
     const bridge=window.FroggyServerEconomy;if(!bridge?.buyCases){setStatus('Server Cases bridge is not ready. Refresh Froggy Leap and try again.','lose');return false;}
     serverCaseRuntime.busy=true;renderCases();setStatus(`Server is buying ${qty} ${item.name}${qty===1?'':'s'}…`,'info');
     try{
-      const requestId=bridge.requestId?.('buy')||undefined,result=await bridge.buyCases(item.id,qty,requestId);
+      const requestId=bridge.requestId?.('buy')||undefined,result=await waitWithTransaction(bridge.buyCases(item.id,qty,requestId),'Transaction pending…','Purchase saved');
       mergeServerCaseResult(result);mirrorLocalCaseSpend(total);refreshEconomyHud();saveState();renderCases();audio.cash();haptic(10);
       setStatus(`🔒 SERVER PURCHASE · Bought ${qty} ${item.name}${qty===1?'':'s'} · ${money(serverCaseInventoryCount(item.id))} authoritative owned.`,'win');return true;
     }catch(error){serverCaseRuntime.lastError=serverCaseFriendlyError(error);if(caseOpeningRuntime.phase==='server-lock')hideCaseOpening();setStatus(serverCaseRuntime.lastError,'lose');void syncServerCases({quiet:true});return false;}
@@ -3393,7 +3437,7 @@
     els.caseOpeningResult.innerHTML=`<div class="case-opening-result-aura"></div><div class="case-opening-result-art">${frogSvg(frog,{collection:true})}</div><div class="case-opening-result-copy"><small>${frog.rarity}</small><h3>${frog.name}</h3>${duplicateCopy}<p>${duplicate?'You already owned this frog, so 50% of its Bank Value was returned to your wallet.':'The frog is yours. Equip it now or view it in Collection.'}</p><div class="case-opening-result-actions"><button class="pressable primary" data-case-equip="${frog.id}" ${state.selectedFrog===frog.id?'disabled':''}>${state.selectedFrog===frog.id?'EQUIPPED':'EQUIP'}</button><button class="pressable secondary" data-case-view="${frog.id}">COLLECTION</button><button class="pressable open-again" data-case-open-again="${item.id}" data-case-open-again-qty="1" ${displayCaseInventoryCount(item.id)<=0?'disabled':''}>OPEN NEXT · ${money(displayCaseInventoryCount(item.id))} OWNED</button></div></div>`;
     audio.caseReveal(frog.rarity);haptic(rank>=5?[35,45,70,55,110]:rank>=4?[25,35,55]:[18,25,35]);
     if(state.effects){confettiBurst(rank>=5?100:rank>=4?70:rank>=3?48:28);screenFeedback('win');}
-    refresh();renderCases();saveState();
+    refresh();renderCases();saveState();postActionTransactionSaved('Case saved');
   }
   function finishMultiCaseOpeningReveal(){
     if(!caseOpeningRuntime.active||caseOpeningRuntime.phase==='reveal')return;
@@ -3412,7 +3456,7 @@
     els.caseOpeningResult.innerHTML=`<div class="case-opening-multi-result-grid" style="--case-result-count:${qty}">${cards}</div><div class="case-opening-multi-result-footer"><button class="pressable open-again" data-case-open-again="${item.id}" data-case-open-again-qty="${qty}" ${displayCaseInventoryCount(item.id)<qty?'disabled':''}>OPEN ${qty} AGAIN · ${money(displayCaseInventoryCount(item.id))} OWNED</button></div>`;
     if(best){audio.caseReveal(best.frog.rarity);haptic(bestRank>=5?[35,45,70,55,110]:bestRank>=4?[25,35,55]:[18,25,35]);}
     if(state.effects){confettiBurst(bestRank>=5?110:bestRank>=4?78:52);screenFeedback('win');}
-    refresh();renderCases();saveState();
+    refresh();renderCases();saveState();postActionTransactionSaved('Cases saved');
   }
   function skipCaseOpening(){if(caseOpeningRuntime.active&&caseOpeningRuntime.phase!=='reveal'){if(caseOpeningRuntime.quantity>1)finishMultiCaseOpeningReveal();else finishCaseOpeningReveal();}}
   function animateCaseOpeningReel(){
@@ -3506,10 +3550,10 @@
     state.animating=true;
     els.caseOpeningOverlay.className=`case-opening-overlay phase-intro ${qty>1?'case-opening-multi-active ':''}case-opening-case-${item.accent}`;
     els.caseOpeningClose.classList.add('hidden');els.caseOpeningSkip.classList.add('hidden');
-    els.caseOpeningChest.classList.remove('hidden','case-opening-chest-open');els.caseOpeningChest.querySelector('b').textContent=qty===1?'LOCKING RESULT':`LOCKING ${qty} RESULTS`;
+    els.caseOpeningChest.classList.remove('hidden','case-opening-chest-open');els.caseOpeningChest.querySelector('b').textContent=qty===1?'OPENING':'OPENING CASES';
     els.caseOpeningReelWrap.classList.add('hidden');els.caseOpeningResult.className='case-opening-result hidden';els.caseOpeningResult.innerHTML='';
-    els.caseOpeningKicker.textContent='🔒 SERVER CASE';els.caseOpeningTitle.textContent=qty===1?item.name:`${item.name} × ${qty}`;
-    els.caseOpeningSubtitle.textContent='Firebase is committing the outcome. The reel starts as soon as the authoritative result is locked.';els.caseOpeningChestEmoji.textContent=item.emoji;
+    els.caseOpeningKicker.textContent='FROGGY CASE OPENING';els.caseOpeningTitle.textContent=qty===1?item.name:`${item.name} × ${qty}`;
+    els.caseOpeningSubtitle.textContent='Opening the case…';els.caseOpeningChestEmoji.textContent=item.emoji;
     audio.start();haptic(10);
   }
 
@@ -3526,7 +3570,7 @@
     if(!serverCasesActive()&&!await syncServerCases())return false;
     const stock=serverCaseInventoryCount(item.id);if(stock<qty){setStatus(`SERVER INVENTORY needs ${money(qty-stock)} more ${item.name}${qty-stock===1?'':'s'} for OPEN ${qty}.`,'lose');renderCases();return false;}
     const bridge=window.FroggyServerEconomy;if(!bridge?.openCases){setStatus('Server Cases bridge is not ready. Refresh Froggy Leap and try again.','lose');return false;}
-    serverCaseRuntime.busy=true;renderCases();beginServerCaseLock(item,qty);setStatus(`🔒 Server is locking ${qty===1?'the result':`${qty} results`}…`,'info');
+    serverCaseRuntime.busy=true;renderCases();beginServerCaseLock(item,qty);setStatus(`Opening ${qty} ${item.name}${qty===1?'':'s'}…`,'info');
     try{
       const requestId=bridge.requestId?.('open')||undefined,result=await bridge.openCases(item.id,qty,requestId),rawResults=Array.isArray(result?.results)?result.results:[];
       if(rawResults.length!==qty)throw new Error('Server returned an incomplete Case result. No local reroll was performed.');
@@ -3534,7 +3578,7 @@
       const results=rawResults.map(entry=>{const frog=FROGS.find(f=>f.id===entry.frogId);if(!frog)throw new Error('Server returned an unknown frog.');return {caseId:item.id,frogId:frog.id,frog,duplicate:Boolean(entry.duplicate),duplicateCredit:Math.max(0,Math.floor(Number(entry.duplicateCredit)||0))};});
       state.caseHistory=[...results.slice().reverse().map(({caseId,frogId,duplicate,duplicateCredit})=>({caseId,frogId,duplicate,duplicateCredit})),...(state.caseHistory||[])].slice(0,30);
       if(qty>1)lastCaseBatch={caseId:item.id,results:results.map(({caseId,frogId,duplicate,duplicateCredit})=>({caseId,frogId,duplicate,duplicateCredit}))};
-      refreshEconomyHud();saveState();renderCases();setStatus(`🔒 SERVER RESULT LOCKED · ${qty} ${item.name}${qty===1?'':'s'} committed to the ledger.`,'win');
+      refreshEconomyHud();saveState();renderCases();setStatus(`${qty} ${item.name}${qty===1?'':'s'} ready.`,'win');
       if(qty===1){const r=results[0];beginCaseOpening(item,r.frog,r.duplicate,r.duplicateCredit);}else beginMultiCaseOpening(item,results);return true;
     }catch(error){serverCaseRuntime.lastError=serverCaseFriendlyError(error);if(caseOpeningRuntime.phase==='server-lock')hideCaseOpening();setStatus(serverCaseRuntime.lastError,'lose');void syncServerCases({quiet:true});return false;}
     finally{serverCaseRuntime.busy=false;if(!caseOpeningRuntime.active)renderCases();}
@@ -3674,7 +3718,7 @@
       const bridge=window.FroggyServerEconomy;if(!bridge?.buyCollection){setStatus('Server Collection bridge is unavailable. Refresh Froggy Leap.','lose');return false;}
       setStatus(`🔒 Server is purchasing ${item.name}…`,'info');
       try{
-        const kind=collectionMode==='frogs'?'frog':'lake',result=await bridge.buyCollection(kind,id,bridge.requestId?.('shop'));
+        const kind=collectionMode==='frogs'?'frog':'lake',result=await waitWithTransaction(bridge.buyCollection(kind,id,bridge.requestId?.('shop')),'Transaction pending…','Purchase saved');
         mergeServerCaseResult(result);
         state[selectKey]=id;
         // Mirror only the spend into the legacy local wallet so staged local systems do not gain value from a server purchase.

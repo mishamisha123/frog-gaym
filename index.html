@@ -35,9 +35,15 @@
           <button id="profileTopButton" class="top-nav-shortcut profile-top-shortcut pressable" aria-label="Open Profile"><span>👤</span><small>PROFILE</small></button>
         </div>
         <button id="soundButton" class="icon-button pressable" aria-label="Toggle sound">🔊</button>
-        <div class="balance-pill">
-          <span class="coin-icon">F</span>
-          <strong id="balanceLabel">1,000</strong>
+        <div class="balance-status-stack">
+          <div class="balance-pill">
+            <span class="coin-icon">F</span>
+            <strong id="balanceLabel">1,000</strong>
+          </div>
+          <div id="transactionPendingToast" class="transaction-pending-toast hidden" role="status" aria-live="polite" aria-atomic="true">
+            <span class="transaction-pending-spinner" aria-hidden="true"></span>
+            <small id="transactionPendingTitle">Transaction pending…</small>
+          </div>
         </div>
       </div>
     </header>
@@ -107,7 +113,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v114.8 RECOVERY · FROGGY LEAP</div>
+          <div class="build-version" aria-label="Installed game version">v114.9 · FROGGY LEAP</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -209,6 +215,7 @@
             </div>
             <div id="plinkoBoard" class="plinko-board">
               <canvas id="plinkoCanvas" aria-label="Frog egg bouncing through a Plinko peg board"></canvas>
+              <div id="plinkoServerStage" class="plinko-server-stage hidden" aria-hidden="true"><span>🥚</span></div>
               <div id="plinkoMultipliers" class="plinko-multipliers" aria-label="Plinko payout multipliers"></div>
             </div>
             <p id="plinkoStatus" class="plinko-status" role="status" aria-live="polite">Choose a bet and risk, then drop a frog egg.</p>
@@ -846,7 +853,7 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script type="module" src="firebase-account.js?v=1148-full-recovery"></script>
-  <script src="app.js?v=1148-full-recovery"></script>
+  <script type="module" src="firebase-account.js?v=1149-responsive-ux"></script>
+  <script src="app.js?v=1149-responsive-ux"></script>
 </body>
 </html>

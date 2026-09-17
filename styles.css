@@ -6262,3 +6262,60 @@ body.plinko-focus-mode .plinko-slot b,body.plinko-focus-mode .plinko-multipliers
 .economy-authority-status{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px;padding:11px 14px;border:1px solid rgba(105,229,255,.34);border-radius:14px;background:rgba(5,35,72,.62);color:#d9efff;font-size:12px}
 .economy-authority-status b{color:#7be9ff;letter-spacing:.06em}.economy-authority-status span{color:#9eb8d6}
 .economy-authority-status[data-state="live"]{border-color:rgba(109,255,156,.4);background:rgba(12,66,64,.56)}.economy-authority-status[data-state="live"] b{color:#9dffb8}
+
+
+/* ==========================================================
+   v114.9 — discreet GTA-style transaction status
+   ========================================================== */
+.balance-status-stack{position:relative;display:grid;justify-items:end;align-items:start;min-width:0}
+.transaction-pending-toast{
+  position:absolute;right:0;top:calc(100% + 5px);z-index:10050;
+  display:flex;align-items:center;gap:5px;width:max-content;max-width:155px;
+  min-height:18px;padding:3px 7px;border-radius:4px;
+  background:rgba(4,8,14,.82);box-shadow:0 1px 5px rgba(0,0,0,.34);
+  color:rgba(255,255,255,.9);pointer-events:none;white-space:nowrap;
+  backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)
+}
+.transaction-pending-toast.hidden{display:none!important}
+.transaction-pending-toast small{font-size:9px;line-height:1.2;font-weight:700;letter-spacing:.01em;color:inherit}
+.transaction-pending-spinner{
+  flex:0 0 9px;width:9px;height:9px;border-radius:50%;
+  border:1.5px solid rgba(255,255,255,.25);border-top-color:#fff;
+  animation:froggyTxnSpin .68s linear infinite
+}
+.transaction-pending-toast.saved{color:#d7ffe0;background:rgba(5,20,11,.84)}
+.transaction-pending-toast.saved .transaction-pending-spinner{animation:none;border:0;position:relative}
+.transaction-pending-toast.saved .transaction-pending-spinner::after{
+  content:"✓";position:absolute;inset:-3px;display:grid;place-items:center;font-size:10px;font-weight:900
+}
+.transaction-pending-toast.failed{color:#ffd3db;background:rgba(34,5,10,.86)}
+.transaction-pending-toast.failed .transaction-pending-spinner{animation:none;border:0;position:relative}
+.transaction-pending-toast.failed .transaction-pending-spinner::after{
+  content:"!";position:absolute;inset:-3px;display:grid;place-items:center;font-size:10px;font-weight:900
+}
+@keyframes froggyTxnSpin{to{transform:rotate(360deg)}}
+
+/* Plinko immediately looks alive while the protected result is coming back. */
+.plinko-server-stage{
+  position:absolute;z-index:7;left:50%;top:15px;transform:translateX(-50%);
+  width:42px;height:42px;display:grid;place-items:center;pointer-events:none
+}
+.plinko-server-stage.hidden{display:none!important}
+.plinko-server-stage span{
+  display:block;font-size:29px;filter:drop-shadow(0 5px 6px rgba(0,0,0,.42));
+  animation:plinkoServerStage .52s ease-in-out infinite alternate
+}
+@keyframes plinkoServerStage{
+  from{transform:translate3d(-7px,0,0) rotate(-9deg) scale(.96)}
+  to{transform:translate3d(7px,5px,0) rotate(9deg) scale(1.04)}
+}
+@media(max-width:620px){
+  .transaction-pending-toast{max-width:138px;padding:3px 6px}
+  .transaction-pending-toast small{font-size:8px}
+  .plinko-server-stage{top:10px}
+  .plinko-server-stage span{font-size:25px}
+}
+@media(prefers-reduced-motion:reduce){
+  .transaction-pending-spinner{animation-duration:1.4s}
+  .plinko-server-stage span{animation-duration:1.2s}
+}
