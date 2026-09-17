@@ -1,34 +1,34 @@
-# Froggy Leap v114.5 — WARM TRANSACTION GATEWAY + MICRO STATUS
+# Froggy Leap v114.6 — CASES + PLINKO STABILITY HOTFIX
 
 GITHUB / WEBSITE ONLY.
-Deploy the matching v114.5 Firebase Functions package FIRST and wait for `Deploy complete!`.
 
-## Latency change
-Normal player transactions now use ONE shared Firebase callable:
-`economyFastAction`.
+This hotfix fixes the v114.5 regression where Cases/Plinko could stop working after
+normal gameplay traffic was routed through the shared `economyFastAction` gateway.
 
-The website uses one shared transaction gateway and sends a non-blocking ping after sign-in.
-The gateway is allowed to scale to zero; there is NO reserved minimum instance. The original individual Functions stay deployed for compatibility.
+v114.6 routes the game back through the proven dedicated Firebase callables:
+- getEconomySnapshot
+- buyCasesAuthoritative / openCasesAuthoritative
+- buyCollectionAuthoritative
+- startJobShiftAuthoritative / jobActionAuthoritative / endJobShiftAuthoritative
+- piggyTransferAuthoritative
+- bankTakeLoanAuthoritative / bankRepayLoanAuthoritative
+- dropPlinkoAuthoritative
 
-This targets callable cold-start/service switching, which v114.4 did not eliminate.
+The small GTA-style `Transaction pending…` status directly under the top balance is preserved.
 
-## Transaction status UI
-The old large floating notification is removed.
+NO FIREBASE DEPLOYMENT IS REQUIRED for v114.6 if the v114.5 backend is already deployed.
+The dedicated functions are already present in that backend.
 
-The new status is a tiny GTA-style line DIRECTLY BELOW THE TOP BALANCE BOX:
-- small spinner + `Transaction pending…`
-- brief `Transaction saved`
-- small failure line only if the server rejects the action
+GitHub deployment:
+1. Extract this ZIP.
+2. Upload the extracted files/folders to the GitHub Pages repository root.
+3. Replace the current v114.5 website files.
+4. Commit.
+5. Open refresh.html and refresh the PWA/browser cache.
 
-It is deliberately subtle and does not cover gameplay.
-
-Timing remains:
-- Job: after the visible shift is finished
-- Case opening: after the reveal is finished
-- Plinko: after the visible egg/round finishes
-- Bank/Piggy/purchases: while the direct transaction is actually waiting
-
-Lily Leap and Crash are not authoritative yet; their real round-end transaction status comes with v115.
-
-Upload extracted files to the GitHub Pages repository root, replacing v114.4.
-Then open refresh.html to clear the old browser/PWA cache.
+If you have NOT deployed the v114.5 backend, deploy the latest backend first using:
+cd functions
+npm install
+cd ..
+firebase.cmd use froggyleap-f59a8
+firebase.cmd deploy --only functions
