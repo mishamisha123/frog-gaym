@@ -96,7 +96,7 @@ const economyStatus = byId('froggyEconomyStatus');
 const GAME_STORAGE_KEY = 'froggy-leap-deluxe-v3';
 const CLOUD_DEVICE_KEY = 'froggy-cloud-device-v1';
 const CLOUD_META_PREFIX = 'froggy-cloud-meta-v1:';
-const CLOUD_BUILD_VERSION = 'v114.6';
+const CLOUD_BUILD_VERSION = 'v114.7-recovery';
 const CLOUD_AUTOSAVE_DELAY_MS = 12000;
 
 let auth;
@@ -125,7 +125,7 @@ let cloudBusy = false;
 let serverEconomySnapshot = null;
 let serverEconomyBusy = false;
 let serverEconomyUnsub = null;
-const SERVER_ECONOMY_VERSION = 'v114.6-dedicated-callables';
+const SERVER_ECONOMY_VERSION = 'v114.7-recovery-direct';
 
 function setStatus(message, type = 'info') {
   if (!status) return;
@@ -1243,11 +1243,6 @@ function serverEconomyRequestId(prefix = 'op') {
 function callable(name) {
   if (!functionsApi) throw new Error('functions-not-ready');
   return httpsCallable(functionsApi, name);
-}
-
-async function fastEconomyCall(action, payload = {}) {
-  const result = await callable('economyFastAction')({action, payload});
-  return result.data;
 }
 
 function economyErrorMessage(error) {
