@@ -6319,3 +6319,357 @@ body.plinko-focus-mode .plinko-slot b,body.plinko-focus-mode .plinko-multipliers
   .transaction-pending-spinner{animation-duration:1.4s}
   .plinko-server-stage span{animation-duration:1.2s}
 }
+
+/* ==========================================================
+   v114.10 — game-wide latency masking + true GTA-style status
+   ========================================================== */
+
+/* This is intentionally NOT a notification card. It is a tiny HUD line under the balance. */
+.transaction-pending-toast{
+  position:fixed!important;
+  z-index:20050!important;
+  top:72px;
+  right:10px;
+  width:max-content!important;
+  max-width:190px!important;
+  min-height:14px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:5px!important;
+  color:rgba(255,255,255,.96)!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.98),0 0 5px rgba(0,0,0,.72);
+  pointer-events:none!important;
+  white-space:nowrap;
+}
+.transaction-pending-toast.hidden{display:none!important}
+.transaction-pending-toast small{
+  font:700 9px/1.15 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;
+  letter-spacing:.01em!important;
+  color:inherit!important;
+}
+.transaction-pending-spinner{
+  width:8px!important;height:8px!important;flex:0 0 8px!important;
+  border:1.35px solid rgba(255,255,255,.28)!important;
+  border-top-color:#fff!important;
+  border-radius:50%!important;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.85));
+  animation:froggyTxnSpin .62s linear infinite!important;
+}
+.transaction-pending-toast.saved{color:#d8ffe1!important}
+.transaction-pending-toast.failed{color:#ffd0d7!important}
+.transaction-pending-toast.saved .transaction-pending-spinner,
+.transaction-pending-toast.failed .transaction-pending-spinner{
+  animation:none!important;border:0!important;position:relative!important
+}
+.transaction-pending-toast.saved .transaction-pending-spinner::after{
+  content:"✓";position:absolute;inset:-4px;display:grid;place-items:center;font-size:10px;font-weight:1000
+}
+.transaction-pending-toast.failed .transaction-pending-spinner::after{
+  content:"!";position:absolute;inset:-4px;display:grid;place-items:center;font-size:10px;font-weight:1000
+}
+
+/* Plinko focus mode keeps ONLY the compact balance HUD visible. */
+body.plinko-focus-mode .topbar{
+  display:block!important;
+  position:fixed!important;
+  z-index:19000!important;
+  top:max(5px,env(safe-area-inset-top))!important;
+  right:max(7px,env(safe-area-inset-right))!important;
+  left:auto!important;
+  width:auto!important;height:auto!important;
+  padding:0!important;
+  background:transparent!important;border:0!important;box-shadow:none!important;
+  pointer-events:none!important;
+}
+body.plinko-focus-mode .topbar::after,
+body.plinko-focus-mode .topbar>.profile-chip,
+body.plinko-focus-mode .topbar>.brand{display:none!important}
+body.plinko-focus-mode .topbar>.top-actions{display:flex!important;pointer-events:none!important}
+body.plinko-focus-mode .topbar>.top-actions>*{display:none!important}
+body.plinko-focus-mode .topbar .balance-status-stack{display:grid!important;pointer-events:none!important}
+body.plinko-focus-mode .topbar .balance-pill{
+  display:flex!important;min-width:76px!important;max-width:110px!important;
+  opacity:.94;box-shadow:0 3px 12px rgba(0,0,0,.45)!important
+}
+
+/* Plinko launch chute starts instantly while Firebase commits the protected path. */
+.plinko-server-stage{
+  position:absolute!important;
+  z-index:9!important;
+  left:50%!important;
+  top:0!important;
+  transform:translateX(-50%)!important;
+  width:94px!important;
+  height:82px!important;
+  display:block!important;
+  pointer-events:none!important;
+}
+.plinko-server-stage.hidden{display:none!important}
+.plinko-launch-chute{
+  position:absolute;left:50%;top:-4px;transform:translateX(-50%);
+  width:58px;height:55px;border-radius:0 0 18px 18px;
+  background:linear-gradient(90deg,#173c73,#2d72b9 48%,#143665);
+  border:1px solid rgba(143,220,255,.55);
+  box-shadow:inset 0 -8px 12px rgba(0,0,0,.25),0 8px 18px rgba(0,0,0,.32)
+}
+.plinko-launch-chute::after{
+  content:"";position:absolute;left:9px;right:9px;bottom:-7px;height:10px;border-radius:0 0 10px 10px;
+  background:#0b2752;border:1px solid rgba(123,209,255,.45)
+}
+.plinko-launch-chute i{
+  position:absolute;top:10px;width:6px;height:30px;border-radius:8px;background:rgba(174,232,255,.42)
+}
+.plinko-launch-chute i:nth-child(1){left:12px}.plinko-launch-chute i:nth-child(2){left:26px}.plinko-launch-chute i:nth-child(3){right:12px}
+.plinko-server-stage .plinko-stage-egg{
+  position:absolute!important;left:50%!important;top:16px!important;display:block!important;font-size:27px!important;
+  filter:drop-shadow(0 5px 5px rgba(0,0,0,.48))!important;
+  animation:plinkoChuteEgg .72s cubic-bezier(.4,0,.25,1) infinite!important
+}
+@keyframes plinkoChuteEgg{
+  0%{transform:translate(-50%,-5px) rotate(-8deg) scale(.95)}
+  40%{transform:translate(-50%,11px) rotate(7deg) scale(1.03)}
+  68%{transform:translate(-50%,18px) rotate(-4deg) scale(.99)}
+  100%{transform:translate(-50%,-5px) rotate(-8deg) scale(.95)}
+}
+
+/* Case server wait is hidden behind an actual moving decoy reel. */
+.case-opening-reel.case-server-prespin .case-reel-card{filter:saturate(.9)}
+.case-opening-overlay.phase-spin .case-opening-subtitle{opacity:.92}
+
+/* Job clocks in visually immediately while the server creates the protected shift. */
+.job-clock-in{
+  position:absolute;inset:0;z-index:25;
+  display:grid;place-content:center;justify-items:center;gap:8px;
+  color:white;background:rgba(5,28,43,.48);backdrop-filter:blur(2px);
+  pointer-events:none
+}
+.job-clock-in.hidden{display:none!important}
+.job-clock-in span{font-size:58px;animation:jobClockFrog .65s ease-in-out infinite alternate}
+.job-clock-in b{font-size:12px;letter-spacing:.16em;text-shadow:0 2px 3px rgba(0,0,0,.7)}
+.job-clock-in i{width:72px;height:4px;border-radius:8px;overflow:hidden;background:rgba(255,255,255,.18)}
+.job-clock-in i::after{
+  content:"";display:block;width:36%;height:100%;border-radius:inherit;background:#dfff67;
+  animation:jobClockBar .75s ease-in-out infinite alternate
+}
+@keyframes jobClockFrog{to{transform:translateY(-5px) rotate(-3deg)}}
+@keyframes jobClockBar{to{transform:translateX(178%)}}
+
+@media(max-width:620px){
+  .transaction-pending-toast small{font-size:8.5px!important}
+  .plinko-server-stage{width:82px!important;height:72px!important}
+  .plinko-launch-chute{width:52px;height:49px}
+  .plinko-server-stage .plinko-stage-egg{font-size:24px!important}
+}
+
+
+
+/* ==========================================================
+   v114.11 — Plinko: no fake/staging egg
+   ========================================================== */
+.plinko-stage-egg{display:none!important}
+.plinko-server-stage .plinko-launch-chute{
+  animation:plinkoLauncherReady .42s ease-in-out infinite alternate;
+  transform-origin:50% 15%;
+}
+.plinko-server-stage .plinko-launch-chute i{
+  animation:plinkoLauncherPulse .62s ease-in-out infinite alternate;
+}
+.plinko-server-stage .plinko-launch-chute i:nth-child(2){animation-delay:.08s}
+.plinko-server-stage .plinko-launch-chute i:nth-child(3){animation-delay:.16s}
+@keyframes plinkoLauncherReady{
+  from{transform:translateX(-50%) rotate(-.7deg)}
+  to{transform:translateX(-50%) rotate(.7deg)}
+}
+@keyframes plinkoLauncherPulse{
+  from{opacity:.28}
+  to{opacity:.72}
+}
+
+
+/* ==========================================================
+   v114.13 — input + latency engine polish
+   ========================================================== */
+.case-opening-reel-wrap.case-latebind-swap{
+  animation:caseLateBindSwap .16s ease-out both;
+}
+@keyframes caseLateBindSwap{
+  0%{opacity:.72;filter:blur(.8px);transform:scale(.997)}
+  100%{opacity:1;filter:blur(0);transform:scale(1)}
+}
+.plinko-server-stage .plinko-launch-chute{
+  will-change:transform,filter;
+}
+.plinko-server-stage:not(.hidden) .plinko-launch-chute{
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,.32)) drop-shadow(0 0 7px rgba(74,196,255,.16));
+}
+.transaction-pending-toast{
+  contain:layout paint style;
+  transform:translateZ(0);
+}
+
+
+/* ==========================================================
+   v114.14 — Feel Engine
+   ========================================================== */
+
+/* Plinko stays visually honest: while Firebase is preparing a result,
+   the BOARD remains empty. Feedback lives on the button only. */
+.plinko-server-stage{display:none!important}
+.plinko-drop-button{
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+}
+.plinko-drop-button.server-preparing::after{
+  content:"";
+  position:absolute;
+  z-index:0;
+  left:-45%;
+  top:0;
+  width:34%;
+  height:100%;
+  pointer-events:none;
+  transform:skewX(-18deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent);
+  animation:plinkoPreparingSweep 1.05s ease-in-out infinite;
+}
+.plinko-drop-button.server-preparing>span,
+.plinko-drop-button.server-preparing>small{position:relative;z-index:1}
+.plinko-drop-button.server-preparing>span::before{
+  content:"";
+  display:inline-block;
+  width:7px;height:7px;
+  margin-right:6px;
+  vertical-align:1px;
+  border:1.3px solid rgba(255,255,255,.3);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:froggyTxnSpin .62s linear infinite;
+}
+@keyframes plinkoPreparingSweep{
+  0%{left:-45%;opacity:0}
+  20%{opacity:1}
+  72%{opacity:1}
+  100%{left:118%;opacity:0}
+}
+
+/* The real wallet visually settles instead of snapping. */
+.balance-pill.wallet-settle-up{
+  animation:walletSettleUp .48s cubic-bezier(.2,.9,.25,1);
+}
+.balance-pill.wallet-settle-down{
+  animation:walletSettleDown .48s cubic-bezier(.2,.9,.25,1);
+}
+.balance-pill.wallet-settle-flat{
+  animation:walletSettleFlat .4s ease-out;
+}
+@keyframes walletSettleUp{
+  0%{transform:translateY(0) scale(1);filter:brightness(1)}
+  42%{transform:translateY(-1px) scale(1.055);filter:brightness(1.28)}
+  100%{transform:translateY(0) scale(1);filter:brightness(1)}
+}
+@keyframes walletSettleDown{
+  0%{transform:translateY(0) scale(1);filter:brightness(1)}
+  42%{transform:translateY(1px) scale(.975);filter:brightness(.84)}
+  100%{transform:translateY(0) scale(1);filter:brightness(1)}
+}
+@keyframes walletSettleFlat{
+  50%{transform:scale(1.025)}
+}
+
+/* Make the tiny transaction line feel like HUD text, never a notification card. */
+.transaction-pending-toast{
+  font-variant-numeric:tabular-nums;
+  opacity:.96;
+}
+.transaction-pending-toast.saved{
+  animation:transactionSavedPop .22s ease-out both;
+}
+@keyframes transactionSavedPop{
+  from{transform:translateY(-1px);opacity:.55}
+  to{transform:translateY(0);opacity:.96}
+}
+
+/* Case late-binding should be practically invisible. */
+.case-opening-reel-wrap.case-latebind-swap{
+  animation-duration:.11s!important;
+}
+
+/* Better tactile response without changing game timing. */
+.pressable:not(:disabled):active,
+.action-button:not(:disabled):active{
+  transform:translateY(1px) scale(.985);
+}
+
+/* Mobile/GPU hygiene: isolate the most animated surfaces. */
+.plinko-board,
+.case-opening-reel-wrap,
+.job-playfield,
+.game-frame,
+.crash-frame{
+  contain:layout paint;
+}
+
+@media(prefers-reduced-motion:reduce){
+  .plinko-drop-button.server-preparing::after{animation-duration:1.8s}
+  .balance-pill.wallet-settle-up,
+  .balance-pill.wallet-settle-down,
+  .balance-pill.wallet-settle-flat{animation:none}
+}
+
+
+/* ==========================================================
+   v114.15 — Premium Response Engine
+   ========================================================== */
+.plinko-drop-button.server-preparing::after{
+  animation-duration:var(--plinko-prepare-cycle,760ms)!important;
+}
+.plinko-drop-button.server-preparing>span::before{
+  animation-duration:var(--plinko-prepare-cycle,760ms)!important;
+}
+.job-clock-in span,
+.job-clock-in i::after{
+  animation-duration:var(--job-clock-cycle,650ms)!important;
+}
+.transaction-pending-toast.slow{
+  opacity:.82!important;
+}
+.transaction-pending-toast.slow .transaction-pending-spinner{
+  animation-duration:.9s!important;
+}
+html.network-offline .transaction-pending-toast.failed{
+  opacity:.98!important;
+}
+.balance-pill{
+  transform-origin:78% 50%;
+  will-change:transform,filter;
+}
+.case-opening-reel-wrap.case-latebind-swap{
+  animation:caseLateBindPremium .09s ease-out both!important;
+}
+@keyframes caseLateBindPremium{
+  from{opacity:.82;filter:blur(.45px)}
+  to{opacity:1;filter:blur(0)}
+}
+:where(button,input,select,[role="button"]):focus-visible{
+  outline:2px solid rgba(172,238,255,.82);
+  outline-offset:2px;
+}
+.balance-pill,
+.transaction-pending-toast{
+  font-variant-numeric:tabular-nums;
+}
+@media(prefers-reduced-motion:reduce){
+  .plinko-drop-button.server-preparing::after,
+  .plinko-drop-button.server-preparing>span::before,
+  .job-clock-in span,
+  .job-clock-in i::after{animation-duration:1.5s!important}
+}

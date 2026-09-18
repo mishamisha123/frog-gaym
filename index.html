@@ -8,10 +8,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Froggy Leap" />
   <meta name="description" content="A juicy lily-pad risk game with virtual Froggy currency, unlockable frogs, lakes and offline play." />
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://us-central1-froggyleap-f59a8.cloudfunctions.net" crossorigin />
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=1140-bank-piggy-plinko-dev" />
+  <link rel="stylesheet" href="styles.css?v=11415-premium-response" />
   <title>Froggy Leap</title>
 </head>
 <body>
@@ -40,13 +43,16 @@
             <span class="coin-icon">F</span>
             <strong id="balanceLabel">1,000</strong>
           </div>
-          <div id="transactionPendingToast" class="transaction-pending-toast hidden" role="status" aria-live="polite" aria-atomic="true">
-            <span class="transaction-pending-spinner" aria-hidden="true"></span>
-            <small id="transactionPendingTitle">Transaction pending…</small>
-          </div>
         </div>
       </div>
     </header>
+
+    <!-- v114.15: viewport-level HUD dock. JS positions it directly below the real balance.
+         Keeping it outside the topbar prevents game/focus-mode CSS from accidentally hiding it. -->
+    <div id="transactionPendingToast" class="transaction-pending-toast hidden" role="status" aria-live="polite" aria-atomic="true">
+      <span class="transaction-pending-spinner" aria-hidden="true"></span>
+      <small id="transactionPendingTitle">Transaction pending…</small>
+    </div>
 
     <main class="screen-stack">
       <section id="playScreen" class="screen active" aria-label="Froggy Leap games">
@@ -113,7 +119,7 @@
             <p id="customBetError" class="custom-bet-error" role="status" aria-live="polite"></p>
           </form>
 
-          <div class="build-version" aria-label="Installed game version">v114.9 · FROGGY LEAP</div>
+          <div class="build-version" aria-label="Installed game version">v114.15 · FROGGY LEAP</div>
           <div class="run-meta"><span>15 lily pads</span><b>Up to 258.10×</b><span>95% base RTP</span></div>
 
           <div class="main-actions">
@@ -215,7 +221,6 @@
             </div>
             <div id="plinkoBoard" class="plinko-board">
               <canvas id="plinkoCanvas" aria-label="Frog egg bouncing through a Plinko peg board"></canvas>
-              <div id="plinkoServerStage" class="plinko-server-stage hidden" aria-hidden="true"><span>🥚</span></div>
               <div id="plinkoMultipliers" class="plinko-multipliers" aria-label="Plinko payout multipliers"></div>
             </div>
             <p id="plinkoStatus" class="plinko-status" role="status" aria-live="polite">Choose a bet and risk, then drop a frog egg.</p>
@@ -265,6 +270,9 @@
             <div id="jobRewardBurst" class="job-reward-burst hidden" aria-live="polite"><b>+15 F</b><span>+5 XP · +2s</span></div>
             <div id="jobExplosion" class="job-explosion hidden" aria-hidden="true">
               <i></i><i></i><i></i><i></i><i></i><i></i><b>💥</b>
+            </div>
+            <div id="jobClockIn" class="job-clock-in hidden" aria-hidden="true">
+              <span>🐸</span><b>CLOCKING IN</b><i></i>
             </div>
             <div id="jobIntro" class="job-intro">
               <div class="job-mascot">🐸🍟</div>
@@ -853,7 +861,7 @@
     <div id="selfTestResult" hidden></div>
   </div>
 
-  <script type="module" src="firebase-account.js?v=1149-responsive-ux"></script>
-  <script src="app.js?v=1149-responsive-ux"></script>
+  <script type="module" src="firebase-account.js?v=11415-premium-response"></script>
+  <script src="app.js?v=11415-premium-response"></script>
 </body>
 </html>

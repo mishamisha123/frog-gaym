@@ -3,7 +3,7 @@
 
   const TEST_MODE = new URLSearchParams(location.search).has('selftest');
   const STORAGE_KEY = 'froggy-leap-deluxe-v3';
-  const BUILD_VERSION = 'v114.9';
+  const BUILD_VERSION = 'v114.15';
   console.info(`Froggy Leap ${BUILD_VERSION} loaded`);
 
   // Base-game economy: each ordinary cash-out point targets 95% RTP.
@@ -55,8 +55,9 @@
   function serverPlinkoActive(){return serverPhase4Active();}
   function serverCaseWalletBalance(){return Math.max(0,Math.floor(Number(serverCaseRuntime.snapshot?.wallet)||0));}
   function serverPhase4WalletBalance(){return serverPhase4Active()?serverCaseWalletBalance():0;}
-  function displayWalletBalance(){return serverCasesActive()?serverCaseWalletBalance():Math.max(0,Math.floor(Number(state?.balance)||0));}
+  function displayWalletBalance(){return presentedWalletBalance();}
   const serverV114Runtime={bankBusy:false,piggyBusy:false,plinkoPending:0};
+  const roundPresentationRuntime={leapToken:'',crashToken:''};
   function serverPlayerLevel(){return Math.max(1,Math.floor(Number(serverCaseRuntime.snapshot?.level)||1));}
   function serverPlayerXp(){return Math.max(0,Math.floor(Number(serverCaseRuntime.snapshot?.xp)||0));}
   function displayPlayerLevel(){return serverPhase3Active()?serverPlayerLevel():Math.max(1,Math.floor(Number(state?.level)||1));}
@@ -350,7 +351,7 @@
     milestoneTrack: $('milestoneTrack'), milestoneFill: $('milestoneFill'), goalGrid: $('goalGrid'), goalSummary: $('goalSummary'),
     sessionRoundsStat: $('sessionRoundsStat'), sessionWinsStat: $('sessionWinsStat'), sessionNetStat: $('sessionNetStat'), sessionTimeStat: $('sessionTimeStat'), pondRankLabel: $('pondRankLabel'), achievementGrid: $('achievementGrid'), settingsReminders: $('settingsReminders'),
     transactionToast:$('transactionPendingToast'), transactionTitle:$('transactionPendingTitle'), plinkoServerStage:$('plinkoServerStage'),
-    confetti: $('confettiLayer'), flash: $('flashLayer'), jobPlayfield:$('jobPlayfield'), jobFry:$('jobFry'), jobQueuedFry:$('jobQueuedFry'), jobBag:$('jobBag'), jobIntro:$('jobIntro'), jobStartButton:$('jobStartButton'), jobShiftMoney:$('jobShiftMoney'), jobFriesBagged:$('jobFriesBagged'), jobTimerHud:$('jobTimerHud'), jobTimerLabel:$('jobTimerLabel'), jobBoostLabel:$('jobBoostLabel'), jobLevelLabel:$('jobLevelLabel'), jobPayLabel:$('jobPayLabel'), jobXpFill:$('jobXpFill'), jobXpLabel:$('jobXpLabel'), jobRewardBurst:$('jobRewardBurst'), jobExplosion:$('jobExplosion'), jobResult:$('jobResult'), jobResultClose:$('jobResultClose'), jobResultIcon:$('jobResultIcon'), jobResultTitle:$('jobResultTitle'), jobResultMoney:$('jobResultMoney'), jobResultText:$('jobResultText'), jobAgainButton:$('jobAgainButton'),
+    confetti: $('confettiLayer'), flash: $('flashLayer'), jobPlayfield:$('jobPlayfield'), jobFry:$('jobFry'), jobQueuedFry:$('jobQueuedFry'), jobBag:$('jobBag'), jobIntro:$('jobIntro'), jobStartButton:$('jobStartButton'), jobShiftMoney:$('jobShiftMoney'), jobFriesBagged:$('jobFriesBagged'), jobTimerHud:$('jobTimerHud'), jobTimerLabel:$('jobTimerLabel'), jobBoostLabel:$('jobBoostLabel'), jobLevelLabel:$('jobLevelLabel'), jobPayLabel:$('jobPayLabel'), jobXpFill:$('jobXpFill'), jobXpLabel:$('jobXpLabel'), jobRewardBurst:$('jobRewardBurst'), jobExplosion:$('jobExplosion'), jobClockIn:$('jobClockIn'), jobResult:$('jobResult'), jobResultClose:$('jobResultClose'), jobResultIcon:$('jobResultIcon'), jobResultTitle:$('jobResultTitle'), jobResultMoney:$('jobResultMoney'), jobResultText:$('jobResultText'), jobAgainButton:$('jobAgainButton'),
     selfTest: $('selfTestResult')
   };
 
@@ -360,38 +361,214 @@
   function easeOutBack(t){ const c1=1.70158,c3=c1+1; return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2); }
   function money(n){ return Math.floor(Number(n)||0).toLocaleString('en-US'); }
 
-  const transactionUiRuntime={token:0,hideTimer:0};
-  function transactionPending(text='Transaction pending…'){
+  const LATENCY_PROFILE_KEY='froggy-leap-latency-profile-v2';
+  const LATENCY_PROFILE_OLD_KEY='froggy-leap-latency-profile-v1';
+  const latencyRuntime={profile:{}};
+  try{
+    let parsed=JSON.parse(localStorage.getItem(LATENCY_PROFILE_KEY)||'null');
+    if(!parsed||typeof parsed!=='object'||Array.isArray(parsed)){
+      const legacy=JSON.parse(localStorage.getItem(LATENCY_PROFILE_OLD_KEY)||'{}');
+      parsed={};
+      if(legacy&&typeof legacy==='object'&&!Array.isArray(legacy)){
+        for(const [key,row] of Object.entries(legacy)){
+          const seed=Number(row?.ema);
+          if(Number.isFinite(seed))parsed[key]={ema:seed,samples:[Math.round(seed)],count:Number(row?.count)||1,updatedAt:Number(row?.updatedAt)||Date.now()};
+        }
+      }
+    }
+    if(parsed&&typeof parsed==='object'&&!Array.isArray(parsed))latencyRuntime.profile=parsed;
+  }catch{}
+  function latencyPercentile(values,p=.8){
+    const list=(Array.isArray(values)?values:[]).map(Number).filter(Number.isFinite).sort((x,y)=>x-y);
+    if(!list.length)return NaN;
+    const index=Math.min(list.length-1,Math.max(0,Math.ceil(list.length*p)-1));
+    return list[index];
+  }
+  function latencyStats(key,fallback=900){
+    const row=latencyRuntime.profile[key]||{};
+    const samples=(Array.isArray(row.samples)?row.samples:[]).map(Number).filter(v=>Number.isFinite(v)&&v>=1&&v<=15000).slice(-12);
+    const ema=Number(row.ema);
+    const p80=latencyPercentile(samples,.8);
+    const median=latencyPercentile(samples,.5);
+    const target=Number.isFinite(p80)&&samples.length>=3?Math.max(Number.isFinite(ema)?ema:0,p80):Number.isFinite(ema)?ema:fallback;
+    const spread=samples.length>=3&&Number.isFinite(p80)&&Number.isFinite(median)?Math.max(0,p80-median):0;
+    return{estimate:clamp(Math.round(Number.isFinite(target)?target:fallback),80,15000),median:clamp(Math.round(Number.isFinite(median)?median:target||fallback),80,15000),p80:clamp(Math.round(Number.isFinite(p80)?p80:target||fallback),80,15000),jitter:Math.round(spread),samples:samples.length,count:Number(row.count)||samples.length};
+  }
+  function latencyEstimate(key,fallback=900){return latencyStats(key,fallback).estimate;}
+  function recordLatency(key,ms){
+    const sample=clamp(Math.round(Number(ms)||0),1,15000);
+    if(!key||!Number.isFinite(sample))return sample;
+    const old=latencyRuntime.profile[key]||{};
+    const oldEma=Number(old.ema);
+    const ema=Number.isFinite(oldEma)?Math.round(oldEma*.76+sample*.24):sample;
+    const samples=[...(Array.isArray(old.samples)?old.samples:[]),sample].slice(-12);
+    latencyRuntime.profile[key]={ema,samples,sample,count:Math.min(1000,(Number(old.count)||0)+1),updatedAt:Date.now()};
+    try{localStorage.setItem(LATENCY_PROFILE_KEY,JSON.stringify(latencyRuntime.profile));}catch{}
+    return sample;
+  }
+  async function timedServerPromise(key,promise){
+    const started=performance.now();
+    try{return await promise;}
+    finally{recordLatency(key,performance.now()-started);}
+  }
+  window.FroggyLatency={estimate:(key)=>latencyEstimate(key),stats:(key)=>latencyStats(key),profile:()=>JSON.parse(JSON.stringify(latencyRuntime.profile))};
+
+
+  const transactionUiRuntime={token:0,hideTimer:0,slowTimer:0,startedAt:0,minPendingMs:620,latencyKey:'transaction'};
+  function syncTransactionDockPosition(){
+    if(!els.transactionToast)return;
+    const pill=els.balance?.closest?.('.balance-pill');
+    const rect=pill?.getBoundingClientRect?.();
+    if(rect&&rect.width>1&&rect.height>1){
+      els.transactionToast.style.top=`${Math.round(rect.bottom+5)}px`;
+      els.transactionToast.style.right=`${Math.max(8,Math.round(window.innerWidth-rect.right))}px`;
+    }else{
+      els.transactionToast.style.top='72px';
+      els.transactionToast.style.right='10px';
+    }
+  }
+  function transactionPending(text='Transaction pending…',latencyKey='transaction'){
     if(!els.transactionToast)return 0;
-    clearTimeout(transactionUiRuntime.hideTimer);
+    clearTimeout(transactionUiRuntime.hideTimer);clearTimeout(transactionUiRuntime.slowTimer);
     const token=++transactionUiRuntime.token;
-    els.transactionToast.classList.remove('hidden','saved','failed');
-    els.transactionTitle.textContent=text;
+    transactionUiRuntime.startedAt=performance.now();transactionUiRuntime.latencyKey=latencyKey;
+    els.transactionToast.classList.remove('hidden','saved','failed','slow');
+    els.transactionTitle.textContent=text;syncTransactionDockPosition();
+    const learned=latencyEstimate(latencyKey,1100),slowAfter=clamp(Math.round(learned*1.65),1700,4200);
+    transactionUiRuntime.slowTimer=setTimeout(()=>{
+      if(token!==transactionUiRuntime.token||els.transactionToast.classList.contains('hidden'))return;
+      els.transactionToast.classList.add('slow');els.transactionTitle.textContent='Still syncing…';syncTransactionDockPosition();
+    },slowAfter);
     return token;
   }
   function transactionSaved(token=transactionUiRuntime.token,text='Transaction saved'){
-    if(!els.transactionToast||token!==transactionUiRuntime.token)return;
-    els.transactionToast.classList.remove('failed');els.transactionToast.classList.add('saved');
-    els.transactionTitle.textContent=text;
-    clearTimeout(transactionUiRuntime.hideTimer);
-    transactionUiRuntime.hideTimer=setTimeout(()=>{if(token===transactionUiRuntime.token)els.transactionToast.classList.add('hidden');},650);
+    if(!els.transactionToast||token!==transactionUiRuntime.token)return;clearTimeout(transactionUiRuntime.slowTimer);
+    const wait=Math.max(0,transactionUiRuntime.minPendingMs-(performance.now()-transactionUiRuntime.startedAt));
+    setTimeout(()=>{
+      if(token!==transactionUiRuntime.token)return;
+      els.transactionToast.classList.remove('failed');els.transactionToast.classList.add('saved');
+      els.transactionTitle.textContent=text;syncTransactionDockPosition();
+      clearTimeout(transactionUiRuntime.hideTimer);
+      transactionUiRuntime.hideTimer=setTimeout(()=>{if(token===transactionUiRuntime.token)els.transactionToast.classList.add('hidden');},900);
+    },wait);
   }
   function transactionFailed(token=transactionUiRuntime.token,text='Transaction failed'){
-    if(!els.transactionToast||token!==transactionUiRuntime.token)return;
+    if(!els.transactionToast||token!==transactionUiRuntime.token)return;clearTimeout(transactionUiRuntime.slowTimer);
     els.transactionToast.classList.remove('saved');els.transactionToast.classList.add('failed');
-    els.transactionTitle.textContent=text;
+    els.transactionTitle.textContent=text;syncTransactionDockPosition();
     clearTimeout(transactionUiRuntime.hideTimer);
-    transactionUiRuntime.hideTimer=setTimeout(()=>{if(token===transactionUiRuntime.token)els.transactionToast.classList.add('hidden');},1700);
+    transactionUiRuntime.hideTimer=setTimeout(()=>{if(token===transactionUiRuntime.token)els.transactionToast.classList.add('hidden');},1800);
+  }
+  function transactionSavedOnly(text='Balance updated'){
+    if(!els.transactionToast)return;clearTimeout(transactionUiRuntime.slowTimer);
+    clearTimeout(transactionUiRuntime.hideTimer);
+    const token=++transactionUiRuntime.token;
+    els.transactionToast.classList.remove('hidden','failed');els.transactionToast.classList.add('saved');
+    els.transactionTitle.textContent=text;syncTransactionDockPosition();
+    transactionUiRuntime.hideTimer=setTimeout(()=>{if(token===transactionUiRuntime.token)els.transactionToast.classList.add('hidden');},950);
+  }
+  function transactionFailedOnly(text='Transaction failed'){
+    const token=transactionPending('Transaction pending…');
+    transactionUiRuntime.startedAt=performance.now()-transactionUiRuntime.minPendingMs;
+    transactionFailed(token,text);
   }
   function postActionTransactionSaved(text='Transaction saved'){
     const token=transactionPending('Transaction pending…');
-    setTimeout(()=>transactionSaved(token,text),380);
+    setTimeout(()=>transactionSaved(token,text),520);
   }
-  async function waitWithTransaction(promise,pending='Transaction pending…',saved='Transaction saved'){
-    const token=transactionPending(pending);
-    try{const value=await promise;transactionSaved(token,saved);return value;}
-    catch(error){transactionFailed(token,'Transaction failed');throw error;}
+
+
+  let balancePulseTimer=0;
+  function pulseBalanceSettlement(delta){
+    const pill=els.balance?.closest?.('.balance-pill');
+    if(!pill)return;
+    const amount=Number(delta);
+    pill.classList.remove('wallet-settle-up','wallet-settle-down','wallet-settle-flat');
+    void pill.offsetWidth;
+    pill.classList.add(amount>0?'wallet-settle-up':amount<0?'wallet-settle-down':'wallet-settle-flat');
+    clearTimeout(balancePulseTimer);
+    balancePulseTimer=setTimeout(()=>pill.classList.remove('wallet-settle-up','wallet-settle-down','wallet-settle-flat'),520);
   }
+
+  const walletPresentationRuntime={nextId:1,holds:new Map(),frozenWallet:null};
+  function beginWalletPresentationHold(kind='transaction'){
+    const token=`wallet-${walletPresentationRuntime.nextId++}`;
+    if(walletPresentationRuntime.holds.size===0){
+      walletPresentationRuntime.frozenWallet=serverCasesActive()?serverCaseWalletBalance():ownedWalletBalance();
+    }
+    walletPresentationRuntime.holds.set(token,{kind,startedAt:performance.now(),delta:null});
+    return token;
+  }
+  function setWalletPresentationDelta(token,delta){
+    const entry=walletPresentationRuntime.holds.get(token);
+    if(!entry)return false;
+    const value=Number(delta);
+    entry.delta=Number.isFinite(value)?Math.trunc(value):null;
+    return true;
+  }
+  function endWalletPresentationHold(token){
+    if(!token||!walletPresentationRuntime.holds.has(token))return walletPresentationRuntime.holds.size===0;
+    const entry=walletPresentationRuntime.holds.get(token);
+    if(entry?.delta!==null&&walletPresentationRuntime.frozenWallet!==null){
+      walletPresentationRuntime.frozenWallet=Math.max(0,Math.floor(walletPresentationRuntime.frozenWallet+entry.delta));
+      pulseBalanceSettlement(entry.delta);
+    }
+    walletPresentationRuntime.holds.delete(token);
+    if(walletPresentationRuntime.holds.size===0){
+      walletPresentationRuntime.frozenWallet=null;
+      refreshEconomyHud();
+      return true;
+    }
+    refreshEconomyHud();
+    return false;
+  }
+  function cancelWalletPresentationHold(token){
+    if(!token||!walletPresentationRuntime.holds.has(token))return walletPresentationRuntime.holds.size===0;
+    walletPresentationRuntime.holds.delete(token);
+    if(walletPresentationRuntime.holds.size===0)walletPresentationRuntime.frozenWallet=null;
+    refreshEconomyHud();
+    return walletPresentationRuntime.holds.size===0;
+  }
+  function presentedWalletBalance(){
+    return walletPresentationRuntime.frozenWallet===null
+      ? (serverCasesActive()?serverCaseWalletBalance():ownedWalletBalance())
+      : Math.max(0,Math.floor(Number(walletPresentationRuntime.frozenWallet)||0));
+  }
+
+  async function waitWithTransaction(promise,pending='Transaction pending…',saved='Transaction saved',latencyKey='transaction'){
+    const walletToken=beginWalletPresentationHold('direct');
+    const token=transactionPending(pending,latencyKey);
+    try{
+      const value=await timedServerPromise(latencyKey,promise);
+      endWalletPresentationHold(walletToken);
+      transactionSaved(token,saved);
+      return value;
+    }catch(error){
+      cancelWalletPresentationHold(walletToken);
+      transactionFailed(token,'Transaction failed');
+      throw error;
+    }
+  }
+
+  function showNetworkState(online){
+    document.documentElement.classList.toggle('network-offline',!online);
+    if(!online&&els.transactionToast){
+      clearTimeout(transactionUiRuntime.hideTimer);clearTimeout(transactionUiRuntime.slowTimer);
+      const token=++transactionUiRuntime.token;
+      els.transactionToast.classList.remove('hidden','saved','slow');els.transactionToast.classList.add('failed');
+      els.transactionTitle.textContent='Offline';syncTransactionDockPosition();
+      transactionUiRuntime.hideTimer=setTimeout(()=>{if(token===transactionUiRuntime.token)els.transactionToast.classList.add('hidden');},1700);
+    }
+  }
+  window.addEventListener('online',()=>showNetworkState(true));
+  window.addEventListener('offline',()=>showNetworkState(false));
+
+  if(typeof ResizeObserver==='function'&&els.balance){
+    const transactionAnchorObserver=new ResizeObserver(()=>syncTransactionDockPosition());
+    transactionAnchorObserver.observe(els.balance.closest('.balance-pill')||els.balance);
+  }
+  window.addEventListener('resize',syncTransactionDockPosition,{passive:true});
+  window.addEventListener('orientationchange',()=>setTimeout(syncTransactionDockPosition,120),{passive:true});
 
 
   function compactMoney(n){
@@ -1093,6 +1270,7 @@
     return true;
   }
   const PLINKO_MAX_ACTIVE_EGGS = 96;
+  const PLINKO_MAX_PENDING_REQUESTS = 4;
   const plinkoRuntime={raf:0,eggs:[],nextId:1,lastFrame:0,lastPegSoundAt:0,lastCelebrationAt:0,layout:null,renderDpr:1,boardCache:null,boardCacheKey:'',eggSpriteCache:new Map(),uiRefreshTimer:0};
   function plinkoConfig(risk=state.plinkoRisk){return PLINKO_CONFIGS[['low','medium','high'].includes(risk)?risk:'medium'];}
   function plinkoRows(risk=state.plinkoRisk){return plinkoConfig(risk).rows;}
@@ -1169,11 +1347,15 @@
   function setPlinkoRisk(risk){if(state.plinkoActive||!['low','medium','high'].includes(risk))return false;state.plinkoRisk=risk;refreshPlinkoHud();saveState();return true;}
   function refreshPlinkoHud(){
     if(!els.plinkoGamePane)return;
-    const risk=state.plinkoRisk,rows=plinkoRows(risk),table=plinkoTable(risk),activeCount=plinkoRuntime.eggs.length,atCap=activeCount>=PLINKO_MAX_ACTIVE_EGGS;
+    const risk=state.plinkoRisk,rows=plinkoRows(risk),table=plinkoTable(risk),activeCount=plinkoRuntime.eggs.length,atCap=activeCount>=PLINKO_MAX_ACTIVE_EGGS,pendingCount=serverV114Runtime.plinkoPending,pendingCap=!TEST_MODE&&pendingCount>=PLINKO_MAX_PENDING_REQUESTS;
     els.plinkoBetInput.value=String(state.plinkoBet);
-    els.plinkoDropButton.disabled=atCap||(!TEST_MODE&&!serverPlinkoActive())||serverV114Runtime.plinkoPending+activeCount>=PLINKO_MAX_ACTIVE_EGGS||plinkoWalletBalance()<Math.max(MIN_BET,state.plinkoBet);
-    els.plinkoDropButton.querySelector('span').textContent=activeCount?'DROP ANOTHER EGG':'DROP FROG EGG';
-    els.plinkoDropButton.querySelector('small').textContent=atCap?`${activeCount} eggs falling · wait for one to land`:plinkoBankRoundRuntime.active?`Round ${plinkoRoundTimeText()} · ${activeCount} egg${activeCount===1?'':'s'} falling · tap to spam`:activeCount?`${activeCount} egg${activeCount===1?'':'s'} falling · tap to spam`: `Bet ${money(state.plinkoBet)} F · ${plinkoRiskLabel()} · ${rows} rows`;
+    els.plinkoDropButton.disabled=atCap||pendingCap||(!TEST_MODE&&!serverPlinkoActive())||pendingCount+activeCount>=PLINKO_MAX_ACTIVE_EGGS||plinkoWalletBalance()<Math.max(MIN_BET,state.plinkoBet);
+    els.plinkoDropButton.classList.toggle('server-preparing',pendingCount>0);
+    const plinkoPrepareCycle=clamp(Math.round(latencyEstimate('plinko',900)*.72),520,1250);
+    els.plinkoDropButton.style.setProperty('--plinko-prepare-cycle',`${plinkoPrepareCycle}ms`);
+    els.plinkoDropButton.setAttribute('aria-busy',pendingCount>0?'true':'false');
+    els.plinkoDropButton.querySelector('span').textContent=activeCount||pendingCount?'DROP ANOTHER EGG':'DROP FROG EGG';
+    els.plinkoDropButton.querySelector('small').textContent=pendingCap?`${pendingCount} drops preparing · wait for one`:atCap?`${activeCount} eggs falling · wait for one to land`:plinkoBankRoundRuntime.active?`Round ${plinkoRoundTimeText()} · ${activeCount} egg${activeCount===1?'':'s'} falling${pendingCount?` · ${pendingCount} preparing`:''}`:activeCount?`${activeCount} egg${activeCount===1?'':'s'} falling${pendingCount?` · ${pendingCount} preparing`:''}`:pendingCount?`${pendingCount===1?'Preparing drop':`Preparing ${pendingCount} drops`}…`: `Bet ${money(state.plinkoBet)} F · ${plinkoRiskLabel()} · ${rows} rows`;
     if(els.plinkoRoundLabel)els.plinkoRoundLabel.textContent=plinkoRoundTimeText();
     els.plinkoRiskButtons.querySelectorAll('[data-plinko-risk]').forEach(button=>{button.disabled=state.plinkoActive;button.classList.toggle('active',button.dataset.plinkoRisk===risk);});
     els.plinkoQuickBets.querySelectorAll('button').forEach(button=>button.disabled=state.plinkoActive);
@@ -1226,8 +1408,10 @@
     egg.segmentDuration=duration;egg.segmentGravity=gravity;egg.segmentVx=dx/duration;egg.segmentVy=(dy-.5*gravity*duration*duration)/duration;
   }
   function primePlinkoEggPhysics(egg,L){
-    egg.rows=L.rows;egg.row=-1;egg.rights=0;egg.nextRow=0;egg.landing=false;egg.finished=false;egg.bounce=0;egg.x=L.cx+(Math.random()-.5)*L.eggRadius*.28;egg.y=L.top-Math.max(38,L.rowGap*.82);egg.vx=0;egg.vy=0;egg.rotation=(Math.random()-.5)*.18;egg.angularVelocity=(Math.random()-.5)*1.4;rebuildPlinkoEggTargets(egg,L);
-    const first=egg.targets?.[0]||plinkoImpactTarget(egg,0,L);beginPlinkoMotionSegment(egg,L,first.x,first.y,'peg');
+    egg.rows=L.rows;egg.row=-1;egg.rights=0;egg.nextRow=0;egg.landing=false;egg.finished=false;egg.bounce=0;egg.x=L.cx;egg.y=L.top;egg.vx=0;egg.vy=0;egg.rotation=(Math.random()-.5)*.18;egg.angularVelocity=(Math.random()-.5)*1.4;rebuildPlinkoEggTargets(egg,L);
+    // No extra invisible approach: when the authoritative result exists, the real egg
+    // appears at the first legitimate peg impact immediately and continues its true path.
+    triggerPlinkoPegImpact(egg,L);
   }
   function triggerPlinkoPegImpact(egg,L){
     const row=egg.nextRow;if(row>=egg.rows)return;
@@ -1264,8 +1448,10 @@
     const sprite={canvas,cssSize};plinkoRuntime.eggSpriteCache.set(key,sprite);return sprite;
   }
   function drawPlinkoEgg(c,egg,L){
+    // Do not show the authoritative egg hovering above the first peg.
+    // It becomes visible only after its first real peg impact (row 0).
+    if((egg?.row??-1)<0)return;
     const sprite=getPlinkoEggSprite(L,Boolean(egg.protected));
-    // Keep the egg silhouette stable. The old per-impact squash/stretch looked like frame glitches on phones.
     c.save();c.translate(egg.x,egg.y);c.rotate(egg.rotation||0);c.drawImage(sprite.canvas,-sprite.cssSize/2,-sprite.cssSize/2,sprite.cssSize,sprite.cssSize);c.restore();
   }
   function renderPlinkoStaticBoard(c,L){
@@ -1297,7 +1483,7 @@
   }
   function finishPlinkoEgg(egg,{quiet=false}={}){
     const bet=egg.bet,multiplier=egg.multiplier,payout=serverPlinkoActive()&&!TEST_MODE?Math.max(0,Math.floor(Number(egg.payout)||0)):creditBalance(egg.payout);state.plinkoLastMultiplier=multiplier;state.bestPlinkoMultiplier=Math.max(state.bestPlinkoMultiplier,multiplier);state.biggestWin=Math.max(state.biggestWin,payout);session.net+=payout;
-    const profitable=payout>bet,returned=payout>=bet;if(returned){if(!serverPlinkoActive()||TEST_MODE)state.plinkoWins++;session.wins++;session.lossStreak=0;}else{session.losses++;session.lossStreak++;}
+    if(egg.settlementToken){endWalletPresentationHold(egg.settlementToken);egg.settlementToken='';}const profitable=payout>bet,returned=payout>=bet;if(returned){if(!serverPlinkoActive()||TEST_MODE)state.plinkoWins++;session.wins++;session.lossStreak=0;}else{session.losses++;session.lossStreak++;}
     state.roundBetForXp=bet;const plinkoXp=Math.max(1,Math.floor((8+wagerXpBonus())/5));addXp(plinkoXp);recordXpWager();const profit=payout-bet;
     if(!quiet){setPlinkoStatus(`${multiplier.toFixed(2)}× · ${profit>=0?'+':''}${money(profit)} F · +${plinkoXp} XP`,profitable?'win':returned?'':'lose');flashPlinkoSlot(egg.slot);if(serverPlinkoActive()&&!TEST_MODE)postActionTransactionSaved('Plinko saved');}
     const activeEggs=plinkoRuntime.eggs.length,now=performance.now(),crowded=activeEggs>18;if(!quiet){if(multiplier>=5){audio.reward();if(!crowded)haptic([12,30,20]);if((!crowded||multiplier>=50)&&now-plinkoRuntime.lastCelebrationAt>220){plinkoRuntime.lastCelebrationAt=now;confettiBurst(Math.min(crowded?42:90,24+Math.floor(multiplier)));}}else if(returned){audio.cash();if(!crowded)haptic(12);}else{audio.croak();if(!crowded)haptic(14);}}
@@ -1320,38 +1506,41 @@
     const winningSlots=table.map((m,i)=>m>1?i:-1).filter(i=>i>=0),slot=winningSlots[Math.floor(Math.random()*winningSlots.length)];
     const path=Array(rows).fill(0);for(let i=0;i<slot;i++)path[i]=1;return {path,slot};
   }
-  function launchCommittedPlinkoEgg({bet,risk,path,slot,multiplier,payout,protectedRound=false}){
+  function launchCommittedPlinkoEgg({bet,risk,path,slot,multiplier,payout,protectedRound=false,settlementToken=''}){
     if(!plinkoRuntime.layout||plinkoRuntime.layout.risk!==risk)resizePlinkoCanvas();
-    const rows=plinkoRows(risk),egg={id:plinkoRuntime.nextId++,bet,risk,rows,path,slot,multiplier,payout,protected:protectedRound};
+    const rows=plinkoRows(risk),egg={id:plinkoRuntime.nextId++,bet,risk,rows,path,slot,multiplier,payout,protected:protectedRound,settlementToken};
     primePlinkoEggPhysics(egg,plinkoRuntime.layout||plinkoLayout(risk));plinkoRuntime.eggs.push(egg);state.plinkoActive=true;if(!serverPlinkoActive()||TEST_MODE)state.plinkoDrops++;session.net-=bet;
-    if(!plinkoBankRoundRuntime.active)startPlinkoBankRound();setPlinkoStatus(`${protectedRound?'🛡️ Protected · ':''}${plinkoRuntime.eggs.length} egg${plinkoRuntime.eggs.length===1?'':'s'} in flight · server result locked.`,protectedRound?'win':'');
+    if(!plinkoBankRoundRuntime.active)startPlinkoBankRound();setPlinkoStatus(`${protectedRound?'🛡️ Protected · ':''}Drop committed · server result locked.`,protectedRound?'win':'');
     if(plinkoRuntime.eggs.length<=12||plinkoRuntime.eggs.length%4===0)audio.start();if(plinkoRuntime.eggs.length<=12)haptic(protectedRound?[9,20,9]:9);
     if(!plinkoRuntime.raf){plinkoRuntime.lastFrame=0;plinkoRuntime.raf=requestAnimationFrame(animatePlinko);}schedulePlinkoUiRefresh(120);return true;
   }
   function startPlinko(){
     audio.unlock();if(state.roundActive||state.crashActive)return false;
+    if(!TEST_MODE&&serverV114Runtime.plinkoPending>=PLINKO_MAX_PENDING_REQUESTS){setPlinkoStatus('Drop queue is full · wait for one server result before adding another egg.','lose');refreshPlinkoHud();return false;}
     const activeTotal=plinkoRuntime.eggs.length+serverV114Runtime.plinkoPending;if(activeTotal>=PLINKO_MAX_ACTIVE_EGGS){setPlinkoStatus(`Let one of the ${PLINKO_MAX_ACTIVE_EGGS} eggs land before dropping another.`,'lose');return false;}
     const bet=Math.floor(Number(state.plinkoBet)||0),risk=state.plinkoRisk,wallet=plinkoWalletBalance();if(bet<MIN_BET||bet>wallet){setPlinkoStatus(`You need ${money(Math.max(MIN_BET,bet))} F in your wallet.`,'lose');refreshPlinkoHud();return false;}
     if(!TEST_MODE){
       if(!serverPlinkoActive()){setPlinkoStatus('Server Economy Phase 4 is required for Plinko in v114.','lose');return false;}
       const bridge=window.FroggyServerEconomy;if(!bridge?.dropPlinko){setPlinkoStatus('The v114 Plinko backend bridge is unavailable.','lose');return false;}
+      const settlementToken=beginWalletPresentationHold('plinko');
       serverV114Runtime.plinkoPending++;refreshPlinkoHud();
-      els.plinkoServerStage?.classList.remove('hidden');
       setPlinkoStatus(`Preparing ${money(bet)} F ${risk.toUpperCase()} drop…`);
-      void bridge.dropPlinko(bet,risk,bridge.requestId?.('plinko')).then(result=>{
+      void timedServerPromise('plinko',bridge.dropPlinko(bet,risk,bridge.requestId?.('plinko'))).then(result=>{
         const outcome=result?.outcome||result?.plinko||result;
         const path=Array.isArray(outcome?.path)?outcome.path.map(v=>v?1:0):null,rows=plinkoRows(risk),slot=Math.floor(Number(outcome?.slot));
         const multiplier=Number(outcome?.multiplier),payout=Math.max(0,Math.floor(Number(outcome?.payout)||0));
         if(!path||path.length!==rows||!Number.isInteger(slot)||slot<0||slot>=plinkoTable(risk).length||!Number.isFinite(multiplier))throw new Error('Server returned an invalid Plinko outcome.');
+        setWalletPresentationDelta(settlementToken,payout-bet);
         if(result?.economy)applyServerCaseSnapshot(result.economy);else{const cached=bridge.getCachedSnapshot?.();if(cached)applyServerCaseSnapshot(cached);}
-        els.plinkoServerStage?.classList.add('hidden');launchCommittedPlinkoEgg({bet,risk,path,slot,multiplier,payout,protectedRound:false});
-      }).catch(error=>{els.plinkoServerStage?.classList.add('hidden');setPlinkoStatus(serverCaseFriendlyError(error),'lose');void syncServerCases({quiet:true});}).finally(()=>{els.plinkoServerStage?.classList.add('hidden');serverV114Runtime.plinkoPending=Math.max(0,serverV114Runtime.plinkoPending-1);refreshPlinkoHud();});
+        // Launch immediately when the authoritative result exists. No artificial 720ms minimum.
+        launchCommittedPlinkoEgg({bet,risk,path,slot,multiplier,payout,protectedRound:false,settlementToken});
+      }).catch(error=>{cancelWalletPresentationHold(settlementToken);transactionFailedOnly('Plinko failed');setPlinkoStatus(serverCaseFriendlyError(error),'lose');void syncServerCases({quiet:true});}).finally(()=>{serverV114Runtime.plinkoPending=Math.max(0,serverV114Runtime.plinkoPending-1);refreshPlinkoHud();});
       return true;
     }
-    if(!spendOwnedFunds(bet))return false;
+    const settlementToken=beginWalletPresentationHold('plinko-local');if(!spendOwnedFunds(bet)){cancelWalletPresentationHold(settlementToken);return false;}
     const protectedRound=state.safeRunCredits>0;if(protectedRound)state.safeRunCredits=Math.max(0,state.safeRunCredits-1);
-    const rows=plinkoRows(risk),{path,slot}=rollPlinkoPath(risk,{protectedRound}),multiplier=plinkoTable(risk)[slot],payout=Math.floor(bet*multiplier);
-    return launchCommittedPlinkoEgg({bet,risk,path,slot,multiplier,payout,protectedRound});
+    const rows=plinkoRows(risk),{path,slot}=rollPlinkoPath(risk,{protectedRound}),multiplier=plinkoTable(risk)[slot],payout=Math.floor(bet*multiplier);setWalletPresentationDelta(settlementToken,payout-bet);
+    return launchCommittedPlinkoEgg({bet,risk,path,slot,multiplier,payout,protectedRound,settlementToken});
   }
 
 
@@ -1484,7 +1673,7 @@
   }
   function crashProtectionActive(){return Boolean(state.crashActive&&state.roundSafe);}
   function startCrash(){
-    if(anyRoundActive()||!gameUnlocked('crash'))return false;const v=selectedVehicle();if(availableVehicleFlights(v.id)<=0){refreshCrashHud();els.crashNoFlights.classList.add('attention');setTimeout(()=>els.crashNoFlights.classList.remove('attention'),520);haptic([18,35,18]);return false;}if(state.crashBet>availableBetBalance()){setCrashStatus('Lower the bet or add more Froggy to your wallet.','lose');return false;}const allocation=allocateRoundStake(state.crashBet);if(!allocation)return false;
+    if(anyRoundActive()||!gameUnlocked('crash'))return false;const v=selectedVehicle();if(availableVehicleFlights(v.id)<=0){refreshCrashHud();els.crashNoFlights.classList.add('attention');setTimeout(()=>els.crashNoFlights.classList.remove('attention'),520);haptic([18,35,18]);return false;}if(state.crashBet>availableBetBalance()){setCrashStatus('Lower the bet or add more Froggy to your wallet.','lose');return false;}roundPresentationRuntime.crashToken=beginWalletPresentationHold('sky-crash');const allocation=allocateRoundStake(state.crashBet);if(!allocation){cancelWalletPresentationHold(roundPresentationRuntime.crashToken);roundPresentationRuntime.crashToken='';return false;}
     state.vehicleCharges[v.id]--;state.crashActive=true;state.crashMultiplier=1;state.crashPoint=generateCrashPoint(v.max);state.roundSafe=state.safeRunCredits>0;if(state.roundSafe)state.safeRunCredits--;state.roundBetForXp=state.crashBet;state.crashRounds++;state.rounds++;session.rounds++;session.net-=state.crashBet;state.crashStartedAt=performance.now()+CRASH_LAUNCH_COUNTDOWN_MS;crashScene.start();setCrashStatus(state.roundSafe?'PROTECTED ROUND':'',state.roundSafe?'win':'');audio.start();refresh();
     requestAnimationFrame(()=>{els.crashGamePane.scrollTop=0;});
     return true;
@@ -1528,7 +1717,7 @@
   function crashCashOut(options={}){
     if(!state.crashActive||performance.now()<state.crashStartedAt)return false;
     const automatic=Boolean(options.automatic),reason=options.reason||'manual',vehicle=selectedVehicle(),multiplier=Math.min(state.crashMultiplier,vehicle.max),payout=crashPayoutFor(multiplier),net=payout-state.crashBet,profit=Math.max(0,net),wasProtected=state.roundSafe;
-    finishLeverageWin(payout,state.crashBet);state.crashActive=false;state.roundSafe=false;state.crashMultiplier=multiplier;state.crashWins++;state.bestCrashMultiplier=Math.max(state.bestCrashMultiplier,multiplier);state.biggestWin=Math.max(state.biggestWin,payout);session.wins++;session.lossStreak=0;session.net+=payout;
+    finishLeverageWin(payout,state.crashBet);endWalletPresentationHold(roundPresentationRuntime.crashToken);roundPresentationRuntime.crashToken='';transactionSavedOnly('Round settled');state.crashActive=false;state.roundSafe=false;state.crashMultiplier=multiplier;state.crashWins++;state.bestCrashMultiplier=Math.max(state.bestCrashMultiplier,multiplier);state.biggestWin=Math.max(state.biggestWin,payout);session.wins++;session.lossStreak=0;session.net+=payout;
     const baseXp=Math.floor(30*Math.log2(Math.max(1,multiplier)))+wagerXpBonus()*2,xpAward=skinCrashXp(vehicleCrashXp(vehicle,baseXp));addXp(xpAward);const perk=completeVehicleFlight(vehicle.id),debtResult=finishCompletedRound(payout);
     const label=reason==='redline'?'REDLINE AUTO-PULLOUT':reason==='protected'?'PROTECTED PULLOUT':'SAFE PULLOUT';
     const statusLead=reason==='redline'?'Vehicle limit reached — automatically paid out':reason==='protected'?'Protected round prevented the crash and paid out':'Pulled out';
@@ -1537,7 +1726,7 @@
     setTimeout(()=>showResult({icon:reason==='redline'?'🏁':reason==='protected'?'🛡️':'🪂',kicker:label,title:`${multiplier.toFixed(2)}× secured`,amount:`${money(payout)} F returned`,profit:netText,profitLabel:'NET',text:appendDebtResult(`${wasProtected?'Protected round used. ':''}${vehicle.name} has ${availableVehicleFlights(vehicle.id)} flights left. +${money(xpAward)} XP.${perk.message}`,debtResult)}),TEST_MODE?1:180);return true;
   }
   function crashLose(){
-    if(!state.crashActive)return false;const vehicle=selectedVehicle(),crashedAt=state.crashMultiplier,stake=state.crashBet;finishLeverageLoss();state.crashActive=false;state.roundSafe=false;session.losses++;session.lossStreak++;crashScene.crash();const perk=completeVehicleFlight(vehicle.id),debtResult=finishCompletedRound(0);setCrashStatus(`ENGINE FAILURE at ${crashedAt.toFixed(2)}×.${perk.message}`,'lose');audio.splash();haptic([30,40,50]);refresh();setTimeout(()=>showResult({icon:'💥',kicker:'FLIGHT LOST',title:`Failed at ${crashedAt.toFixed(2)}×`,amount:`−${money(stake)} F`,text:appendDebtResult(`${vehicle.name} has ${availableVehicleFlights(vehicle.id)} flights left.${perk.message}`,debtResult),lose:true}),TEST_MODE?1:240);return true;
+    if(!state.crashActive)return false;const vehicle=selectedVehicle(),crashedAt=state.crashMultiplier,stake=state.crashBet;finishLeverageLoss();endWalletPresentationHold(roundPresentationRuntime.crashToken);roundPresentationRuntime.crashToken='';transactionSavedOnly('Round settled');state.crashActive=false;state.roundSafe=false;session.losses++;session.lossStreak++;crashScene.crash();const perk=completeVehicleFlight(vehicle.id),debtResult=finishCompletedRound(0);setCrashStatus(`ENGINE FAILURE at ${crashedAt.toFixed(2)}×.${perk.message}`,'lose');audio.splash();haptic([30,40,50]);refresh();setTimeout(()=>showResult({icon:'💥',kicker:'FLIGHT LOST',title:`Failed at ${crashedAt.toFixed(2)}×`,amount:`−${money(stake)} F`,text:appendDebtResult(`${vehicle.name} has ${availableVehicleFlights(vehicle.id)} flights left.${perk.message}`,debtResult),lose:true}),TEST_MODE?1:240);return true;
   }
 
   const scene = new Scene(els.canvas);
@@ -1852,9 +2041,9 @@
       const bridge=window.FroggyServerEconomy;
       if(!bridge?.piggyTransfer){setPiggyMessage('The v114 Piggy backend bridge is unavailable.','error');return false;}
       serverV114Runtime.piggyBusy=true;updatePiggyTransferControls();
-      setPiggyMessage(`Server is ${piggyTransferMode==='deposit'?'depositing':'withdrawing'} ${money(amount)} F…`);
+      setPiggyMessage(`${piggyTransferMode==='deposit'?'Depositing':'Withdrawing'} ${money(amount)} F…`);
       const mode=piggyTransferMode;
-      void waitWithTransaction(bridge.piggyTransfer(mode,amount,bridge.requestId?.('piggy')),'Transaction pending…','Piggy saved').then(result=>{
+      void waitWithTransaction(bridge.piggyTransfer(mode,amount,bridge.requestId?.('piggy')),'Transaction pending…','Piggy saved','piggy').then(result=>{
         if(result?.economy)applyServerCaseSnapshot(result.economy);else{const cached=bridge.getCachedSnapshot?.();if(cached)applyServerCaseSnapshot(cached);}
         piggyTransferAmount=0;setPiggyTransferAmount(0);audio.coin();haptic(16);
         setPiggyMessage(mode==='deposit'?`Deposited ${money(amount)} F into authoritative Piggy savings.`:`Withdrew ${money(amount)} F to the authoritative wallet.`,'success');refresh();
@@ -2248,7 +2437,7 @@
     if(!bridge?.takeBankLoan){setDebtMessage('The v114 Bank backend bridge is unavailable.','error');return false;}
     serverV114Runtime.bankBusy=true;refresh();setDebtMessage(`Server is validating ${money(amount)} F and its collateral…`);
     try{
-      const result=await waitWithTransaction(bridge.takeBankLoan(amount,selected,bridge.requestId?.('loan')),'Transaction pending…','Bank saved');
+      const result=await waitWithTransaction(bridge.takeBankLoan(amount,selected,bridge.requestId?.('loan')),'Transaction pending…','Bank saved','bank');
       if(result?.economy)applyServerCaseSnapshot(result.economy);else{const cached=bridge.getCachedSnapshot?.();if(cached)applyServerCaseSnapshot(cached);}
       setDebtMessage(`Authoritative loan received: ${money(amount)} F. The server owns the debt, collateral, interest, and repayment state.`,'success');setStatus(`Server Bank loan received: +${money(amount)} F.`,'win');audio.coin();haptic([12,30,12]);refresh();return true;
     }catch(error){setDebtMessage(serverCaseFriendlyError(error),'error');void syncServerCases({quiet:true});return false;}
@@ -2288,8 +2477,8 @@
     if(!TEST_MODE){
       if(!serverBankActive()||serverV114Runtime.bankBusy){setDebtMessage('Authoritative Bank is not ready for this payment.','error');return false;}
       const bridge=window.FroggyServerEconomy;if(!bridge?.repayBankLoan){setDebtMessage('The v114 Bank repayment bridge is unavailable.','error');return false;}
-      serverV114Runtime.bankBusy=true;refresh();setDebtMessage(`Server is processing ${all?'full payoff':'the next payment'}…`);
-      void waitWithTransaction(bridge.repayBankLoan(all?'all':'installment',bridge.requestId?.('repay')),'Transaction pending…','Bank saved').then(result=>{
+      serverV114Runtime.bankBusy=true;refresh();setDebtMessage(`Processing ${all?'full payoff':'the next payment'}…`);
+      void waitWithTransaction(bridge.repayBankLoan(all?'all':'installment',bridge.requestId?.('repay')),'Transaction pending…','Bank saved','bank').then(result=>{
         if(result?.economy)applyServerCaseSnapshot(result.economy);else{const cached=bridge.getCachedSnapshot?.();if(cached)applyServerCaseSnapshot(cached);}
         setDebtMessage(all?'Authoritative loan payoff completed and collateral released.':'Authoritative installment paid.','success');audio.cash();haptic(18);refresh();
       }).catch(error=>{setDebtMessage(serverCaseFriendlyError(error),'error');void syncServerCases({quiet:true});}).finally(()=>{serverV114Runtime.bankBusy=false;refresh();});
@@ -2664,7 +2853,8 @@
     audio.unlock();if(anyRoundActive()||state.animating)return;
     if(ownedWalletBalance()<MIN_BET&&leverageRoundLimit()<MIN_BET){setStatus(`You need at least ${money(MIN_BET)} F to start a round.`,'lose');audio.croak();haptic(20);refresh();return;}
     if(state.bet>availableBetBalance()){state.bet=Math.max(MIN_BET,Math.floor(availableBetBalance()/50)*50);setStatus('Bet adjusted to available owned and leverage funds.');refresh();return;}
-    const allocation=allocateRoundStake(state.bet);if(!allocation){setStatus('Turn leverage on or lower the bet.','lose');return;}
+    roundPresentationRuntime.leapToken=beginWalletPresentationHold('lily-leap');
+    const allocation=allocateRoundStake(state.bet);if(!allocation){cancelWalletPresentationHold(roundPresentationRuntime.leapToken);roundPresentationRuntime.leapToken='';setStatus('Turn leverage on or lower the bet.','lose');return;}
     els.customBetRow.classList.add('hidden');state.roundBetForXp=state.bet;session.rounds++;session.net-=state.bet;state.jump=0;state.roundActive=true;state.animating=false;state.roundSafe=state.safeRunCredits>0;if(state.roundSafe)state.safeRunCredits--;state.rounds++;scene.reset();setStatus(`${money(state.bet)} F on the line${allocation.borrowed?` · ${money(allocation.borrowed)} F leveraged`:''}.`);audio.start();haptic(20);refresh();
   }
 
@@ -2675,19 +2865,19 @@
       state.animating=false;state.totalJumps++;
       if(didFail){
         state.roundActive=false;state.roundSafe=false;state.bestJump=Math.max(state.bestJump,state.jump);session.losses++;session.lossStreak++;setStatus('SPLASH! The lily pad broke.','lose');
-        const lost=state.bet,leverageResult=finishLeverageLoss(),careNote=session.lossStreak>=3?' Three losses in a row—consider taking a short break before another round.':'',debtResult=finishCompletedRound(0); refresh(); setTimeout(()=>showResult({icon:'💦',kicker:'ROUND OVER',title:'The pad cracked!',amount:`−${money(lost)} F`,text:appendDebtResult(`You reached jump ${state.jump}. The pond keeps this bet.${leverageResult.fee?` Borrowed loss charge: +${money(leverageResult.fee)} F debt.`:''}${careNote}`,debtResult),lose:true}),TEST_MODE?1:420);
+        const lost=state.bet,leverageResult=finishLeverageLoss();endWalletPresentationHold(roundPresentationRuntime.leapToken);roundPresentationRuntime.leapToken='';transactionSavedOnly('Round settled');const careNote=session.lossStreak>=3?' Three losses in a row—consider taking a short break before another round.':'',debtResult=finishCompletedRound(0); refresh(); setTimeout(()=>showResult({icon:'💦',kicker:'ROUND OVER',title:'The pad cracked!',amount:`−${money(lost)} F`,text:appendDebtResult(`You reached jump ${state.jump}. The pond keeps this bet.${leverageResult.fee?` Borrowed loss charge: +${money(leverageResult.fee)} F debt.`:''}${careNote}`,debtResult),lose:true}),TEST_MODE?1:420);
       } else {
         state.jump=next;state.safeJumps++;state.bestJump=Math.max(state.bestJump,state.jump);addXp(skinLeapXp(10+state.jump*2+wagerXpBonus()));audio.coin();haptic(15);screenFeedback('win');
         if([5,10,15].includes(state.jump)){audio.reward();haptic([12,30,18]);confettiBurst(22+state.jump);}
         if(state.jump===RISKS.length){
-          const payout=currentPayout(),leverageResult=finishLeverageWin(payout,state.bet);session.net+=payout-leverageResult.sweep;session.wins++;session.lossStreak=0;state.bestCashMultiplier=Math.max(state.bestCashMultiplier,MULTIPLIERS[state.jump]);state.biggestWin=Math.max(state.biggestWin,payout);state.roundActive=false;state.roundSafe=false;addXp(skinLeapXp(120+wagerXpBonus()*3));const debtResult=finishCompletedRound(payout);setStatus(`LEGENDARY LEAP! ${money(payout)} Froggy at ${MULTIPLIERS[state.jump].toFixed(2)}×!`,'win');audio.win();confettiBurst(120);refresh();setTimeout(()=>showResult({icon:'🏆',kicker:'LEGENDARY LEAP',title:'Every pad cleared!',amount:`+${money(payout)} F`,text:appendDebtResult(`Fifteen golden landings and a ${MULTIPLIERS[state.jump].toFixed(2)}× finish. Absolute frog glory.`,debtResult)}),TEST_MODE?1:500);
+          const payout=currentPayout(),leverageResult=finishLeverageWin(payout,state.bet);endWalletPresentationHold(roundPresentationRuntime.leapToken);roundPresentationRuntime.leapToken='';transactionSavedOnly('Round settled');session.net+=payout-leverageResult.sweep;session.wins++;session.lossStreak=0;state.bestCashMultiplier=Math.max(state.bestCashMultiplier,MULTIPLIERS[state.jump]);state.biggestWin=Math.max(state.biggestWin,payout);state.roundActive=false;state.roundSafe=false;addXp(skinLeapXp(120+wagerXpBonus()*3));const debtResult=finishCompletedRound(payout);setStatus(`LEGENDARY LEAP! ${money(payout)} Froggy at ${MULTIPLIERS[state.jump].toFixed(2)}×!`,'win');audio.win();confettiBurst(120);refresh();setTimeout(()=>showResult({icon:'🏆',kicker:'LEGENDARY LEAP',title:'Every pad cleared!',amount:`+${money(payout)} F`,text:appendDebtResult(`Fifteen golden landings and a ${MULTIPLIERS[state.jump].toFixed(2)}× finish. Absolute frog glory.`,debtResult)}),TEST_MODE?1:500);
         } else {const milestoneName={5:'WARM-UP CLEARED',10:'DEEP WATER'}[state.jump];setStatus(milestoneName?`${milestoneName}! ${MULTIPLIERS[state.jump].toFixed(2)}× secured so far.`:`Perfect landing! ${MULTIPLIERS[state.jump].toFixed(2)}× — cash out or leap again.`,'win');refresh();}
       }
     });
   }
 
   function cashOut(){
-    if(!state.roundActive||state.animating||state.jump===0)return;const payout=currentPayout(),profit=payout-state.bet,leverageResult=finishLeverageWin(payout,state.bet);session.net+=payout-leverageResult.sweep;session.wins++;session.lossStreak=0;state.bestCashMultiplier=Math.max(state.bestCashMultiplier,MULTIPLIERS[state.jump]);state.biggestWin=Math.max(state.biggestWin,payout);state.roundActive=false;state.roundSafe=false;addXp(skinLeapXp(25+state.jump*4+wagerXpBonus()*2));const debtResult=finishCompletedRound(payout);audio.cash();haptic([15,35,20]);screenFeedback('win');confettiBurst(35+state.jump*3);setStatus(`Cashed out ${money(payout)} Froggy!`,'win');refresh();setTimeout(()=>showResult({icon:'🪙',kicker:'SMART CASH-OUT',title:`${MULTIPLIERS[state.jump].toFixed(2)}× secured!`,amount:`+${money(payout)} F`,text:appendDebtResult(`Profit: ${money(profit)} F.${leverageResult.sweep?` ${money(leverageResult.sweep)} F automatically swept to debt.`:''}`,debtResult)}),TEST_MODE?1:220);
+    if(!state.roundActive||state.animating||state.jump===0)return;const payout=currentPayout(),profit=payout-state.bet,leverageResult=finishLeverageWin(payout,state.bet);endWalletPresentationHold(roundPresentationRuntime.leapToken);roundPresentationRuntime.leapToken='';transactionSavedOnly('Round settled');session.net+=payout-leverageResult.sweep;session.wins++;session.lossStreak=0;state.bestCashMultiplier=Math.max(state.bestCashMultiplier,MULTIPLIERS[state.jump]);state.biggestWin=Math.max(state.biggestWin,payout);state.roundActive=false;state.roundSafe=false;addXp(skinLeapXp(25+state.jump*4+wagerXpBonus()*2));const debtResult=finishCompletedRound(payout);audio.cash();haptic([15,35,20]);screenFeedback('win');confettiBurst(35+state.jump*3);setStatus(`Cashed out ${money(payout)} Froggy!`,'win');refresh();setTimeout(()=>showResult({icon:'🪙',kicker:'SMART CASH-OUT',title:`${MULTIPLIERS[state.jump].toFixed(2)}× secured!`,amount:`+${money(payout)} F`,text:appendDebtResult(`Profit: ${money(profit)} F.${leverageResult.sweep?` ${money(leverageResult.sweep)} F automatically swept to debt.`:''}`,debtResult)}),TEST_MODE?1:220);
   }
 
   function showResult({icon,kicker,title,amount,profit='',profitLabel='PROFIT',text,lose=false}){
@@ -2717,7 +2907,7 @@
 
 
   const jobRuntime={
-    active:false,dragging:false,falling:false,resolving:false,type:'normal',
+    active:false,starting:false,dragging:false,falling:false,resolving:false,type:'normal',
     shiftMoney:0,fries:0,moneyBoostUntil:0,xpBoostUntil:0,moneyBoostMultiplier:1,xpBoostMultiplier:1,
     bagX:0,bagTarget:0,bagVelocity:0,lastBagX:0,lastFrame:0,raf:0,
     pointerId:null,fryX:0,fryY:0,fryVx:0,fryVy:0,fryRotation:0,frySpin:0,
@@ -2725,7 +2915,7 @@
     queued:null,shiftRoundCounted:false,lastDebtResult:null,pendingMoneyBoosts:0,pendingXpBoosts:0,
     shiftEndsAt:0,rimCooldownUntil:0,rewardTimer:0,spawnTimer:0,
     serverSessionId:'',serverNextType:'',serverBusy:false,serverExpiresAtMs:0,
-    serverFryQueue:[],serverActionChain:Promise.resolve(),serverPendingActions:0,serverPendingBags:0,serverPendingRewards:[],serverActionFailed:false
+    serverFryQueue:[],serverActionChain:Promise.resolve(),serverPendingActions:0,serverPendingBags:0,serverPendingRewards:[],serverActionFailed:false,settlementToken:''
   };
   function jobXpNeeded(level=state.jobLevel){return 100+Math.max(0,level-1)*40;}
   function jobPay(){const level=Math.max(1,Number(state.jobLevel)||1);return 15+Math.floor(4*Math.sqrt(Math.max(0,level-1)));}
@@ -2840,21 +3030,26 @@
     positionJobFry();
   }
   async function startJobShift(){
-    if(jobRuntime.serverBusy)return;
+    if(jobRuntime.serverBusy||jobRuntime.starting)return;
     closeJobResult({restoreIdle:false});clearTimeout(jobRuntime.spawnTimer);clearTimeout(jobRuntime.rewardTimer);
+    jobRuntime.starting=true;jobRuntime.settlementToken=beginWalletPresentationHold('job');
+    const learnedJobStart=latencyStats('job-start',900).p80;
+    els.jobClockIn?.style.setProperty('--job-clock-cycle',`${clamp(Math.round(learnedJobStart*.48),420,1050)}ms`);
+    els.jobIntro.classList.add('hidden');els.jobClockIn?.classList.remove('hidden');els.jobBag.classList.remove('hidden');
+    setStatus('Clocking in…','info');audio.start();haptic(8);
     let serverStart=null;
     if(!TEST_MODE){
-      if(!serverJobActive()&&!await syncServerCases())return;
-      if(!serverJobActive()){setStatus('Server Job is not ready yet. Refresh Froggy Leap and try again.','lose');return;}
-      const bridge=window.FroggyServerEconomy;if(!bridge?.startJob){setStatus('Server Job bridge is not ready. Refresh Froggy Leap.','lose');return;}
+      if(!serverJobActive()&&!await syncServerCases()){cancelWalletPresentationHold(jobRuntime.settlementToken);jobRuntime.settlementToken='';jobRuntime.starting=false;els.jobClockIn?.classList.add('hidden');restoreJobIdleScreen();return;}
+      if(!serverJobActive()){cancelWalletPresentationHold(jobRuntime.settlementToken);jobRuntime.settlementToken='';jobRuntime.starting=false;els.jobClockIn?.classList.add('hidden');setStatus('Server Job is not ready yet. Refresh Froggy Leap and try again.','lose');restoreJobIdleScreen();return;}
+      const bridge=window.FroggyServerEconomy;if(!bridge?.startJob){cancelWalletPresentationHold(jobRuntime.settlementToken);jobRuntime.settlementToken='';jobRuntime.starting=false;els.jobClockIn?.classList.add('hidden');setStatus('Server Job bridge is not ready. Refresh Froggy Leap.','lose');restoreJobIdleScreen();return;}
       jobRuntime.serverBusy=true;if(els.jobStartButton)els.jobStartButton.disabled=true;if(els.jobAgainButton)els.jobAgainButton.disabled=true;
       const sessionId=bridge.requestId?.('jobshift')||`jobshift-${Date.now()}`;
-      setStatus('🔒 Starting authoritative Job shift…','info');
-      try{serverStart=await bridge.startJob(sessionId,state.selectedFrog);mergeServerCaseResult(serverStart);jobRuntime.serverSessionId=String(serverStart?.sessionId||sessionId);const issued=Array.isArray(serverStart?.fryQueue)?serverStart.fryQueue.filter(type=>['normal','green','yellow','red'].includes(type)):[];jobRuntime.serverFryQueue=issued.length?issued:[String(serverStart?.currentFryType||'normal')];jobRuntime.serverNextType='';jobRuntime.serverExpiresAtMs=Number(serverStart?.expiresAtMs)||Date.now()+15000;}
-      catch(error){setStatus(serverCaseFriendlyError(error),'lose');restoreJobIdleScreen();return;}
+      setStatus('Clocking in…','info');
+      try{serverStart=await timedServerPromise('job-start',bridge.startJob(sessionId,state.selectedFrog));mergeServerCaseResult(serverStart);jobRuntime.serverSessionId=String(serverStart?.sessionId||sessionId);const issued=Array.isArray(serverStart?.fryQueue)?serverStart.fryQueue.filter(type=>['normal','green','yellow','red'].includes(type)):[];jobRuntime.serverFryQueue=issued.length?issued:[String(serverStart?.currentFryType||'normal')];jobRuntime.serverNextType='';jobRuntime.serverExpiresAtMs=Number(serverStart?.expiresAtMs)||Date.now()+15000;}
+      catch(error){cancelWalletPresentationHold(jobRuntime.settlementToken);jobRuntime.settlementToken='';jobRuntime.starting=false;els.jobClockIn?.classList.add('hidden');setStatus(serverCaseFriendlyError(error),'lose');restoreJobIdleScreen();return;}
       finally{jobRuntime.serverBusy=false;if(els.jobStartButton)els.jobStartButton.disabled=false;if(els.jobAgainButton)els.jobAgainButton.disabled=false;}
     }
-    jobRuntime.active=true;jobRuntime.dragging=false;jobRuntime.falling=false;jobRuntime.resolving=false;
+    jobRuntime.starting=false;els.jobClockIn?.classList.add('hidden');jobRuntime.active=true;jobRuntime.dragging=false;jobRuntime.falling=false;jobRuntime.resolving=false;
     jobRuntime.shiftMoney=0;jobRuntime.fries=0;jobRuntime.moneyBoostUntil=0;jobRuntime.xpBoostUntil=0;jobRuntime.moneyBoostMultiplier=1;jobRuntime.xpBoostMultiplier=1;jobRuntime.queued=null;jobRuntime.shiftRoundCounted=false;jobRuntime.lastDebtResult=null;jobRuntime.serverActionChain=Promise.resolve();jobRuntime.serverPendingActions=0;jobRuntime.serverPendingBags=0;jobRuntime.serverPendingRewards=[];jobRuntime.serverActionFailed=false;
     jobRuntime.shiftEndsAt=serverStart?performance.now()+Math.max(1000,jobRuntime.serverExpiresAtMs-Date.now()):performance.now()+15000+skinJobStartBonusMs();
     const m=jobFieldMetrics();
@@ -3152,7 +3347,7 @@
   function endJobShift(reason='miss',alreadyStopped=false){
     if(!jobRuntime.active&&!alreadyStopped)return;
     let jobSettlementPromise=Promise.resolve();
-    if(serverJobActive()&&!TEST_MODE&&jobRuntime.serverSessionId){const bridge=window.FroggyServerEconomy,sessionId=jobRuntime.serverSessionId,chain=jobRuntime.serverActionChain;jobRuntime.serverSessionId='';jobRuntime.serverNextType='';jobRuntime.serverFryQueue=[];if(bridge?.endJob)jobSettlementPromise=Promise.resolve(chain).catch(()=>{}).then(()=>bridge.endJob(sessionId,reason,bridge.requestId?.('jobend')));}
+    if(serverJobActive()&&!TEST_MODE&&jobRuntime.serverSessionId){const bridge=window.FroggyServerEconomy,sessionId=jobRuntime.serverSessionId,chain=jobRuntime.serverActionChain;jobRuntime.serverSessionId='';jobRuntime.serverNextType='';jobRuntime.serverFryQueue=[];if(bridge?.endJob)jobSettlementPromise=Promise.resolve(chain).catch(()=>{}).then(()=>timedServerPromise('job-end',bridge.endJob(sessionId,reason,bridge.requestId?.('jobend'))));}
     jobRuntime.active=false;jobRuntime.dragging=false;jobRuntime.falling=false;jobRuntime.resolving=true;jobRuntime.shiftEndsAt=0;
     cancelAnimationFrame(jobRuntime.raf);clearTimeout(jobRuntime.spawnTimer);els.jobFry.classList.add('hidden');hideQueuedJobFry();
     finishJobShiftRound('loss');
@@ -3168,7 +3363,16 @@
       els.jobResult.classList.remove('hidden');
       if(serverJobActive()&&!TEST_MODE){
         const token=transactionPending('Transaction pending…');
-        Promise.resolve(jobSettlementPromise).then(()=>transactionSaved(token,'Job saved')).catch(()=>transactionFailed(token,'Job save failed'));
+        Promise.resolve(jobSettlementPromise).then(()=>{
+          endWalletPresentationHold(jobRuntime.settlementToken);jobRuntime.settlementToken='';
+          transactionSaved(token,'Job saved');
+        }).catch(()=>{
+          cancelWalletPresentationHold(jobRuntime.settlementToken);jobRuntime.settlementToken='';
+          transactionFailed(token,'Job save failed');
+        });
+      }else{
+        endWalletPresentationHold(jobRuntime.settlementToken);jobRuntime.settlementToken='';
+        transactionSavedOnly('Shift settled');
       }
     },reason==='bomb'?220:0);
     refresh();renderJob();saveState();
@@ -3176,7 +3380,7 @@
   function restoreJobIdleScreen(){
     if(jobRuntime.active)return;
     cancelAnimationFrame(jobRuntime.raf);clearTimeout(jobRuntime.spawnTimer);clearTimeout(jobRuntime.rewardTimer);
-    jobRuntime.dragging=false;jobRuntime.falling=false;jobRuntime.resolving=false;jobRuntime.queued=null;
+    jobRuntime.starting=false;els.jobClockIn?.classList.add('hidden');jobRuntime.dragging=false;jobRuntime.falling=false;jobRuntime.resolving=false;jobRuntime.queued=null;
     jobRuntime.shiftMoney=0;jobRuntime.fries=0;jobRuntime.shiftEndsAt=0;jobRuntime.shiftRoundCounted=false;jobRuntime.lastDebtResult=null;jobRuntime.serverSessionId='';jobRuntime.serverNextType='';jobRuntime.serverExpiresAtMs=0;jobRuntime.serverBusy=false;jobRuntime.serverFryQueue=[];jobRuntime.serverActionChain=Promise.resolve();jobRuntime.serverPendingActions=0;jobRuntime.serverPendingBags=0;jobRuntime.serverPendingRewards=[];jobRuntime.serverActionFailed=false;
     jobRuntime.moneyBoostUntil=0;jobRuntime.xpBoostUntil=0;jobRuntime.moneyBoostMultiplier=1;jobRuntime.xpBoostMultiplier=1;
     els.jobFry.classList.add('hidden');els.jobBag.classList.add('hidden');hideQueuedJobFry();
@@ -3349,7 +3553,7 @@
     const bridge=window.FroggyServerEconomy;if(!bridge?.buyCases){setStatus('Server Cases bridge is not ready. Refresh Froggy Leap and try again.','lose');return false;}
     serverCaseRuntime.busy=true;renderCases();setStatus(`Server is buying ${qty} ${item.name}${qty===1?'':'s'}…`,'info');
     try{
-      const requestId=bridge.requestId?.('buy')||undefined,result=await waitWithTransaction(bridge.buyCases(item.id,qty,requestId),'Transaction pending…','Purchase saved');
+      const requestId=bridge.requestId?.('buy')||undefined,result=await waitWithTransaction(bridge.buyCases(item.id,qty,requestId),'Transaction pending…','Purchase saved','case-buy');
       mergeServerCaseResult(result);mirrorLocalCaseSpend(total);refreshEconomyHud();saveState();renderCases();audio.cash();haptic(10);
       setStatus(`🔒 SERVER PURCHASE · Bought ${qty} ${item.name}${qty===1?'':'s'} · ${money(serverCaseInventoryCount(item.id))} authoritative owned.`,'win');return true;
     }catch(error){serverCaseRuntime.lastError=serverCaseFriendlyError(error);if(caseOpeningRuntime.phase==='server-lock')hideCaseOpening();setStatus(serverCaseRuntime.lastError,'lose');void syncServerCases({quiet:true});return false;}
@@ -3378,7 +3582,7 @@
     els.caseHistoryList.innerHTML=history.map(entry=>{const frog=FROGS.find(f=>f.id===entry.frogId),item=caseById(entry.caseId);if(!frog||!item)return'';return `<div class="case-history-row"><span>${item.emoji}</span><div><b>${frog.name}</b><small>${item.name} · ${frog.rarity}</small></div><strong>${entry.duplicate?`+${money(entry.duplicateCredit)} F`:'NEW'}</strong></div>`;}).join('');
   }
 
-  const caseOpeningRuntime={active:false,phase:'idle',raf:0,timers:[],item:null,frog:null,results:null,quantity:1,duplicate:false,duplicateCredit:0,winnerIndex:0,landingFraction:.5,startFraction:.5,spinDuration:0,easingPower:4.25,lastTickIndex:-1,lastTickAt:0,lastHapticAt:0};
+  const caseOpeningRuntime={active:false,phase:'idle',raf:0,timers:[],item:null,frog:null,results:null,quantity:1,duplicate:false,duplicateCredit:0,winnerIndex:0,landingFraction:.5,startFraction:.5,spinDuration:0,easingPower:4.25,lastTickIndex:-1,lastTickAt:0,lastHapticAt:0,settlementToken:'',prespinStartedAt:0};
   function caseRarityClass(rarity){return String(rarity||'COMMON').toLowerCase().replace(/[^a-z0-9]+/g,'-');}
   function clearCaseOpeningWork(){
     if(caseOpeningRuntime.raf)cancelAnimationFrame(caseOpeningRuntime.raf);caseOpeningRuntime.raf=0;
@@ -3388,6 +3592,58 @@
   function caseOpeningCard(frog,index,winnerIndex){
     const rarity=caseRarityClass(frog.rarity),winner=index===winnerIndex?' data-case-winner="true"':'';
     return `<div class="case-reel-card rarity-${rarity}" data-case-reel-index="${index}"${winner}><div class="case-reel-rarity">${frog.rarity}</div><div class="case-reel-art">${frogSvg(frog,{collection:true})}</div><b>${frog.name}</b></div>`;
+  }
+  function buildCaseServerPrespin(item){
+    const base=Array.from({length:18},()=>rollCase(item)),visual=[...base,...base,...base];
+    els.caseOpeningReelWrap.className='case-opening-reel-wrap';
+    els.caseOpeningReel.className='case-opening-reel case-server-prespin';
+    els.caseOpeningReel.style.removeProperty('--case-lanes');
+    els.caseOpeningReel.innerHTML=visual.map((frog,index)=>caseOpeningCard(frog,index,-1)).join('');
+    els.caseOpeningReel.style.transform='translate3d(0,0,0)';
+  }
+  function animateCaseServerPrespin(){
+    caseOpeningRuntime.phase='server-lock';caseOpeningRuntime.prespinStartedAt=performance.now();
+    els.caseOpeningOverlay.classList.remove('phase-intro');els.caseOpeningOverlay.classList.add('phase-spin');
+    els.caseOpeningReelWrap.classList.remove('hidden');els.caseOpeningChest.classList.add('case-opening-chest-open');
+    queueCaseOpening(()=>els.caseOpeningChest.classList.add('hidden'),220);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      if(!caseOpeningRuntime.active||caseOpeningRuntime.phase!=='server-lock')return;
+      const cards=[...els.caseOpeningReel.children],first=cards[0],second=cards[1],viewport=els.caseOpeningReelWrap;
+      if(!first||!second||!viewport)return;
+      const firstCenter=first.offsetLeft+first.offsetWidth/2,step=(second.offsetLeft+second.offsetWidth/2)-firstCenter,segment=step*18,start=performance.now();
+      let lastIndex=-1,lastTickAt=0;
+      const frame=now=>{
+        if(!caseOpeningRuntime.active||caseOpeningRuntime.phase!=='server-lock')return;
+        const travel=((now-start)*.72)%segment,x=viewport.clientWidth/2-firstCenter-segment-travel;
+        els.caseOpeningReel.style.transform=`translate3d(${x}px,0,0)`;
+        const index=Math.floor(travel/Math.max(1,step));
+        if(index!==lastIndex&&now-lastTickAt>62){lastIndex=index;lastTickAt=now;audio.caseTick(.22);}
+        caseOpeningRuntime.raf=requestAnimationFrame(frame);
+      };
+      caseOpeningRuntime.raf=requestAnimationFrame(frame);
+    }));
+  }
+  function commitServerCaseOpening(item,result){
+    const settlementToken=caseOpeningRuntime.settlementToken;
+    clearCaseOpeningWork();
+    Object.assign(caseOpeningRuntime,{active:true,phase:'intro',item,frog:result.frog,results:null,quantity:1,duplicate:result.duplicate,duplicateCredit:result.duplicateCredit,settlementToken,lastTickIndex:-1,lastTickAt:0,lastHapticAt:0});
+    state.animating=true;buildCaseOpeningReel(item,result.frog);els.caseOpeningReelWrap.classList.add('case-latebind-swap');
+    els.caseOpeningOverlay.className=`case-opening-overlay phase-spin case-opening-case-${item.accent}`;
+    els.caseOpeningClose.classList.add('hidden');els.caseOpeningSkip.classList.remove('hidden');
+    els.caseOpeningChest.classList.add('hidden');els.caseOpeningReelWrap.classList.remove('hidden');els.caseOpeningResult.className='case-opening-result hidden';els.caseOpeningResult.innerHTML='';
+    els.caseOpeningKicker.textContent='FROGGY CASE OPENING';els.caseOpeningTitle.textContent=item.name;els.caseOpeningSubtitle.textContent='Opening…';
+    queueCaseOpening(()=>els.caseOpeningReelWrap.classList.remove('case-latebind-swap'),140);queueCaseOpening(animateCaseOpeningReel,45);
+  }
+  function commitServerMultiCaseOpening(item,results){
+    const settlementToken=caseOpeningRuntime.settlementToken;
+    clearCaseOpeningWork();
+    Object.assign(caseOpeningRuntime,{active:true,phase:'intro',item,frog:null,results,quantity:results.length,duplicate:false,duplicateCredit:0,settlementToken,lastTickIndex:-1,lastTickAt:0,lastHapticAt:0});
+    state.animating=true;buildMultiCaseOpeningReels(item,results);els.caseOpeningReelWrap.classList.add('case-latebind-swap');
+    els.caseOpeningOverlay.className=`case-opening-overlay phase-spin case-opening-multi-active case-opening-case-${item.accent}`;
+    els.caseOpeningClose.classList.add('hidden');els.caseOpeningSkip.classList.remove('hidden');
+    els.caseOpeningChest.classList.add('hidden');els.caseOpeningReelWrap.classList.remove('hidden');els.caseOpeningResult.className='case-opening-result hidden';els.caseOpeningResult.innerHTML='';
+    els.caseOpeningKicker.textContent='FROGGY MULTI-CASE OPENING';els.caseOpeningTitle.textContent=`${item.name} × ${results.length}`;els.caseOpeningSubtitle.textContent='Opening cases…';
+    queueCaseOpening(()=>els.caseOpeningReelWrap.classList.remove('case-latebind-swap'),140);queueCaseOpening(animateMultiCaseOpeningReels,45);
   }
   function buildCaseOpeningReel(item,winner){
     // Vary how far the reel travels so repeated openings do not share the same cadence.
@@ -3437,7 +3693,7 @@
     els.caseOpeningResult.innerHTML=`<div class="case-opening-result-aura"></div><div class="case-opening-result-art">${frogSvg(frog,{collection:true})}</div><div class="case-opening-result-copy"><small>${frog.rarity}</small><h3>${frog.name}</h3>${duplicateCopy}<p>${duplicate?'You already owned this frog, so 50% of its Bank Value was returned to your wallet.':'The frog is yours. Equip it now or view it in Collection.'}</p><div class="case-opening-result-actions"><button class="pressable primary" data-case-equip="${frog.id}" ${state.selectedFrog===frog.id?'disabled':''}>${state.selectedFrog===frog.id?'EQUIPPED':'EQUIP'}</button><button class="pressable secondary" data-case-view="${frog.id}">COLLECTION</button><button class="pressable open-again" data-case-open-again="${item.id}" data-case-open-again-qty="1" ${displayCaseInventoryCount(item.id)<=0?'disabled':''}>OPEN NEXT · ${money(displayCaseInventoryCount(item.id))} OWNED</button></div></div>`;
     audio.caseReveal(frog.rarity);haptic(rank>=5?[35,45,70,55,110]:rank>=4?[25,35,55]:[18,25,35]);
     if(state.effects){confettiBurst(rank>=5?100:rank>=4?70:rank>=3?48:28);screenFeedback('win');}
-    refresh();renderCases();saveState();postActionTransactionSaved('Case saved');
+    endWalletPresentationHold(caseOpeningRuntime.settlementToken);caseOpeningRuntime.settlementToken='';refresh();renderCases();saveState();postActionTransactionSaved('Case saved');
   }
   function finishMultiCaseOpeningReveal(){
     if(!caseOpeningRuntime.active||caseOpeningRuntime.phase==='reveal')return;
@@ -3456,9 +3712,9 @@
     els.caseOpeningResult.innerHTML=`<div class="case-opening-multi-result-grid" style="--case-result-count:${qty}">${cards}</div><div class="case-opening-multi-result-footer"><button class="pressable open-again" data-case-open-again="${item.id}" data-case-open-again-qty="${qty}" ${displayCaseInventoryCount(item.id)<qty?'disabled':''}>OPEN ${qty} AGAIN · ${money(displayCaseInventoryCount(item.id))} OWNED</button></div>`;
     if(best){audio.caseReveal(best.frog.rarity);haptic(bestRank>=5?[35,45,70,55,110]:bestRank>=4?[25,35,55]:[18,25,35]);}
     if(state.effects){confettiBurst(bestRank>=5?110:bestRank>=4?78:52);screenFeedback('win');}
-    refresh();renderCases();saveState();postActionTransactionSaved('Cases saved');
+    endWalletPresentationHold(caseOpeningRuntime.settlementToken);caseOpeningRuntime.settlementToken='';refresh();renderCases();saveState();postActionTransactionSaved('Cases saved');
   }
-  function skipCaseOpening(){if(caseOpeningRuntime.active&&caseOpeningRuntime.phase!=='reveal'){if(caseOpeningRuntime.quantity>1)finishMultiCaseOpeningReveal();else finishCaseOpeningReveal();}}
+  function skipCaseOpening(){if(!caseOpeningRuntime.active||caseOpeningRuntime.phase==='reveal'||caseOpeningRuntime.phase==='server-lock')return;if(caseOpeningRuntime.quantity>1)finishMultiCaseOpeningReveal();else finishCaseOpeningReveal();}
   function animateCaseOpeningReel(){
     if(!caseOpeningRuntime.active)return;
     caseOpeningRuntime.phase='spin';els.caseOpeningOverlay.classList.remove('phase-intro');els.caseOpeningOverlay.classList.add('phase-spin');els.caseOpeningChest.classList.add('case-opening-chest-open');
@@ -3474,7 +3730,10 @@
       const landingOffset=(Math.random()*2-1)*maxLandingOffset,landingPoint=winner.offsetLeft+winner.offsetWidth/2+landingOffset;
       const startFraction=.18+Math.random()*.64,startPoint=first.offsetLeft+first.offsetWidth*startFraction;
       const startX=viewport.clientWidth/2-startPoint,targetX=viewport.clientWidth/2-landingPoint;
-      const duration=state.effects?5100+Math.random()*1450:1450+Math.random()*650,easingPower=3.7+Math.random()*1.2,start=performance.now();
+      const prespinElapsed=caseOpeningRuntime.prespinStartedAt?Math.max(0,performance.now()-caseOpeningRuntime.prespinStartedAt):0;
+      const learnedCaseLatency=latencyStats('cases',900).p80;
+      const targetTotal=state.effects?clamp(3000+learnedCaseLatency*.32+Math.random()*360,3150,4300):clamp(1250+learnedCaseLatency*.18+Math.random()*260,1350,2200),minimumFinal=state.effects?1150:620;
+      const duration=prespinElapsed?clamp(targetTotal-prespinElapsed,minimumFinal,targetTotal):(state.effects?targetTotal:1450+Math.random()*520),easingPower=3.7+Math.random()*1.2,start=performance.now();
       caseOpeningRuntime.landingFraction=clamp(.5+landingOffset/winner.offsetWidth,0,1);caseOpeningRuntime.startFraction=startFraction;caseOpeningRuntime.spinDuration=duration;caseOpeningRuntime.easingPower=easingPower;
       caseOpeningRuntime.lastTickIndex=-1;caseOpeningRuntime.lastTickAt=0;caseOpeningRuntime.lastHapticAt=0;
       const frame=now=>{
@@ -3505,7 +3764,9 @@
         const safeMargin=Math.max(5,Math.min(11,winner.offsetWidth*.13)),maxLandingOffset=Math.max(0,winner.offsetWidth/2-safeMargin),landingOffset=(Math.random()*2-1)*maxLandingOffset;
         const landingPoint=winner.offsetLeft+winner.offsetWidth/2+landingOffset,startFraction=.18+Math.random()*.64,startPoint=first.offsetLeft+first.offsetWidth*startFraction;
         const startX=viewport.clientWidth/2-startPoint,targetX=viewport.clientWidth/2-landingPoint;
-        return {viewport,track,cards,winner,firstCenter,step,startX,targetX,duration:state.effects?4800+Math.random()*1250+laneIndex*120:1450+Math.random()*520+laneIndex*80,easingPower:3.65+Math.random()*1.15,lastIndex:-1,finished:false};
+        const prespinElapsed=caseOpeningRuntime.prespinStartedAt?Math.max(0,performance.now()-caseOpeningRuntime.prespinStartedAt):0,learnedCaseLatency=latencyStats('cases',900).p80,targetTotal=state.effects?clamp(3200+learnedCaseLatency*.34+Math.random()*380+laneIndex*70,3350,4550):clamp(1350+learnedCaseLatency*.2+Math.random()*280+laneIndex*50,1450,2350),minimumFinal=state.effects?1250:680;
+        const duration=prespinElapsed?clamp(targetTotal-prespinElapsed,minimumFinal,targetTotal):(state.effects?targetTotal:1450+Math.random()*520+laneIndex*70);
+        return {viewport,track,cards,winner,firstCenter,step,startX,targetX,duration,easingPower:3.65+Math.random()*1.15,lastIndex:-1,finished:false};
       }).filter(Boolean);
       if(!animations.length)return finishMultiCaseOpeningReveal();
       const start=performance.now();let lastTickAt=0,lastHapticAt=0;
@@ -3526,7 +3787,7 @@
     }));
   }
   function beginCaseOpening(item,frog,duplicate,duplicateCredit){
-    clearCaseOpeningWork();Object.assign(caseOpeningRuntime,{active:true,phase:'intro',item,frog,results:null,quantity:1,duplicate,duplicateCredit,lastTickIndex:-1,lastTickAt:0,lastHapticAt:0});
+    clearCaseOpeningWork();Object.assign(caseOpeningRuntime,{active:true,phase:'intro',item,frog,results:null,quantity:1,duplicate,duplicateCredit,prespinStartedAt:0,lastTickIndex:-1,lastTickAt:0,lastHapticAt:0});
     state.animating=true;buildCaseOpeningReel(item,frog);
     els.caseOpeningOverlay.className=`case-opening-overlay phase-intro case-opening-case-${item.accent}`;els.caseOpeningClose.classList.add('hidden');els.caseOpeningSkip.classList.add('hidden');
     els.caseOpeningChest.classList.remove('hidden','case-opening-chest-open');els.caseOpeningChest.querySelector('b').textContent='UNLOCKING';els.caseOpeningReelWrap.classList.add('hidden');els.caseOpeningResult.className='case-opening-result hidden';els.caseOpeningResult.innerHTML='';els.caseOpeningReel.style.transform='translate3d(0,0,0)';
@@ -3536,7 +3797,7 @@
     queueCaseOpening(animateCaseOpeningReel,850);
   }
   function beginMultiCaseOpening(item,results){
-    clearCaseOpeningWork();Object.assign(caseOpeningRuntime,{active:true,phase:'intro',item,frog:null,results,quantity:results.length,duplicate:false,duplicateCredit:0,lastTickIndex:-1,lastTickAt:0,lastHapticAt:0});
+    clearCaseOpeningWork();Object.assign(caseOpeningRuntime,{active:true,phase:'intro',item,frog:null,results,quantity:results.length,duplicate:false,duplicateCredit:0,prespinStartedAt:0,lastTickIndex:-1,lastTickAt:0,lastHapticAt:0});
     state.animating=true;buildMultiCaseOpeningReels(item,results);
     els.caseOpeningOverlay.className=`case-opening-overlay phase-intro case-opening-multi-active case-opening-case-${item.accent}`;els.caseOpeningClose.classList.add('hidden');els.caseOpeningSkip.classList.add('hidden');
     els.caseOpeningChest.classList.remove('hidden','case-opening-chest-open');els.caseOpeningChest.querySelector('b').textContent=`UNLOCKING ${results.length} CASES`;els.caseOpeningReelWrap.classList.add('hidden');els.caseOpeningResult.className='case-opening-result hidden';els.caseOpeningResult.innerHTML='';
@@ -3545,16 +3806,16 @@
   }
   function openCase(id){return openCases(id,1);}
 
-  function beginServerCaseLock(item,qty){
-    clearCaseOpeningWork();Object.assign(caseOpeningRuntime,{active:true,phase:'server-lock',item,frog:null,results:null,quantity:qty,duplicate:false,duplicateCredit:0,lastTickIndex:-1,lastTickAt:0,lastHapticAt:0});
+  function beginServerCaseLock(item,qty,settlementToken){
+    clearCaseOpeningWork();Object.assign(caseOpeningRuntime,{active:true,phase:'server-lock',item,frog:null,results:null,quantity:qty,duplicate:false,duplicateCredit:0,settlementToken,lastTickIndex:-1,lastTickAt:0,lastHapticAt:0});
     state.animating=true;
     els.caseOpeningOverlay.className=`case-opening-overlay phase-intro ${qty>1?'case-opening-multi-active ':''}case-opening-case-${item.accent}`;
     els.caseOpeningClose.classList.add('hidden');els.caseOpeningSkip.classList.add('hidden');
     els.caseOpeningChest.classList.remove('hidden','case-opening-chest-open');els.caseOpeningChest.querySelector('b').textContent=qty===1?'OPENING':'OPENING CASES';
-    els.caseOpeningReelWrap.classList.add('hidden');els.caseOpeningResult.className='case-opening-result hidden';els.caseOpeningResult.innerHTML='';
+    els.caseOpeningResult.className='case-opening-result hidden';els.caseOpeningResult.innerHTML='';
     els.caseOpeningKicker.textContent='FROGGY CASE OPENING';els.caseOpeningTitle.textContent=qty===1?item.name:`${item.name} × ${qty}`;
-    els.caseOpeningSubtitle.textContent='Opening the case…';els.caseOpeningChestEmoji.textContent=item.emoji;
-    audio.start();haptic(10);
+    els.caseOpeningSubtitle.textContent='Opening…';els.caseOpeningChestEmoji.textContent=item.emoji;
+    buildCaseServerPrespin(item);audio.start();haptic(10);animateCaseServerPrespin();
   }
 
   async function openCases(id,quantity=1){
@@ -3570,17 +3831,17 @@
     if(!serverCasesActive()&&!await syncServerCases())return false;
     const stock=serverCaseInventoryCount(item.id);if(stock<qty){setStatus(`SERVER INVENTORY needs ${money(qty-stock)} more ${item.name}${qty-stock===1?'':'s'} for OPEN ${qty}.`,'lose');renderCases();return false;}
     const bridge=window.FroggyServerEconomy;if(!bridge?.openCases){setStatus('Server Cases bridge is not ready. Refresh Froggy Leap and try again.','lose');return false;}
-    serverCaseRuntime.busy=true;renderCases();beginServerCaseLock(item,qty);setStatus(`Opening ${qty} ${item.name}${qty===1?'':'s'}…`,'info');
+    const settlementToken=beginWalletPresentationHold('case-open');serverCaseRuntime.busy=true;renderCases();beginServerCaseLock(item,qty,settlementToken);setStatus(`Opening ${qty} ${item.name}${qty===1?'':'s'}…`,'info');
     try{
-      const requestId=bridge.requestId?.('open')||undefined,result=await bridge.openCases(item.id,qty,requestId),rawResults=Array.isArray(result?.results)?result.results:[];
+      const requestId=bridge.requestId?.('open')||undefined,result=await timedServerPromise('cases',bridge.openCases(item.id,qty,requestId)),rawResults=Array.isArray(result?.results)?result.results:[];
       if(rawResults.length!==qty)throw new Error('Server returned an incomplete Case result. No local reroll was performed.');
-      mergeServerCaseResult(result);mirrorLocalCaseCredit(result?.duplicateTotal||0);
+      mergeServerCaseResult(result);mirrorLocalCaseCredit(result?.duplicateTotal||0);setWalletPresentationDelta(settlementToken,Math.max(0,Math.floor(Number(result?.duplicateTotal)||0)));
       const results=rawResults.map(entry=>{const frog=FROGS.find(f=>f.id===entry.frogId);if(!frog)throw new Error('Server returned an unknown frog.');return {caseId:item.id,frogId:frog.id,frog,duplicate:Boolean(entry.duplicate),duplicateCredit:Math.max(0,Math.floor(Number(entry.duplicateCredit)||0))};});
       state.caseHistory=[...results.slice().reverse().map(({caseId,frogId,duplicate,duplicateCredit})=>({caseId,frogId,duplicate,duplicateCredit})),...(state.caseHistory||[])].slice(0,30);
       if(qty>1)lastCaseBatch={caseId:item.id,results:results.map(({caseId,frogId,duplicate,duplicateCredit})=>({caseId,frogId,duplicate,duplicateCredit}))};
       refreshEconomyHud();saveState();renderCases();setStatus(`${qty} ${item.name}${qty===1?'':'s'} ready.`,'win');
-      if(qty===1){const r=results[0];beginCaseOpening(item,r.frog,r.duplicate,r.duplicateCredit);}else beginMultiCaseOpening(item,results);return true;
-    }catch(error){serverCaseRuntime.lastError=serverCaseFriendlyError(error);if(caseOpeningRuntime.phase==='server-lock')hideCaseOpening();setStatus(serverCaseRuntime.lastError,'lose');void syncServerCases({quiet:true});return false;}
+      if(qty===1)commitServerCaseOpening(item,results[0]);else commitServerMultiCaseOpening(item,results);return true;
+    }catch(error){cancelWalletPresentationHold(settlementToken);caseOpeningRuntime.settlementToken='';transactionFailedOnly('Case failed');serverCaseRuntime.lastError=serverCaseFriendlyError(error);if(caseOpeningRuntime.phase==='server-lock')hideCaseOpening();setStatus(serverCaseRuntime.lastError,'lose');void syncServerCases({quiet:true});return false;}
     finally{serverCaseRuntime.busy=false;if(!caseOpeningRuntime.active)renderCases();}
   }
 
@@ -3718,7 +3979,7 @@
       const bridge=window.FroggyServerEconomy;if(!bridge?.buyCollection){setStatus('Server Collection bridge is unavailable. Refresh Froggy Leap.','lose');return false;}
       setStatus(`🔒 Server is purchasing ${item.name}…`,'info');
       try{
-        const kind=collectionMode==='frogs'?'frog':'lake',result=await waitWithTransaction(bridge.buyCollection(kind,id,bridge.requestId?.('shop')),'Transaction pending…','Purchase saved');
+        const kind=collectionMode==='frogs'?'frog':'lake',result=await waitWithTransaction(bridge.buyCollection(kind,id,bridge.requestId?.('shop')),'Transaction pending…','Purchase saved','collection-buy');
         mergeServerCaseResult(result);
         state[selectKey]=id;
         // Mirror only the spend into the legacy local wallet so staged local systems do not gain value from a server purchase.
@@ -4170,9 +4431,33 @@
     els.installButton.addEventListener('click',installGame);
     document.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('click',closeModal));els.modalBackdrop.addEventListener('click',e=>{if(e.target===els.modalBackdrop)closeModal();});
     window.addEventListener('froggy:open-owner-console',()=>{void openProtectedOwnerConsole();});
-    window.addEventListener('keydown',e=>{if(e.code==='Space'){if(caseOpeningRuntime.active)return;e.preventDefault();if(state.selectedGame==='crash'){state.crashActive?crashCashOut():startCrash();}else if(state.selectedGame==='plinko'){startPlinko();}else{state.roundActive?jump():startRound();}}if(e.code==='Escape'){if(plinkoFocusRuntime.active){exitPlinkoFocusMode();return;}if(caseOpeningRuntime.active){if(caseOpeningRuntime.phase==='reveal')hideCaseOpening();else skipCaseOpening();return;}if(!els.jobResult.classList.contains('hidden'))closeJobResult();else if(state.crashActive)crashCashOut();else state.roundActive?cashOut():closeModal();}});
+    const gameKeyboardRuntime={spaceDown:false};
+    const keyboardTargetConsumesSpace=target=>Boolean(target?.closest?.('input,textarea,select,button,[contenteditable="true"],[role="textbox"]'));
+    const releaseGameSpace=()=>{gameKeyboardRuntime.spaceDown=false;};
+    window.addEventListener('keydown',e=>{
+      if(e.code==='Space'){
+        if(keyboardTargetConsumesSpace(e.target))return;
+        e.preventDefault();
+        // Browser key-repeat must never become game-repeat.
+        if(e.repeat||gameKeyboardRuntime.spaceDown)return;
+        gameKeyboardRuntime.spaceDown=true;
+        if(caseOpeningRuntime.active)return;
+        if(state.selectedGame==='crash'){state.crashActive?crashCashOut():startCrash();}
+        else if(state.selectedGame==='plinko'){startPlinko();}
+        else{state.roundActive?jump():startRound();}
+        return;
+      }
+      if(e.code==='Escape'){
+        if(e.repeat)return;
+        if(plinkoFocusRuntime.active){exitPlinkoFocusMode();return;}
+        if(caseOpeningRuntime.active){if(caseOpeningRuntime.phase==='reveal')hideCaseOpening();else skipCaseOpening();return;}
+        if(!els.jobResult.classList.contains('hidden'))closeJobResult();else if(state.crashActive)crashCashOut();else state.roundActive?cashOut():closeModal();
+      }
+    });
+    window.addEventListener('keyup',e=>{if(e.code==='Space')releaseGameSpace();});
+    window.addEventListener('blur',releaseGameSpace);
     document.addEventListener('fullscreenchange',()=>{if(plinkoFocusRuntime.active&&plinkoFocusRuntime.enteredFullscreen&&!document.fullscreenElement)exitPlinkoFocusMode({skipFullscreenExit:true});else syncPlinkoFocusLayout();});window.addEventListener('orientationchange',()=>setTimeout(syncPlinkoFocusLayout,120));
-    document.addEventListener('visibilitychange',()=>{if(plinkoBankRoundRuntime.active)plinkoBankRoundRuntime.lastTick=performance.now();});
+    document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseGameSpace();if(plinkoBankRoundRuntime.active)plinkoBankRoundRuntime.lastTick=performance.now();});
     window.addEventListener('pagehide',()=>{if(plinkoRuntime.uiRefreshTimer)flushPlinkoUiRefresh();if(plinkoBankRoundRuntime.active)cancelPlinkoBankRound();});
     window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;els.installButton.classList.remove('hidden');});
     window.addEventListener('appinstalled',()=>els.installButton.classList.add('hidden'));
